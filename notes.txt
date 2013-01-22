@@ -1,3 +1,8 @@
+GGplot2 notes
+---------------
+
+
+
 * Tricky plots to draw
 
 * Other pitfalls

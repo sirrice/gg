@@ -2,7 +2,8 @@
 
 var d3 = require('d3');
 var _ = require('underscore');
-var gg = require('./gg.js');
+//var gg = require('./gg.js');
+var gg = require('./gg2.js');
 
 var linechart = gg.gg({
     layers: [
