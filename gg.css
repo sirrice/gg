@@ -42,9 +42,13 @@ div#examples span { margin: 3px; }
     stroke: #fff;
     fill: none;
 }
-.axis text {
+.axis path.domain {
+    fill: none;
+}
+.axis text, g.axis g text {
   font-size: 8px;
   font-weight: 300;
+  fill: black;
 }
 
 .legend {

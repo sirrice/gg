@@ -12,6 +12,7 @@ _myfunc = (exports,undef) ->
         constructor: (@opts) ->
             @layers = []
             @scales = {}
+            # @statistics ?
 
             @opts = @opts or { padding: 35 }
             # TODO: move this into addtl parameters object!
@@ -62,32 +63,49 @@ _myfunc = (exports,undef) ->
                 .attr('height', @height)
             @facets.render w, h, @svg, data
 
-        renderer: (w, h, where) ->
-            (data) => @render w, h, where, data
-
-
+        # Wrapper to bind @render with default settings
+        renderer: (w, h, where) -> (data) => @render w, h, where, data
         layer: (e) -> @layers.push e
-
         scale: (s) -> @scales[s.aesthetic] = s
-
         legend: (aes) -> @scales[aes].legend or @layers[0].legend aes
 
-    Facets = {}
+    class Facets
+        constructor: () ->
 
-    Facets.fromSpec = (spec, graphic) ->
-        if spec?
-            throw 'Other facets not implemented'
-        else
-            new SingleFacet graphic
+        @fromSpec = (spec, graphic) ->
+            # use spec contents to create single or multi-facets
+            if spec?
+                throw 'Other facets not implemented'
+            else
+                new SingleFacet graphic
+
+    class GridFacet
+        constructor: (spec) ->
+            # x, y faceting groupby information
+            @groupX = spec.groupX or (d) -> 'X'
+            @groupY = spec.groupY or (d) -> 'Y'
+            @subFacets = null
+
+        prepare: (data) ->
+            group = (data) => [@groupX(data), @groupY(data)]
+
+            # group the data by x,y
+
+        render: (w, h, svg, data) ->
+            # compute layout of the facets
+            _.each @subFacets,
+
+
+
 
     class SingleFacet
         constructor: (@graphic) ->
 
-        render: (w, h, svg, data) ->
-            [@width, @height] = [w,h]
+        render: (@weight, @height, svg, data) ->
 
             svg.append('rect')
                 .attr('class', 'base')
+                .attr('fill', 'white')
                 .attr('x', 0)
                 .attr('y', 0)
                 .attr('width', @width)
@@ -98,6 +116,8 @@ _myfunc = (exports,undef) ->
 
 
             # Draws Axes then calls layer renderers with non-axis space
+
+            # Create d3 axis objects
             xAxis = d3.svg.axis()
                 .scale(@graphic.scales['x'].d3Scale)
                 .tickSize(2*@graphic.paddingY - @height)
@@ -111,24 +131,25 @@ _myfunc = (exports,undef) ->
             # create the div for the x axis
             svg.append('g')
                 .attr('class', 'x axis')
-                .attr('transform', 'translate(0, #{@height-@graphic.paddingY})')
+                .attr('fill', 'none')
+                .attr('transform', "translate(0, #{@height-@graphic.paddingY})")
                 .call(xAxis)
 
             svg.append('g')
                 .attr('class', 'y axis')
-                .attr('transform', 'translate(#{@graphic.paddingX}, 0)')
+                .attr('transform', "translate(#{@graphic.paddingX}, 0)")
                 .call(yAxis)
 
             svg.append('g')
                 .attr('class', 'x legend')
-                .attr('transform', 'translate(#{@width/2}, #{@height-5})')
+                .attr('transform', "translate(#{@width/2}, #{@height-5})")
                 .append('text')
                 .text(@graphic.legend('x'))
                 .attr('text-anchor', 'middle')
 
             svg.append('g')
                 .attr('class', 'y legend')
-                .attr('transform', 'translate(10, #{@height/2}) rotate(270)')
+                .attr('transform', "translate(10, #{@height/2}) rotate(-90)")
                 .append('text')
                 .text(@graphic.legend('y'))
                 .attr('text-anchor', 'middle')
@@ -161,14 +182,6 @@ _myfunc = (exports,undef) ->
             layer.statistic = Statistics.fromSpec spec.statistic or {kind: 'identity'}
             layer
 
-        scaleExtracted: (v, aes, d) -> @graphic.scales[aes].scale v, d
-
-        scaledValue: (d, aes) -> @scaleExtracted @dataValue(d, aes), aes, d
-
-        scaledMin: (aes) ->
-            s = @graphic.scales[aes]
-            s.scale s.min
-
         aesthetics: () -> _.without _.keys(@mappings), 'group'
 
         trainScales: (newData) ->
@@ -193,8 +206,14 @@ _myfunc = (exports,undef) ->
         render: (g) -> @geometry.render g, @newData
 
 
-        dataValue: (datum, aes) -> datum[@mappings[aes]]
+        scaleExtracted: (v, aes, d) -> @graphic.scales[aes].scale v, d
+        scaledValue: (d, aes) -> @scaleExtracted @dataValue(d, aes), aes, d
+        scaledMin: (aes) -> @graphic.scales[aes].scale @graphic.scales[aes].min
 
+        dataValue: (datum, aes) ->
+            # TODO: this is where aes functions would go
+            #       otherwise, data xforms should be done in Statistics
+            datum[@mappings[aes]]
 
         dataMin: (data, aes) ->
             if @mappings[aes]
@@ -216,7 +235,7 @@ _myfunc = (exports,undef) ->
             @mappings[aes] or @statistic.variable
 
     attributeValue = (layer, aes, defaultVal) ->
-        if aes of layer.mappings then (d) -> layer.scaledValue d, aes else defaultValue
+        if aes of layer.mappings then (d) -> layer.scaledValue d, aes else defaultVal
 
     class Geometry
         constructor: (spec) ->
@@ -237,8 +256,8 @@ _myfunc = (exports,undef) ->
                 .attr('cx', (d) => @layer.scaledValue d, 'x')
                 .attr('cy', (d) => @layer.scaledValue d, 'y')
                 .attr('fill-opacity', @alpha)
-                .attr('fill', attributeValue layer, 'color', @color)
-                .attr('r', attributeValue layer, 'size', @size)
+                .attr('fill', attributeValue @layer, 'color', @color)
+                .attr('r', attributeValue @layer, 'size', @size)
 
     class AreaGeometry extends Geometry
         constructor: (spec) ->
@@ -316,17 +335,19 @@ _myfunc = (exports,undef) ->
     class TextGeometry extends Geometry
         constructor: (spec) ->
             @show = spec.show
+            @offsetX = spec.offsetX or 5
+            @offsetY = spec.offsetY or -10
             super spec
 
         render: (g, data) ->
             area = g.append 'g'
             text = groups(area, 'text', data).selectAll('circle')
-                .data(Object)
+                .data((d,i)-> d)
                 .enter()
                 .append('text')
                 .attr('class', 'graphicText')
-                .attr('x', (d) => @layer.scaledValue d, 'x')
-                .attr('y', (d) => @layer.scaledValue d, 'y')
+                .attr('x', (d) => @offsetX + @layer.scaledValue d, 'x')
+                .attr('y', (d) => @offsetY + @layer.scaledValue d, 'y')
                 .text((d) => @layer.scaledValue d, 'text')
 
             text.attr('class', 'graphicText showOnHover') if @show is 'hover'
@@ -336,14 +357,14 @@ _myfunc = (exports,undef) ->
 
 
     groups = (g, klass, data) ->
-        g.selectAll('g.#{klass}')
+        g.selectAll("g.#{klass}")
             .data(data)
             .enter()
             .append('g')
             .attr('class', klass)
 
     #
-    ##
+    #
     #
     #
     #
@@ -379,14 +400,14 @@ _myfunc = (exports,undef) ->
             s
 
         defaultDomain: (layer, data, aes) ->
-            @min = layer.graphic.datamin data, aes if not @min?
-            @max = layer.graphic.dataMax data, aes if not @max?
+            min = if @min? then @min else layer.graphic.dataMin data, aes
+            max = if @max? then @max else layer.graphic.dataMax data, aes
             @domainSet = true
             if @center?
-                extreme = Math.max @max-@center, Math.abs(@min-@center)
+                extreme = Math.max max-@center, Math.abs(min-@center)
                 @domain [@center - extreme, @center + extreme]
             else
-                @domain [@min, @max]
+                @domain [min, max]
 
         domain: (interval) -> @d3Scale =  @d3Scale.domain interval
         range: (i) -> @d3Scale = @d3Scale.range i
