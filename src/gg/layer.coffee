@@ -1,3 +1,4 @@
+#<< gg/util
 #<< gg/geom
 class gg.Layer
     constructor: (@geometry, @graphic) ->
@@ -72,8 +73,5 @@ class gg.Layer
 
     legend: (aes) ->
         @mappings[aes] or @statistic.variable
-
-attributeValue = (layer, aes, defaultVal) ->
-    if aes of layer.mappings then (d) -> layer.scaledValue d, aes else defaultVal
 
 

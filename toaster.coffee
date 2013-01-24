@@ -24,5 +24,5 @@ toast
 
   # => HTTPFOLDER (optional), RELEASE / DEBUG (required)
   httpfolder: '../js/'
-  release: 'src/compiled/ggplotjs2.js'
-  debug: 'src/compiled/ggplotjs2-debug.js'
+  release: 'build/compiled/ggplotjs2.js'
+  debug: 'build/compiled/ggplotjs2-debug.js'

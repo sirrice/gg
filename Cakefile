@@ -29,17 +29,18 @@ task 'clean', ->
   clean()
 
 build = (callback) ->
-  for dir in ['build', 'build/data', 'build/css', 'build/font', 'build/html', 'build/images',
+  for dir in ['build', 'build/data', 'build/compiled', 'build/css', 'build/font', 'build/html', 'build/images',
               'build/js', 'build/vendor', 'build/vendor/font',
               'build/vendor/js']
     fs.mkdirSync dir unless fs.existsSync dir
 
   commands = []
+  commands.push 'toaster -dc'
 #  commands.push 'cp src/manifest.json build/'
   commands.push 'cp -r src/html build/'
   commands.push 'cp -r src/font build/'
   commands.push 'cp -r src/js build/'
-  commands.push 'cp -r src/compiled/* build/js/'
+  commands.push 'cp -r build/compiled/* build/js/'
   # TODO: consider optipng
   commands.push 'cp -r src/images build/'
   for inFile in glob.sync 'src/less/**/*.less'

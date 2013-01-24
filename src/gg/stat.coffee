@@ -1,3 +1,4 @@
+#<< gg/util
 class gg.Statistic
     constructor: (spec) ->
         @group = spec.group or false
@@ -87,19 +88,5 @@ class gg.IdentityStatistic extends gg.Statistic
 
 
 
-
-
-groupData = (data, groupBy) ->
-    if not groupBy? then [data] else _.groupBy data, groupBy
-splitByGroups = (data, group, variable) ->
-    groups = {}
-    if group
-        _.each data, (d) =>
-            g = d[group]
-            groups[g] = [] if not groups[g]?
-            groups[g].push d[variable]
-    else
-        groups['data'] = _.pluck data, variable
-    groups
 
 

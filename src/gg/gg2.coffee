@@ -1,5 +1,6 @@
+###
 # @param undef undefined variable
-_myfunc = (exports,undef) ->
+((exports,undef) ->
 
     _ = exports._
     d3 = exports.d3
@@ -8,20 +9,22 @@ _myfunc = (exports,undef) ->
         d3 = require 'd3'
         _ = require 'underscore'
 
+###
 
 
-    #<< gg/graphic
-    #<< gg/facets
-    #<< gg/layer
-    #<< gg/geom
-    #<< gg/scale
-    #<< gg/stats
+#<< gg/graphic
+#<< gg/facets
+#<< gg/layer
+#<< gg/geom
+#<< gg/scale
+#<< gg/stats
+
+
+@_gg = gg
+@gg = (spec, opts) -> return _gg.Graphic.fromSpec spec, opts
+_.extend @gg, @_gg
+_.extend @gg.prototype, @_gg
 
 
 
-    exports.gg = (spec, opts) -> return gg.Graphic.fromSpec spec, opts
-
-
-
-
-_myfunc(this)
+#)(this)
