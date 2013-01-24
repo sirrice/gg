@@ -1,28 +1,42 @@
 gg
 ===
 
-Etsy Hack Week project to make in-Javascript DSL for The Grammar of Graphics.
+Javascript DSL for Grammar of Graphics extended to support interactivity and
+backend data-processing support.  Written in coffeescript
 
-See a demo here:
+Setup
+====
 
-> [http://gigamonkey.github.com/gg/](http://gigamonkey.github.com/gg/)
+Install node
 
-Some ideas of things to do next:
+    brew install node
+
+Install gg
+
+    npm install
+
+Install coffeescrip
+
+    ---
+
+Compile
+
+    cake build
+    cake release
+
+
+TODOs
+=======
 
 - Implement positioners, especially for stacked and side-by-side bar charts.
-
 - Facets.
-
 - Keys for aesthetics other than x and y.
-
 - Size scales for more geometries.
-
 - Coordinate systems (esp. pie charts)
-
 - Regularize/rationalize/document use of CSS for controlling appearence.
-
 - In-browser interactive graphic builder. (REPL?)
 
 
-*Want to hack data or something else at Etsy? Email me or see
- [http://www.etsy.com/careers/](http://www.etsy.com/careers/)*
+
+Original code jacked from [http://gigamonkey.github.com/gg/](http://gigamonkey.github.com/gg/).
+
