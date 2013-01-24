@@ -82,7 +82,8 @@
             layers: [ {
                 geometry: 'box',
                 mapping: { x: 'group', y: false },
-                statistic: { kind: 'box', group: 'grade', variable: 'value' }
+                statistic: { kind: 'box', group: 'grade', variable: 'value' },
+                width: 10
             }],
             scales: [
                 { type: 'categorical', aesthetic: 'x' }
@@ -112,7 +113,7 @@
         // ... and render 'em
 
         var data = gg.sampleData;
-        var w    = 300;
+        var w    = 400;
         var h    = 200;
         var ex   = function () { return d3.select('#examples').append('span'); };
 

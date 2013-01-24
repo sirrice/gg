@@ -321,9 +321,9 @@ _myfunc = (exports,undef) ->
                 .append('rect')
                 .attr('x', (d) => scale(d, 'x') - @width/2)
                 .attr('y', (d) => scale(d, 'y'))
-                .attr('width', @width)
+                .attr('width', () => @width)
                 .attr('height', (d) => @layer.scaledMin('y') - scale(d, 'y'))
-                .attr('fill', attributeValue layer, 'color', @color)
+                .attr('fill', attributeValue @layer, 'color', @color)
 
     class BoxPlotGeometry extends Geometry
         constructor: (spec) ->
@@ -400,14 +400,14 @@ _myfunc = (exports,undef) ->
             s
 
         defaultDomain: (layer, data, aes) ->
-            min = if @min? then @min else layer.graphic.dataMin data, aes
-            max = if @max? then @max else layer.graphic.dataMax data, aes
+            @min = if @min? then @min else layer.graphic.dataMin data, aes
+            @max = if @max? then @max else layer.graphic.dataMax data, aes
             @domainSet = true
             if @center?
-                extreme = Math.max max-@center, Math.abs(min-@center)
+                extreme = Math.max @max-@center, Math.abs(@min-@center)
                 @domain [@center - extreme, @center + extreme]
             else
-                @domain [min, max]
+                @domain [@min, @max]
 
         domain: (interval) -> @d3Scale =  @d3Scale.domain interval
         range: (i) -> @d3Scale = @d3Scale.range i
@@ -423,7 +423,7 @@ _myfunc = (exports,undef) ->
 
     class LogScale extends Scale
         constructor: () ->
-            @d3Scale = d3.scale.llog()
+            @d3Scale = d3.scale.log()
 
     class CategoricalScale extends Scale
         constructor: () ->
@@ -485,12 +485,12 @@ _myfunc = (exports,undef) ->
             super spec
 
         compute: (data) ->
-            vals = _.pluck data @variable
+            vals = _.pluck data, @variable
             histogram = d3.layout.histogram().bins(@bins)
             freq = histogram vals
             histogram.frequency false
             density = histogram vals
-            _map frequency, (bin, i) =>
+            _.map freq, (bin, i) =>
                 bin: i, count: bin.y, density: density[i].y, ncount: bin.y / data.length or 0
 
     class SumStatistic extends Statistic
@@ -498,9 +498,9 @@ _myfunc = (exports,undef) ->
             super spec
 
         compute: (data) ->
-            groups = groupData data @group
+            grps = groupData data, @group
             value = _.bind (point) => point[@variable]
-            _.map groups, (values, name) =>
+            _.map grps, (values, name) =>
                 {
                     group : name,
                     count: values.length,
@@ -522,7 +522,34 @@ _myfunc = (exports,undef) ->
             ]
 
         compute: (data) ->
-            groups = groupData data @group
+            grps = splitByGroups data, @group, @variable
+
+            _.map grps, (vals, name) =>
+                vals.sort d3.ascending
+
+                q1 = d3.quantile vals, 0.25
+                median = d3.quantile vals, 0.5
+                q3 = d3.quantile vals, 0.75
+                min = vals[0]
+                max = vals[vals.length - 1]
+                fr = 1.5 * (q3-q1)
+                lowerIdx = d3.bisectLeft vals, q1 - fr
+                upperIdx = (d3.bisectRight vals, q3 + fr, lowerIdx) - 1
+                lower = vals[lowerIdx]
+                upper = vals[upperIdx]
+                outliers = vals.slice(0, lowerIdx).concat(vals.slice(upperIdx + 1))
+
+                {
+                    group: name,
+                    q1: q1,
+                    median: median,
+                    q3: q3,
+                    lower: lower,
+                    upper: upper,
+                    outliers: outliers,
+                    min: min,
+                    max: max
+                }
 
     class IdentityStatistic extends Statistic
         constructor: (spec) ->

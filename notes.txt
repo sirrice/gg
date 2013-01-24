@@ -82,6 +82,9 @@ Questions
 
 1. where to hook in interaction?  click, drag, select, brush, link, change dimensions, zoom
 2. where to hook in custom theme?  (at least coloring)
+   generate CSS?
+   how to support interactivity then?
+
 
 
 
