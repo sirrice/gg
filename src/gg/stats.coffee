@@ -1,5 +1,5 @@
 #<< gg/stat
-class Statistics
+class gg.Statistics
     @fromSpec: (spec) ->
         new {
             identity: gg.IdentityStatistic,

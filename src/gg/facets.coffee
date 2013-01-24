@@ -1,5 +1,5 @@
-#<< gg/facet.coffee
-class Facets
+#<< gg/facet
+class gg.Facets
     constructor: () ->
 
     @fromSpec = (spec, graphic) ->

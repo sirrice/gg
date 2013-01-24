@@ -10,9 +10,9 @@ _myfunc = (exports,undef) ->
 
 
 
-    #<< gg/graphic.coffee
-    #<< gg/facets.coffee
-    #<< gg/layer.coffee
+    #<< gg/graphic
+    #<< gg/facets
+    #<< gg/layer
     #<< gg/geom
     #<< gg/scale
     #<< gg/stats

@@ -1,10 +1,10 @@
-class Statistic
+class gg.Statistic
     constructor: (spec) ->
         @group = spec.group or false
         @variable = spec.variable # why just a single variable?
 
 
-class BinStatistic extends gg.Statistic
+class gg.BinStatistic extends gg.Statistic
     constructor: (spec) ->
         @bins = spec.bins or 20
         super spec
@@ -18,7 +18,7 @@ class BinStatistic extends gg.Statistic
         _.map freq, (bin, i) =>
             bin: i, count: bin.y, density: density[i].y, ncount: bin.y / data.length or 0
 
-class SumStatistic extends gg.Statistic
+class gg.SumStatistic extends gg.Statistic
     constructor: (spec) ->
         super spec
 
@@ -34,7 +34,7 @@ class SumStatistic extends gg.Statistic
                 max: d3.max(values, value)
             }
 
-class BoxPlotStatistic extends gg.Statistic
+class gg.BoxPlotStatistic extends gg.Statistic
     constructor: (spec) ->
         super spec
 
@@ -76,7 +76,7 @@ class BoxPlotStatistic extends gg.Statistic
                 max: max
             }
 
-class IdentityStatistic extends gg.Statistic
+class gg.IdentityStatistic extends gg.Statistic
     constructor: (spec) ->
         super spec
 

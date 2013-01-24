@@ -1,4 +1,4 @@
-class GridFacet
+class gg.GridFacet
     constructor: (spec) ->
         # x, y faceting groupby information
         @groupX = spec.groupX or (d) -> 'X'
@@ -17,7 +17,7 @@ class GridFacet
 
 
 
-class SingleFacet
+class gg.SingleFacet
     constructor: (@graphic) ->
 
     render: (@weight, @height, svg, data) ->

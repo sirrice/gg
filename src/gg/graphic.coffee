@@ -2,7 +2,7 @@
 #<< gg/layer
 #<< gg/scale
 #<< gg/stats
-class Graphic
+class gg.Graphic
     constructor: (@opts) ->
         @layers = []
         @scales = {}

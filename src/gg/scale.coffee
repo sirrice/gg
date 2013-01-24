@@ -1,4 +1,4 @@
-class Scale
+class gg.Scale
     constructor: () ->
 
     @fromSpec: (spec) ->
@@ -42,19 +42,19 @@ class Scale
     range: (i) -> @d3Scale = @d3Scale.range i
     scale: (v) -> @d3Scale v
 
-class LinearScale extends gg.Scale
+class gg.LinearScale extends gg.Scale
     constructor: () ->
         @d3Scale = d3.scale.linear()
 
-class TimeScale extends gg.Scale
+class gg.TimeScale extends gg.Scale
     constructor: () ->
         @d3Scale = d3.time.scale()
 
-class LogScale extends gg.Scale
+class gg.LogScale extends gg.Scale
     constructor: () ->
         @d3Scale = d3.scale.log()
 
-class CategoricalScale extends gg.Scale
+class gg.CategoricalScale extends gg.Scale
     constructor: () ->
         @d3Scale = d3.scale.ordinal()
         @padding = 1
@@ -69,14 +69,14 @@ class CategoricalScale extends gg.Scale
     range: (interval) -> @d3Scale = @d3Scale.rangeBands interval, @padding
 
 # TODO: ColorScale, TextScale
-class ColorScale extends gg.CategoricalScale
+class gg.ColorScale extends gg.CategoricalScale
     constructor: () ->
         @d3Scale = d3.scale.category20()
 
     range: (interval) -> @d3Scale = @d3Scale.range(interval)
 
 
-class TextScale extends gg.Scale
+class gg.TextScale extends gg.Scale
     constructor: () ->
 
     prepare: (layer, newData, aes) ->

@@ -1,5 +1,5 @@
 #<< gg/geom
-class Layer
+class gg.Layer
     constructor: (@geometry, @graphic) ->
         @mappings = {}
         @statistic = null
