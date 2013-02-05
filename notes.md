@@ -1,0 +1,304 @@
+gg notes
+==============
+
+ggplot2 strangeness/confusion
+-----------------
+
+### Mixture of responsibilites
+
+stat+geom shorthand mixes together
+
+1. stat input columns,
+2. stat output columns
+3. aesthetics mapping (x=x)
+
+for example:
+
+    ggplot(diamonds) + stat_bin(aes(x=x,y=..x..), geom='point')
+    # stat_bin outputs ..x.., ..count.., ..density..
+    # aes(x=..x..) is not possible in this format
+
+
+### stat invisibly replaces dataset with new dataset
+
+This may be less of an issue, but explicit schema transformations are better than implicit
+
+    stat_bin(aes(x))
+    # replaces exsiting dataset with a new dataset with attributes
+    # x, density, count
+
+### Layers are implicit
+
+stat and geom functions implicitly create layers.  rather create
+layers explicitly because it follows the mental model.  The mental model
+is:
+
+1. map inputs to statistical function(s) using aes mapping
+2. execute statistical functions, which output new schema
+3. map new schema to attributes geometry objects
+4. figure out layout automatically
+
+### Customization
+
+Customization is really difficult/confusing.  Would like
+
+1. high level constraints that affect the layout algorithms
+2. well defined handles to rendered objects to explicit manipulate them
+   or theme them (via CSS)
+3. completely separate theming from rendered vis
+
+### Interactivity
+
+1. Single pane interactions (requires handles, objects)
+   hover, click, select, zoom
+2. Single pane manipulations
+   Change geometry, stats, data, filter
+3. Multi-pane synchronized interactions
+   brush/link
+
+
+### Objects not self describing
+
+1. should have references to underlying datasets/row
+
+
+
+
+
+
+GGplot-JS notes
+---------------
+
+### Tough Queries
+
+    ggplot(diamonds) + 
+    geom_bar(aes(color, carat, group=clarity, fill=clarity, color=clarity), 
+             position='dodge', stat='identity', ymax=10000) + 
+    stat_bin(aes(x, group=clarity, color=clarity), 
+             alpha=0.3,position='jitter', geom='point') +
+    facet_grid(cut~., scales='free_y')
+
+1. combination of discrete (geom_bar) and continuous (stat_bin) axes shows
+   only first axis is rendered
+1. Also shows that rendering continuous on discrete axes ok, but not vice versa.  (weird)
+2. faceting shows that the discrete and continuous scales are aligned across 
+   facets (in fixed scales mode)
+2. `geom_bar` shows that dodge requires rejiggering (not sure how) scales 
+   to plot the tick marks appropriately
+3. `stat_bin` shows that statistics are computed after grouping by clarity
+
+
+
+
+
+## Processing flow
+
+1. facet prepares data
+    * split data by facets.  pData = a facet's data
+    * create pane objects
+    - compute nrows, ncols
+1. compute per layer pre-rendering
+    - setup scales
+1. compute for each layer _during rendering_
+    - group pData by group attribute
+    - stats on each group
+    - scale domain and range
+      (if there is conflicting x-axis mappings, 1 scale _per layer_!!!)
+    - track merged domains for each (continuous scale, ordinal scale, text is separate)
+    - select a default scale for each plot, its ticks will be plotted
+1. compute scales across panels
+    - all y axis scales in same row should be same across the layers
+    - all x axis scales in same col should be same across the layers
+1. Compute internal geometry schemas
+    - turn y, width into y1, y2 etc schema
+    - but still keep existing attributes for the scales!!!
+1. Reposition geometries
+    - update scales to accurately reflect changes
+    - Is there a clear API to add positioning?
+    - e.g., dodge makes the rendered columns at a single tick wider (by using enclosing containers?)
+    - e.g., jitter may be done by adding rand() to the data before sending to scale)
+
+
+## scales
+
+Multiple levels of scales!
+
+1. default for a geometry/aesthetic
+2. default defined by spec.scales
+3. default defined by spec.layers[X].scales
+
+Centralize location where scales are defined (scalefactory)
+
+* fromSpec(basespec)
+* getScale(aes, panel=X, layer=X)
+
+
+Multiple instances of scales
+
+1. Each panel.layer has a local scale
+2. Each panel decides which X/Y coordinate scale to end up plotting
+    3. each layer's scaletype, aesthetic needs to be merged and synchronized
+3. Panel scales need to be synchronized
+4. Graphic scales for legend (categorical, color, group)
+
+## facet renders containers
+    - then calls panes to render themselves
+1. pane plots data
+    - plot default (first layer) scales
+1. layers
+    - plot geometries
+    
+    
+## Questions
+
+where does themeing, interactions come into play?
+
+
+
+## Component Responsibilites
+
+1. Graphic
+    * render top level container
+    * render title, guides
+    * hub to access everything else + convenience accessors
+1. Facet
+    * instantiate and manage panes
+    * layout panes
+    * split up datasets
+    * provide defaults for scales
+    * ensure scales are all consistent (for guides)
+    * render pane containers, facet labels
+1. Pane
+    * contain layers
+    * provide default scales
+    * train layer scales
+    * render axes, plot area
+1. Layer
+    * split dataset into groups
+    * compute stats on each group
+    * Update its individual scale
+1. Geometry
+    * track position selection
+    * 
+1. Position
+
+
+
+### User Specifications
+
+spec:
+
+    layers: [ {  geometry:,
+               mapping: {
+                   x:, y:, group:, color:, text:, show
+               }
+               statistic: {kind: 'identity', group: function, variable}
+               visual attributes (e.g., size, fill, width, etc),
+           }]
+    facets: { x: function(row)/aes,
+              y:,
+              type: grid/wrap,
+              scales: free/fixed,
+              sizing: free/fixed}
+    scales
+    coordinates
+    options (themes)
+
+    opts
+      paddingX, paddingY, padding
+
+### Misc
+  compute statistics
+  compute scales
+  render
+ defaults:
+  mapping
+  geom: point
+  statistic: inteval
+  position: none
+ scales
+   facetid,aes -> scale object
+ facets: everything is a grid
+   x,y -> singlefacet +
+   layer
+    mapping
+    subset of data
+    statistic
+    scale from graphic
+    coordinate
+    position
+    theme
+    geom (row) -> svg object, w/ units derived from @scale()
+
+
+
+etsy gg responsibilities
+-----------------------
+
+Graphic
+
+    ensureScales: make sure each aesthetic has a scale
+    prepareLayers: calles prepare on each layer
+    aesthetic -> scale
+    render: create container, call facet.render
+
+GricFacet
+
+    render:
+        ensure scales of each subfacet, prepare their layers
+        draw overall axes
+
+
+Facet
+
+    render:
+        call Graphic to ensure scales, prepare layers (bulk of work)
+        draw axes and tick marks
+        call layer.render with new 'g' dom element
+
+
+Layer
+
+    tied together with a geometry
+    computes statistics, groups, updates scales, and calles geom.render
+    statistic
+    trainScales
+        for each aesthetic, set/learn the domain of the data
+        XXX currently trains on the first layer and stops (domainSet variable)
+    prepare
+        replace data with computed statistics
+        turn data into groups using mappings.group
+        trainscales on new data
+    render
+        call geometry.render()
+
+Geometry
+
+    the data has a well defined schema
+    render the svg objects
+        takes groups as input, so need to consider that!
+    load rendering attributes like size, color, width, fill from spec toplevel
+
+
+
+Scale
+
+    has handle to Graphic to determin global min, max values
+    tied to a specific aesthetic (defaultFor(aesthetic) -> Scale object)
+
+
+Questions
+
+1. where to hook in interaction?  click, drag, select, brush, link, change dimensions, zoom
+2. where to hook in custom theme?  (at least coloring)
+   generate CSS?
+   how to support interactivity then?
+
+
+
+
+* Tricky plots to draw
+
+* Other pitfalls
+
+* Crazy ideas

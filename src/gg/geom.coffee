@@ -9,6 +9,7 @@ class gg.Geometry
     constructor: (spec) ->
         @color = spec.color or 'black'
         @width = spec.width or 2
+        @layer = null
 
 
 class gg.PointGeometry extends gg.Geometry
@@ -17,6 +18,7 @@ class gg.PointGeometry extends gg.Geometry
         super spec
 
     render: (g, data) ->
+
         groups(g, 'circles', data).selectAll('circle')
             .data(Object)
             .enter()
@@ -62,17 +64,19 @@ class gg.LineGeometry extends gg.Geometry
 
     render: (g, data) ->
         scale = (d, aes) => @layer.scaledValue d, aes
-        color = if 'color' of @layer.mappings then (d) -> scale d[0], 'color' else @color
+        if 'color' of @layer.mappings
+            color = (d) -> scale d[0], 'color'
+        else
+            color = @color
+
         line = d3.svg.line()
-            .x((d) -> scale d, 'x')
-            .y((d) -> scale d, 'y')
+            .x((d,i) -> scale d, 'x')
+            .y((d,i) -> scale d, 'y')
             .interpolate('linear')
 
-        groups(g, 'lines', data).selectAll('polyline')
-            .data((d) -> [d])
-            .enter()
-            .append('svg:path')
-            .attr('d', line)
+        groups(g, 'lines', data).selectAll('path')
+            .data((d) -> [d]).enter().append('path')
+            .attr('d',  line)
             .attr('fill', 'none')
             .attr('stroke-width', @width)
             .attr('stroke', color)
@@ -89,7 +93,7 @@ class gg.IntervalGeometry extends gg.Geometry
             .append('rect')
             .attr('x', (d) => scale(d, 'x') - @width/2)
             .attr('y', (d) => scale(d, 'y'))
-            .attr('width', () => @width)
+            .attr('width', attributeValue @layer, 'width', @width)#() => @width)
             .attr('height', (d) => @layer.scaledMin('y') - scale(d, 'y'))
             .attr('fill', attributeValue @layer, 'color', @color)
 

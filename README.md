@@ -5,7 +5,7 @@ Javascript DSL for Grammar of Graphics extended to support interactivity and
 backend data-processing support.  Written in coffeescript
 
 Setup
-====
+------
 
 Install node
 
@@ -26,7 +26,7 @@ Compile
 
 
 TODOs
-=======
+---------
 
 - Implement positioners, especially for stacked and side-by-side bar charts.
 - Facets.
@@ -37,6 +37,18 @@ TODOs
 - In-browser interactive graphic builder. (REPL?)
 
 
+Related Technologies
+-----------
+
+* ggplot (+ shiny?)
+* ggobi
+* tableau
+* protovis
+* perfuse
+*
+
 
 Original code jacked from [http://gigamonkey.github.com/gg/](http://gigamonkey.github.com/gg/).
+
+
 

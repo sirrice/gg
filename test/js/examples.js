@@ -8,7 +8,13 @@
         // Define graphics ...
 
         var scatterplot = gg({
-            layers: [{ geometry: 'point', mapping: { x: 'd', y: 'r' } }]
+            layers: [
+                { geometry: 'line', mapping: { x: 'd', y: 'r - 10', size: 'r', group: 'g', color: 'g' } },
+                { geometry: 'point', mapping: {x: 'd * 0.8', y: 'r - d / 500.', size: 'r' }}
+            ],
+            scales: [
+                { aesthetic: 'size', range: [0.5, 2] }
+            ]
         });
 
         var symmetric = gg({
@@ -68,7 +74,7 @@
             layers: [
                 {
                     geometry: 'interval',
-                    mapping: { x: 'bin', y: 'count' },
+                    mapping: { x: 'bin', y: 'count', width: '((count % 5) + 1) * 20' },
                     statistic: { kind: 'bin', variable: 'height', bins: 30 }
                 }
             ],
@@ -103,7 +109,7 @@
             layers: [
                 {
                     geometry: 'point',
-                    mapping: { x: 'x', y: 'y', size: 'size' }
+                    mapping: { x: 'x', y: 'y', size: function(row){ return row['size']*2 + 50}}
                 },
                 { geometry: 'text', mapping: { x: 'x', y: 'y', text: '{name}: {size}' },  show: "hover" }
             ],
@@ -113,15 +119,21 @@
         // ... and render 'em
 
         var data = gg.sampleData;
-        var w    = 400;
+        var w    = 1000;
         var h    = 200;
         var ex   = function () { return d3.select('#examples').append('span'); };
 
+        var bigdata = _.map(_.range(0, 5000), function(d) {
+            g = Math.floor(Math.random() * 10);
+            return {d:d, r:Math.random() + g, g: g};
+        })
+        scatterplot.renderer(w, h, ex())(bigdata)
+
         //symmetric.render(w, h, ex(), data.toBeCentered);
+//        quadrants.renderer(w, h, ex())(data.quadrants);
         linechart.renderer(w, h, ex())(data.upwardSubjects);
         combined.renderer(w, h, ex())(data.upward);
         barchart.renderer(w, h, ex())(data.upward);
-        quadrants.renderer(w, h, ex())(data.quadrants);
         histogram.renderer(w, h, ex())(data.purchases);
         semilog.renderer(w, h, ex())(data.semiLogData);
         heightHistogram.renderer(w, h, ex())(data.heightWeight);

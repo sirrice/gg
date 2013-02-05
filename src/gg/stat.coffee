@@ -3,6 +3,15 @@ class gg.Statistic
     constructor: (spec) ->
         @group = spec.group or false
         @variable = spec.variable # why just a single variable?
+        @requiredAES = []
+        @defaultAES
+        @defaultMapping
+
+    ensureAES: (data) ->
+        if not data? or not data.length
+            true
+        _.every @requiredAES, (aes) -> aes of data[0]
+
 
 
 class gg.BinStatistic extends gg.Statistic
