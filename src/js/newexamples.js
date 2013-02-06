@@ -11,25 +11,25 @@
             layers: [
                 { geometry: 'line', mapping: { x: 'd', y: 'r', size: 'r', group: 't', color: 't' } },
 
-                { geometry: 'point', mapping: { x: 'd', y: 'r + 5', size: 'r', group: 't', color: 't' } }
+                { geometry: 'point', mapping: { x: 'd', y: '10 - (d+1)/5000', size: 'r', group: 't', color: 't' } }
             ],
             scales: [
-                { aesthetic: 'size', range: [.5, 5] }
+                { aesthetic: 'size', range: [.5, 2] }
             ],
-            facets: { x: 'f', y: 'g'}
+            facets: { x: 'f', y: 'g', scales:'fixed'}
 
         });
 
 
-        var w    = 1000;
-        var h    = 700;
+        var w    = 1300;
+        var h    = 1000;
         var ex   = function () { return d3.select('#examples').append('span'); };
 
-        var bigdata = _.map(_.range(0, 500), function(d) {
-            g = Math.floor(Math.random() * 5);
+        var bigdata = _.map(_.range(0, 5000), function(d) {
+            g = Math.floor(Math.random() * 9);
             f = Math.floor(Math.random() * 5);
             t = Math.floor(Math.random() * 3)
-            return {d:d, r:Math.random() + g, g: g, f:f, t:t};
+            return {d:d, r:Math.random() + g + f, g: g, f:f, t:t};
         })
         scatterplot.renderer(w, h, ex())(bigdata)
     });

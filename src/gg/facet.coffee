@@ -19,8 +19,8 @@ class gg.GridFacet
         @groupX = ((row) -> row[spec.x]) if typeof spec.x is 'string'
         @groupY = ((row) -> row[spec.y]) if typeof spec.y is 'string'
         @type = spec.type or 'grid'
-        #@scales = spec.scales or 'fixed'
-        #@sizing = spec.sizing or 'fixed'
+        @scales = spec.scales or 'fixed'
+        @sizing = spec.sizing or 'fixed'
         @panes = []
 
         @xs = []
@@ -75,6 +75,26 @@ class gg.GridFacet
             [x,y] = key
             @subFacets[x][y].prepare @facetData[x][y]
 
+        if @scales is 'fixed'
+            @trainFixedScales()
+        else
+            @trainFreeScales()
+
+
+    trainFixedScales: ->
+        # TODO: move xAesthetics/yAesthetics/aesthetics into one place
+        aesthetics = ['x', 'y', 'y0', 'y1']
+        masterScales = gg.Scales.merge(_.map @panes, (p) -> p.scales)
+        console.log String(masterScales)
+        masterScales = masterScales.keep(aesthetics)
+        console.log String(masterScales)
+
+        _.each @panes, (p) =>
+            p.scales.merge masterScales, false
+
+
+    trainFreeScales: ->
+
         # now compute the shared scales for each column and row
         xAesthetics = ['x']
         colScales = _.map @xs, (x) =>
@@ -88,7 +108,7 @@ class gg.GridFacet
                .keep(yAesthetics)
         @yScales = rowScales
 
-        # update column scales to match on x aesthetics
+        # update panes' scales to match along columns and rows
         _.each @xs, (x, xIdx) =>
             _.each @ys, (y, yIdx) =>
                 paneScales = @subFacets[x][y].scales
@@ -96,49 +116,12 @@ class gg.GridFacet
                 paneScales.merge rowScales[yIdx], false
 
 
-
-    renderXAxis: () ->
-    renderYAxis: () ->
-
-    render: (@width, @height, svg, data) ->
-        # compute layout of the facets
-        # decide if x/y labels need to be rendered
-        # create the containers
-
-        @prepare data
-        # each pane's layers has trained their scales
-
-        # add margins
-        margin = @margin / 2
-        matrix = "#{1.0-2*margin/@width},0,0,
-            #{1.0-2*margin/@height}, #{margin}, #{margin}"
-        svg = svg.append('g')
-            .attr('transform', "matrix(#{matrix})")
-
-
-        svg.append('rect')
-            .attr('class', 'plot-background')
-            .attr('fill', 'white')
-            .attr('x', 0)
-            .attr('y', 0)
-            .attr('width', @width)
-            .attr('height', @height)
-
-        paddingY = 10
-        paddingX = 10
-        labelSize = 20
-        labelPadding = 4
-        facetSize = labelSize + labelPadding*2
-
-        facetWidth = @width - 2*facetSize - paddingX
-        facetHeight = @height - 2*facetSize
-        xFacet = d3.scale.ordinal().domain(@xs).rangeBands([0, facetWidth], 0.02)
+    renderFacetLabels: (facetSize, labelPadding, xFacet, yFacet, svg) ->
         xBand = xFacet.rangeBand()
-        yFacet = d3.scale.ordinal().domain(@ys).rangeBands([0, facetHeight], 0.02)
         yBand = yFacet.rangeBand()
 
 
-        xLabels = svg.append('g').attr('transform', "translate(#{paddingX+facetSize}, 0)")
+        xLabels = svg.append('g').attr('transform', "translate(#{facetSize}, 0)")
             .selectAll("g").data(@xs)
         xEnter = xLabels.enter().insert('g').attr('class', 'facet-label x')
         xEnter.append('rect')
@@ -155,7 +138,7 @@ class gg.GridFacet
             .attr("height", facetSize)
 
         yLabels = svg.append('g')
-            .attr('transform', "translate(#{facetWidth+paddingX+facetSize}, #{facetSize})")
+            .attr('transform', "translate(#{@width-facetSize}, #{facetSize})")
             .selectAll("g").data(@ys, String)
         yEnter = yLabels.enter().insert('g').attr('class', 'facet-label y')
         yEnter.append('rect')
@@ -165,6 +148,7 @@ class gg.GridFacet
         yEnter.select("text")
             .attr("y", (d) -> yFacet(d) + yBand / 2)
             .attr("x", labelPadding)
+            .attr("rotate", 90)
         yEnter.select("rect")
             .attr("y", yFacet)
             .attr("height", yBand)
@@ -173,9 +157,48 @@ class gg.GridFacet
 
 
 
+    render: (@width, @height, svg, data) ->
+        # compute layout of the facets
+        # decide if x/y labels need to be rendered
+        # create the containers
+
+        @prepare data
+        # each pane's layers has trained their scales
+
+        # add margins
+        margin = @margin / 2
+        matrix = "#{1.0-2*margin/@width},0,0,
+                  #{1.0-2*margin/@height},
+                  #{margin}, #{margin}"
+        svg = svg.append('g')
+            .attr('transform', "matrix(#{matrix})")
+
+        svg.append('rect')
+            .attr('class', 'plot-background')
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('width', @width)
+            .attr('height', @height)
+
+        # TODO: make this configurable
+        labelSize = 20
+        labelPadding = 4
+        facetSize = labelSize + labelPadding*2
+
+        facetWidth = @width - 2*facetSize
+        facetHeight = @height - 2*facetSize
+        xFacet = d3.scale.ordinal().domain(@xs).rangeBands([0, facetWidth], 0.05)
+        yFacet = d3.scale.ordinal().domain(@ys).rangeBands([0, facetHeight], 0.05)
+        xBand = xFacet.rangeBand()
+        yBand = yFacet.rangeBand()
+
+
+        @renderFacetLabels(facetSize, labelPadding, xFacet, yFacet, svg)
+
+
 
         # Now create containers for each pane
-        matrix = "1,0,0,1,#{facetSize+paddingX}, #{facetSize}"
+        matrix = "1,0,0,1,#{facetSize}, #{facetSize}"
         facetContainer = svg.append('g')
             .attr("transform", "matrix(#{matrix})")
             .attr("class", "facet-grid-container")
@@ -189,76 +212,9 @@ class gg.GridFacet
 
                 pane = @subFacets[x][y]
                 pane.render xBand, yBand, cell
-                if yidx == @ys.length-1
-                    pane.renderXAxis cell
-                if xidx == 0
-                    pane.renderYAxis cell
-            ###
-            #colEnter.append("rect")
-            .attr("x", 0)
-            .attr("y", 0)
-            .attr("width", xBand)
-            .attr("height", yBand)
-            .style("fill", "red")
-            ###
+                pane.renderXAxis cell, yidx is @ys.length-1
+                pane.renderYAxis cell, xidx is 0
 
-
-
-
-        ###
-        # Now render X/Y axes.  This runs after pane.render
-        # because pane.scales need to be updated
-        matrix = "1,0,0,1,#{facetSize+paddingX},#{facetSize+facetHeight}"
-        xAxesCont = svg.append("g")
-            .attr("transform", "matrix(#{matrix})")
-            .attr("class", "facet-axes x")
-        xAxisCont = xAxesCont.selectAll("g").data(@xs)
-        xAxisEnter = xAxisCont.enter().append("g")
-            .attr("transform", (d)->"translate(#{xFacet(d)},0)")
-            .attr("id", (d,i)->"facet-x-axis-#{i}")
-            .attr("class", "axis x")
-            .attr("fill", "none")
-        _.each @xs, (x, xidx)=>
-            id = "#facet-x-axis-#{xidx}"
-            pane = @subFacets[x][@ys[0]].renderXAxis xAxesCont.select(id)
-
-
-        matrix = "1,0,0,1,#{paddingX+facetSize},#{facetSize}"
-        yAxesCont = svg.append('g')
-            .attr("transform", "matrix(#{matrix})")
-            .attr("class", "facet-axes y")
-        yAxisCont = yAxesCont.selectAll("g").data(@ys)
-        yAxisEnter = yAxisCont.enter().append("g")
-            .attr("transform", (d)->"translate(0, #{yFacet(d)})")
-            .attr("id", (d,i)->"facet-y-axis-#{i}")
-            .attr("class", "axis y")
-            .attr("fill", "none")
-        _.each @ys, (y, yidx)=>
-            id = "#facet-y-axis-#{yidx}"
-            console.log @subFacets[@xs[0]][y]
-            @subFacets[@xs[0]][y].renderYAxis yAxesCont.select(id)
-
-
-        ###
-
-
-        return
-
-        # OK.  layout the plot area
-        # 7. render axes, ticks, labels, facet labels
-        # 8. render children
-    ###
-        _.each facetKeys, (key) =>
-            [x,y] = key
-            # TODO
-            svgcontainer = null
-            @subFacets[x][y].render(width, height, svgcontainer)
-
-
-        _.each @subFacets, (panes, x) =>
-            _.each panes, (pane, y) =>
-                pane.render @width, @height, svg, @facetData[x][y]
-    ###
 
 class gg.SingleFacet extends gg.GridFacet
     constructor: (@graphic, spec) ->

@@ -10,7 +10,7 @@ class gg.Graphic
         @facets = null
 
         # TODO: move this into addtl parameters object!
-        @opts = @opts or { padding: 5 }
+        @opts = @opts or { padding: 0 }
         @paddingX = @opts.paddingX or @opts.padding
         @paddingY = @opts.paddingY or @opts.padding
 

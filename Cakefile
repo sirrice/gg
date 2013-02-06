@@ -57,7 +57,7 @@ build = (callback) ->
     outFile = 'build/' + inFile
     commands.push "cp #{inFile} #{outFile}"
   commands.push 'node_modules/coffee-script/bin/coffee --output build/js ' +
-                '--compile src/coffee/*.coffee'
+                '--compile src/gg/*.coffee'
   commands.push 'cp build/js/*.js test/js/'
   async.forEachSeries commands, run, ->
     callback() if callback

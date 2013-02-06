@@ -57,7 +57,7 @@ class gg.Scales
     # overwriting
     keep: (aesthetics) ->
         _.each _.keys(@scales), (aes) =>
-            if aes not of aesthetics
+            if aes not in aesthetics
                 delete @scales[aes]
         @
 

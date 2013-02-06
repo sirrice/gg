@@ -50,29 +50,37 @@ class gg.Pane
     layersWithAesthetic: (aes) ->
         _.filter @layers, (layer) -> aes of layer.mappings
 
-    renderXAxis: (svg) ->
+    renderXAxis: (svg, text=true) ->
         xAxis = d3.svg.axis()
             .scale(@scale('x').d3Scale)
-#            .tickSize(2*@graphic.paddingY - @height)
+            .ticks(5)
+            .tickSize(2*@graphic.paddingY - @height)
             .orient('bottom')
+
+        if not text
+            xAxis.tickFormat('')
 
         svg.append('g')
             .attr('class', 'x axis')
             .attr('fill', 'none')
-            .attr('transform', "translate(0, #{@height})")#-@graphic.paddingY})")
+            .attr('transform', "translate(0, #{@height-@graphic.paddingY})")
             .call(xAxis)
 
 
-    renderYAxis: (svg) ->
+    renderYAxis: (svg, text) ->
         yAxis = d3.svg.axis()
             .scale(@scale('y').d3Scale)
-#            .tickSize(2*@graphic.paddingX - @width)
+            .ticks(5)
+            .tickSize(2*@graphic.paddingX - @width)
             .orient('left')
+
+        if not text
+            yAxis.tickFormat('')
 
         svg.append('g')
             .attr('class', 'y axis')
             .attr('fill', 'none')
-            .attr('transform', "translate(0,0)")##{@graphic.paddingX},0)")
+            .attr('transform', "translate(#{@graphic.paddingX},0)")
             .call(yAxis)
 
 
