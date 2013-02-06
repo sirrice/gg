@@ -27,10 +27,20 @@ class gg.Graphic
         @svg = where.append('svg')
             .attr('width', @width)
             .attr('height', @height)
+
+        @facets.prepare data
+
+        legendAess = _.intersection @facets.masterScales.aesthetics(), gg.Scale.legendAess
+        console.log ""+@facets.masterScales
+        console.log legendAess
+        _.each legendAess, (aes) =>
+            console.log @legend aes
+            s = @facets.masterScales.scale(aes)
+            console.log s
+
+        # Allocate space for title, subtitle, legend
         @facets.render w, h, @svg, data
 
-        # TODO: Need to consolidate the scales into a single set
-        # and render legend here
 
     # Wrapper to bind @render with default settings
     renderer: (w, h, where) -> (data) => @render w, h, where, data

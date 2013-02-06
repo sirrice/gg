@@ -1,3 +1,8 @@
+# Convenience class that creates identical gg.Scales objects
+# from a single spec
+#
+# Used to create layer, panel and facet level copies of gg.Scales
+# when training the scales
 class gg.ScaleFactory
     constructor: (@spec) ->
         @paneDefaults = {}      # aes -> scale object
@@ -61,6 +66,12 @@ class gg.Scales
                 delete @scales[aes]
         @
 
+    exclude: (aesthetics) ->
+        _.each aesthetics, (aes) =>
+            if aes of @scales
+                delete @scales[aes]
+        @
+
     aesthetics: -> _.keys @scales
 
 
@@ -70,7 +81,7 @@ class gg.Scales
         @
 
 
-    contains: (aes, type) -> aes of @scales and type of @scales[aes]
+    contains: (aes, type=null) -> aes of @scales and (not type or type of @scales[aes])
     scale: (aesOrScale, type=null) ->
         if typeof aesOrScale is 'string'
             aes = aesOrScale
@@ -152,6 +163,11 @@ class gg.Scales
 class gg.Scale
     constructor: () ->
         @domainSet = false
+
+    @xs = ['x']
+    @ys = ['y', 'y0', 'y1']
+    @xys = @xs.concat @ys
+    @legendAess = ['size', 'group', 'color']
 
     @fromSpec: (spec) ->
         s = new {

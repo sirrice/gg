@@ -117,7 +117,6 @@ class gg.Layer
             (@statistic.dataRange data)[1]
 
     legend: (aes) ->
-        @statistic.variable
-        #@mappings[aes] or @statistic.variable
+        @mappings[aes] or @statistic.variable
 
 

@@ -91,6 +91,12 @@ class gg.Pane
 
         @scales.setRanges @
 
+        # @scales may have been trained by gg.Facets,
+        # so update @layers scales
+        _.each @layers, (l) =>
+            l.scales.merge @scales
+
+
 
         svg.append('rect')
             .attr('class', 'base')
@@ -101,24 +107,6 @@ class gg.Pane
             .attr('height', @height)
 
 
-
-        # Draws Axes then calls layer renderers with non-axis space
-
-        ###
-        svg.append('g')
-            .attr('class', 'x legend')
-            .attr('transform', "translate(#{@width/2}, #{@height-5})")
-            .append('text')
-            .text(@graphic.legend('x'))
-            .attr('text-anchor', 'middle')
-
-        svg.append('g')
-            .attr('class', 'y legend')
-            .attr('transform', "translate(10, #{@height/2}) rotate(-90)")
-            .append('text')
-            .text(@graphic.legend('y'))
-            .attr('text-anchor', 'middle')
-        ###
 
 
         # each layer draws their contents

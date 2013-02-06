@@ -9,14 +9,13 @@
 
         var scatterplot = gg({
             layers: [
-                { geometry: 'line', mapping: { x: 'd', y: 'r', size: 'r', group: 't', color: 't' } },
-
-                { geometry: 'point', mapping: { x: 'd', y: '10 - (d+1)/5000', size: 'r', group: 't', color: 't' } }
+                { geometry: 'line', mapping: { x: 'd', y: 'r', group: 't', color: 't'} },
+                { geometry: 'point', mapping: { x: 'd', y: 'r + 10', size: 'r', color: 't'}}
             ],
             scales: [
-                { aesthetic: 'size', range: [.5, 2] }
-            ],
-            facets: { x: 'f', y: 'g', scales:'fixed'}
+                { aesthetic: 'size', range: [.5, 5] }
+            ]
+            ,facets: { x: 'f', y: 'g', scales:'fixed'}
 
         });
 
@@ -25,9 +24,9 @@
         var h    = 1000;
         var ex   = function () { return d3.select('#examples').append('span'); };
 
-        var bigdata = _.map(_.range(0, 5000), function(d) {
-            g = Math.floor(Math.random() * 9);
-            f = Math.floor(Math.random() * 5);
+        var bigdata = _.map(_.range(0, 500), function(d) {
+            g = Math.floor(Math.random() * 3);
+            f = Math.floor(Math.random() * 3) * 10;
             t = Math.floor(Math.random() * 3)
             return {d:d, r:Math.random() + g + f, g: g, f:f, t:t};
         })

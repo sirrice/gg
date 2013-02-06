@@ -25,12 +25,15 @@ class gg.GridFacet
 
         @xs = []
         @ys = []
+        @xScales = []
+        @yScales = []
         @subFacets = {}
         @facetKeys = []
-        @colScales = null
-        @rowScales = null
 
         @margin = 10
+        @labelSize = 20
+        @labelPadding = 4
+        @facetSize = @labelSize + @labelPadding *2
 
 
         # Display options
@@ -75,48 +78,55 @@ class gg.GridFacet
             [x,y] = key
             @subFacets[x][y].prepare @facetData[x][y]
 
+        @masterScales = gg.Scales.merge(_.map @panes, (p) -> p.scales)
+        @expandDomains(@masterScales)
         if @scales is 'fixed'
             @trainFixedScales()
         else
             @trainFreeScales()
 
+    expandDomains: (scales) ->
+        console.log ''+scales
+        _.each gg.Scale.xys, (aes) =>
+            if scales.contains aes
+                d = scales.scale(aes).domain()
+                range = d[1] - d[0]
+                padding = 0.1 * range
+                d = [d[0]-padding, d[1]+padding]
+                scales.scale(aes).domain d
+        console.log ''+scales
+
+
 
     trainFixedScales: ->
-        # TODO: move xAesthetics/yAesthetics/aesthetics into one place
-        aesthetics = ['x', 'y', 'y0', 'y1']
-        masterScales = gg.Scales.merge(_.map @panes, (p) -> p.scales)
-        console.log String(masterScales)
-        masterScales = masterScales.keep(aesthetics)
-        console.log String(masterScales)
-
         _.each @panes, (p) =>
-            p.scales.merge masterScales, false
+            p.scales.merge @masterScales, false
 
 
     trainFreeScales: ->
 
         # now compute the shared scales for each column and row
-        xAesthetics = ['x']
-        colScales = _.map @xs, (x) =>
+        @xScales = _.map @xs, (x) =>
             gg.Scales.merge(_.map @ys, (y) => @subFacets[x][y].scales)
-                .keep(xAesthetics)
-        @xScales = colScales
+                .exclude(gg.Scale.ys)
 
-        yAesthetics = ['y', 'y0', 'y1']
-        rowScales = _.map @ys, (y) =>
+        @yScales = _.map @ys, (y) =>
             gg.Scales.merge(_.map @xs, (x) => @subFacets[x][y].scales)
-               .keep(yAesthetics)
-        @yScales = rowScales
+               .exclude(gg.Scale.xs)
+
+        _.each _.union(@xScales, @yScales), @expandDomains
 
         # update panes' scales to match along columns and rows
         _.each @xs, (x, xIdx) =>
             _.each @ys, (y, yIdx) =>
                 paneScales = @subFacets[x][y].scales
-                paneScales.merge colScales[xIdx], false
-                paneScales.merge rowScales[yIdx], false
+                paneScales.merge @xScales[xIdx], false
+                paneScales.merge @yScales[yIdx], false
 
 
-    renderFacetLabels: (facetSize, labelPadding, xFacet, yFacet, svg) ->
+    renderFacetLabels: (xFacet, yFacet, svg) ->
+        facetSize = @facetSize
+        labelPadding = @labelPadding
         xBand = xFacet.rangeBand()
         yBand = yFacet.rangeBand()
 
@@ -158,12 +168,7 @@ class gg.GridFacet
 
 
     render: (@width, @height, svg, data) ->
-        # compute layout of the facets
-        # decide if x/y labels need to be rendered
-        # create the containers
-
-        @prepare data
-        # each pane's layers has trained their scales
+        #@prepare data
 
         # add margins
         margin = @margin / 2
@@ -180,25 +185,21 @@ class gg.GridFacet
             .attr('width', @width)
             .attr('height', @height)
 
-        # TODO: make this configurable
-        labelSize = 20
-        labelPadding = 4
-        facetSize = labelSize + labelPadding*2
 
-        facetWidth = @width - 2*facetSize
-        facetHeight = @height - 2*facetSize
+        facetWidth = @width - 2*@facetSize
+        facetHeight = @height - 2*@facetSize
         xFacet = d3.scale.ordinal().domain(@xs).rangeBands([0, facetWidth], 0.05)
         yFacet = d3.scale.ordinal().domain(@ys).rangeBands([0, facetHeight], 0.05)
         xBand = xFacet.rangeBand()
         yBand = yFacet.rangeBand()
 
 
-        @renderFacetLabels(facetSize, labelPadding, xFacet, yFacet, svg)
+        @renderFacetLabels(xFacet, yFacet, svg)
 
 
 
         # Now create containers for each pane
-        matrix = "1,0,0,1,#{facetSize}, #{facetSize}"
+        matrix = "1,0,0,1,#{@facetSize}, #{@facetSize}"
         facetContainer = svg.append('g')
             .attr("transform", "matrix(#{matrix})")
             .attr("class", "facet-grid-container")
@@ -211,6 +212,7 @@ class gg.GridFacet
                     .attr("class", "facet-row-#{xidx} facet-col-#{yidx} facet-grid")
 
                 pane = @subFacets[x][y]
+                console.log _.flatten(['panescale', x, y, pane.scales.scale('y').domain()])
                 pane.render xBand, yBand, cell
                 pane.renderXAxis cell, yidx is @ys.length-1
                 pane.renderYAxis cell, xidx is 0
@@ -219,5 +221,10 @@ class gg.GridFacet
 class gg.SingleFacet extends gg.GridFacet
     constructor: (@graphic, spec) ->
         super @graphic, spec
+
+        @facetSize = 0
+        @labelPadding = 0
+
+    renderFacetLabels: (xFacet, yFacet, svg) ->
 
 
