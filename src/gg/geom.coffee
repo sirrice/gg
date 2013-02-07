@@ -3,7 +3,7 @@ groups = (g, klass, data) ->
         .data(data)
         .enter()
         .append('g')
-        .attr('class', klass)
+        .attr('class', "#{klass}")
 
 class gg.Geometry
     constructor: (spec) ->
@@ -15,19 +15,55 @@ class gg.Geometry
 class gg.PointGeometry extends gg.Geometry
     constructor: (spec) ->
         @size = spec.size or 5
+        @shape = spec.shape or 'circle'
         super spec
 
     render: (g, data) ->
+        addCoord = (ds) =>
+            _.each ds, (d) =>
+                x = @layer.scaledValue d, 'x'
+                y = @layer.scaledValue d, 'y'
+                r = attributeValue(@layer, 'size', @size)(d)/2
+                f = attributeValue(@layer, 'color', @color)(d)
+                d['__x__'] = x
+                d['__y__'] = y
+                d['__r__'] = r
+                d['__f__'] = f
+                d
+            ds
 
-        groups(g, 'circles', data).selectAll('circle')
-            .data(Object)
-            .enter()
-            .append('circle')
-            .attr('cx', (d) => @layer.scaledValue d, 'x')
-            .attr('cy', (d) => @layer.scaledValue d, 'y')
-            .attr('fill-opacity', @alpha)
-            .attr('fill', attributeValue @layer, 'color', @color)
-            .attr('r', attributeValue @layer, 'size', @size)
+        if 'shape' not of @layer.mappings or @layer.mappings['shape'] is 'circle'
+            groups(g, 'circles geoms', data).selectAll('circle')
+                .data(addCoord)
+                .enter()
+                .append('circle')
+                .attr('class', 'geom')
+                .attr('cx', (d) => d['__x__'])
+                .attr('cy', (d) => d['__y__'])
+                .attr('fill-opacity', @alpha)
+                .attr('fill', (d) => d['__f__'])
+                .attr('r', (d) => d['__r__'])
+        else
+            val = (d, aes) => @layer.scaledValue d, aes
+            xformfunc = (d) -> "translate(#{val d, 'x'},#{val d, 'y'})"
+            shapef = (d) =>
+                size = attrVal(@layer, 'size', @size)(d)
+                attrVal(@layer, 'shape', @shape, size)(d)
+            groups(g, 'symbols geoms', data).selectAll('path')
+                .data(addCoord)
+                .enter()
+                .append('path')
+                .attr('class', 'geom')
+                .attr('transform', xformfunc)
+                .attr('fill-opacity', @alpha)
+                .attr('fill', attributeValue @layer, 'color', @color)
+                .attr('stroke', attributeValue @layer, 'color', @color)
+                .attr('stroke-width', 1)
+                .attr('d', shapef)
+
+        g.selectAll('.geom')
+            .on('mouseover', (ev) =>)
+
 
 class gg.AreaGeometry extends gg.Geometry
     constructor: (spec) ->

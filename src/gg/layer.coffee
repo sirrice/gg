@@ -52,8 +52,10 @@ class gg.Layer
         graphic = pane.graphic
 
         geom.layer = layer = new gg.Layer geom, pane, layerId
-        layer.mappings = spec.mapping if spec.mapping?
+        layer.mappings = _.clone pane.graphic.mapping
+        _.extend(layer.mappings, spec.mapping) if spec.mapping?
         layer.statistic = gg.Statistics.fromSpec spec.statistic or {kind: 'identity'}
+        layer.position = spec.position or 'identity'
         layer.spec = spec
         layer.scales = graphic.scaleFactory.scales layer.aesthetics()
         layer
@@ -68,13 +70,17 @@ class gg.Layer
 
     render: (g) ->
         @scales.setRanges @pane
-        @geometry.render g, @newData
+        c = g.append('g')
+            .attr('id', "pane-#{@pane.id}-layer-#{@id}")
+            .attr("class", "layer-#{@id}")
+        @geometry.render c, @newData
 
 
     aesthetics: -> _.without _.keys(@mappings), 'group'
     scale: (aes) -> @scales.scale(aes)
-    scaleExtracted: (v, aes, d) -> @scale(aes).scale v, d
-    scaledValue: (d, aes) -> @scaleExtracted @dataValue(d, aes), aes, d
+    scaleExtracted: (v, aes, d, args...) -> @scale(aes).scale v, d, args...
+    scaledValue: (d, aes, args...) ->
+        @scaleExtracted @dataValue(d, aes), aes, d, args...
     scaledMin: (aes) -> @scale(aes).scale @scale(aes).min
     scaledMax: (aes) -> @scale(aes).scale @scale(aes).max
 

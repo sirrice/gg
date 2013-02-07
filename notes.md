@@ -61,7 +61,17 @@ Customization is really difficult/confusing.  Would like
 
 1. should have references to underlying datasets/row
 
+### Combined shape/line type/colors
 
+Currently, can only independently map aesthetic -> shape/line/color.  Want ability to
+map aesthetic -> shape x color 
+
+    if x -> shape x color:
+    x    symbol
+    0    green circle
+    1    blue circle
+    2    green square
+    3    blue square
 
 
 
@@ -181,7 +191,9 @@ where does themeing, interactions come into play?
     * track position selection
     * 
 1. Position
-
+1. Guides
+    * Map aesthetic(s) to legends (1 legend, multiple aesthetics)
+    * Track 
 
 
 ### User Specifications
@@ -202,6 +214,7 @@ spec:
               sizing: free/fixed}
     scales
     coordinates
+    guides: { guide-1: [color]
     options (themes)
 
     opts

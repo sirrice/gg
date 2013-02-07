@@ -8,12 +8,16 @@
         // Define graphics ...
 
         var scatterplot = gg({
+            mapping: {x: '-d', y: 'r'},
             layers: [
-                { geometry: 'line', mapping: { x: 'd', y: 'r', group: 't', color: 't'} },
-                { geometry: 'point', mapping: { x: 'd', y: 'r + 10', size: 'r', color: 't'}}
+                { geometry: 'line', mapping: { group: 't', color: 'Math.floor(r/10)'} }
+                ,{ geometry: 'point', mapping: {y: 'r + 10', size: 'r', color: "t"},
+                  position: 'jitter'}
             ],
             scales: [
-                { aesthetic: 'size', range: [.5, 5] }
+                { aesthetic: 'size', range: [1, 4] }
+                //,{ aes: 'x', lim: [-50, 50], range: [10, 300]}
+                //,{ aesthetic: 'y', domain: [-50, 50]}
             ]
             ,facets: { x: 'f', y: 'g', scales:'fixed'}
 
@@ -24,11 +28,11 @@
         var h    = 1000;
         var ex   = function () { return d3.select('#examples').append('span'); };
 
-        var bigdata = _.map(_.range(0, 500), function(d) {
+        var bigdata = _.map(_.range(0, 5000), function(d) {
             g = Math.floor(Math.random() * 3);
             f = Math.floor(Math.random() * 3) * 10;
             t = Math.floor(Math.random() * 3)
-            return {d:d, r:Math.random() + g + f, g: g, f:f, t:t};
+            return {d:d, r: d * t * 0.05 + Math.random() + f, g: g, f:f, t:t};
         })
         scatterplot.renderer(w, h, ex())(bigdata)
     });

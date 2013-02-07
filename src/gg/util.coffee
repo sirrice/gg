@@ -5,11 +5,12 @@
             ret.push { x: a1, y: a2, i:i, j:j }
     ret
 
-@attributeValue = (layer, aes, defaultVal) ->
+@attributeValue = (layer, aes, defaultVal, args...) ->
     if aes of layer.mappings
-        (d) -> layer.scaledValue d, aes
+        (d) -> layer.scaledValue d, aes, args...
     else
-        defaultVal
+        (d) -> defaultVal
+@attrVal = @attributeValue
 
 @groupData = (data, groupBy) ->
     if not groupBy? then [data] else _.groupBy data, groupBy

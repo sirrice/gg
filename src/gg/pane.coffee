@@ -6,6 +6,8 @@ class gg.Pane
         @id = gg.Pane.nextId()
         @layers = @graphic.layersFactory.forPane @
         @scales = @graphic.scaleFactory.scales @aesthetics
+        @brush = null
+        @svg = null
 
 
     @nextId: () ->
@@ -87,16 +89,15 @@ class gg.Pane
 
 
 
-    render: (@width, @height, svg, data) ->
+    render: (@width, @height, xText, yText, svg, data) ->
 
         @scales.setRanges @
+        @svg = svg
 
         # @scales may have been trained by gg.Facets,
         # so update @layers scales
         _.each @layers, (l) =>
             l.scales.merge @scales
-
-
 
         svg.append('rect')
             .attr('class', 'base')
@@ -107,11 +108,45 @@ class gg.Pane
             .attr('height', @height)
 
 
-
+        @renderXAxis svg, yText
+        @renderYAxis svg, xText
 
         # each layer draws their contents
         _.each @layers, (layer) => layer.render svg.append('g')
 
 
+
+        @brush = d3.svg.brush()
+            .x(@scale('x'))
+            .y(@scale('y'))
+
+        @brush.brushEvent = (parentbrush) =>
+            extent = @brush.extent()
+            svg.selectAll('.geom')
+                .attr('fill', (d) ->
+                    fill = d['__f__']
+                    x = d['__x__']
+                    y = d['__y__']
+                    r = d['__r__']
+                    valid = extent[0][0] <= x+r and extent[1][0] >= x-r and
+                        extent[0][1] <= y+r and extent[1][1] >= y-r
+
+                    if valid then 'black' else fill
+                )
+
+            # now update the other brushes
+            _.each @facet.panes, (p) =>
+                p.brush.extent extent
+                p.brush p.svg
+                if not parentbrush?
+                    p.brush.brushEvent(@brush)
+
+        @brush.on('brush', @brush.brushEvent)
+
+
+        # Brushes render last so they're on top
+        svg.append('g')
+            .attr('class', 'brush')
+            .call(@brush)
 
 

@@ -8,6 +8,7 @@ class gg.Graphic
         @scaleFactory = null
         @spec = {}
         @facets = null
+        @mapping = {} # the default mapping
 
         # TODO: move this into addtl parameters object!
         @opts = @opts or { padding: 0 }
@@ -16,11 +17,14 @@ class gg.Graphic
 
     @fromSpec: (spec, opts) ->
         g = new gg.Graphic opts
+        g.mapping = spec.mapping or {}
         g.layersFactory = new gg.LayersFactory spec.layers, g
         g.scaleFactory = new gg.ScaleFactory spec
         g.facets = gg.Facets.fromSpec spec.facets, g
         g.spec = spec
         g
+
+    # TODO: add clone, add scales/layers/other specs
 
     render: (w, h, where, data) ->
         [@width, @height] = [w, h]

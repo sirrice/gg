@@ -44,49 +44,50 @@ class gg.GridFacet
         #
 
 
-
-    # Split data by facet group functions
-    # Tell layers to prepare their own scales an ddata
-    # Optimize scales, sizing from layers
-    prepare: (data) ->
-        group = (row) => [@groupX(row), @groupY(row)]
+    # Sets @xs, @ys, @facetData
+    splitData: (data) ->
+        # TODO: potentially support datavore
         @xs = (_.uniq _.map data, @groupX).sort()
         @ys = (_.uniq _.map data, @groupY).sort()
 
-        # create grid[x][y] and populate with
         @facetData = {}  # stores each pane's data
-        @subFacets = {}  # panes X,Y indexed
-        @panes = []      # panes linear list
-        @facetKeys = []  # list of [X,Y] for faster indexing
         _.each @xs, (x) =>
             @facetData[x] = {}
-            @subFacets[x] = {}
-            _.each @ys, (y) =>
-                pane = new gg.Pane @, @graphic
-                @facetData[x][y] = []
-                @subFacets[x][y] = pane
-                @panes.push pane
-                @facetKeys.push [x,y]
-
+            _.each @ys, (y) => @facetData[x][y] = []
 
         # split the dataset by panels
         _.each data, (row) =>
             @facetData[@groupX row][@groupY row].push row
 
+
+
+
+    # Split data by facet group functions
+    # Tell layers to prepare their own scales an ddata
+    # Optimize scales, sizing from layers
+    prepare: (data) ->
+        @splitData data
+
+        @subFacets = {}  # panes X,Y indexed
+        @panes = []      # panes linear list
+        @facetKeys = []  # list of [X,Y] for faster indexing
+
+        _.each @xs, (x) =>
+            @subFacets[x] = {}
+            _.each @ys, (y) =>
+                pane = new gg.Pane @, @graphic
+                @subFacets[x][y] = pane
+                @panes.push pane
+                @facetKeys.push [x,y]
+
+
         # now set each pane's data
-        _.each @facetKeys, (key) =>
-            [x,y] = key
+        _.each @facetKeys, ([x,y]) =>
             @subFacets[x][y].prepare @facetData[x][y]
 
-        @masterScales = gg.Scales.merge(_.map @panes, (p) -> p.scales)
-        @expandDomains(@masterScales)
-        if @scales is 'fixed'
-            @trainFixedScales()
-        else
-            @trainFreeScales()
+        @trainScales()
 
     expandDomains: (scales) ->
-        console.log ''+scales
         _.each gg.Scale.xys, (aes) =>
             if scales.contains aes
                 d = scales.scale(aes).domain()
@@ -94,14 +95,14 @@ class gg.GridFacet
                 padding = 0.1 * range
                 d = [d[0]-padding, d[1]+padding]
                 scales.scale(aes).domain d
-        console.log ''+scales
 
-
-
-    trainFixedScales: ->
-        _.each @panes, (p) =>
-            p.scales.merge @masterScales, false
-
+    trainScales: ->
+        @masterScales = gg.Scales.merge(_.map @panes, (p) -> p.scales)
+        @expandDomains(@masterScales)
+        if @scales is 'fixed'
+            _.each @panes, (p) => p.scales.merge @masterScales, false
+        else
+            @trainFreeScales()
 
     trainFreeScales: ->
 
@@ -140,7 +141,8 @@ class gg.GridFacet
         xLabels.select("text").text(String)
         xEnter.select('text')
             .attr("x", (d) -> xFacet(d) + xBand / 2)
-            .attr("y", labelPadding + facetSize/2)
+            .attr('y', facetSize)
+            .attr("dy", "0.2em")
         xEnter.select("rect")
             .attr("x", xFacet)
             .attr("width", xBand)
@@ -157,7 +159,7 @@ class gg.GridFacet
         yLabels.select("text").text(String)
         yEnter.select("text")
             .attr("y", (d) -> yFacet(d) + yBand / 2)
-            .attr("x", labelPadding)
+            .attr("x", "0.2em")
             .attr("rotate", 90)
         yEnter.select("rect")
             .attr("y", yFacet)
@@ -212,11 +214,9 @@ class gg.GridFacet
                     .attr("class", "facet-row-#{xidx} facet-col-#{yidx} facet-grid")
 
                 pane = @subFacets[x][y]
-                console.log _.flatten(['panescale', x, y, pane.scales.scale('y').domain()])
-                pane.render xBand, yBand, cell
-                pane.renderXAxis cell, yidx is @ys.length-1
-                pane.renderYAxis cell, xidx is 0
-
+                xText = xidx is 0
+                yText = yidx is @ys.length - 1
+                pane.render xBand, yBand, xText, yText, cell
 
 class gg.SingleFacet extends gg.GridFacet
     constructor: (@graphic, spec) ->
