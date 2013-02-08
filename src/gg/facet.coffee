@@ -46,6 +46,14 @@ class gg.GridFacet
 
     # Sets @xs, @ys, @facetData
     splitData: (data) ->
+        if typeof @groupX is "object"
+            # every column contains the same dataset
+            1
+        if typeof @groupY is 'object'
+            # every row contains same dataset
+            1
+
+
         # TODO: potentially support datavore
         @xs = (_.uniq _.map data, @groupX).sort()
         @ys = (_.uniq _.map data, @groupY).sort()

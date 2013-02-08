@@ -108,12 +108,6 @@ class gg.Pane
             .attr('height', @height)
 
 
-        @renderXAxis svg, yText
-        @renderYAxis svg, xText
-
-        # each layer draws their contents
-        _.each @layers, (layer) => layer.render svg.append('g')
-
 
 
         @brush = d3.svg.brush()
@@ -130,7 +124,6 @@ class gg.Pane
                     r = d['__r__']
                     valid = extent[0][0] <= x+r and extent[1][0] >= x-r and
                         extent[0][1] <= y+r and extent[1][1] >= y-r
-
                     if valid then 'black' else fill
                 )
 
@@ -141,12 +134,44 @@ class gg.Pane
                 if not parentbrush?
                     p.brush.brushEvent(@brush)
 
-        @brush.on('brush', @brush.brushEvent)
 
+        # TODO: double click to zoom, something to zoom out?
+        # touch events?
+
+        @renderXAxis svg, yText
+        @renderYAxis svg, xText
+
+        # each layer draws their contents
+        _.each @layers, (layer) => layer.render svg.append('g')
+
+
+        ###
+        eventSvg = svg.append('rect')
+            .attr(
+                fill: 'none'
+                x: 0
+                y: 0
+                stroke: 'none'
+                width: @width
+                height: @height)
+        console.log eventSvg
+        $(eventSvg[0])
+            .click( (ev) ->)
+            .dblclick( (ev) =>
+
+                # if brush exent exists
+                console.log 'double click'
+                console.log _.flatten(@brush.extent())
+                console.log @brush.empty()
+            )
+            .scroll(-> console.log 'scroll')
+        ###
 
         # Brushes render last so they're on top
-        svg.append('g')
+        @brush.on('brush', @brush.brushEvent)
+        brushsvg = svg.append('g')
             .attr('class', 'brush')
             .call(@brush)
+
 
 

@@ -124,7 +124,7 @@ class gg.Scales
                 if @contains aes, type
                     @scale(aes, type).mergeDomain scales.scale(aes, type).domain()
                 else if insert
-                    @scale(scales.scale aes, type)
+                    @scale(scales.scale(aes, type).clone())
         @
 
 
@@ -186,22 +186,23 @@ class gg.Scale
             categorical: gg.CategoricalScale,
             color: gg.ColorScale,
             shape: gg.ShapeScale
-        }[spec.type or 'linear']
+        }[spec? and spec.type or 'linear']
 
         s.spec = spec
-        aes = spec.aesthetic or spec.aes or spec.var
-        s.aesthetic = aes
-        for key, val of spec
-            switch key
-                when 'range'
-                    if aes not in ['x', 'y']
-                        s.range val
-                        s.rangeSet = true
-                when 'domain', 'lim'
-                    s.domain val
-                    s.domainSet = true
-                else
-                    s[key] = val if val?
+        if spec?
+            aes = spec.aesthetic or spec.aes or spec.var
+            s.aesthetic = aes
+            for key, val of spec
+                switch key
+                    when 'range'
+                        if aes not in ['x', 'y']
+                            s.range val
+                            s.rangeSet = true
+                    when 'domain', 'lim'
+                        s.domain val
+                        s.domainSet = true
+                    else
+                        s[key] = val if val?
         s
 
     @defaultFor: (aes) ->

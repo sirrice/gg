@@ -38,6 +38,14 @@ is:
 3. map new schema to attributes geometry objects
 4. figure out layout automatically
 
+### Facets are data only
+
+Would like to facet by 
+
+1. statistical/sampling model 
+2. aesthetic mappings 
+3. variables
+
 ### Customization
 
 Customization is really difficult/confusing.  Would like
@@ -98,7 +106,48 @@ GGplot-JS notes
 3. `stat_bin` shows that statistics are computed after grouping by clarity
 
 
+### Processing model
 
+Very similar to ggplot2's at a high level, but makes many processes explicit
+
+* Facet partitions data up, and each partition flows through the same set of transformations.
+* Statistics and geometries are modeled as xforms, which define a specific input and output data schema.  
+* Mappers map one data schema into another (replaces the aes() shorthand in ggplot2)
+* transformation pipeline is a list of stats/mappings ending at a geom object
+* Scales are single variable transformations, trained right before sending data to geom object
+* Inputs to scales need to be materialized
+* Faceting on models/xforms/variables should (ideally) just prepend to the xform pipeline
+
+Where does interaction come into play?
+
+
+
+### Components
+
+* **Grid Layout**: plots a set of self-rendering objects in a grid layout, with options to add labels above each cell.
+* **Mapper*: trans
+* **Storage Engine?**: backend to server/datavore/something?
+* **Faceter**: partition data, prepend xforms/defaults to each subfacet
+* **XForm**: transformations with well defined input/output schemas.  Required vs optional attrs
+* **Geom**: well defined input schema, output is an SVG
+* 
+
+### Adoption
+
+Need auxilary tools to make system easy to use and configure
+
+* CSS based customization for _most_ things
+* Configuration embedded as HTML tags a.la [exhibit](http://simile-widgets.org/exhibit/)
+* Direct manipulation of viz
+* Easily exportable -- links or self-contained vizes.
+* Easily configurable (if recieved an exported viz)
+* Drag and drop configuration
+* Support many input data formats (gdocs, HTML table, csv, etc)
+
+
+
+Old notes
+---------------
 
 
 ## Processing flow
@@ -207,7 +256,7 @@ spec:
                statistic: {kind: 'identity', group: function, variable}
                visual attributes (e.g., size, fill, width, etc),
            }]
-    facets: { x: function(row)/aes,
+    facets: { x: facetFunction or aes or facetList,
               y:,
               type: grid/wrap,
               scales: free/fixed,
@@ -219,6 +268,10 @@ spec:
 
     opts
       paddingX, paddingY, padding
+     
+     facetFunction: (row) -> string
+     facetList: list of models, variable names,
+     facetObject: object of [label] -> [model or variable name]
 
 ### Misc
   compute statistics

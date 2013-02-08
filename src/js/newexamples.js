@@ -20,6 +20,7 @@
                 //,{ aesthetic: 'y', domain: [-50, 50]}
             ]
             ,facets: { x: 'f', y: 'g', scales:'fixed'}
+//            ,facets: { x: ['g', 'f', 'r'] }
 
         });
 
@@ -32,7 +33,7 @@
             g = Math.floor(Math.random() * 3);
             f = Math.floor(Math.random() * 3) * 10;
             t = Math.floor(Math.random() * 3)
-            return {d:d, r: d * t * 0.05 + Math.random() + f, g: g, f:f, t:t};
+            return {d:d, r: t * 0.05 + Math.random() + g, g: g, f:f, t:t};
         })
         scatterplot.renderer(w, h, ex())(bigdata)
     });
