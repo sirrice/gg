@@ -86,7 +86,13 @@ The observation is that every step in ggplot2's/grammar of graphics' pipeline in
 * *TrainScales*: Takes the output of all instances of the previous operator, and feeds each transformed dataset to the corresponding instance of the subsequent operator (This will be apparent in the next section)
 * *Placeholder*: Wraps around a subset of the workflow to provide it with a name.  Used by facetting to dynamically replace portions of the workflow.  For example, a noop placeholder named "sampler" may be replaces with operators that implement different sampling techniques.  
 
-For example, the following defines a single layer's transformation workflow:
+The following diagram shows a static specification of *Split* and *Join* is transformed into the executed workflow.  A separate instance of the blue workflow is created for each of the 3 partitions.
+
+<img src="imgs/splitting.png" width=500/>
+
+
+
+The following defines a single layer's transformation workflow:
 
     layer: [ 
         {xform: "log", base: 10, var: "x"}      // outputs same schema as input table
@@ -121,6 +127,10 @@ Naturally there are distinct steps and an order to the workflow.  Below is an ex
 * The Stats component computes statistics (e.g., total number of students by department) and may execute an internal workflow (e.g., split by department, then count the students each of the sub-partitions).  
 * After the statistics are computed, the schema and data values may have changed (the y axis is a count rather than a column in the original table), so the scales need to be re-trained.  
 * Finally, the blue boxes turn the data table into a standardized geometry schema (geom), update the positionings of the geometries (position), transform the coordinates (coord), add color/texture/etc, and finally render the geometries.
+
+#### Facets
+
+
 
 
 #### Univariate Transforms
@@ -179,7 +189,8 @@ It's not clear what the schema for supporting polar coordinates looks like
 * 1D wrap, 2D grid, or nested (to support mosaics p. 343 GoG)
 * Pixels allocated to subplots can be equi-sized or varied by value range of subplots' data
 * Can facet on different workflow implementations (facet by sampling techniques)
-* Can facet on a set of variables (to compare variables)
+    * User defines different workflows with the *same schema* to replace a placeholder.
+* Can facet on a set of variables (to compare variables) (XXX: this is equivalent to pivoting the table  and a normal facet?)
 * Can facet on a partitioning function (to compare different, possibly overlapping, segments of a time series)
 
 #### Scales
@@ -191,6 +202,7 @@ Scales are non-trivial because they interact with almost every component.
 * Training scales across layers need to support conflicting data types and have sane defaults
 * Training across subplots (due to facetting) depends on if subplots are equi-sized or variable sized
 * Layer, Subplot, and graphic level scales accessible by all components
+* Allowing facetting on a set of variables means the same y-scale may be trained on different variables.
 
 
 #### Labels
