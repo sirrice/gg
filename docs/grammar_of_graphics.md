@@ -71,6 +71,11 @@ The rendering jobs are separated into:
 
 The bulk of the work lies in (4), which needs to transform data, compute statistics, and render geometric objects.  In the process, it also *trains the scales*, meaning it computes the domains and ranges of each aesthetic component (e.g., the domain of the x,y variables), which is necessary to know how to render the axes and legends.  This is implemented with a generic workflow that is compiled from high level specifications.  The workflow is presented next.
 
+### Data Model
+
+The data model are nested relational tables of up to two levels.  The schema supports the standard types  (int, float, string, datetime, function), or a schema of the standard types only.  The function type returns a int/float/string/dattime type when executed at access time.  Function columns enable values are decided at runtime (e.g., a slider that sets a parameter used by a function).
+
+This is similar to PIG's model.
 
 
 ### Rendering a Layer (low level)
@@ -128,9 +133,11 @@ Naturally there are distinct steps and an order to the workflow.  Below is an ex
 * After the statistics are computed, the schema and data values may have changed (the y axis is a count rather than a column in the original table), so the scales need to be re-trained.  
 * Finally, the blue boxes turn the data table into a standardized geometry schema (geom), update the positionings of the geometries (position), transform the coordinates (coord), add color/texture/etc, and finally render the geometries.
 
+
+
 #### Facets
 
-
+?
 
 
 #### Univariate Transforms
@@ -182,27 +189,42 @@ It's not clear what the schema for supporting polar coordinates looks like
 
 #### Aesthetics
 
+
+
+
 ### High-Level Feature Requirements 
 
 #### Facets
 
 * 1D wrap, 2D grid, or nested (to support mosaics p. 343 GoG)
 * Pixels allocated to subplots can be equi-sized or varied by value range of subplots' data
-* Can facet on different workflow implementations (facet by sampling techniques)
-    * User defines different workflows with the *same schema* to replace a placeholder.
-* Can facet on a set of variables (to compare variables) (XXX: this is equivalent to pivoting the table  and a normal facet?)
-* Can facet on a partitioning function (to compare different, possibly overlapping, segments of a time series)
+* Can facet on 
+    * different workflow implementations (facet by sampling techniques)
+        * User defines different workflows with the *same schema* to replace a placeholder.
+    * set of variables (to compare variables) 
+        * (XXX: this is equivalent to pivoting the table  and a normal facet?)
+    * partitioning function (to compare different, possibly overlapping, segments of a time series)
+    * a xform operator's parameter (histogram binwidth)
 
 #### Scales
 
 Scales are non-trivial because they interact with almost every component.
 
-* Need scales for each layer, subplot, and overall graphic
-* Positional scales need to track the correct label and value range (transformations may lose this info)
+**Maybe just have two sets of scales?  Or type/scale the columns and throw it all away for the second retraining.**
+
+* Need scales for each layer, subplot, and overall graphic 
+* Positional scales need to track the correct label and value range 
+    * User may say "y-scale is column X", but X may be transformed, renamed and summarized.  
+    * Need provenance or a way to remove ambiguities.
+    * e.g., for x-axis, start from geom-component and track schema mappings backwards to root column.
 * Training scales across layers need to support conflicting data types and have sane defaults
 * Training across subplots (due to facetting) depends on if subplots are equi-sized or variable sized
 * Layer, Subplot, and graphic level scales accessible by all components
 * Allowing facetting on a set of variables means the same y-scale may be trained on different variables.
+
+#### Glyphs
+
+Support to render points as glyphs (think sparkline style plot instead of a circle)
 
 
 #### Labels
@@ -213,3 +235,246 @@ Text geometries and axis labels need to support smart layout to avoid overlap.
 * Can detect overlapping labels
 * Understands possible options (move the label, shrink size of text) in response to overlap
 
+
+#### CSS based styling
+
+* Every individual and logical group of elements (labels, axes, ticks, geometries) can be referenced using css selectors
+
+#### Interaction
+
+* Selection
+* Linked Brushing
+* Linked panels separate from the main graphic
+* Parametarized columns whose values are populated by a separate control (e.g., slider)
+* Zooming in/out
+* Drill downs, roll ups
+
+# Schema and Detailed Descriptions
+
+## Global Variables
+
+## Schema resolution
+
+Given an input schema `(x:[func, colname])`, the component expects to be able to access 
+a value for `x` from each tuple in the input table.  
+
+The user may explicitly specify Since `x` may be specified as a function, a column name, or not 
+
+## Data Table
+
+Since the schema allows function type, try to execute function as late as possible.  Thus unless transformation accesses and uses value, just wrap functions.
+
+**Need to differentiate arguments of function type, and proxy functions that should be executed to retrieve the actual value.  Create "proxyfunc" type?**
+
+Table Interface
+
+* table.get(id) -> tuple
+* table.iterate(function(tuple, idx))
+
+Tuple interface
+
+* tuple.get(attr, default=null) -> value
+    * the get() may execute the function, provide a default value
+
+## Facets
+
+Grid/Wrap Facets need to facet on
+
+* Column name
+* Group by function
+* List of variable names to map to a positional(?) scale.
+* List of xforms to replace named subflows.  `{ subflow1: [[xforms], [xform2->xform3]] }`
+
+
+## Scales
+
+A Scale must define pre-stats and post-stats columns that it should be trained on.  Every scale defaults to identity.  
+
+**XXX: Some logic needs to figure out pre-stats/post-stats from specs.**
+
+
+* Pre-stats
+    1. Train on original data
+    1. Transform data to scale distribution
+* Post-stats
+    1. Lookup post-stats column
+    1. Train on post-stats column if it has changed
+* Post-position
+    1. Train position (x/y) scales
+* Accessible at any time from any module
+* Distinct instances at
+    * facetter level
+    * subplot level
+    * flow level
+* Training at different levels
+    1. Flow: read column data and set (min, max) for continuous, and unique values for discrete
+    1. Subplot: union values of discrete scales across flows.  union of continuous limits across flows.
+    1. Facet: 
+        * All discrete scales from all subplots are unioned.  
+        * Continuous Scales from each set of related subplots (row/column) are merged.  
+        * Global set of non-positional scales merged.
+    1. Note: positional scales able to tolerate continuous/discrete mix.  non-positional cannot.
+* Rendering Guides
+    1. Render non-positional scales that have alreday been trained and stored
+    1. Render each positional scale in the right place.
+
+Legends are rendered with 
+
+1. Legend(nrows, ncol, maxwidth, maxheight, position, order)
+1. Glyph(shape, stroke, fill, size, dx, dy, background)
+2. Name(string)
+
+
+## Statistics Schemas
+
+Statistics are responsible for transforming, summarizing, and learning from the data.
+Every statistics function can take a `group` function or column to independently run the stats function on each partition of the table.
+
+If `group` is not specified, the grouping is defined as the cross-product of attributes in the table that are mapped to discrete aesthetic variables/ or are discrete.
+
+A statistics component's job is to use the mapping parameters to 
+
+1. define the grouping strategy
+2. implement the aggregation
+3. implement join logic (if any)
+
+.
+
+    Stats(args) extends Component
+        get()            // access a parameter value.  If is a proxy function, execute and return result.
+        exec()
+        gbfunc() // figure out what the discrete types to split are
+        stats()           // run on each partition
+        join()           // 
+
+
+
+Type resolution
+
+1. Look for corresponding position scale.  Use if exists
+2. Try to infer from data
+3. Discrete
+
+Generic summarization
+
+* Collect(key: (tuple)->[keys], agg: (tuples)->tuple)
+    * Compiles to split on key -> agg -> join
+    * Can be used for: `bin, bin2d`
+    * Output:    (keys, aggval, [ids])
+* Sample(strategy='uniform')
+    * Input:     (…)
+    * Output:    (…)
+* PixelSubsample(binwidth=scales.range()/30, mapping)
+    * Input:     (x, y)
+    * Output:    (x0, x1, [ids])
+
+
+Specific functions post-split.
+
+* Bin(binwidth=scales.domain()/30:float, mapping)
+    * Input:     (x:[(tuple)->number,number])
+    * Output:    (x0, x1, count, density, normalized count, normalized density)
+* Bin2D(dx, dy, agg:(tuples)->number, mapping)
+    * Input:     (x:[(tuple)->number,number], y: [(tup)->#,#])
+    * Output:    (x0, x1, y0, y1, count, density, normalized count, normalized density)
+* EquiBin(nx, ny, agg:(tuples)->number, mapping)
+    * Input:     (x:colname, y:colname)
+    * Output:    (x0, x1, y0, y1, count, density, normalizedcount, normalized density)
+* Normalize(mapping)
+    * Input:     (x:colnames)
+    * Output:    (same schema)
+* Boxplot(mapping)
+    * Input:     (y:colname)
+    * Output:    (median:float, q1-3:float, xvals:(x:colname))
+* Density(kernel:func(adjust, etc), mapping)
+    * Input:     (x:colname, y:colname or 1)
+    * Output:    (x, y)
+* Density2D(kernel, mapping)
+* ECDF(mapping)
+    * Input:     (x:colname)
+    * Output:    (x, y)     // may need to interpolate to render steps?
+* Function(f:(x)->number, n:int, min, max)
+    * Input:     ()
+    * Output:    (x, y)
+* QQ(mapping)
+* Smooth(function, n:int, mapping)
+    * Input:     (x:[(d)->number,number])
+    * Output:    (function)    // piped into Function component?
+* Spoke(mapping)
+    * Input:     (x, y, mag, theta, radius=1)
+    * Output:    (x0, x1, y0, y1, radius)
+* Sum(mapping)
+    * Input:     (x, y, v=1)
+    * Output:    (x, y, v:normalized float)
+    * Internally needs to use scales or typing information to know if x &or y are discrete
+    * Split on the discrete cols
+    * count(\*) Group by continuous cols
+    * normalize vals in each discrete partition
+* Cluster(alg="kmeans", distance, mapping)      // maybe
+    * Input:     (v1, v2, w=1)
+    * Output:    (v1, v2, w)
+
+
+## Geometry Schemas
+
+Geometries are responsible for taking transformed data and outputing a schema that can be directly rendered into svg/canvas objects.  The schema is ~like~
+
+    (svg/canvas shape, id, class, (x,y)*, [stroke, fill, shape specific attributes)
+
+Geometries are split into a component that maps input tables into an internal schema, and a renderer that creates dom elements.
+
+Geometries like line, path, etc that return schemas containing tables can be compiled into
+
+    Split(grouping keys) -> Map -> Join()
+
+0-D
+
+* Point:      ( x, y, r, x0, x1, y0, y1, [all other variables…] )
+
+1-D
+
+* Line:       ( (x, y)*, [grouping keys] )
+* Step:       ( (x, y)*, [grouping keys] )     // renders step path
+* Path:       ( (x0, x1, y0, y1)* [grouping keys] )
+
+2-D
+
+* Area ->     ( (x,y)*, [grouping keys] )
+* Interval -> ( x, y, width, x0=x, x1=x+width, y0=0, y1=y, [all other variables…] )
+* Rect ->     ( x, w, y, h, x0=x, x1=x+w, y0=y, y1=y+h, [all other variables…] )
+* Polygon ->  ( (x,y)*, [grouping keys] )
+    * difference from line/area is that the polygon is closed
+* Hex -> ( x, y, r, [all other variables] )
+
+N-D
+
+* Schema:    ( x, q0, q1, q2, q3, [y]*, [all other variables…] )
+* Glyph:     ( x0, x1, y0, y1, glyphname, [glyph specific variables] )
+    * Glyph can be used to generate symbols
+
+Network
+
+* edge:      ( v1, v2, [weight], )
+
+
+
+
+
+## Positioning Schemas
+
+Positioners don't change the schemas
+
+* Stack/Dodge: ((x0, x1) or (x, width)) and (y or y0, y1)
+* Jitter: x, y
+* Dotplot: x, y, ( r)
+* Network layout: N1, N2, (weight)
+* Tree layout: parent, child, (weight)
+    * Output: (x, y, parent, child, weight)
+
+
+
+## Libraries
+
+* [parallel.js](http://adambom.github.com/parallel.js/)
+* [sciencejs](https://github.com/jasondavies/science.js)
+* [d3](http://d3js.org)
