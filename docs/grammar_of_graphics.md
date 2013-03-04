@@ -88,6 +88,7 @@ The observation is that every step in ggplot2's/grammar of graphics' pipeline in
     * *Identity*: Transforming one or more columns but keeping the same schema
 * *Split*: partitions the dataset by a value of a grouping function.  The rest of the transformations until the paired *Join* operator are duplicated and executed on each partition independently.
 * *Join*: Paired with a *Split* operator.  Concats the transformed partitions into a single table, and adds a column that identifies tuples from each partition.  Note: a *split* followed immediately by a *join* does not return an identical table because join adds a column for the partition ids.
+* *Collect*: Takes N input tables and outputs N (possibly transformed) tables.  
 * *TrainScales*: Takes the output of all instances of the previous operator, and feeds each transformed dataset to the corresponding instance of the subsequent operator (This will be apparent in the next section)
 * *Placeholder*: Wraps around a subset of the workflow to provide it with a name.  Used by facetting to dynamically replace portions of the workflow.  For example, a noop placeholder named "sampler" may be replaces with operators that implement different sampling techniques.  
 
@@ -125,6 +126,9 @@ The following defines a single layer's transformation workflow:
 Naturally there are distinct steps and an order to the workflow.  Below is an example of a concrete workflow that generates a faceted graphic consisting of a single layer:
 
 <img src="imgs/mid-level flow.png" width=750/>
+
+There are three major sub-workflows: Statistics, Geometry/position, Coordinates
+
 
 * Facets define a grid of subplots, each with a partition of the data (e.g., partition by university).  The workflow is replicated and executed for each partition.  
 * While each partition is largely processed independently, there are two points of coordination (Scale1, Scale2) to synchronize the Scales objects.  
@@ -251,7 +255,26 @@ Text geometries and axis labels need to support smart layout to avoid overlap.
 
 # Schema and Detailed Descriptions
 
-## Global Variables
+## Component
+
+Join: 
+
+## Graphic
+
+    create scales
+    create initial workflow (name different components)
+    create facets
+        partition data, split the workflow
+        execute transforms
+        apply scales
+        train scales
+        execute stats
+        train scales
+        update coords
+        geom/position
+        retrain scales
+        
+    
 
 ## Schema resolution
 
@@ -266,17 +289,37 @@ Since the schema allows function type, try to execute function as late as possib
 
 **Need to differentiate arguments of function type, and proxy functions that should be executed to retrieve the actual value.  Create "proxyfunc" type?**
 
-Table Interface
 
-* table.get(id) -> tuple
-* table.iterate(function(tuple, idx))
 
-Tuple interface
+Table classes
 
-* tuple.get(attr, default=null) -> value
-    * the get() may execute the function, provide a default value
+    Table:
+        @join(tables) -> table
+        clone() -> table
+        tuple(id) -> tuple
+        val(id, attr) -> value
+        type(colname) -> TYPE
+        query(??) -> table
+        split({groupname: keyfunc}) -> [tables]
+        transform(colname, function) -> table
+            clone().col.get(idx) = function(col.get(idx))
+    
+    Column:
+        get(idx) -> tuple
+
+
+    Tuple
+        get(attr, default=null) -> value
+        the get() may execute the function, provide a default value
 
 ## Facets
+
+    facets: {
+        x|y: "colname" | gb function | ["colname",…] | [ { "subflow_id" : subflow } ],
+        scales: free | fixed,
+        type: grid | wrap,
+        sizing: free | fixed
+    }
 
 Grid/Wrap Facets need to facet on
 
@@ -287,6 +330,14 @@ Grid/Wrap Facets need to facet on
 
 
 ## Scales
+
+    scales: {
+        aes: {range:[],  Scale(pre-stats-colname, post-stats-colname)
+    }
+    
+    class scales(aes, post-aes, pre=null, range, domain)
+        train()
+        
 
 A Scale must define pre-stats and post-stats columns that it should be trained on.  Every scale defaults to identity.  
 

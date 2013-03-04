@@ -1,4 +1,35 @@
 #<< gg/util
+class gg.Statistic #extends gg.wf.Composite
+    constructor: (@spec) ->
+        super
+
+    isDiscrete: (aes, colname, table) ->
+
+    run: (tables) ->
+
+
+    compute: (tables) ->
+
+class gg.Bin extends gg.Statistic
+    constructor: (@spec) ->
+        super @spec
+
+        @inSchema = ['x']
+
+        @binwidth = specget 'binwidth', @scales('x').domain() / 30
+
+
+    getgroupcols: ->
+        groups = specget ['group', 'groups']
+        groups = _.filter @scales().aesthetics(), @isDiscrete if not groups?
+
+
+
+
+
+
+
+
 class gg.Statistic
     constructor: (spec) ->
         @group = spec.group or false

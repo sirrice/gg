@@ -25,6 +25,10 @@ task 'release', ->
 task 'vendor', ->
   vendor()
 
+task 'test', ->
+  build ->
+      test()
+
 task 'clean', ->
   clean()
 
@@ -59,6 +63,7 @@ build = (callback) ->
   commands.push 'node_modules/coffee-script/bin/coffee --output build/js ' +
                 '--compile src/gg/*.coffee'
   commands.push 'cp build/js/*.js test/js/'
+  commands.push 'cp build/js/ggplotjs2*js .'
   async.forEachSeries commands, run, ->
     callback() if callback
 
@@ -99,9 +104,15 @@ release = (callback) ->
     callback() if callback
 
 clean = (callback) ->
-  remove 'build', ignoreMissing: true, ->
-    remove 'release', ignoreMissing: true,
-      callback
+  remove 'build', {ignoreMissing: true}, ->
+    remove 'release', {ignoreMissing: true}, ->
+        callback() if callback
+
+
+test = (callback) ->
+    commands = []
+    commands.push "node_modules/vows/bin/vows"
+    async.forEachSeries commands, run, ->
 
 vendor = (callback) ->
   dirs = ['vendor', 'vendor/js', 'vendor/less', 'vendor/font', 'vendor/tmp']
