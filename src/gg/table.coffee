@@ -1,15 +1,10 @@
 class gg.Table
-    @toTuple: (row) ->
-        row.get = (attr, defaultVal=null) ->
-            val = row[attr]
-            if _.isFunction val
-                val(row)
-            else
-                if val? then val else defaultVal
-
     type: (colname) ->
         val = @get(0, colname)
         if val? then typeof val else 'unknown'
+
+    nrows: -> throw "not implemented"
+    ncols: -> throw "not implemented"
 
 
     cloneShallow: -> throw "not implemented"
@@ -27,6 +22,18 @@ class gg.RowTable extends gg.Table
     constructor: (@rows=[]) ->
         @rows.forEach gg.RowTable.toTuple
 
+    @toTuple: (row) ->
+        row.get = (attr, defaultVal=null) ->
+            val = row[attr]
+            if _.isFunction val
+                val(row)
+            else
+                if val? then val else defaultVal
+        row.ncols = -> _.size(row) - 2 # for row.get & row.ncols
+
+    nrows: -> @rows.length
+    ncols: -> if @nrows() > 0 then @rows[0].ncols() else 0
+
 
     cloneShallow: ->
         new gg.RowTable(@rows.map (row) -> row)
@@ -36,7 +43,10 @@ class gg.RowTable extends gg.Table
 
 
     merge: (table) ->
-        @rows.push.apply @rows, table.rows
+        if @constructor.name is "gg.RowTable"
+            @rows.push.apply @rows, table.rows
+        else
+            throw Error("merge not implemented")
         @
 
     @merge: (tables) ->
@@ -59,6 +69,8 @@ class gg.RowTable extends gg.Table
             groups[key].addRow row
         groups
 
+    # @param colname either a string, or an object of {key: xform} pairs
+    # @param func transformation function.  ignored if colname is an object
     transform: (colname, func) ->
         pairs = []
         if _.isObject colname
@@ -73,7 +85,7 @@ class gg.RowTable extends gg.Table
 
     addColumn: (name, vals, type=null) ->
         if vals.length != @rows.length
-            throw "column has #{vals.length} values, table has #{@rows.length} rows"
+            throw Error("column has #{vals.length} values, table has #{@rows.length} rows")
         @rows.forEach (row, idx) => row[name] = vals[idx]
         @
 
