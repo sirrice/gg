@@ -26,3 +26,6 @@ toast
   httpfolder: '../js/'
   release: 'build/compiled/ggplotjs2.js'
   debug: 'build/compiled/ggplotjs2-debug.js'
+
+
+

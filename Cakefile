@@ -1,4 +1,9 @@
+#
+#
+#
 # Adapted from pwnall's dropship cakefile
+#
+#
 #
 async = require 'async'
 {spawn, exec} = require 'child_process'
@@ -8,6 +13,9 @@ log = console.log
 path = require 'path'
 remove = require 'remove'
 
+
+coffeebin = "coffee" #"node_modules/coffee-script/bin/coffee"
+
 # Node 0.6 compatibility hack.
 unless fs.existsSync
   fs.existsSync = (filePath) -> path.existsSync filePath
@@ -16,11 +24,6 @@ unless fs.existsSync
 task 'build', ->
   vendor ->
     build()
-
-task 'release', ->
-  vendor ->
-    build ->
-      release()
 
 task 'vendor', ->
   vendor()
@@ -32,81 +35,39 @@ task 'test', ->
 task 'clean', ->
   clean()
 
+
+
 build = (callback) ->
-  for dir in ['build', 'build/data', 'build/compiled', 'build/css', 'build/font', 'build/html', 'build/images',
-              'build/js', 'build/vendor', 'build/vendor/font',
-              'build/vendor/js']
-    fs.mkdirSync dir unless fs.existsSync dir
+    create_build_dirs()
 
-  commands = []
-  commands.push 'toaster -dc'
-#  commands.push 'cp src/manifest.json build/'
-  commands.push 'cp -r src/html build/'
-  commands.push 'cp -r src/font build/'
-  commands.push 'cp -r src/js build/'
-  commands.push 'cp -r build/compiled/* build/js/'
-  # TODO: consider optipng
-  commands.push 'cp -r src/images build/'
-  for inFile in glob.sync 'src/less/**/*.less'
-    continue if path.basename(inFile).match /^_/
-    outFile = inFile.replace(/^src\/less\//, 'build/css/').
-                     replace(/\.less$/, '.css')
-    commands.push "node_modules/less/bin/lessc --strict-imports #{inFile} " +
-                  "> #{outFile}"
-  for inFile in glob.sync 'vendor/js/*.js'
-      #continue if inFile.match /\.min\.js$/
-    outFile = 'build/' + inFile
-    commands.push "cp #{inFile} #{outFile}"
-  for inFile in glob.sync 'vendor/font/*'
-    outFile = 'build/' + inFile
-    commands.push "cp #{inFile} #{outFile}"
-  commands.push 'node_modules/coffee-script/bin/coffee --output build/js ' +
-                '--compile src/gg/*.coffee'
-  commands.push 'cp build/js/*.js test/js/'
-  commands.push 'cp build/js/ggplotjs2*js .'
-  async.forEachSeries commands, run, ->
-    callback() if callback
+    commands = []
 
-release = (callback) ->
-  for dir in ['release', 'release/css', 'release/html', 'release/images',
-              'release/js', 'release/vendor', 'release/vendor/font',
-              'release/vendor/js']
-    fs.mkdirSync dir unless fs.existsSync dir
 
-  if fs.existsSync 'release/dropship-chrome.zip'
-    fs.unlinkSync 'release/dropship-chrome.zip'
+    commands.push 'toaster -dc'
+    commands.push 'cp -r build/compiled/* build/js/'
 
-  commands = []
-  commands.push 'cp build/manifest.json release/'
-  # TODO(pwnall): consider a html minifier
-  commands.push 'cp -r build/html release/'
-  commands.push 'cp -r build/font release/'
-  commands.push 'cp -r build/images release/'
-  commands.push 'cp -r build/vendor/font release/vendor/'
-  for inFile in glob.sync 'src/less/**/*.less'
-    continue if path.basename(inFile).match /^_/
-    outFile = inFile.replace(/^src\/less\//, 'release/css/').
-                     replace(/\.less$/, '.css')
-    commands.push "node_modules/less/bin/lessc --compress --strict-imports " +
-                  "#{inFile} > #{outFile}"
-  for inFile in glob.sync 'build/js/*.js'
-    outFile = inFile.replace /^build\//, 'release/'
-    commands.push 'node_modules/uglify-js/bin/uglifyjs --compress --mangle ' +
-                  "--output #{outFile} #{inFile}"
-  for inFile in glob.sync 'vendor/js/*.min.js'
-    outFile = 'release/' + inFile.replace /\.min\.js$/, '.js'
-    commands.push "cp #{inFile} #{outFile}"
+    #  commands.push 'cp src/manifest.json build/'
+    commands.push 'cp -r src/html build/'
+    commands.push 'cp -r src/font build/'
+    commands.push 'cp -r src/js build/'
+    # TODO: consider optipng
+    commands.push 'cp -r src/images build/'
 
-  commands.push 'cd release && zip -r -9 -x "*.DS_Store" "*.sw*" @ ' +
-                'dropship-chrome.zip .'
+    compile_less commands
+    copy_vendor commands
 
-  async.forEachSeries commands, run, ->
-    callback() if callback
+    #commands.push "#{coffeebin} --output build/js --compile src/gg/*.coffee"
+    commands.push "#{coffeebin} --output test/js --compile  test/gg/*.coffee"
+    commands.push 'cp build/js/ggplotjs2*js .'
+    async.forEachSeries commands, run, ->
+      callback() if callback
+
 
 clean = (callback) ->
-  remove 'build', {ignoreMissing: true}, ->
-    remove 'release', {ignoreMissing: true}, ->
-        callback() if callback
+    fs.remove 'build',  ->
+        fs.remove 'test/js/*', ->
+          fs.remove 'release', ->
+            callback() if callback
 
 
 test = (callback) ->
@@ -145,18 +106,6 @@ vendor = (callback) ->
 
   async.forEachSeries downloads, download, ->
     commands = []
-    ###
-    # If a dropbox-js development tree happens to be checked out next to
-    # the extension, copy the dropbox.js files from there.
-    if fs.existsSync '../dropbox-js/lib/dropbox.js'
-      commands.push 'cp ../dropbox-js/lib/dropbox.js vendor/js/'
-    else
-      # If there is no development dir, use the minified dropbox.js everywhere.
-      unless fs.existsSync 'vendor/dropbox.js'
-        commands.push 'cp vendor/js/dropbox.min.js vendor/js/dropbox.js'
-    if fs.existsSync '../dropbox-js/lib/dropbox.min.js'
-      commands.push 'cp ../dropbox-js/lib/dropbox.min.js vendor/js/'
-    ###
 
     # Minify humanize.
     unless fs.existsSync 'vendor/js/humanize.min.js'
@@ -189,6 +138,48 @@ vendor = (callback) ->
         callback() if callback
 
 
+
+
+create_build_dirs = ->
+  for dir in [
+      'build',
+      'build/data',
+      'build/compiled',
+      'build/css',
+      'build/font',
+      'build/html',
+      'build/images',
+      'build/js',
+      'build/vendor',
+      'build/vendor/font',
+      'build/vendor/js',
+      'test/js']
+    fs.mkdirSync dir unless fs.existsSync dir
+
+compile_less = (commands) ->
+    # compile LESS
+    for inFile in glob.sync 'src/less/**/*.less'
+        continue if path.basename(inFile).match /^_/
+        outFile = inFile.replace(/^src\/less\//, 'build/css/').
+                         replace(/\.less$/, '.css')
+        commands.push "node_modules/less/bin/lessc " +
+                      "--strict-imports #{inFile} " +
+                      "> #{outFile}"
+
+
+copy_vendor = (commands) ->
+    for inFile in glob.sync 'vendor/js/*.js'
+        #continue if inFile.match /\.min\.js$/
+        outFile = 'build/' + inFile
+        commands.push "cp #{inFile} #{outFile}"
+
+    for inFile in glob.sync 'vendor/font/*'
+        outFile = 'build/' + inFile
+        commands.push "cp #{inFile} #{outFile}"
+
+
+
+
 run = (args...) ->
   for a in args
     switch typeof a
@@ -205,9 +196,16 @@ run = (args...) ->
   process.on 'SIGHUP', -> cmd.kill()
   cmd.on 'exit', (code) -> callback() if callback? and code is 0
 
+
+
+
 download = ([url, file], callback) ->
   if fs.existsSync file
     callback() if callback?
     return
 
   run "curl -L -o #{file} #{url}", callback
+
+
+
+

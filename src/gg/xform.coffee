@@ -5,14 +5,16 @@ events = require 'events'
 #
 
 # by default, blindly clone
-class gg.Node extends events.EventEmitter
-    constructor: () ->
+class gg.wf.Node extends events.EventEmitter
+    constructor: (@compute) ->
         # NOTE: all children are instances of the same type.
         @type = "node"
         @children = []
+        @compute = (input) -> input if not @compute?
+
         @input = null
         @nclones = 0
-        id = gg.wf.Node.id()
+        @id = gg.wf.Node.id()
 
 
     @id: -> gg.wf.Node::_id += 1
@@ -21,21 +23,25 @@ class gg.Node extends events.EventEmitter
     toSpec: ->
         {
             type: @type
-            children: @children
+            children: _.clone @children
+            compute: @compute
         }
 
     @fromSpec: (spec) ->
-        new {
+        clone = new {
             node: gg.wf.Node
+            barrier: gg.wf.Barrier
+        }[spec.type or 'node'](spec.compute)
 
-        }
+        clone.children = spec.children
+        clone
+
 
     # @param prev previous node instance
     # @param stop nodefactory object to stop cloning at
     clone: (prev, stop=null)->
         return @ if @ == stop
 
-        # XXX: figure this out
         copy = gg.wf.Node.fromSpec @toSpec()
 
         if @children.length > 0
@@ -53,10 +59,11 @@ class gg.Node extends events.EventEmitter
     # @return emits to "output-child.id"
     run: ->
         output = @compute @input
+        @emit("output", [@id, output])
         @emit("output-#{child.id}", [@id, output])
+        output
 
-    compute: (input) ->
-        input
+    #compute: (input) -> input
 
 
 
@@ -75,13 +82,15 @@ class gg.Node extends events.EventEmitter
         @children = [node]
         node
 
+    isNode: (specOrNode) -> not (specOrNode.constructor.name is 'Object')
+
     exec: (specOrNode) -> @setChild gg.wf.Node, specOrNode
     split: (specOrNode) -> @setChild gg.wf.Split, specOrNode
     join: (specOrNode) -> @setChild gg.wf.Join, specOrNode
     barrier: (specOrNode) -> @setChild gg.wf.Barrier, specOrNode
 
 
-class gg.Barrier extends gg.Node
+class gg.wf.Barrier extends gg.wf.Node
     constructor: ->
         super
         @nclones = 1
@@ -115,7 +124,7 @@ class gg.Barrier extends gg.Node
 
 
 
-class gg.Split extends gg.Node
+class gg.wf.Split extends gg.wf.Node
     constructor: ->
         super
 
@@ -142,7 +151,7 @@ class gg.Split extends gg.Node
         _.partition @input, @gbfunc
 
 
-class gg.Join extends gg.Node
+class gg.wf.Join extends gg.wf.Node
     constructor: ->
         super
 

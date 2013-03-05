@@ -30,6 +30,7 @@ class gg.RowTable extends gg.Table
             else
                 if val? then val else defaultVal
         row.ncols = -> _.size(row) - 2 # for row.get & row.ncols
+        row
 
     nrows: -> @rows.length
     ncols: -> if @nrows() > 0 then @rows[0].ncols() else 0
@@ -90,8 +91,7 @@ class gg.RowTable extends gg.Table
         @
 
     addRow: (row) ->
-        gg.RowTable.toTuple row
-        @rows.push row
+        @rows.push gg.RowTable.toTuple row
         @
 
     get: (row, col=null) ->
@@ -102,4 +102,8 @@ class gg.RowTable extends gg.Table
                 @rows[row]
         else
             null
+
+
+class gg.ColTable extends gg.Table
+
 
