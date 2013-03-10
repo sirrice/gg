@@ -1,165 +1,113 @@
-groups = (g, klass, data) ->
-    g.selectAll("g.#{klass}")
-        .data(data)
-        .enter()
-        .append('g')
-        .attr('class', "#{klass}")
-
-class gg.Geometry
-    constructor: (spec) ->
-        @color = spec.color or 'black'
-        @width = spec.width or 2
-        @layer = null
+#<< gg/wf/xform
 
 
-class gg.PointGeometry extends gg.Geometry
-    constructor: (spec) ->
-        @size = spec.size or 5
-        @shape = spec.shape or 'circle'
-        super spec
+# router for instantiating specific geometries
+class gg.Geom
+    constructor: (@layer, @spec) ->
+        @g = @layer.g
 
-    render: (g, data) ->
-        addCoord = (ds) =>
-            _.each ds, (d) =>
-                x = @layer.scaledValue d, 'x'
-                y = @layer.scaledValue d, 'y'
-                r = attributeValue(@layer, 'size', @size)(d)/2
-                f = attributeValue(@layer, 'color', @color)(d)
-                d['__x__'] = x
-                d['__y__'] = y
-                d['__r__'] = r
-                d['__f__'] = f
-                d
-            ds
+    svg: -> @layer.svg
+    layerScales: -> @layer.scales()
+    facetScales: -> @layer.facetScales()
 
-        if 'shape' not of @layer.mappings or @layer.mappings['shape'] is 'circle'
-            groups(g, 'circles geoms', data).selectAll('circle')
-                .data(addCoord)
-                .enter()
-                .append('circle')
-                .attr('class', 'geom')
-                .attr('cx', (d) => d['__x__'])
-                .attr('cy', (d) => d['__y__'])
-                .attr('fill-opacity', @alpha)
-                .attr('fill', (d) => d['__f__'])
-                .attr('r', (d) => d['__r__'])
+
+    mappingXform: -> throw Error()
+    renderXform: ->  throw Error()
+    name: -> @constructor.name.toLowerCase()
+
+    @klasses: ->
+        klasses = [
+            gg.Point,
+            gg.Line,
+            gg.Step,
+            gg.Path,
+            gg.Area,
+            gg.Interval,
+            gg.Rect,
+            gg.Polygon,
+            gg.Hex,
+            gg.Schema,
+            gg.Glyph,
+            gg.Edge
+        ]
+        ret = {}
+        _.each klasses, (klass) -> ret[klass.name] = klass
+        ret
+
+    @fromSpec: (layer, spec) ->
+        klasses = gg.Geom.klasses()
+        if _.isString spec
+            type = spec
+            spec = { geom: type }
         else
-            val = (d, aes) => @layer.scaledValue d, aes
-            xformfunc = (d) -> "translate(#{val d, 'x'},#{val d, 'y'})"
-            shapef = (d) =>
-                size = attrVal(@layer, 'size', @size)(d)
-                attrVal(@layer, 'shape', @shape, size)(d)
-            groups(g, 'symbols geoms', data).selectAll('path')
-                .data(addCoord)
+            type = findGood [spec.geom, spec.type,  "point"]
+
+        klass = findGood [type, gg.Point]
+        geom = new klass layer, spec
+        geom
+
+# x,y,r,x0,x1,y0,y1, ...
+class gg.Point extends gg.Geom
+    @name: "point"
+
+
+    mappingXform: ->
+        (table) ->
+            {
+                x: 'x',
+                y: 'y',
+                r: 'r',
+                x0: 'x-r/2',
+                x1: 'x+r/2',
+                y0: 'y-r/2',
+                y1: 'y+r/2'
+            }
+
+    renderXforms: ->
+        # need to access the proper svg container for the geom
+        (table) =>
+            @svg.selectAll("g.#{klass}")
+                .data(table)
                 .enter()
-                .append('path')
-                .attr('class', 'geom')
-                .attr('transform', xformfunc)
-                .attr('fill-opacity', @alpha)
-                .attr('fill', attributeValue @layer, 'color', @color)
-                .attr('stroke', attributeValue @layer, 'color', @color)
-                .attr('stroke-width', 1)
-                .attr('d', shapef)
+                .append("g")
+                .attr("class", "#{klass}")
 
-        g.selectAll('.geom')
-            .on('mouseover', (ev) =>)
-
-
-class gg.AreaGeometry extends gg.Geometry
-    constructor: (spec) ->
-        @fill = spec.fill or 'black'
-        @alpha = spec.alpha or 1
-        @stroke = spec.stroke or @fill
-        super spec
-
-    render: (g, data) ->
-        scale = (d, key, aes) => @layer.scaleExtracted d[key], aes, d
-
-        area = d3.svg.area()
-            .x((d) -> scale d, 'x', 'x')
-            .y1((d) -> scale d, 'y1', 'y')
-            .y0((d) -> scale d, 'y0', 'y')
-            .interpolate('basis')
-
-        # attributes should be imported in bulk using
-        # .attr( {} ) where {} is @attrs
-        groups(g, 'lines', data).selectAll('polyline')
-            .data((d) -> [d])
-            .enter()
-            .append('svg:path')
-            .attr('d', area)
-            .attr('stroke-width', @width)
-            .attr('stroke', @stroke)
-            .attr('fill', @fill)
-            .attr('fill-opacity', @alpha)
-            .attr('stroke-opacity', @alpha)
-
-class gg.LineGeometry extends gg.Geometry
-    constructor: (spec) ->
-        super spec
-
-    render: (g, data) ->
-        scale = (d, aes) => @layer.scaledValue d, aes
-        if 'color' of @layer.mappings
-            color = (d) -> scale d[0], 'color'
-        else
-            color = @color
-
-        line = d3.svg.line()
-            .x((d,i) -> scale d, 'x')
-            .y((d,i) -> scale d, 'y')
-            .interpolate('linear')
-
-        groups(g, 'lines', data).selectAll('path')
-            .data((d) -> [d]).enter().append('path')
-            .attr('d',  line)
-            .attr('fill', 'none')
-            .attr('stroke-width', @width)
-            .attr('stroke', color)
-
-class gg.IntervalGeometry extends gg.Geometry
-    constructor: (spec) ->
-        super spec
-
-    render: (g, data) ->
-        scale = (d, aes) => @layer.scaledValue d, aes
-        groups(g, 'rects', data).selectAll('rect')
-            .data(Object) # add a single element
-            .enter()
-            .append('rect')
-            .attr('x', (d) => scale(d, 'x') - @width/2)
-            .attr('y', (d) => scale(d, 'y'))
-            .attr('width', attributeValue @layer, 'width', @width)#() => @width)
-            .attr('height', (d) => @layer.scaledMin('y') - scale(d, 'y'))
-            .attr('fill', attributeValue @layer, 'color', @color)
-
-class gg.BoxPlotGeometry extends gg.Geometry
-    constructor: (spec) ->
-        super spec
-
-    # TODO: lots more geoms
-    #
-
-class gg.TextGeometry extends gg.Geometry
-    constructor: (spec) ->
-        @show = spec.show
-        @offsetX = spec.offsetX or 5
-        @offsetY = spec.offsetY or -10
-        super spec
-
-    render: (g, data) ->
-        area = g.append 'g'
-        text = groups(area, 'text', data).selectAll('circle')
-            .data((d,i)-> d)
-            .enter()
-            .append('text')
-            .attr('class', 'graphicText')
-            .attr('x', (d) => @offsetX + @layer.scaledValue d, 'x')
-            .attr('y', (d) => @offsetY + @layer.scaledValue d, 'y')
-            .text((d) => @layer.scaledValue d, 'text')
-
-        text.attr('class', 'graphicText showOnHover') if @show is 'hover'
-        @
+            table
 
 
 
+
+
+class gg.Line extends gg.Geom
+    @name: "line"
+
+class gg.Step extends gg.Geom
+    @name: "step"
+
+class gg.Path extends gg.Geom
+    @name: "path"
+
+class gg.Area extends gg.Geom
+    @name: "area"
+
+class gg.Interval extends gg.Geom
+    @name: "interval"
+
+class gg.Rect extends gg.Geom
+    @name: "rect"
+
+class gg.Polygon extends gg.Geom
+    @name: "polygon"
+
+class gg.Hex extends gg.Geom
+    @name: "hex"
+
+# boxplot
+class gg.Schema extends gg.Geom
+    @name: "schema"
+
+class gg.Glyph extends gg.Geom
+    @name: "glyph"
+
+class gg.Edge extends gg.Geom
+    @name: "edge"

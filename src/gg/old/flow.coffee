@@ -1,5 +1,5 @@
 #<< gg/util
-#<< gg/xform
+#<< gg/wf/xform
 #<< gg/geom
 class gg.FlowFactory
     constructor: (@spec, @graphic) ->

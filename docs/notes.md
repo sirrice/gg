@@ -40,10 +40,10 @@ is:
 
 ### Facets are data only
 
-Would like to facet by 
+Would like to facet by
 
-1. statistical/sampling model 
-2. aesthetic mappings 
+1. statistical/sampling model
+2. aesthetic mappings
 3. variables
 
 ### Customization
@@ -72,7 +72,7 @@ Customization is really difficult/confusing.  Would like
 ### Combined shape/line type/colors
 
 Currently, can only independently map aesthetic -> shape/line/color.  Want ability to
-map aesthetic -> shape x color 
+map aesthetic -> shape x color
 
     if x -> shape x color:
     x    symbol
@@ -89,19 +89,19 @@ GGplot-JS notes
 
 ### Tough Queries
 
-    ggplot(diamonds) + 
-    geom_bar(aes(color, carat, group=clarity, fill=clarity, color=clarity), 
-             position='dodge', stat='identity', ymax=10000) + 
-    stat_bin(aes(x, group=clarity, color=clarity), 
+    ggplot(diamonds) +
+    geom_bar(aes(color, carat, group=clarity, fill=clarity, color=clarity),
+             position='dodge', stat='identity', ymax=10000) +
+    stat_bin(aes(x, group=clarity, color=clarity),
              alpha=0.3,position='jitter', geom='point') +
     facet_grid(cut~., scales='free_y')
 
 1. combination of discrete (geom_bar) and continuous (stat_bin) axes shows
    only first axis is rendered
 1. Also shows that rendering continuous on discrete axes ok, but not vice versa.  (weird)
-2. faceting shows that the discrete and continuous scales are aligned across 
+2. faceting shows that the discrete and continuous scales are aligned across
    facets (in fixed scales mode)
-2. `geom_bar` shows that dodge requires rejiggering (not sure how) scales 
+2. `geom_bar` shows that dodge requires rejiggering (not sure how) scales
    to plot the tick marks appropriately
 3. `stat_bin` shows that statistics are computed after grouping by clarity
 
@@ -111,7 +111,7 @@ GGplot-JS notes
 Very similar to ggplot2's at a high level, but makes many processes explicit
 
 * Facet partitions data up, and each partition flows through the same set of transformations.
-* Statistics and geometries are modeled as xforms, which define a specific input and output data schema.  
+* Statistics and geometries are modeled as xforms, which define a specific input and output data schema.
 * Mappers map one data schema into another (replaces the aes() shorthand in ggplot2)
 * transformation pipeline is a list of stats/mappings ending at a geom object
 * Scales are single variable transformations, trained right before sending data to geom object
@@ -136,7 +136,7 @@ spec:
     coordinates
     guides: { guide-1: [color]
     options (themes)
-    
+
     xforms: statistics, sampling, jitter/positioning
 
 
@@ -233,8 +233,8 @@ Multiple instances of scales
     - plot default (first layer) scales
 1. layers
     - plot geometries
-    
-    
+
+
 ## Questions
 
 where does themeing, interactions come into play?
@@ -265,11 +265,11 @@ where does themeing, interactions come into play?
     * Update its individual scale
 1. Geometry
     * track position selection
-    * 
+    *
 1. Position
 1. Guides
     * Map aesthetic(s) to legends (1 legend, multiple aesthetics)
-    * Track 
+    * Track
 
 
 ### User Specifications
@@ -295,34 +295,35 @@ spec:
 
     opts
       paddingX, paddingY, padding
-     
+
      facetFunction: (row) -> string
      facetList: list of models, variable names,
      facetObject: object of [label] -> [model or variable name]
 
 ### Misc
-  compute statistics
-  compute scales
-  render
- defaults:
-  mapping
-  geom: point
-  statistic: inteval
-  position: none
- scales
-   facetid,aes -> scale object
- facets: everything is a grid
-   x,y -> singlefacet +
-   layer
-    mapping
-    subset of data
-    statistic
-    scale from graphic
-    coordinate
-    position
-    theme
-    geom (row) -> svg object, w/ units derived from @scale()
-    
+
+      compute statistics
+      compute scales
+      render
+     defaults:
+      mapping
+      geom: point
+      statistic: inteval
+      position: none
+     scales
+       facetid,aes -> scale object
+     facets: everything is a grid
+       x,y -> singlefacet +
+       layer
+        mapping
+        subset of data
+        statistic
+        scale from graphic
+        coordinate
+        position
+        theme
+        geom (row) -> svg object, w/ units derived from @scale()
+
 
 Other Libraries
 ----------------
@@ -347,66 +348,19 @@ Other Libraries
 2. Lattice (R )
 3. Graphical Programming Language (SPSS)
 4. ViZML
-5. 
+5.
 
 
+### Commercial competitors
 
-etsy gg responsibilities
------------------------
+1. [Platfora](http://www.platfora.com/deployment/)
+1. Qliktech/tableau/spotfire
+1. Splunk
 
-Graphic
-
-    ensureScales: make sure each aesthetic has a scale
-    prepareLayers: calles prepare on each layer
-    aesthetic -> scale
-    render: create container, call facet.render
-
-GricFacet
-
-    render:
-        ensure scales of each subfacet, prepare their layers
-        draw overall axes
-
-
-Facet
-
-    render:
-        call Graphic to ensure scales, prepare layers (bulk of work)
-        draw axes and tick marks
-        call layer.render with new 'g' dom element
-
-
-Layer
-
-    tied together with a geometry
-    computes statistics, groups, updates scales, and calles geom.render
-    statistic
-    trainScales
-        for each aesthetic, set/learn the domain of the data
-        XXX currently trains on the first layer and stops (domainSet variable)
-    prepare
-        replace data with computed statistics
-        turn data into groups using mappings.group
-        trainscales on new data
-    render
-        call geometry.render()
-
-Geometry
-
-    the data has a well defined schema
-    render the svg objects
-        takes groups as input, so need to consider that!
-    load rendering attributes like size, color, width, fill from spec toplevel
-
-
-
-Scale
-
-    has handle to Graphic to determin global min, max values
-    tied to a specific aesthetic (defaultFor(aesthetic) -> Scale object)
 
 
 Questions
+------------
 
 1. where to hook in interaction?  click, drag, select, brush, link, change dimensions, zoom
 2. where to hook in custom theme?  (at least coloring)
@@ -414,10 +368,3 @@ Questions
    how to support interactivity then?
 
 
-
-
-* Tricky plots to draw
-
-* Other pitfalls
-
-* Crazy ideas

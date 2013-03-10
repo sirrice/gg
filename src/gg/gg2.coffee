@@ -22,23 +22,24 @@ exports = module.exports = @
 
 
 #<< gg/table
-#g/graphic
-#g/facets
-#g/layer
-#g/geom
-#g/scale
-#g/stats
+#<< gg/wf/flow
+#<< gg/graphic
+#<< gg/facets
+#<< gg/layer
+#<< gg/geom
+#<< gg/scale
+#<< gg/stats
 
 
-# this sets MODULE._gg = gg
-@_gg = gg
+# makes sure the gg namespace has all the classes defined
+_.extend @, gg
 
-# this sets MODULE.gg = gg
-# so can do new gg.gg(spec, opts)
-# toaster defines gg as the module namec
-@gg = (spec, opts) -> return _gg.Graphic.fromSpec spec, opts
-_.extend @gg, @_gg
-_.extend @gg.prototype, @_gg
+# this sets MODULE.gg as the fromSpec method
+fromSpec = (spec) -> new gg.Graphic spec
+@gg = fromSpec
+
+
+
 
 
 #)(this)

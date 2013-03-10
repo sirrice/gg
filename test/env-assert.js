@@ -13,7 +13,7 @@ assert.lessThan = assert.lt = function(actual, comparison, message) {
     }
 };
 
-assert.lessThan = assert.lt = function(actual, comparison, message) {
+assert.lessThanEqual = assert.lte = function(actual, comparison, message) {
     if (!(actual <= comparison)) {
         assert.fail(actual, comparison, message || "expected {actual} <= {comparison}", "<=");
     }
