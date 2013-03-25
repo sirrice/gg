@@ -5,14 +5,14 @@ groups = (g, klass, data) ->
         .append('g')
         .attr('class', "#{klass}")
 
-class gg.Geometry
+class gg.old.Geometry
     constructor: (spec) ->
         @color = spec.color or 'black'
         @width = spec.width or 2
         @layer = null
 
 
-class gg.PointGeometry extends gg.Geometry
+class gg.old.PointGeometry extends gg.Geometry
     constructor: (spec) ->
         @size = spec.size or 5
         @shape = spec.shape or 'circle'
@@ -65,7 +65,7 @@ class gg.PointGeometry extends gg.Geometry
             .on('mouseover', (ev) =>)
 
 
-class gg.AreaGeometry extends gg.Geometry
+class gg.old.AreaGeometry extends gg.Geometry
     constructor: (spec) ->
         @fill = spec.fill or 'black'
         @alpha = spec.alpha or 1
@@ -94,7 +94,7 @@ class gg.AreaGeometry extends gg.Geometry
             .attr('fill-opacity', @alpha)
             .attr('stroke-opacity', @alpha)
 
-class gg.LineGeometry extends gg.Geometry
+class gg.old.LineGeometry extends gg.Geometry
     constructor: (spec) ->
         super spec
 
@@ -117,7 +117,7 @@ class gg.LineGeometry extends gg.Geometry
             .attr('stroke-width', @width)
             .attr('stroke', color)
 
-class gg.IntervalGeometry extends gg.Geometry
+class gg.old.IntervalGeometry extends gg.Geometry
     constructor: (spec) ->
         super spec
 
@@ -133,14 +133,14 @@ class gg.IntervalGeometry extends gg.Geometry
             .attr('height', (d) => @layer.scaledMin('y') - scale(d, 'y'))
             .attr('fill', attributeValue @layer, 'color', @color)
 
-class gg.BoxPlotGeometry extends gg.Geometry
+class gg.old.BoxPlotGeometry extends gg.Geometry
     constructor: (spec) ->
         super spec
 
     # TODO: lots more geoms
     #
 
-class gg.TextGeometry extends gg.Geometry
+class gg.old.TextGeometry extends gg.Geometry
     constructor: (spec) ->
         @show = spec.show
         @offsetX = spec.offsetX or 5

@@ -20,15 +20,15 @@ _ = require 'underscore'
 # if we don't
 exports = module.exports = @
 
-
+#<< gg/util
 #<< gg/table
 #<< gg/wf/flow
 #<< gg/graphic
-#<< gg/facets
+#<< gg/facet
 #<< gg/layer
 #<< gg/geom
 #<< gg/scale
-#<< gg/stats
+#<< gg/stat
 
 
 # makes sure the gg namespace has all the classes defined

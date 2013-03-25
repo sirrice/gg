@@ -1,5 +1,5 @@
 # Mappers are tied closely with XForms
-class gg.Mapper# extends gg.wf.Node
+class gg.old.Mapper# extends gg.wf.Node
     # @param mapping output attribute -> input attribute/function
     constructor: (@mapping) ->
         super
@@ -79,7 +79,7 @@ class gg.Mapper# extends gg.wf.Node
 
 
 
-class gg.IdentityMapper extends gg.Mapper
+class gg.old.IdentityMapper extends gg.Mapper
     constructor: () ->
         super
 

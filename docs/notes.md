@@ -358,6 +358,12 @@ Other Libraries
 1. Splunk
 
 
+Plots to replicate
+------------
+
+* http://blog.uber.com/2012/06/23/uberdata-building-the-perfect-uber-party-city/
+* http://blog.uber.com/2012/11/12/uberdata-mapping-a-citys-flow-using-ubers-ridership-data/
+
 
 Questions
 ------------

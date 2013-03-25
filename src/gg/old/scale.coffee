@@ -3,7 +3,7 @@
 #
 # Used to create layer, panel and facet level copies of gg.Scales
 # when training the scales
-class gg.ScaleFactory
+class gg.old.ScaleFactory
     constructor: (@spec) ->
         @paneDefaults = {}      # aes -> scale object
         @layerDefaults = {}     # [layerid,aes] -> scale object
@@ -48,7 +48,7 @@ class gg.ScaleFactory
 # Manage a graphic/pane/layer's set of scales
 # a Wrapper around {aes -> {type -> scale} } + utility functions
 #
-class gg.Scales
+class gg.old.Scales
     constructor: (@factory) ->
         @scales = {}
         @spec = {}
@@ -160,7 +160,7 @@ class gg.Scales
 
 
 
-class gg.Scale
+class gg.old.Scale
     constructor: () ->
         # Whether or not the domain/range was set from the Spec
         # -> don't update at all
@@ -262,27 +262,27 @@ class gg.Scale
         @d3Scale.range()
     scale: (v) -> @d3Scale v
 
-class gg.LinearScale extends gg.Scale
+class gg.old.LinearScale extends gg.Scale
     constructor: () ->
         super
         @d3Scale = d3.scale.linear().clamp(true)
         @type = 'continuous'
 
 
-class gg.TimeScale extends gg.Scale
+class gg.old.TimeScale extends gg.Scale
     constructor: () ->
         super
         @d3Scale = d3.time.scale().clamp(true)
         @type = 'time'
 
-class gg.LogScale extends gg.Scale
+class gg.old.LogScale extends gg.Scale
     constructor: () ->
         super
         @d3Scale = d3.scale.log().clamp(true)
         @type = 'continuous'
 
 
-class gg.CategoricalScale extends gg.Scale
+class gg.old.CategoricalScale extends gg.Scale
     constructor: (@padding=1) ->
         super
         @d3Scale = d3.scale.ordinal()
@@ -301,7 +301,7 @@ class gg.CategoricalScale extends gg.Scale
         if not @rangeSet
             @d3Scale = @d3Scale.rangeBands interval, @padding
 
-class gg.ShapeScale extends gg.CategoricalScale
+class gg.old.ShapeScale extends gg.CategoricalScale
     constructor: (@padding=1) ->
         super
         customTypes = ['star', 'ex']
@@ -334,7 +334,7 @@ class gg.ShapeScale extends gg.CategoricalScale
 
 
 
-class gg.ColorScale extends gg.Scale
+class gg.old.ColorScale extends gg.Scale
     constructor: (@spec={}) ->
         super
         @d3Scale = d3.scale.linear().clamp(true) # default to linear scale
@@ -371,7 +371,7 @@ class gg.ColorScale extends gg.Scale
             @mergeDomain uniqueVals
 
 
-class gg.TextScale extends gg.Scale
+class gg.old.TextScale extends gg.Scale
     constructor: () ->
         super
         @type = 'text'

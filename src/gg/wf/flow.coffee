@@ -1,5 +1,5 @@
 #<< gg/util
-#<< gg/wf/xform
+#<< gg/wf/node
 events = require 'events'
 
 
@@ -33,11 +33,12 @@ events = require 'events'
 #
 
 class gg.wf.Flow extends events.EventEmitter
-    constructor: (@spec) ->
+    constructor: (@spec={}) ->
         @nodes = []
         @id2node = []
         @inId2outId = {}  # parent -> child edges
         @outId2inId = {}  # child -> parent edges
+        @g = @spec.g  # graphic object that compiled into this workflow
 
     add: (node) ->
         unless node.id of @id2node
@@ -94,9 +95,13 @@ class gg.wf.Flow extends events.EventEmitter
                     root
 
     run: (table) ->
-        runner = new gg.wf.Runner @instantiate()
-        runner.on "output", (id, table) => @emit "output", id, table
-        runner.run(table)
+      root = @instantiate()
+      source = new gg.wf.TableSource {wf: @, table: table}
+      source.addChild root, root.getAddInputCB(0)
+
+      runner = new gg.wf.Runner source
+      runner.on "output", (id, data) => @emit "output", id, data
+      runner.run()
 
     #
     # Visit nodes breadth first
@@ -118,49 +123,51 @@ class gg.wf.Flow extends events.EventEmitter
     # Visit nodes depth first
     #
     visitDFS: (f, node=null, seen=null) ->
-        seen = {} unless seen?
+      seen = {} unless seen?
 
-        if node?
-            return if node.id of seen
-            seen[node.id] = yes
-            f node
+      if node?
+          return if node.id of seen
+          seen[node.id] = yes
+          f node
 
-            _.each @children(node), (child) =>
-                @visitDFS f, child, seen
-        else
-            _.each @sources(), (child) =>
-                @visitDFS f, child, seen
+          _.each @children(node), (child) =>
+              @visitDFS f, child, seen
+      else
+          _.each @sources(), (child) =>
+              @visitDFS f, child, seen
 
     toString: ->
-        arr = []
-        f = (node) =>
-            childnames = _.map @children(node), (c) -> c.name
-            cns = childnames.join(', ') or "SINK"
-            arr.push "#{node.name}\t->\t#{cns}"
-        @visitBFS f
-        arr.join("\n")
+      arr = []
+      f = (node) =>
+          childnames = _.map @children(node), (c) -> c.name
+          cns = childnames.join(', ') or "SINK"
+          arr.push "#{node.name}\t->\t#{cns}"
+      @visitBFS f
+      arr.join("\n")
 
 
 
     # @param specOrNode specification of a node or a Node object
     # WARNING: sets @children to specOrNode (clobbers existing children array)!
     setChild: (klass, specOrNode) ->
-        specOrNode = {} unless specOrNode?
-        if _.isFunction specOrNode
-            node = new klass {f: specOrNode}
-        else if specOrNode.constructor.name is not "Object" and specOrNode.type?
-            node = specOrNode
-        else
-            node = new klass specOrNode
+      specOrNode = {} unless specOrNode?
+      if _.isSubclass specOrNode, gg.wf.Node
+        node = specOrNode
+      else if _.isFunction specOrNode
+        node = new klass {f: specOrNode}
+      else
+        node = new klass specOrNode
 
-        prevNode = _.last(@nodes) or null
-        @connect prevNode, node if prevNode?
-        @add node
-        this
+      prevNode = _.last(@nodes) or null
+      @connect prevNode, node if prevNode?
+      @add node
+      this
 
     isNode: (specOrNode) -> not (specOrNode.constructor.name is 'Object')
+    node: (node) -> @setChild null, node
     exec: (specOrNode) -> @setChild gg.wf.Exec, specOrNode
     split: (specOrNode) -> @setChild gg.wf.Split, specOrNode
+    partition: (specOrNode) -> @setChild gg.wf.Partition, specOrNode
     join: (specOrNode) -> @setChild gg.wf.Join, specOrNode
     barrier: (specOrNode) -> @setChild gg.wf.Barrier, specOrNode
     multicast: (specOrNode) -> @setChild gg.wf.Multicast, specOrNode
@@ -168,6 +175,9 @@ class gg.wf.Flow extends events.EventEmitter
 
 
 
+#
+# potentially transformation rules
+#
 class gg.wf.Rule
     constructor: ->
 
@@ -185,8 +195,7 @@ class gg.wf.Optimizer
 class gg.wf.Runner extends events.EventEmitter
     constructor: (@root) ->
 
-    run: (table) ->
-        @root.addInput 0, -1, table
+    run: () ->
         queue = new gg.UniqQueue [@root]
 
         seen = {}
@@ -210,7 +219,7 @@ class gg.wf.Runner extends events.EventEmitter
                 unless cur.nChildren()
                     # cur is a sink, register output handler for it
                     cur.addOutputHandler 0, (id, result) =>
-                        @emit "output", id, result
+                        @emit "output", id, result.table
 
                 cur.run()
                 seen[cur.id] = yes

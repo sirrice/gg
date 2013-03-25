@@ -102,8 +102,8 @@ The following defines a single layer's transformation workflow:
 
     layer: [ 
         {xform: "log", base: 10, var: "x"}      // outputs same schema as input table
+       ,{xform: "applyscales"}                  // apply scale transformations (e.g., log10)
        ,{xform: "trainscales"}                  // train scales
-       ,{xform: "applyscales"}                  // apply scale transformations (e.g., log10 transformation)
 
        // The following are statistical transformations
        ,{xform: "split", on: "a"}               // Computing separate histograms for each value of "a"
@@ -116,6 +116,7 @@ The following defines a single layer's transformation workflow:
        ,{xform: "trainscales"}                  // train the scales' domains from the transformed data
        ,{xform: "geom-box"}                     // transform data table into {x, width, height} box schema
        ,{xform: "stack"}                        // update 
+       ,{xform: "facetrender"}                  //
        ,{xform: "coord-polar"}
        ,{xform: "geom-box-render"}              // Render the boxes
            ]
@@ -332,11 +333,12 @@ Grid/Wrap Facets need to facet on
 ## Scales
 
     scales: {
-        aes: {range:[],  Scale(pre-stats-colname, post-stats-colname)
+        #  aes: {range:[],  Scale(pre-stats-colname, post-stats-colname)
     }
     
     class scales(aes, post-aes, pre=null, range, domain)
         train()
+        apply()
         
 
 A Scale must define pre-stats and post-stats columns that it should be trained on.  Every scale defaults to identity.  
@@ -522,7 +524,14 @@ Positioners don't change the schemas
 * Tree layout: parent, child, (weight)
     * Output: (x, y, parent, child, weight)
 
+## Rendering Schemas
 
+Renderers are the last step in the (geometry) processing pipeline and transform a table into a visual object e.g., svg/canvas/etc
+
+* Line:  ( (x,y)*, aesthetics )
+* Path:  ( (x,y)*, aesthetics)
+* Polygon: ( (x,y)*, aesthetics )
+* Point: (x,y)
 
 ## Libraries
 

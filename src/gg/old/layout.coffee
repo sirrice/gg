@@ -1,4 +1,4 @@
-class gg.GridLayout
+class gg.old.GridLayout
     constructor: (@spec) ->
         @nrows = 0
         @ncols = 0

@@ -5,6 +5,7 @@ toast
       'src/gg': 'gg'
 
   # EXCLUDED FOLDERS (optional)
+  exclude: ['src/gg/old']
   # exclude: ['folder/to/exclude', 'another/folder/to/exclude', ... ]
 
   # => VENDORS (optional)

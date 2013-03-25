@@ -1,18 +1,81 @@
-#<< gg/wf/xform
+#<< gg/wf/node
 
 
+
+# transforms data -> pixel/aesthetic values
+class gg.GeomTransform extends gg.XForm
+  constructor: (@layer, @spec) ->
+    super @layer.g, @spec
+    @parseSpec()
+
+  parseSpec: ->
+    null
+
+  compute: (table, env) ->
+    info = @paneInfo env
+    scalesSet = @g.scales.scales(info.facetX, info.facetY, info.layer)
+    table = table.clone()
+    _.each scalesSet.aesthetics(), (aes) ->
+      if table.contains aes
+        table.map scalesSet.scale(aes).scale, aes
+    table
+
+
+
+
+
+
+# Geoms are a holding house for tree types of XForms
+#
+# 1) Schema Mapping -- from stats outputs to geometry-expected schemas
+# 2) apply scales -- actually transforming from data domain to pixel range
+# 3) Positioning
+# 4) Rendering
+#
+# Each of these XForms are defined elsewhere. A Geom class defines a
+# preset series of XForms, which are accessible via @nodes()
+#
 # router for instantiating specific geometries
-class gg.Geom
+#
+#
+# Spec has following grammar:
+#
+# layershorthand:
+#   {
+#     geom: STRING,
+#     (aes|aesthetic|mapping): aesmapping,
+#     (stat|stats|statistic): xformspec
+#     pos: posspec
+#   }
+#
+class gg.Geom extends gg.XForm
+
     constructor: (@layer, @spec) ->
-        @g = @layer.g
+      super @layer.g, @spec
+
+      @mapping = null
+      @position = null
+      @render = null
+      @transformDomain = null
+      @parseSpec()
 
     svg: -> @layer.svg
-    layerScales: -> @layer.scales()
-    facetScales: -> @layer.facetScales()
+    scales: -> @layer.scales()
 
+    parseSpec: ->
+      aesSpec = findGood [@spec['post-stats'], @spec['pre-geom'], null]
+      posSpec = findGood [@spec.pos, @spec.position, "identity"]
 
-    mappingXform: -> throw Error()
-    renderXform: ->  throw Error()
+      @mapping = new gg.Mapper @g, aesSpec if aesSpec?
+      @position = gg.Position.fromSpec @layer, @spec.pos
+      @render = gg.GeomRender.fromSpec @layer, @spec.geom
+      @transformDomain = new gg.GeomTransform @layer, {}
+
+    mappingXForm: -> if @mapping? then @mapping.compile() else []
+    transformDomainXForm: -> @transformDomain.compile()
+    positionXForm: -> @position.compile()
+    renderXForm: -> @render.compile()
+    compile: -> _.flatten [@mappingXForm(), @positionXForm(), @renderXForm()]
     name: -> @constructor.name.toLowerCase()
 
     @klasses: ->
@@ -37,49 +100,44 @@ class gg.Geom
     @fromSpec: (layer, spec) ->
         klasses = gg.Geom.klasses()
         if _.isString spec
-            type = spec
-            spec = { geom: type }
+          type = spec
+          spec = { geom: type }
         else
-            type = findGood [spec.geom, spec.type,  "point"]
+          type = findGood [spec.geom, spec.type,  "point"]
 
-        klass = findGood [type, gg.Point]
-        geom = new klass layer, spec
+
+        klass = findGood [klasses[type], gg.Point]
+        spec["name"] = klass.name unless spec["name"]?
+        geom = new klass(layer, spec)
         geom
+
 
 # x,y,r,x0,x1,y0,y1, ...
 class gg.Point extends gg.Geom
     @name: "point"
 
+    defaults: (table, env) ->
+      r: 2
+    inputSchema: (table, env) ->
+      ['x', 'y']
 
-    mappingXform: ->
-        (table) ->
-            {
-                x: 'x',
-                y: 'y',
-                r: 'r',
-                x0: 'x-r/2',
-                x1: 'x+r/2',
-                y0: 'y-r/2',
-                y1: 'y+r/2'
-            }
+    mappingXForm: ->
+      new gg.Mapper @g,
+        x: 'x'
+        y: 'y'
+        r: 'r'
+        x0: 'x'
+        x1: 'x'
+        y0: 'y'
+        y1: 'y'
 
-    renderXforms: ->
-        # need to access the proper svg container for the geom
-        (table) =>
-            @svg.selectAll("g.#{klass}")
-                .data(table)
-                .enter()
-                .append("g")
-                .attr("class", "#{klass}")
-
-            table
-
-
-
+    renderXForm: -> new gg.GeomRenderPointSvg @layer, {}
 
 
 class gg.Line extends gg.Geom
     @name: "line"
+
+
 
 class gg.Step extends gg.Geom
     @name: "step"

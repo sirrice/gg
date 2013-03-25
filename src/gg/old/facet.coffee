@@ -11,7 +11,7 @@ grid_grid = () ->
 # WrapFacet and SingleFacet are special cases of the GridFacet
 #
 #
-class gg.GridFacet
+class gg.old.GridFacet
     constructor: (@graphic, spec) ->
         # x, y faceting groupby information
         @groupX = spec.x or (d) -> 'X'
@@ -226,7 +226,7 @@ class gg.GridFacet
                 yText = yidx is @ys.length - 1
                 pane.render xBand, yBand, xText, yText, cell
 
-class gg.SingleFacet extends gg.GridFacet
+class gg.old.SingleFacet extends gg.GridFacet
     constructor: (@graphic, spec) ->
         super @graphic, spec
 

@@ -1,6 +1,6 @@
 # Pane is responsible for rendering the scales and contents of a single
 # plot
-class gg.Pane
+class gg.old.Pane
     constructor: (@facet, @scales) ->
         @graphic = @facet.graphic
         @id = gg.Pane.nextId()

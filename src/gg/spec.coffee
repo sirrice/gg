@@ -21,6 +21,7 @@
 #     geom: STRING,
 #     (aes|aesthetic|mapping): aesmapping,
 #     (stat|stats|statistic): xformspec
+#     pos: posspec
 #   }
 #
 #
@@ -49,10 +50,12 @@
 #
 # scale:
 #   {
-#     [type: STRING,]
+#     [type: (log,pow,continuous,discrete),]
 #     [lim: [min, max],]
 #     [domain: [min, max] | [STRING,...],]
 #     [range: [min, max] | [STRING,...],]
+#     [expand: [mult, add]]
+#
 #   }
 #
 # aesthetic: (x|y|color|texture|size|shape|width)
@@ -63,9 +66,9 @@
 #
 #
 #
-# Here is a single set of scales, but possibly multiple mappings
+# There is a single set of scales, but possibly multiple mappings
 # during pre and post stats.
-# By default, the user specifies the post stats mapping
+# By default, the user specifies the pre stats mapping
 #
 
 

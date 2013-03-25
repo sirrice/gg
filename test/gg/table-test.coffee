@@ -62,6 +62,25 @@ suite.addBatch {
             table.addColumn "d", _.range(table.nrows())
             assert.equal table.ncols(), 5
 
+        "with function column":
+            topic: ->
+                v = 1
+                f = () ->
+                    v += 2
+                    v
+                rows = _.map _.range(100), (i) -> {a:i%10, b: f, id:i}
+                new gg.RowTable(rows)
+            "has correct data": (table) ->
+                valid = _.range(10)
+                table.each (row) ->
+                    assert.equal (row.get('b') % 2), 1
+                    assert.lt 0, row.get('b')
+                    assert.include valid, row.get('a')
+
+
+
+
+
     }
 }
 

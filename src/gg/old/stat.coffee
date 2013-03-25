@@ -1,5 +1,5 @@
 #<< gg/util
-class gg.Statistic #extends gg.wf.Composite
+class gg.old.Statistic #extends gg.wf.Composite
     constructor: (@spec) ->
         super
 
@@ -10,7 +10,7 @@ class gg.Statistic #extends gg.wf.Composite
 
     compute: (tables) ->
 
-class gg.Bin extends gg.Statistic
+class gg.old.Bin extends gg.Statistic
     constructor: (@spec) ->
         super @spec
 
@@ -30,7 +30,7 @@ class gg.Bin extends gg.Statistic
 
 
 
-class gg.Statistic
+class gg.old.Statistic
     constructor: (spec) ->
         @group = spec.group or false
         @variable = spec.variable # why just a single variable?
@@ -45,7 +45,7 @@ class gg.Statistic
 
 
 
-class gg.BinStatistic extends gg.Statistic
+class gg.old.BinStatistic extends gg.Statistic
     constructor: (spec) ->
         @bins = spec.bins or 20
         super spec
@@ -59,7 +59,7 @@ class gg.BinStatistic extends gg.Statistic
         _.map freq, (bin, i) =>
             bin: i, count: bin.y, density: density[i].y, ncount: bin.y / data.length or 0
 
-class gg.SumStatistic extends gg.Statistic
+class gg.old.SumStatistic extends gg.Statistic
     constructor: (spec) ->
         super spec
 
@@ -75,7 +75,7 @@ class gg.SumStatistic extends gg.Statistic
                 max: d3.max(values, value)
             }
 
-class gg.BoxPlotStatistic extends gg.Statistic
+class gg.old.BoxPlotStatistic extends gg.Statistic
     constructor: (spec) ->
         super spec
 
@@ -117,7 +117,7 @@ class gg.BoxPlotStatistic extends gg.Statistic
                 max: max
             }
 
-class gg.IdentityStatistic extends gg.Statistic
+class gg.old.IdentityStatistic extends gg.Statistic
     constructor: (spec) ->
         super spec
 

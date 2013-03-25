@@ -1,2 +1,2 @@
-#<< gg/wf/xform
+#<< gg/wf/node
 

@@ -5,19 +5,27 @@ class gg.Table
 
     nrows: -> throw "not implemented"
     ncols: -> throw "not implemented"
+    # XXX: define return value.  currently Array<String>
+    colNames: -> throw "not implemented"
+    contains: (colName) -> colName of @colNames()
 
     @merge: (tables) -> gg.RowTable.merge tables
 
     each: (f) -> _.each _.range(@nrows()), (i) => f @get(i), i
-
+    # XXX: destructive!
+    map: (f, colName=null) -> throw Error("not implemented")
+    clone: -> @cloneShallow()
     cloneShallow: -> throw "not implemented"
     cloneDeep: -> throw "not implemented"
     merge: (table)-> throw "not implemented"
     split: (gbfunc)-> throw "not implemented"
     transform: (colname, func)-> throw "not implemented"
+    addConstColumn: (name, val, type=null) -> throw "not implemented"
     addColumn: (name, vals, type=null) -> throw "not implemented"
     addRow: (row) -> throw "not implemented"
     get: (row, col=null)-> throw "not implemented"
+    # because we may have column stores
+    asArray: -> throw "not implemented"
 
 
 
@@ -39,6 +47,11 @@ class gg.RowTable extends gg.Table
 
     nrows: -> @rows.length
     ncols: -> if @nrows() > 0 then @rows[0].ncols() else 0
+    colNames: ->
+      if @nrows() is 0
+        throw Error("no rows to extract schema from")
+      else
+        _.keys @get(0)
     # more direct implementation
     each: (f) -> _.each @rows, f
 
@@ -65,20 +78,23 @@ class gg.RowTable extends gg.Table
 
     # gbfunc's output will be JSON encoded and used as key
     # @param {Function} gbfunc (row) -> key
-    # @return object with key as JSON.stringify(gbfunc) and value is a table
+    # @return {Array} of objects: {key: group key, table: partition}
     split: (gbfunc) ->
-        if typeof gbfunc is "string"
-            key = gbfunc
-            gbfunc = (tuple) => tuple.get(key)
+      if _.isString gbfunc
+        gbfunc = ((key) -> (tuple) -> tuple.get(key))(gbfunc)
 
 
-        groups = {}
-        @rows.forEach (row) ->
-            # NOTE: also gbfunc.apply(row) to set this?
-            key = JSON.stringify(gbfunc(row))
-            groups[key] = new gg.RowTable() if key not of groups
-            groups[key].addRow row
-        groups
+      groups = {}
+      @rows.forEach (row) ->
+        # NOTE: also gbfunc.apply(row) to set this?
+        key = JSON.stringify(gbfunc(row))
+        groups[key] = new gg.RowTable() if key not of groups
+        groups[key].addRow row
+
+      ret = []
+      _.each groups, (partition, key) ->
+        ret.push {key: JSON.parse(key), table: partition}
+      ret
 
     # @param colname either a string, or an object of {key: xform} pairs
     # @param {Function|boolean} funcOrUpdate
@@ -141,18 +157,25 @@ class gg.RowTable extends gg.Table
                     null
         ret
 
+    map: (f, colName=null) ->
+      if colName?
+        @each (row, idx) => row[colName] = f(row[colName])
+      else
+        throw Error("RowTable.map without a colname is not implemented")
 
 
+    addConstColumn: (name, val, type=null) ->
+      @addColumn name, _.repeat(@nrows(), vals), type
 
     addColumn: (name, vals, type=null) ->
-        if vals.length != @rows.length
-            throw Error("column has #{vals.length} values, table has #{@rows.length} rows")
-        @rows.forEach (row, idx) => row[name] = vals[idx]
-        @
+      if vals.length != @rows.length
+          throw Error("column has #{vals.length} values, table has #{@rows.length} rows")
+      @rows.forEach (row, idx) => row[name] = vals[idx]
+      @
 
     addRow: (row) ->
-        @rows.push gg.RowTable.toTuple row
-        @
+      @rows.push gg.RowTable.toTuple row
+      @
 
 
     get: (row, col=null) ->
@@ -164,7 +187,15 @@ class gg.RowTable extends gg.Table
         else
             null
 
-    getCol: (col) -> _.times @nrows(), (idx) => @get(idx, col)
+    getCol: (col) ->
+      # XXX: hack.  make it do the right thing if no rows
+      if @nrows() > 0 and @get(1, col)?
+        _.times @nrows(), (idx) => @get(idx, col)
+      else
+        null
+    getColumn: (col) -> @getCol col
+
+    asArray: -> @rows
 
 
 class gg.ColTable extends gg.Table

@@ -1,6 +1,6 @@
 
 
-class gg.LayersFactory
+class gg.old.LayersFactory
     constructor: (@spec, @graphic) ->
 
 
@@ -23,7 +23,7 @@ class gg.LayersFactory
 #
 #<< gg/util
 #<< gg/geom
-class gg.Layer
+class gg.old.Layer
     constructor: (@geometry, @pane, @id) ->
         @mappings = {}
         @statistic = null

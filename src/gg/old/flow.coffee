@@ -1,7 +1,7 @@
 #<< gg/util
 #<< gg/wf/xform
 #<< gg/geom
-class gg.FlowFactory
+class gg.old.FlowFactory
     constructor: (@spec, @graphic) ->
 
     forPane: (pane) ->
@@ -14,7 +14,7 @@ see gg.XForm and gg.Geom for detailed specs
 
 Flows are only created from the factory!
 ###
-class gg.Flow
+class gg.old.Flow
     constructor: (@spec, @xforms, @geom, @pane, @flowId) ->
         @graphic = @pane.graphic if @pane?
         @facets = @graphic.facets if @graphic?

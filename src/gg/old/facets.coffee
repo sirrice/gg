@@ -1,5 +1,5 @@
 #<< gg/facet
-class gg.Facets
+class gg.old.Facets
     constructor: () ->
 
     @fromSpec = (spec, graphic) ->

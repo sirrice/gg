@@ -11,7 +11,6 @@ makeTable = (nrows=100) ->
 suite = vows.describe "gg.wf.Flow"
 
 suite.addBatch
-    ###
     "Single Node Flow":
         topic: ->
             flow = new gg.wf.Flow
@@ -73,10 +72,10 @@ suite.addBatch
 
             flow.run makeTable(10)
 
-    "Single split-join flow using spec":
+    "Single partition-join flow using spec":
         topic: ->
             flow = new gg.wf.Flow
-            flow.split {name: "split", f: (row) -> row.get('b')}
+            flow.partition {name: "split", f: (row) -> row.get('b')}
             flow.join {name: "join"}
             flow
 
@@ -86,10 +85,10 @@ suite.addBatch
                 console.log table
             flow.run makeTable(10)
 
-    "Single split-join flow no spec object":
+    "Single partition-join flow no spec object":
         topic: ->
             flow = new gg.wf.Flow
-            flow.split (row) -> row.get('b')
+            flow.partition (row) -> row.get('b')
             flow.join()
             flow
 
@@ -98,13 +97,12 @@ suite.addBatch
             flow.on "output", (id, table) ->
                 console.log table
             flow.run makeTable(10)
-        ###
 
-    "Nested split-join":
+    "Nested partiiton-join":
         topic: ->
             flow = new gg.wf.Flow
-            flow.split {name: "split1", f: (row) -> row.get('b')}
-            flow.split {name: "split2", f: (row) -> row.get('c')}
+            flow.partition {name: "split1", f: (row) -> row.get('b')}
+            flow.partition {name: "split2", f: (row) -> row.get('c')}
             flow.join {name: "join2"}
             flow.join {name: "join1"}
             flow
@@ -120,10 +118,10 @@ suite.addBatch
                 assert.equal col2.length, 2
             flow.run makeTable(100)
 
-    "split-compute-join":
+    "partition-compute-join":
         topic: ->
             flow = new gg.wf.Flow
-            flow.split {name: "split1", f: (row) -> row.get('b')}
+            flow.partition {name: "split1", key: "groupKey", f: (row) -> row.get('b')}
             flow.exec (table) ->
                 col = table.getCol 'a'
                 total = _.foldr col, ((a,b)->a+b), 0
@@ -133,10 +131,12 @@ suite.addBatch
 
         "runs": (flow) ->
             truth = [460, 470, 480, 490, 500, 510, 520, 530, 540, 550]
+            groupKeys = _.range 10
             flow.on "output", (id, table) ->
-                _.times table.nrows(), (idx) ->
-                    assert.include truth, table.get(idx, 'sum')
-                    assert.equal table.get(idx, 'n'), 10
+                table.each (row) ->
+                    assert.include truth, row.get('sum')
+                    assert.equal row.get('n'), 10
+                    assert.include groupKeys, row.get('groupKey')
             flow.run makeTable(100)
 
     "multicast-[exec,exec]":
