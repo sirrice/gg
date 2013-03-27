@@ -30,7 +30,7 @@ class gg.Facets
     @parseSpec()
 
     @splitter = @splitterNodes()
-
+    @labelers = @labelerNodes()
 
 
     @panes = []
@@ -57,6 +57,7 @@ class gg.Facets
     @facetFontSize = findGood [@spec.facetFontSize, "12pt"]
     @facetPadding = findGood [@spec.facetPadding, "5"]
     @exSize = _.exSize @facetFontSize
+
 
 
   # Accessor for facet pane objects
@@ -97,9 +98,26 @@ class gg.Facets
     # XXX: This implementation is not exactly right, because it will not result
     #      in groups for x/y facetpairs that don't have any tuples.
     #      (we expect the cross product!)
+    console.log "splitternode: #{@facetXKey},  #{@facetYKey}"
     facetXNode = @createSplitterNode @x, @facetXKey
     facetYNode = @createSplitterNode @y, @facetYKey
     [facetXNode, facetYNode]
+
+  labelerNodes: ->
+    xjoin = new gg.wf.Exec
+      name: "facetx-join"
+      f: (t,e,n) =>
+        t = t.clone()
+        t.addConstColumn @facetXKey, e.group(@facetXKey, "1")
+        t
+    yjoin = new gg.wf.Exec
+      name: "facety-join"
+      f: (t,e,n) =>
+        t = t.clone()
+        t.addConstColumn @facetYKey, e.group(@facetYKey, "1")
+        t
+
+    [xjoin, yjoin]
 
   #########################
   #
@@ -111,11 +129,11 @@ class gg.Facets
   #
   #########################
 
-  collectXYs: ->
+  collectXYs: (tables, envs, node) ->
     # compute x and y group values
     @xs = {}
     @ys = {}
-    _.each tables, (table) ->
+    _.each tables, (table) =>
       if table.nrows() > 0
         @xs[table.get(0, @facetXKey)] = yes
         @ys[table.get(0, @facetYKey)] = yes
@@ -130,7 +148,10 @@ class gg.Facets
 
   allocatePanesNode: ->
     new gg.wf.Barrier {
-      f: (args...) => @allocatePanes(args...)
+      f: (tables, envs, node) =>
+        @collectXYs(tables, envs, node)
+        @allocatePanes()
+        tables
     }
 
 
@@ -143,7 +164,8 @@ class gg.Facets
     matrix = "#{1.0-2*margin/@w},0,0,
               #{1.0-2*margin/@h},
               #{margin}, #{margin}"
-    svg = svg.append('g')
+    svg = @svg.append('g')
+        .attr('class', 'graphic-with-margin')
         .attr('transform', "matrix(#{matrix})")
 
     svg.append('rect')
@@ -155,6 +177,8 @@ class gg.Facets
 
     # compute dimensions for each container
     # top facet space
+    console.log "exSize: #{JSON.stringify @exSize}"
+
     facetSize = @exSize.h + 2*@facetPadding
     paneWidth = @w - 2 * facetSize
     paneHeight = @h - 2 * facetSize
@@ -187,18 +211,24 @@ class gg.Facets
       height: @h - 2*facetSize
       class: "facet-grid-container"
 
-    xRange = d3.scale.ordina().domain(@xs).rangeBands [0, panelWidth], 0.05
-    yRange = d3.scale.ordina().domain(@ys).rangeBands [0, panelHeight], 0.05
+    console.log @xs
+    console.log @ys
+    xRange = d3.scale.ordinal().domain(@xs).rangeBands [0, paneWidth], 0.05
+    yRange = d3.scale.ordinal().domain(@ys).rangeBands [0, paneHeight], 0.05
     xBand = xRange.rangeBand()
     yBand = yRange.rangeBand()
+    console.log "x/yBand: #{xBand} / #{yBand}\t#{paneWidth} / #{paneHeight}"
 
+
+    console.log topFacetOpts
 
     #
     # create and populate svgs for the facet labels
     #
-    svgTopLabels = _.subSvg @svg, topFacetOpts
+    svgL = _.subSvg @svg, {class: "labels-container"}
+    svgTopLabels = _.subSvg svgL, topFacetOpts
     @renderTopLabels svgTopLabels, xRange
-    svgRightLabels = _.subSvg @svg, rightFacetOpts
+    svgRightLabels = _.subSvg svgL, rightFacetOpts
     @renderRightLabels svgRightLabels, yRange
 
     #
@@ -217,7 +247,8 @@ class gg.Facets
           id: "facet-grid-#{xidx}-#{yidx}"
           class: "facet-grid"
         }
-        @paneSvgMapper[x][y] = svnPane
+        @paneSvgMapper[x] = {} unless x of @paneSvgMapper
+        @paneSvgMapper[x][y] = svgPane
 
 
     # update ranges for the scales
@@ -233,14 +264,12 @@ class gg.Facets
     # finally, update ranges of all the scales
     _.each @g.scales.scalesList, (ss) =>
       _.each gg.Scale.xs, (aes) =>
-        if ss.contains aes
-          ss.scale(aes).range 0, xRange
+        ss.scale(aes).range [0, xBand]
+        console.log "scales(#{aes}): #{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
       _.each gg.Scale.ys, (aes) =>
-        if ss.contains aes
-          ss.scale(aes).range 0, yRange
+        ss.scale(aes).range [0, yBand]
+        console.log "scales(#{aes}): #{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
 
-
-    tables
 
 
 
@@ -256,22 +285,21 @@ class gg.Facets
 
   # train fixed scales (every pane has the same x,y domains)
   trainScales: ->
-    @masterScales = gg.Scales.merge @g.scales.scalesList
+    @masterScales = gg.ScalesSet.merge @g.scales.scalesList
     if @scales is "fixed"
       _.each @g.scales.scalesList, (scalesSet) => scalesSet.merge @masterScales, false
     else
       @trainFreeScales()
 
-    tables
 
   trainFreeScales: ->
     # now compute the shared scales for each column and row
     @xScales = _.map @xs, (x) =>
-        gg.Scales.merge(_.map @ys, (y) => @subFacets[x][y].scales)
+        gg.ScalesSet.merge(_.map @ys, (y) => @subFacets[x][y].scales)
             .exclude(gg.Scale.ys)
 
     @yScales = _.map @ys, (y) =>
-        gg.Scales.merge(_.map @xs, (x) => @subFacets[x][y].scales)
+        gg.ScalesSet.merge(_.map @xs, (x) => @subFacets[x][y].scales)
            .exclude(gg.Scale.xs)
 
 
@@ -310,11 +338,11 @@ class gg.Facets
     enter.select("text")
       .attr("x", (d) -> xRange(d) + xRange.rangeBand()/2)
       .attr("y", @facetPadding)
-      .attr("dy", "0.2em")
+      .attr("dy", "0.5em")
     enter.select("rect")
-      .attr("x", xFacet)
+      .attr("x", xRange)
       .attr("y", 0)
-      .attr("width", xFacet.rangeBand())
+      .attr("width", xRange.rangeBand())
       .attr("height", svg.attr("height"))
 
   renderRightLabels: (svg, yRange) ->

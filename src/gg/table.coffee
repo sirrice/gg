@@ -7,7 +7,7 @@ class gg.Table
     ncols: -> throw "not implemented"
     # XXX: define return value.  currently Array<String>
     colNames: -> throw "not implemented"
-    contains: (colName) -> colName of @colNames()
+    contains: (colName) -> colName in @colNames()
 
     @merge: (tables) -> gg.RowTable.merge tables
 
@@ -138,12 +138,13 @@ class gg.RowTable extends gg.Table
                 if oldattr.length is 0 or (oldattr[0] is '{' and oldattr[1] is '}')
                     strings[newattr] = oldattr
                 else if not (newattr of funcs)
-                    cmds = (_.map row, (val, k) => "var #{k} = row['#{k}'];")
-                    cmds.push "return #{oldattr};"
-                    cmd = cmds.join('')
-                    fcmd = "var __func__ = function(row) {#{cmd}}"
-                    eval fcmd
-                    funcs[newattr] = __func__
+                  cmds = (_.map row, (val, k) => "var #{k} = row['#{k}'];")
+                  cmds.push "return #{oldattr};"
+                  cmd = cmds.join('')
+                  fcmd = "var __func__ = function(row) {#{cmd}}"
+                  console.log fcmd
+                  eval fcmd
+                  funcs[newattr] = __func__
                 funcs[newattr](row)
             else
                 oldattr
@@ -154,21 +155,21 @@ class gg.RowTable extends gg.Table
                     map oldattr, newattr
                 catch error
                     console.log error
-                    null
+                    throw error
         ret
 
     map: (f, colName=null) ->
       if colName?
-        @each (row, idx) => row[colName] = f(row[colName])
+        @each (row, idx) -> row[colName] = f(row[colName])
       else
         throw Error("RowTable.map without a colname is not implemented")
 
 
     addConstColumn: (name, val, type=null) ->
-      @addColumn name, _.repeat(@nrows(), vals), type
+      @addColumn name, _.repeat(@nrows(), val), type
 
     addColumn: (name, vals, type=null) ->
-      if vals.length != @rows.length
+      if vals.length != @nrows()
           throw Error("column has #{vals.length} values, table has #{@rows.length} rows")
       @rows.forEach (row, idx) => row[name] = vals[idx]
       @

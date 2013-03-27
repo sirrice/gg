@@ -1,5 +1,9 @@
 #<< gg/util
-events = require 'events'
+
+try
+  events = require 'events'
+catch error
+  console.log error
 
 #
 # When a node starts running, it is either a Split or not a Split node.
@@ -263,6 +267,8 @@ class gg.wf.Label extends gg.wf.Node
     else
       val = @compute
 
+    console.log "#{@name}: adding label #{@key} -> #{val}"
+
     env = data.env.clone()
     env.pushGroupPair @key, val
     @output 0, new gg.wf.Data(data.table, env)
@@ -310,6 +316,16 @@ class gg.wf.Exec extends gg.wf.Node
     @output 0, new gg.wf.Data(output, data.env.clone())
     output
 
+class gg.wf.Stdout extends gg.wf.Exec
+  constructor: (@spec={}) ->
+    super @spec
+
+    @type = "stdout"
+    @name = findGood [@spec.name, "#{@type}-#{@id}"]
+
+  compute: (table, env, node) ->
+    table.each (row) -> console.log JSON.stringify(_.omit(row, ['get', 'ncols']))
+    table
 
 
 #
@@ -333,18 +349,24 @@ class gg.wf.Barrier extends gg.wf.Node
     @inputs.push null
 
     # we know that clone == this, so we use @ as shorthand
+    #console.log "#{@name} cloneSubplan: #{@children[0]}"
     if @children[0]?
       [child, childInputCB] = @children[0].cloneSubplan stop
       @addChild child, childInputCB
       if @inputs.length != @children.length
         throw Error("# inputs not same as # children (#{@inputs.length}!=#{@children.length}")
+      #console.log "#{@name} has #{@inputs.length} inputs and #{@children.length} children #{@nChildren()}"
 
     [this, @getAddInputCB idx]
 
   addChild: (child, inputCb=null) ->
-    @children.push child
+    if @children[0]?
+      @children.push child
+    else
+      @children[0] = child
     @addOutputHandler @children.length-1, inputCb if inputCb?
     child.addParent @
+    #console.log "#{@name}: addChild #{@children.length}\t#{child.name}, #{inputCb}"
 
   run: ->
     throw Error("Node not ready") unless @ready()
@@ -352,7 +374,7 @@ class gg.wf.Barrier extends gg.wf.Node
     envs = _.pluck @inputs, 'env'
     outputs = @compute tables, envs, @
     for output, idx in outputs
-      @output idx, new gg.wf.Data(output, env[idx])
+      @output idx, new gg.wf.Data(output, envs[idx].clone())
     outputs
 
 
@@ -508,7 +530,7 @@ class gg.wf.Multicast extends gg.wf.Node
       @children[0] = node
     else
       @children.push node
-    child.addParent @
+    node.addParent @
     @addOutputHandler @children.length-1, inputCb if inputCb?
 
   run: ->
@@ -518,7 +540,7 @@ class gg.wf.Multicast extends gg.wf.Node
     for child, idx in @children
       newData = data.clone()
       @output idx, newData
-    input
+    data.table
 
 ###
 class gg.wf.Composite extends gg.wf.Node

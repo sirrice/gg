@@ -16,6 +16,7 @@ class gg.Graphic
       @facets = new gg.Facets @, @facetspec
       @scales = new gg.Scales @, @scalespec
 
+
     svgPane: (facetX, facetY, layer) ->
       @facets.svgPane(facetX, facetY, layer)
 
@@ -58,7 +59,10 @@ class gg.Graphic
         @wFacet = @w
         @hFacet = @h
         @renderGuides()
-      new gg.wf.Barrier f
+        tables
+      new gg.wf.Barrier
+        name: "layoutNode"
+        f: f
 
 
 
@@ -74,7 +78,6 @@ class gg.Layers
       @parseSpec()
 
     parseSpec: ->
-      console.log @spec
       _.each @spec, (layerspec) => @addLayer layerspec
 
     # @return [ [node,...], ...] a list of nodes for each layer
@@ -93,7 +96,9 @@ class gg.Layers
       if _.isSubclass layerOrSpec, gg.Layer
         layer = layerOrSpec
       else
-        layer = new gg.Layer @g, layerOrSpec
+        spec = _.clone layerOrSpec
+        spec.layerIdx = layerIdx
+        layer = new gg.Layer @g, spec
 
       layer.layerIdx = layerIdx
       @layers.push layer
@@ -181,7 +186,7 @@ class gg.Scales extends gg.XForm
     xmappings = mappings[facetX]
     xmappings[facetY] = {} unless facetY of xmappings
     ymappings = xmappings[facetY]
-    ymappings[layerId] = scales
+    ymappings[layerIdx] = scales
 
   # these training methods assume that the tables's attribute names have
   # been mapped to the aesthetic attributes that the scales expect
@@ -190,8 +195,9 @@ class gg.Scales extends gg.XForm
     mappings = {}
     scalesList = []
     _.each _.zip(tables, envs), ([t,e]) =>
-      info = @paneInfo()
+      info = @paneInfo t, e
       aess = @aesthetics info.layer
+      console.log "train scale aess: #{aess}"
 
       scales = @scalesFactory.scales aess
       scales.train t, aess
@@ -201,6 +207,7 @@ class gg.Scales extends gg.XForm
     @mappings = mappings
     @scalesList = scalesList
     @state = nextState if nextState?
+    @g.facets.trainScales()
     tables
 
 
@@ -211,19 +218,22 @@ class gg.Scales extends gg.XForm
   trainOnPixels: (tables, envs, node, nextState=null) ->
     mappings = {}
     scalesList = []
-    _.each _.zip(tables, envs), ([t,e]) =>
-      info = @paneInfo()
+    _.each _.zip(tables, envs), ([table,e]) =>
+      t = table.clone()
+      info = @paneInfo t, e
       aess = @aesthetics info.layer
 
       scales = @scalesFactory.scales aess
-      inverted = @scales.invert t, aess
+      inverted = scales.invert t, aess
       scales.train inverted, aess
       scalesList.push scales
       @setMapping mappings, info, scales
+      console.log "pixeltrained scales: #{scales.scale('x').domain()}"
 
     @mappings = mappings
     @scalesList = scalesList
     @state = nextState if nextState?
+    @g.facets.trainScales()
     tables
 
   trainForFacets: (tables, envs, node, nextState) ->
@@ -236,7 +246,11 @@ class gg.Scales extends gg.XForm
   layer: (layerIdx) -> @g.layers.getLayer layerIdx
 
   # XXX: layer aesthetics should differentiate between pre-post stats aesthetic mappings!
-  aesthetics: (layerIdx) -> @layer(layerIdx).aesthetics()
+  aesthetics: (layerIdx) ->
+    scalesAess = _.keys(@scalesFactory.paneDefaults)
+    layerAess =  @layer(layerIdx).aesthetics()
+    aess = _.compact _.uniq _.flatten([scalesAess, layerAess, ['y', 'x']])
+    aess
 
   facetScales: (facetX, facetY) ->
     try

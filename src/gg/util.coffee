@@ -29,7 +29,7 @@ _ = require 'underscore'
     groups
 
 findGood = (list) ->
-    ret = _.find list, (v)->v
+    ret = _.find list, (v)->v != null and v?
     if typeof ret is "undefined"
         if list.length then _.last(list) else undefined
     else
@@ -67,6 +67,10 @@ exSize = (() ->
         height = div.clientHeight
         width = 12 if width is 0
         height = 12 if height is 0
+
+        if _.any [width, height], _.isNaN
+          throw Error("exSize: width(#{width}), height(#{height})")
+
         {
           width: width
           height: height
@@ -75,10 +79,10 @@ exSize = (() ->
         }
       catch error
         {
-          width: 12
-          height: 12
-          w: 12
-          h: 12
+          width: 20
+          height: 20
+          w: 20
+          h: 20
         }
   _f
 )()

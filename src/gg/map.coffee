@@ -13,8 +13,7 @@
 # 4) ecmascript expression: will use eval() to transform into function
 #
 class gg.Mapper extends gg.XForm
-  constructor: (@g, @mapping) ->
-    @spec = {}
+  constructor: (@g, @spec) ->
     @parseSpec()
     super @g, @spec
 
@@ -22,14 +21,21 @@ class gg.Mapper extends gg.XForm
     @name = findGood [@spec.name, "mapper-#{@id}"]
 
   parseSpec: ->
-    #@mapping = findGood [@spec.mapping, @spec.map, @spec.aes, {}]
+    @mapping = findGood [@spec.mapping, @spec.map, @spec.aes, {}]
+    console.log "mapper spec: #{JSON.stringify @mapping}"
+
     @aesthetics = _.keys @mapping
-    @spec.f = (table) => table.transform @mapping, no
+    @spec.f = (args...) => @compute(args...)
     @inverse = {}
     _.each @mapping, (val, key) => @inverse[val] = key
 
   compute: (table, env, node) ->
-    table.transform @mapping
+    console.log "transform: #{@mapping}"
+    table = table.clone()
+    table.transform @mapping, yes
+    table
+
+  compile: -> new gg.wf.Exec @spec
 
   invertColName: (outColName) -> @inverse[outColName]
 

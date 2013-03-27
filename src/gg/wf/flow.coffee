@@ -96,10 +96,12 @@ class gg.wf.Flow extends events.EventEmitter
 
     run: (table) ->
       root = @instantiate()
-      source = new gg.wf.TableSource {wf: @, table: table}
-      source.addChild root, root.getAddInputCB(0)
+      if table?
+        source = new gg.wf.TableSource {wf: @, table: table}
+        source.addChild root, root.getAddInputCB(0)
+        root = source
 
-      runner = new gg.wf.Runner source
+      runner = new gg.wf.Runner root
       runner.on "output", (id, data) => @emit "output", id, data
       runner.run()
 
@@ -227,7 +229,7 @@ class gg.wf.Runner extends events.EventEmitter
                 for nextNode in _.compact(_.flatten cur.children)
                     queue.push nextNode unless nextNode of seen
             else
-                console.log "not ready #{cur.name}.  #{cur.inputs}"
+                console.log "not ready #{cur.name}.  #{cur.inputs.length}, #{cur.children.length}"
                 if firstUnready is cur
                     throw Error("could not make progress.  Stopping on #{cur.name}")
                 unless firstUnready?

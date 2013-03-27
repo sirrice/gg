@@ -13,6 +13,7 @@
 ###
 
 
+console.log require
 events = require 'events'
 _ = require 'underscore'
 

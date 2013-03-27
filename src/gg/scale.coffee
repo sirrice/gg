@@ -51,6 +51,18 @@
 # breaks: (scale, limits) -> breaks or invert limits via scale, compute breaks, transform via scale
 # train
 #
+#
+# spec:
+#
+# {
+#   aes:
+#   type
+#   limits
+#   range
+#   breaks
+#   label
+#  }
+#
 class gg.Scale
     constructor: () ->
         # Whether or not the domain/range was set from the Spec
@@ -120,9 +132,9 @@ class gg.Scale
         ret
 
 
-    defaultDomain: (layer, data, aes) ->
-        @min = if @min? then @min else layer.pane.dataMin data, aes
-        @max = if @max? then @max else layer.pane.dataMax data, aes
+    defaultDomain: (col) ->
+        @min = if @min? then @min else _.min col
+        @max = if @max? then @max else _.max col
         interval = []
         if @center?
             extreme = Math.max @max-@center, Math.abs(@min-@center)
@@ -150,10 +162,11 @@ class gg.Scale
             @d3Scale =  @d3Scale.domain interval
         @d3Scale.domain()
     range: (i) ->
-        if i? and not @rangeSet
-            @d3Scale = @d3Scale.range i
+        if i?# and not @rangeSet
+          @d3Scale = @d3Scale.range i
         @d3Scale.range()
     scale: (v) -> @d3Scale v
+    invert: (v) -> @d3Scale.invert(v)
 
 class gg.LinearScale extends gg.Scale
     constructor: () ->
@@ -181,18 +194,18 @@ class gg.CategoricalScale extends gg.Scale
         @d3Scale = d3.scale.ordinal()
         @type = 'ordinal'
 
-    @defaultDomain: (layer, data, aes) ->
-        val = (d) -> layer.dataValue d, aes
-        vals = _.uniq _.map(_.flatten(data), val)
+    @defaultDomain: (col) ->
+        vals = _.uniq _.flatten(col)
         vals.sort (a,b)->a-b
         vals
-    defaultDomain: (layer, data, aes) ->
-        gg.CategoricalScale.defaultDomain layer, data, aes
-    mergeDomain: (domain) ->
-        @domain _.uniq(_.union domain, @domain())
+
+    defaultDomain: (col) -> gg.CategoricalScale.defaultDomain col
+
+    mergeDomain: (domain) -> @domain _.uniq(_.union domain, @domain())
+
     range: (interval) ->
-        if not @rangeSet
-            @d3Scale = @d3Scale.rangeBands interval, @padding
+      #if not @rangeSet
+      @d3Scale = @d3Scale.rangeBands interval, @padding
 
 class gg.ShapeScale extends gg.CategoricalScale
     constructor: (@padding=1) ->
@@ -236,26 +249,17 @@ class gg.ColorScale extends gg.Scale
         @endColor = @spec.endColor or d3.rgb 2, 56, 88
         @fixedScale = d3.scale.linear().range [@startColor, @endColor]
 
-    isNumeric: (layer, data, aes) ->
-        val = (d) -> layer.dataValue d, aes
-        isNum = true
-        for dataArr in data
-            for d in dataArr
-                if typeof val(d) is not 'number'
-                    isNum = false
-                    return isNum
-        true
+    isNumeric: (col) -> _.every _.compact(col), _.isNumber
 
 
-    defaultDomain: (layer, data, aes) ->
-        val = (d) -> layer.dataValue d, aes
-        uniqueVals = gg.CategoricalScale.defaultDomain(layer,data, aes)
+    defaultDomain: (col) ->
+        uniqueVals = gg.CategoricalScale.defaultDomain col
 
-        if @isNumeric(layer, data, aes) and uniqueVals.length > 20
+        if @isNumeric(col) and uniqueVals.length > 20
             @d3Scale = @fixedScale
             _.extend @, _.pick(gg.Scale.prototype,
                 'mergeDomain', 'domain', 'range', 'scale')
-            @mergeDomain super(layer, data, aes)
+            @mergeDomain super(col)
         else
             @d3Scale = d3.scale.category20()
             @.range = (interval) -> @d3Scale = @d3Scale.range(interval)

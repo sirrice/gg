@@ -2,10 +2,19 @@ require "../env"
 vows = require "vows"
 assert = require "assert"
 
-
 makeTable = (nrows=100) ->
-    rows = _.map _.range(nrows), (i) -> {a:1+i, b:i%10, id:i}
-    new gg.RowTable(rows)
+  rows = _.map _.range(0, nrows), (d) ->
+      g = Math.floor(Math.random() * 3)
+      f = Math.floor(Math.random() * 3) * 10
+      t = Math.floor(Math.random() * 3)
+      {
+        d:d
+        r: t * 0.05 + Math.random() + g
+        g: g
+        f:f
+        t:t
+      }
+  new gg.RowTable rows
 
 
 outputsProperlyGen = (check) ->
@@ -29,13 +38,16 @@ spec =
     {
       geom: "point"
       aes:
-        x: "x"
-        y: "y"
+        x: "d"
+        y: "r"
+        fill: 't'
+        r: "r"
+
     }
   ]
   facets:
-    x: "a"
-    y: "b"
+    x: "f"
+    y: "g"
   scales:
     x:
       type: "linear"
@@ -47,8 +59,11 @@ suite.addBatch
       graphic = new gg.Graphic spec
       graphic
 
-    "can compile": (graphic) ->
-      graphic.compile()
+
+    "can run": (graphic) ->
+      svg = d3.select("body").append("svg")
+      graphic.render 500, 500, svg, makeTable(500)
+      console.log svg.html()
 
 
 suite.export module

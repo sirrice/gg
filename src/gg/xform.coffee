@@ -21,7 +21,7 @@
 #    the stage of the workflow and which scales training has happened
 #
 #
-# XForms as workflow nodes
+# WRONG::: XForms as workflow nodes
 # ------------------------
 # For convenience, XForm is a workflow Exec node
 #
@@ -31,51 +31,76 @@
 #       A typical series may be: mapping -> split -> exec -> join
 #
 #
-class gg.XForm extends gg.wf.Exec
+#
+# Spec:
+#
+#   defaults: Array or Function
+#   inputSchema: Array or Function
+#
+#
+class gg.XForm# extends gg.wf.Exec
 
   constructor: (@g, @spec={}) ->
-    super @spec
 
-    # now wrap @compute with a validation step
-    _compute = @compute
-    @compute = (table, env, node) =>
-      @validateInput table, env
+  parseSpec: ->
+    spec = _.clone @spec
+    @compute = spec.f or @compute
+    _compute = (table, env, node) =>
       @addDefaults table, env
-      _compute table, env, node
+      @validateInput table, env
+      @compute table, env, node
+    spec.f = _compute
 
-  facetGroups: (env) ->
+    inputSchema = findGood [spec.inputSchema, null]
+    if inputSchema?
+      inputSchema = (table, env) -> inputSchema unless _.isFunction(inputSchema)
+      @inputSchema = inputSchema
+
+    defaults = findGood [spec.defaults, null]
+    if defaults?
+      defaults = (table, env) -> defaults unless _.isFunction(defaults)
+      @defaults = defaults
+
+    @spec = spec
+
+
+  facetGroups: (table, env) ->
     facetX: env.group(@g.facets.facetXKey, "")
     facetY: env.group(@g.facets.facetYKey, "")
 
-  layerIdx: (env) ->
+  layerIdx: (table, env) ->
     layer: env.group("layer", "")
 
-  paneInfo: (env) ->
-    facetX: env.group(@g.facets.facetXKey, "")
-    facetY: env.group(@g.facets.facetYKey, "")
-    layer: env.group("layer", "")
+  paneInfo: (table, env) ->
+    ret = @facetGroups table, env
+    _.extend ret, @layerIdx(table, env)
+    ret
 
   # Defaults for optional attributes
   defaults: (table, env) -> {}
   # Required input schema
   inputSchema: (table, env) -> table.colNames()
-  outputSchema: (table, env) -> table.colNames()
+  #outputSchema: (table, env) -> table.colNames()
 
   # throws exception if inputs don't validate with schema
   validateInput: (table, env) ->
     tableCols = table.colNames()
     iSchema = @inputSchema table, env
-    missing = _.reject iSchema, (attr) -> attr of tableCols
+    missing = _.reject iSchema, (attr) -> attr in tableCols
+    console.log "expecting input schema #{iSchema}"
     if missing.length > 0
       throw Error("#{@name}: input schema did not contain #{missing.join(",")}")
 
   addDefaults: (table, env) ->
+    console.log "adding defaults of #{@defaults(table, env)}"
     _.each @defaults(table, env), (val, col) ->
       unless col of table.colNames
-        table.addConstColumn col, name
+        table.addConstColumn col, val
 
+  compute: (table, env, node) -> table
 
-  compile: -> [@]
+  compile: ->
+    [new gg.wf.Exec @spec]
 
   @fromSpec: (spec) ->
       xformName = findGood [spec.xform, "identity"]

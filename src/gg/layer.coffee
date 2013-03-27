@@ -7,7 +7,7 @@ class gg.Layer
     constructor: (@g, @spec={}) ->
 
       # which index in the specification
-      @layerIdx = @spec.idx
+      @layerIdx = @spec.layerIdx if @spec.layerIdx?
       @type = "node"
       @name = findGood [@spec.name, "node-#{@id}"]
 
@@ -16,6 +16,9 @@ class gg.Layer
       @geoms = []
       @renders = []
       @flow = []
+      @labeler = new gg.wf.Label
+        key: "layer"
+        val: @layerIdx
 
       @parseSpec()
 
@@ -43,6 +46,7 @@ class gg.Layer
       else
         # Shorthand style similar to ggplot2
         console.log "shorthand"
+        console.log @spec
         statSpec = findGood [spec.stat, spec.stats, spec.statistic, "identity"]
         mappingSpec = findGood [spec.aes, spec.aesthetic, spec.mapping, {}]
         geomSpec =
@@ -51,7 +55,8 @@ class gg.Layer
 
 
         # NOTE: mapper defines the initial aesthetics mapping
-        @mapper = new gg.Mapper @g, mappingSpec
+        console.log "mapperSpec: #{JSON.stringify mappingSpec}"
+        @mapper = new gg.Mapper @g, {aes: mappingSpec}
         @stats = [gg.Stat.fromSpec(@, statSpec)]
         @geom = gg.Geom.fromSpec @, geomSpec
 
@@ -100,12 +105,9 @@ class gg.Layer
 
 
     # add layerIdx to environment so xforms can track it
-    idXForm: -> new gg.wf.Label {
-      key: "layer"
-      val: @layerIdx
-    }
+    labelerXForm: -> [@labeler]
     # initial aesthetics mapping
-    mapXForm: ->  [@mapper]
+    mapXForm: ->  @compileXForms [@mapper]
     # statistics
     statXForms: -> @compileXForms @stats
     # map + position
@@ -123,12 +125,14 @@ class gg.Layer
       console.log "layer.compile called"
       nodes = []
 
-      nodes.push @idXForm()
+      nodes.push @labelerXForm()
       # stats: pre-stats aesthetics mapping
       nodes.push @mapXForm()
       # scales: train scales (inputs are data values)
       nodes.push @g.scales.prestatsNode
       nodes.push @statXForms()
+
+      nodes.push @g.facets.labelers
 
 
       # geom: map attributes to aesthetic names, and to pixels
@@ -145,8 +149,11 @@ class gg.Layer
       nodes.push @geom.transformDomainXForm()
       # geom: position transformation
       nodes.push @geom.positionXForm()
+      nodes.push new gg.wf.Stdout {name: "position pixel"}
       # facets: retrain scales (inputs are pixel values)
-      nodes.push @g.scales.prerenderNode
+      #nodes.push new gg.wf.Stdout {name: "pre-render"}
+      #nodes.push @g.scales.prerenderNode
+      #nodes.push new gg.wf.Stdout {name: "prerender"}
       # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
 
       # facets: render axes  XXX: not implemented

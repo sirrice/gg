@@ -28,9 +28,13 @@ class gg.ScaleFactory
   setup: ->
 
     # load graphic defaults
-    _.each @spec, (s) =>
+    _.each @spec, (s, aes) =>
+      # XXX: notice that scale spec expects an aes key
+      s = _.clone s
+      s.aes = aes
       scale = gg.Scale.fromSpec s
       @paneDefaults[scale.aesthetic] = scale
+      console.log "pane default: #{scale.aesthetic}\t#{s}"
 
     # load layer defaults
     if @layerSpecs? and @layerSpecs.length > 0
@@ -56,7 +60,9 @@ class gg.ScaleFactory
       scales = new gg.ScalesSet @
       _.each aesthetics, (aes) =>
           scales.scale(@scale aes, layerIdx)
+          console.log "made scale #{scales.scale(aes)}"
       scales
+
 
 
 
@@ -113,8 +119,8 @@ class gg.ScalesSet
   scale: (aesOrScale, type=null) ->
     if _.isString aesOrScale
         aes = aesOrScale
-        aes = 'x' if aes of gg.Scales.xs
-        aes = 'y' if aes of gg.Scales.ys
+        aes = 'x' if aes in gg.Scale.xs
+        aes = 'y' if aes in gg.Scale.ys
         @scales[aes] = {} if aes not of @scales
 
         if type is null
@@ -164,6 +170,7 @@ class gg.ScalesSet
   # multiple layers may use same aesthetics so need to cope with
   # overlaps
   train: (table, aess=null) ->
+    console.log "scale training on #{aess} #{_.keys @scales}"
     aess = _.keys @scales unless aess?
     _.each aess, (aes) =>
       scale = @scale(aes)
@@ -194,7 +201,7 @@ class gg.ScalesSet
   # destructively invert table on aess columns
   #
   # @param {gg.Table} table
-  invert: -> (table, aess=null) ->
+  invert: (table, aess=null) ->
     aess = _.keys @scales unless aess?
 
     table = table.cloneShallow()

@@ -102,6 +102,9 @@ vendor = (callback) ->
     ['https://github.com/FortAwesome/Font-Awesome/archive/v3.0.1.zip',
      'vendor/tmp/font_awesome.zip']
 
+    # Require.js
+    #['http://requirejs.org/docs/release/2.1.5/minified/require.js', 'vendor/js/require.js'],
+
   ]
 
   async.forEachSeries downloads, download, ->

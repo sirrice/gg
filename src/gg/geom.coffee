@@ -8,16 +8,14 @@ class gg.GeomTransform extends gg.XForm
     super @layer.g, @spec
     @parseSpec()
 
-  parseSpec: ->
-    null
 
   compute: (table, env) ->
-    info = @paneInfo env
+    info = @paneInfo table, env
     scalesSet = @g.scales.scales(info.facetX, info.facetY, info.layer)
     table = table.clone()
-    _.each scalesSet.aesthetics(), (aes) ->
-      if table.contains aes
-        table.map scalesSet.scale(aes).scale, aes
+    _.each scalesSet.aesthetics(), (aes) =>
+      f = (v) -> scalesSet.scale(aes).scale(v)
+      table.map f, aes if table.contains aes
     table
 
 
@@ -66,10 +64,11 @@ class gg.Geom extends gg.XForm
       aesSpec = findGood [@spec['post-stats'], @spec['pre-geom'], null]
       posSpec = findGood [@spec.pos, @spec.position, "identity"]
 
-      @mapping = new gg.Mapper @g, aesSpec if aesSpec?
+      @mapping = new gg.Mapper @g, @spec if aesSpec?
       @position = gg.Position.fromSpec @layer, @spec.pos
       @render = gg.GeomRender.fromSpec @layer, @spec.geom
-      @transformDomain = new gg.GeomTransform @layer, {}
+      @transformDomain = new gg.GeomTransform @layer, {name: "topixel"}
+      console.log @render
 
     mappingXForm: -> if @mapping? then @mapping.compile() else []
     transformDomainXForm: -> @transformDomain.compile()
@@ -116,22 +115,27 @@ class gg.Geom extends gg.XForm
 class gg.Point extends gg.Geom
     @name: "point"
 
-    defaults: (table, env) ->
+    defaults: ->
       r: 2
-    inputSchema: (table, env) ->
+
+    inputSchema: ->
       ['x', 'y']
 
     mappingXForm: ->
-      new gg.Mapper @g,
-        x: 'x'
-        y: 'y'
-        r: 'r'
-        x0: 'x'
-        x1: 'x'
-        y0: 'y'
-        y1: 'y'
+      (new gg.Mapper @g,
+        name: "point-mapper"
+        defaults: @defaults()
+        inputSchema: @inputSchema()
+        map:
+          x: 'x'
+          y: 'y'
+          r: 'r'
+          x0: 'x'
+          x1: 'x'
+          y0: 'y'
+          y1: 'y').compile()
 
-    renderXForm: -> new gg.GeomRenderPointSvg @layer, {}
+    renderXForm: -> (new gg.GeomRenderPointSvg @layer, {}).compile()
 
 
 class gg.Line extends gg.Geom

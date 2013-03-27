@@ -9,13 +9,32 @@ class gg.GeomRender extends gg.XForm
     @parseSpec()
 
   parseSpec: ->
+    super
+
+  svg: (table, env, node) ->
+    info = @paneInfo table, env
+    @g.facets.svgPane info.facetX, info.facetY
 
 
+
+  groups: (g, klass, data) ->
+    g.selectAll("g.#{klass}")
+      .data(data)
+      .enter()
+      .append('g')
+      .attr('class', "#{klass}")
+
+  agroup: (g, klass, data) ->
+    g.append("g")
+      .attr("class", "#{klass}")
+      .data(data)
+
+
+  # given a dictionary of attributes, add them to the dom element
   applyAttrs: (domEl, attrs) ->
     _.each attrs, (val, attr) -> domEl.attr attr, val
 
-  compute: (table, env) ->
-    @render table
+  compute: (table, env, node) -> @render table, env, node
 
   # @override this
   render: (table) -> throw Error("#{@name}.render() not implemented")
@@ -41,20 +60,22 @@ class gg.GeomRenderPointSvg extends gg.GeomRender
 
   defaults: (table, env) ->
     r: 2
-    fill-opacity: 0.5
+    "fill-opacity": 0.5
     fill: "steelblue"
     stroke: "steelblue"
-    stroke-width: 0
-    stroke-opacity: 0.5
+    "stroke-width": 0
+    "stroke-opacity": 0.5
     group: 1
 
   inputSchema: (table, env) ->
     ['x', 'y']
 
-  render: (table) ->
-    circles = groups(@svg(), "circles geoms", table.asArray())
+  render: (table, env, node) ->
+
+    data = table.asArray()
+    circles = @agroup(@svg(table, env), "circles geoms", data)
       .selectAll("circle")
-      .data(Object)
+      .data(data)
     enter = circles.enter()
     exit = circles.exit()
     enterCircles = enter.append("circle")
@@ -89,8 +110,8 @@ class gg.GeomRenderLineSvg extends gg.GeomRender
 
   inputSchema: (table, env) -> ['x1', 'y1', 'x2', 'y2']
 
-  render: (table) ->
-    lines = groups(@svg(), "lines geoms", table.asArray())
+  render: (table, env) ->
+    lines = @groups(@svg(table, env), "lines geoms", table.asArray())
       .selectAll("line")
       .data(Object)
     enter = lines.enter()
