@@ -83,13 +83,14 @@ class gg.Scale
 
     @fromSpec: (spec) ->
       klasses =
+        identity: gg.IdentityScale
         linear: gg.LinearScale
         time: gg.TimeScale
         log: gg.LogScale
         categorical: gg.CategoricalScale
         color: gg.ColorScale
         shape: gg.ShapeScale
-      s = new klasses[spec? and spec.type or 'linear']
+      s = new klasses[spec? and spec.type or 'identity']
 
       s.spec = spec
       if spec?
@@ -121,7 +122,7 @@ class gg.Scale
             size: gg.LinearScale
             text: gg.TextScale
             shape: gg.ShapeScale
-        }[aes] or gg.LinearScale)()
+        }[aes] or gg.IdentityScale)()
         s.aesthetic = aes
         s
 
@@ -161,12 +162,23 @@ class gg.Scale
             @domainUpdated
             @d3Scale =  @d3Scale.domain interval
         @d3Scale.domain()
-    range: (i) ->
-        if i?# and not @rangeSet
-          @d3Scale = @d3Scale.range i
+    range: (interval) ->
+        if interval?# and not @rangeSet
+          @d3Scale = @d3Scale.range interval
         @d3Scale.range()
     scale: (v) -> @d3Scale v
     invert: (v) -> @d3Scale.invert(v)
+
+class gg.IdentityScale extends gg.Scale
+  constructor: () ->
+    super
+    @d3Scale = d3.scale.linear()
+    @type = 'identity'
+
+  scale: (v) -> v
+  invert: (v) -> v
+
+
 
 class gg.LinearScale extends gg.Scale
     constructor: () ->
@@ -205,7 +217,9 @@ class gg.CategoricalScale extends gg.Scale
 
     range: (interval) ->
       #if not @rangeSet
-      @d3Scale = @d3Scale.rangeBands interval, @padding
+      if interval?
+        @d3Scale = @d3Scale.rangeBands interval, @padding
+      @d3Scale.range()
 
 class gg.ShapeScale extends gg.CategoricalScale
     constructor: (@padding=1) ->
@@ -262,7 +276,11 @@ class gg.ColorScale extends gg.Scale
             @mergeDomain super(col)
         else
             @d3Scale = d3.scale.category20()
-            @.range = (interval) -> @d3Scale = @d3Scale.range(interval)
+            @.range = (interval=null) =>
+              if interval?
+                @d3Scale = @d3Scale.range(interval)
+              console.log "getting color scale range"
+              @d3Scale.range()
             _.extend @, _.pick(gg.CategoricalScale.prototype,
                 'mergeDomain', 'domain', 'scale')
             @mergeDomain uniqueVals

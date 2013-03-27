@@ -14,7 +14,9 @@ class gg.GeomTransform extends gg.XForm
     scalesSet = @g.scales.scales(info.facetX, info.facetY, info.layer)
     table = table.clone()
     _.each scalesSet.aesthetics(), (aes) =>
-      f = (v) -> scalesSet.scale(aes).scale(v)
+      scale = scalesSet.scale(aes)
+      f = (v) -> scale.scale(v)
+      console.log "topixel: #{aes} scale is (#{scale.domain()}) -> (#{scale.range()})"
       table.map f, aes if table.contains aes
     table
 

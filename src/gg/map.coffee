@@ -30,7 +30,7 @@ class gg.Mapper extends gg.XForm
     _.each @mapping, (val, key) => @inverse[val] = key
 
   compute: (table, env, node) ->
-    console.log "transform: #{@mapping}"
+    console.log "transform: #{JSON.stringify @mapping}"
     table = table.clone()
     table.transform @mapping, yes
     table

@@ -133,12 +133,14 @@ class gg.Layer
       nodes.push @statXForms()
 
       nodes.push @g.facets.labelers
+      nodes.push new gg.wf.Stdout {name: "pre-geom", n: 10}
 
 
       # geom: map attributes to aesthetic names, and to pixels
       nodes.push @geom.mappingXForm()
       # scales: train scales after the final aesthetic mapping (inputs are data values)
       nodes.push @g.scales.pregeomNode
+      nodes.push new gg.wf.Stdout {name: "post-geom", n: 10}
 
       # layout the overall graphic, allocate space for facets
       nodes.push @g.layoutNode()
@@ -146,10 +148,12 @@ class gg.Layer
       nodes.push @g.facets.allocatePanesNode()
 
       # geom: facets have set the ranges so transform data values to pixel values
+      nodes.push new gg.wf.Stdout {name: "pre-pixel", n: 10}
       nodes.push @geom.transformDomainXForm()
+      nodes.push new gg.wf.Stdout {name: "topixel", n: 10}
       # geom: position transformation
       nodes.push @geom.positionXForm()
-      nodes.push new gg.wf.Stdout {name: "position pixel"}
+
       # facets: retrain scales (inputs are pixel values)
       #nodes.push new gg.wf.Stdout {name: "pre-render"}
       #nodes.push @g.scales.prerenderNode
@@ -159,6 +163,7 @@ class gg.Layer
       # facets: render axes  XXX: not implemented
       # nodes.push @g.facets.renderPanes()
       # render: render geometries
+      nodes.push new gg.wf.Stdout {name: "position pixel", n: 10}
       nodes.push @geom.renderXForm()
 
 

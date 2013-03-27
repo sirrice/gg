@@ -142,7 +142,6 @@ class gg.RowTable extends gg.Table
                   cmds.push "return #{oldattr};"
                   cmd = cmds.join('')
                   fcmd = "var __func__ = function(row) {#{cmd}}"
-                  console.log fcmd
                   eval fcmd
                   funcs[newattr] = __func__
                 funcs[newattr](row)

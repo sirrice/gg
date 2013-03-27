@@ -92,9 +92,10 @@ class gg.XForm# extends gg.wf.Exec
       throw Error("#{@name}: input schema did not contain #{missing.join(",")}")
 
   addDefaults: (table, env) ->
-    console.log "adding defaults of #{@defaults(table, env)}"
+    console.log "adding defaults of #{JSON.stringify @defaults(table, env)}"
+    console.log "                   #{JSON.stringify table.colNames()}"
     _.each @defaults(table, env), (val, col) ->
-      unless col of table.colNames
+      unless col in table.colNames()
         table.addConstColumn col, val
 
   compute: (table, env, node) -> table

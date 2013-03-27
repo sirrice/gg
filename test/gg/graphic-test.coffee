@@ -4,16 +4,16 @@ assert = require "assert"
 
 makeTable = (nrows=100) ->
   rows = _.map _.range(0, nrows), (d) ->
-      g = Math.floor(Math.random() * 3)
-      f = Math.floor(Math.random() * 3) * 10
-      t = Math.floor(Math.random() * 3)
-      {
-        d:d
-        r: t * 0.05 + Math.random() + g
-        g: g
-        f:f
-        t:t
-      }
+    g = Math.floor(Math.random() * 3)
+    f = Math.floor(Math.random() * 3) * 10
+    t = Math.floor(Math.random() * 3)
+    {
+      d:d
+      r: 1 + t * 0.5 + Math.abs(Math.random()) + g
+      g: g
+      f:f
+      t:t
+    }
   new gg.RowTable rows
 
 
@@ -42,6 +42,7 @@ spec =
         y: "r"
         fill: 't'
         r: "r"
+        "fill-opacity": "0.6"
 
     }
   ]
@@ -51,6 +52,9 @@ spec =
   scales:
     x:
       type: "linear"
+    r:
+      type: "linear"
+      range: [2, 10]
 
 
 suite.addBatch

@@ -322,9 +322,12 @@ class gg.wf.Stdout extends gg.wf.Exec
 
     @type = "stdout"
     @name = findGood [@spec.name, "#{@type}-#{@id}"]
+    @n = findGood [@spec.n, null]
 
   compute: (table, env, node) ->
-    table.each (row) -> console.log JSON.stringify(_.omit(row, ['get', 'ncols']))
+    table.each (row, idx) =>
+      if @n is null or idx <= @n
+        console.log JSON.stringify(_.omit(row, ['get', 'ncols']))
     table
 
 

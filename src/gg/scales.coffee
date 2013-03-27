@@ -170,8 +170,7 @@ class gg.ScalesSet
   # multiple layers may use same aesthetics so need to cope with
   # overlaps
   train: (table, aess=null) ->
-    console.log "scale training on #{aess} #{_.keys @scales}"
-    aess = _.keys @scales unless aess?
+    aess = _.uniq _.keys @scales unless aess?
     _.each aess, (aes) =>
       scale = @scale(aes)
 
