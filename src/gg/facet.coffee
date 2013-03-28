@@ -154,30 +154,102 @@ class gg.Facets
     new gg.wf.Barrier {
       f: (tables, envs, node) =>
         @collectXYs(tables, envs, node)
+        @layoutFacets()
         @allocatePanes()
         tables
     }
 
+  layoutFacets: ->
+    # facet X title
+    # facet Y title
+    # add plot backgroundrect
+    # panes container
+
+    w = @g.wFacet
+    h = @g.hFacet
+    svgFacet = @g.svgFacet
+
+    # add a plot background
+    _.subSvg svgFacet, {
+      class: "plot-background"
+      width: w
+      height: h
+    }, "rect"
+
+
+    facetTitleSize = "13pt"
+    titleDims = _.exSize
+      "font-size": facetTitleSize
+      "font-family": "arial"
+    hTitle = titleDims.h + @facetPadding
+    # XXX: make showing facet titles and axes configurable
+
+
+    svgFacet.append("g").append("text")
+      .text(@x)
+      .attr("transform", "translate(#{hTitle}, #{@facetPadding/2})")
+      .attr("dy", "1em")
+      .attr("dx", (w-2*hTitle) / 2)
+      .attr("text-anchor", "middle")
+      .attr("class", "facet-title")
+      .style("font-size", facetTitleSize)
+      .style("fon-family", "arial")
+
+    svgFacet.append("g").append("text")
+      .text(@y + " blah")
+      .attr("transform", "rotate(90)translate(#{hTitle+(h-2*hTitle)/2},-#{w-hTitle-@facetPadding})")
+      .attr("text-anchor", "middle")
+      .attr("class", "facet-title")
+      .style("font-size", facetTitleSize)
+      .style("fon-family", "arial")
+
+    # XXX: better way to retrieve axis labels!
+    svgFacet.append("text")
+      .text("xaxis")
+      .attr("transform", "translate(#{hTitle}, #{h-hTitle-@facetPadding})")
+      .attr("dx", (w-2*hTitle)/2)
+      .attr("text-anchor", "middle")
+    svgFacet.append("text")
+      .text("yaxis")
+      .attr("transform", "rotate(-90)translate(#{-(hTitle+(h-2*hTitle)/2)},#{hTitle})")
+      .attr("text-anchor", "middle")
+
+
+
+
+
+    pDims =
+      left: hTitle
+      top: hTitle
+      width: w - 2*(hTitle-@facetPadding)
+      height: h - 2*(hTitle-@facetPadding)
+      wRatio: (w-2*(hTitle-@facetPadding)) / w
+      hRatio: (h-2*(hTitle-@facetPadding)) / h
+
+    matrix = "#{pDims.wRatio},0,0,#{pDims.hRatio},#{pDims.left},#{pDims.top}"
+
+    @w = pDims.width
+    @h = pDims.height
+    @svg = svgFacet.append('g')
+      .attr("class", "graphic-with-margin")
+      .attr("transform", "matrix(#{matrix})")
+
+
+
+
 
 
   allocatePanes: ->
-    @w = @g.wFacet
-    @h = @g.hFacet
-    @svg = @g.svgFacet
-    margin = @margin / 2
-    matrix = "#{1.0-2*margin/@w},0,0,
-              #{1.0-2*margin/@h},
-              #{margin}, #{margin}"
-    svg = @svg.append('g')
-        .attr('class', 'graphic-with-margin')
-        #.attr('transform', "matrix(#{matrix})")
+    #margin = @margin / 2
+    #matrix = "#{1.0-2*margin/@w},0,0,
+    #          #{1.0-2*margin/@h},
+    #          #{margin}, #{margin}"
+    #svg = @svg.append('g')
+    #    .attr('class', 'graphic-with-margin')
+    #    .attr('transform', "matrix(#{matrix})")
 
-    svg.append('rect')
-        .attr('class', 'plot-background')
-        .attr('x', 0)
-        .attr('y', 0)
-        .attr('width', @w)
-        .attr('height', @h)
+    svg = @svg
+
 
     # compute dimensions for each container
     # top facet space
@@ -250,6 +322,8 @@ class gg.Facets
       _.each @ys, (y, yidx) =>
         left = xRange x
         top = yRange y
+
+        # create the pane
         svgPane = _.subSvg svgPanes, {
           width: xBand
           height: yBand
@@ -263,15 +337,15 @@ class gg.Facets
         _.subSvg svgBg, {
           width: xBand
           height: yBand
-          left: 0
-          top: 0
           class: "facet-grid-background"
         }, "rect"
 
+        # render the axes!
         @renderYAxis svgBg, x, y, xRange, yRange
         @renderXAxis svgBg, x, y, xRange, yRange
 
 
+        # save the pane
         @paneSvgMapper[x] = {} unless x of @paneSvgMapper
         @paneSvgMapper[x][y] = svgPane
 

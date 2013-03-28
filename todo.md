@@ -1,6 +1,5 @@
 # TODOs
 
-1. render axes properly
 
 1. make sure retraining scales after positioning works
 

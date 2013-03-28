@@ -61,8 +61,23 @@ class gg.Graphic
           .attr("width", "100%")
           .attr("height", "100%")
 
-        hTitle = 40
+        # height of title TODO: use _.exSize or _.fontSize instead
+        # Draw Title.  Draw last so it's at the top
+        title = null
+        hTitle = 0
+        if title?
+          hTitle = _.exSize "font-size": "30px"
+          svgTitle = @svg.append("g")
+            .append("text")
+              .text(title)
+              .attr("text-anchor", "middle")
+              .attr("class", "graphic-title")
+              .attr("style", "font-size: 30px")
+              .attr("dx", @w/2)
+              .attr("dy", "1em")
 
+
+        # Create container for facets
         @wFacet = @w
         @hFacet = @h - hTitle
         @svgFacet = @svg.append("g")
@@ -70,14 +85,6 @@ class gg.Graphic
           .attr("width", @wFacet)
           .attr("height", @hFacet)
         @renderGuides()
-
-        # title sits on the top, so draw it last
-        svgTitle = @svg.append("g")
-          .append("text")
-            .text("Title of Graph")
-            .attr("class", "graphic-title")
-            .attr("style", "font-size: 30px")
-            .attr("dy", "1em")
 
         tables
       new gg.wf.Barrier

@@ -6,25 +6,24 @@
   $(document).ready(function() {
 
       var specs = {
-        layers: [ {geom: "point", aes: {x: 'd', y: 'r', fill: 'f', r:'r', "fill-opacity": 0.6}} ],
+        layers: [ {geom: "point", aes: {x: 'd', y: 'r', fill: 'f', r:'r', "fill-opacity": 0.9}} ],
         facets: {x: 'f', y: 'g', fontSize: "15pt"},
         scales: {
           x: {type: 'linear'},
-          r: {type: 'linear', range: [2,15]}
+          r: {type: 'linear', range: [0.5,4]}
         }
       }
 
 
 
-      var w    = 1300;
-      var h    = 1000;
+      var w    = 800;
+      var h    = 600;
       var ex   = function () { return d3.select('#examples').append('span'); };
       var bigdata = _.map(_.range(0, 1000), function(d) {
-          g = Math.floor(Math.random() * 3);
-          f = Math.floor(Math.random() * 3) * 10;
-          t = Math.floor(Math.random() * 3)
-          return {d:d, r: d / (f+1), g: g, f:"f: "+f, t:t};
-          return {d:d, r: t * 0.05 + Math.random() + g, g: g, f:"f: "+f, t:t};
+        g = Math.floor(Math.random() * 3);
+        f = Math.floor(Math.random() * 3);
+        t = Math.floor(Math.random() * 3);
+        return {d:d, r: d, g: g, f:f, t:t};
       })
 
       var scatterplot = gg(specs)
