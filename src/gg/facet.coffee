@@ -223,6 +223,7 @@ class gg.Facets
     yBand = yRange.rangeBand()
     console.log "x/yBand: #{xBand} / #{yBand}\t#{paneWidth} / #{paneHeight}"
 
+    @setScalesRanges xBand, yBand
 
     console.log topFacetOpts
 
@@ -235,10 +236,16 @@ class gg.Facets
     svgRightLabels = _.subSvg svgL, rightFacetOpts
     @renderRightLabels svgRightLabels, yRange
 
+
+
+
+
     #
     # create svg elements for each pane, and add them to the map
     #
     svgPanes = _.subSvg svg, paneOpts
+
+
     _.each @xs, (x, xidx) =>
       _.each @ys, (y, yidx) =>
         left = xRange x
@@ -251,7 +258,9 @@ class gg.Facets
           id: "facet-grid-#{xidx}-#{yidx}"
           class: "facet-grid"
         }
-        _.subSvg svgPane, {
+
+        svgBg = svgPane.append('g')
+        _.subSvg svgBg, {
           width: xBand
           height: yBand
           left: 0
@@ -259,30 +268,12 @@ class gg.Facets
           class: "facet-grid-background"
         }, "rect"
 
+        @renderYAxis svgBg, x, y, xRange, yRange
+        @renderXAxis svgBg, x, y, xRange, yRange
+
 
         @paneSvgMapper[x] = {} unless x of @paneSvgMapper
         @paneSvgMapper[x][y] = svgPane
-
-        scales = @g.scales.facetScales(x, y)
-
-        if xidx == 0 # render y axis
-
-          console.log "range of y-axis"
-          console.log scales.scale('y').range()
-          yAxis = d3.svg.axis()
-            .scale(scales.scale('y').d3Scale)
-            .ticks(5)
-            .tickSize(2*@panePadding - xBand)
-            .orient('left')
-
-          #yAxis.tickFormat('')
-
-          svg.append('g')
-             .attr('class', 'y axis')
-             .attr('fill', 'none')
-             .attr('transform', "translate(#{left+@panePadding},#{top})")
-             .call(yAxis)
-
 
 
 
@@ -296,7 +287,49 @@ class gg.Facets
     #@renderXAxes xRange
     #@renderYAxes yRange
 
-    # finally, update ranges of all the scales
+  renderYAxis: (svg, x, y, xRange, yRange) ->
+    left = 0#xRange x
+    top = 0#yRange y
+    xBand = xRange.rangeBand()
+    scales = @g.scales.facetScales x, y
+
+    console.log "range of y-axis"
+    console.log scales.scale('y').range()
+    yAxis = d3.svg.axis()
+      .scale(scales.scale('y').d3Scale)
+      .ticks(5)
+      .tickSize(-xBand)
+      .orient('left')
+
+    yAxis.tickFormat('') unless x == @xs[0]
+
+    svg.append('g')
+       .attr('class', 'y axis')
+       .attr('transform', "translate(#{left},#{top})")
+       .call(yAxis)
+
+  renderXAxis: (svg, x, y, xRange, yRange) ->
+    left = 0#xRange x
+    top = 0#yRange y
+    yBand = yRange.rangeBand()
+    scales = @g.scales.facetScales x, y
+
+    xAxis = d3.svg.axis()
+        .scale(scales.scale('x').d3Scale)
+        .ticks(5)
+        .tickSize(- yBand)
+        .orient('bottom')
+
+    xAxis.tickFormat('') unless y == _.last(@ys)
+
+    svg.append('g')
+        .attr('class', 'x axis')
+        .attr('fill', 'none')
+        .attr('transform', "translate(0, #{yBand})")
+        .call(xAxis)
+
+
+  setScalesRanges: (xBand, yBand) ->
     _.each @g.scales.scalesList, (ss) =>
       _.each gg.Scale.xs, (aes) =>
         ss.scale(aes).range [0+@panePadding, xBand-@panePadding]
@@ -304,6 +337,9 @@ class gg.Facets
       _.each gg.Scale.ys, (aes) =>
         ss.scale(aes).range [yBand-@panePadding, 0+@panePadding]
         console.log "scales(#{aes}): #{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
+
+
+
 
 
 

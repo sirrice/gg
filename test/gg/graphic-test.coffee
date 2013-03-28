@@ -9,7 +9,7 @@ makeTable = (nrows=100) ->
     t = Math.floor(Math.random() * 3)
     {
       d:d
-      r: 1 + t * 0.5 + Math.abs(Math.random()) + g
+      r:d# 1 + t * 0.5 + Math.abs(Math.random()) + g
       g: g
       f:f
       t:t

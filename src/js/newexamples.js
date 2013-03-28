@@ -6,7 +6,7 @@
   $(document).ready(function() {
 
       var specs = {
-        layers: [ {geom: "point", aes: {x: 'd', y: 'r', fill: 't', r:'r', "fill-opacity": 0.6}} ],
+        layers: [ {geom: "point", aes: {x: 'd', y: 'r', fill: 'f', r:'r', "fill-opacity": 0.6}} ],
         facets: {x: 'f', y: 'g', fontSize: "15pt"},
         scales: {
           x: {type: 'linear'},
@@ -23,6 +23,7 @@
           g = Math.floor(Math.random() * 3);
           f = Math.floor(Math.random() * 3) * 10;
           t = Math.floor(Math.random() * 3)
+          return {d:d, r: d / (f+1), g: g, f:"f: "+f, t:t};
           return {d:d, r: t * 0.05 + Math.random() + g, g: g, f:"f: "+f, t:t};
       })
 
