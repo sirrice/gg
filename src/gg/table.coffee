@@ -11,9 +11,15 @@ class gg.Table
 
     @merge: (tables) -> gg.RowTable.merge tables
 
-    each: (f) -> _.each _.range(@nrows()), (i) => f @get(i), i
+    each: (f, n=null) -> _.each _.range(if n? then n else  @nrows()), (i) => f @get(i), i
     # XXX: destructive!
-    map: (f, colName=null) -> throw Error("not implemented")
+    # updates column values in place
+    # @param {Function or map} fOrName
+    #        must specify colName if fOrMap is a Function
+    #        otherwise, fOrMap is a mapping from colName --> (old val)->new val
+    # @param {String} colName
+    #        is specified if fOrName is a function, otherwise ignored
+    map: (fOrMap, colName=null) -> throw Error("not implemented")
     clone: -> @cloneShallow()
     cloneShallow: -> throw "not implemented"
     cloneDeep: -> throw "not implemented"
@@ -52,12 +58,9 @@ class gg.RowTable extends gg.Table
         throw Error("no rows to extract schema from")
       else
         _.keys @get(0)
-    # more direct implementation
-    each: (f) -> _.each @rows, f
-
 
     cloneShallow: -> new gg.RowTable(@rows.map (row) -> row)
-    cloneDeep: -> new gg.RowTable(@rows.map (row) => @toTuple(_.clone(row)))
+    cloneDeep: -> new gg.RowTable(@rows.map (row) => gg.RowTable.toTuple(_.clone(row)))
 
 
     merge: (table) ->
@@ -157,11 +160,21 @@ class gg.RowTable extends gg.Table
                     throw error
         ret
 
-    map: (f, colName=null) ->
-      if colName?
-        @each (row, idx) -> row[colName] = f(row[colName])
+    map: (fOrMap, colName=null) ->
+      if _.isFunction fOrMap
+        f = fOrMap
+        if colName?
+          @each (row, idx) -> row[colName] = f(row[colName])
+        else
+          throw Error("RowTable.map without a colname is not implemented")
+      else if _.isObject fOrMap
+        @each (row, idx) ->
+          _.each fOrMap, (f, col) -> row[col] = f row[col]
       else
-        throw Error("RowTable.map without a colname is not implemented")
+        throw Error("RowTable.map: invalid arguments: #{arguments}")
+
+      @
+
 
 
     addConstColumn: (name, val, type=null) ->

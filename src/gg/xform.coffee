@@ -44,12 +44,6 @@ class gg.XForm# extends gg.wf.Exec
 
   parseSpec: ->
     spec = _.clone @spec
-    @compute = spec.f or @compute
-    _compute = (table, env, node) =>
-      @addDefaults table, env
-      @validateInput table, env
-      @compute table, env, node
-    spec.f = _compute
 
     inputSchema = findGood [spec.inputSchema, null]
     if inputSchema?
@@ -60,6 +54,13 @@ class gg.XForm# extends gg.wf.Exec
     if defaults?
       defaults = (table, env) -> defaults unless _.isFunction(defaults)
       @defaults = defaults
+
+    @compute = spec.f or @compute
+    _compute = (table, env, node) =>
+      @addDefaults table, env
+      @validateInput table, env
+      @compute table, env, node
+    spec.f = _compute
 
     @spec = spec
 
@@ -87,12 +88,11 @@ class gg.XForm# extends gg.wf.Exec
     tableCols = table.colNames()
     iSchema = @inputSchema table, env
     missing = _.reject iSchema, (attr) -> attr in tableCols
-    console.log "expecting input schema #{iSchema}"
     if missing.length > 0
       throw Error("#{@name}: input schema did not contain #{missing.join(",")}")
 
   addDefaults: (table, env) ->
-    console.log "adding defaults of #{JSON.stringify @defaults(table, env)}"
+    console.log "adding defaults of #{JSON.stringify _.omit(@defaults(table, env), table.colNames())}"
     console.log "                   #{JSON.stringify table.colNames()}"
     _.each @defaults(table, env), (val, col) ->
       unless col in table.colNames()
@@ -100,8 +100,7 @@ class gg.XForm# extends gg.wf.Exec
 
   compute: (table, env, node) -> table
 
-  compile: ->
-    [new gg.wf.Exec @spec]
+  compile: -> [new gg.wf.Exec @spec]
 
   @fromSpec: (spec) ->
       xformName = findGood [spec.xform, "identity"]

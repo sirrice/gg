@@ -6,7 +6,11 @@
   $(document).ready(function() {
 
       var specs = {
-        layers: [ {geom: "point", aes: {x: 'd', y: 'r', fill: 'f', r:'r', "fill-opacity": 0.9}} ],
+        layers: [ {
+          geom: "point",
+          aes: {x: 'd', y: 'r', fill: 'f', r:'r', "fill-opacity": 0.9},
+          pos: {type: "jitter", scale:0.5}
+        } ],
         facets: {x: 'f', y: 'g', fontSize: "15pt"},
         scales: {
           x: {type: 'linear'},

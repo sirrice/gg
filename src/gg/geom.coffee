@@ -1,4 +1,5 @@
 #<< gg/wf/node
+#<< gg/position
 
 
 
@@ -16,7 +17,7 @@ class gg.GeomTransform extends gg.XForm
     _.each scalesSet.aesthetics(), (aes) =>
       scale = scalesSet.scale(aes)
       f = (v) -> scale.scale(v)
-      console.log "topixel: #{aes} scale is (#{scale.domain()}) -> (#{scale.range()})"
+      #console.log "topixel: #{aes} scale is (#{scale.domain()}) -> (#{scale.range()})"
       table.map f, aes if table.contains aes
     table
 
@@ -67,14 +68,17 @@ class gg.Geom extends gg.XForm
       posSpec = findGood [@spec.pos, @spec.position, "identity"]
 
       @mapping = new gg.Mapper @g, @spec if aesSpec?
-      @position = gg.Position.fromSpec @layer, @spec.pos
+      @position = gg.Position.fromSpec @layer, posSpec
       @render = gg.GeomRender.fromSpec @layer, @spec.geom
       @transformDomain = new gg.GeomTransform @layer, {name: "topixel"}
-      console.log @render
+
 
     mappingXForm: -> if @mapping? then @mapping.compile() else []
     transformDomainXForm: -> @transformDomain.compile()
-    positionXForm: -> @position.compile()
+    positionXForm: ->
+      console.log "compiling position xform"
+      console.log @position.spec
+      @position.compile()
     renderXForm: -> @render.compile()
     compile: -> _.flatten [@mappingXForm(), @positionXForm(), @renderXForm()]
     name: -> @constructor.name.toLowerCase()
@@ -95,7 +99,11 @@ class gg.Geom extends gg.XForm
             gg.Edge
         ]
         ret = {}
-        _.each klasses, (klass) -> ret[klass.name] = klass
+        _.each klasses, (klass) ->
+          if _.isArray klass.aliases
+            _.each klass.aliases, (alias) -> ret[alias] = klass
+          else
+            ret[klass.aliases] = klass
         ret
 
     @fromSpec: (layer, spec) ->
@@ -115,7 +123,7 @@ class gg.Geom extends gg.XForm
 
 # x,y,r,x0,x1,y0,y1, ...
 class gg.Point extends gg.Geom
-    @name: "point"
+    @aliases: ["point"]
 
     defaults: ->
       r: 2
@@ -141,37 +149,37 @@ class gg.Point extends gg.Geom
 
 
 class gg.Line extends gg.Geom
-    @name: "line"
+    @aliases: "line"
 
 
 
 class gg.Step extends gg.Geom
-    @name: "step"
+    @aliases: "step"
 
 class gg.Path extends gg.Geom
-    @name: "path"
+    @aliases: "path"
 
 class gg.Area extends gg.Geom
-    @name: "area"
+    @aliases: "area"
 
 class gg.Interval extends gg.Geom
-    @name: "interval"
+    @aliases: "interval"
 
 class gg.Rect extends gg.Geom
-    @name: "rect"
+    @aliases: "rect"
 
 class gg.Polygon extends gg.Geom
-    @name: "polygon"
+    @aliases: "polygon"
 
 class gg.Hex extends gg.Geom
-    @name: "hex"
+    @aliases: "hex"
 
 # boxplot
 class gg.Schema extends gg.Geom
-    @name: "schema"
+    @aliases: "schema"
 
 class gg.Glyph extends gg.Geom
-    @name: "glyph"
+    @aliases: "glyph"
 
 class gg.Edge extends gg.Geom
-    @name: "edge"
+    @aliases: "edge"

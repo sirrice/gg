@@ -193,7 +193,7 @@ class gg.Facets
       .attr("text-anchor", "middle")
       .attr("class", "facet-title")
       .style("font-size", facetTitleSize)
-      .style("fon-family", "arial")
+      .style("font-family", "arial")
 
     svgFacet.append("g").append("text")
       .text(@y + " blah")
@@ -203,7 +203,7 @@ class gg.Facets
       .style("font-size", facetTitleSize)
       .style("fon-family", "arial")
 
-    # XXX: better way to retrieve axis labels!
+    # XXX: have better API to retrieve axis labels!
     svgFacet.append("text")
       .text("xaxis")
       .attr("transform", "translate(#{hTitle}, #{h-hTitle-@facetPadding})")

@@ -263,6 +263,7 @@ class gg.ColorScale extends gg.Scale
         @endColor = @spec.endColor or d3.rgb 2, 56, 88
         @fixedScale = d3.scale.linear().range [@startColor, @endColor]
 
+
     isNumeric: (col) -> _.every _.compact(col), _.isNumber
 
 
@@ -272,18 +273,19 @@ class gg.ColorScale extends gg.Scale
         if @isNumeric(col) and uniqueVals.length > 20
             @d3Scale = @fixedScale
             _.extend @, _.pick(gg.Scale.prototype,
-                'mergeDomain', 'domain', 'range', 'scale')
+                'mergeDomain', 'domain', 'range', 'scale', 'invert')
             @mergeDomain super(col)
         else
             @d3Scale = d3.scale.category20()
             @.range = (interval=null) =>
-              if interval?
-                @d3Scale = @d3Scale.range(interval)
-              console.log "getting color scale range"
+              @d3Scale = @d3Scale.range(interval) if interval?
               @d3Scale.range()
             _.extend @, _.pick(gg.CategoricalScale.prototype,
                 'mergeDomain', 'domain', 'scale')
             @mergeDomain uniqueVals
+            @invertScale = d3.scale.ordinal().domain(@d3Scale.range()).range(@d3Scale.domain())
+            @.invert = (v) => @invertScale(v)
+
 
 
 class gg.TextScale extends gg.Scale

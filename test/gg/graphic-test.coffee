@@ -43,6 +43,7 @@ spec =
         fill: 't'
         r: "r"
         "fill-opacity": "0.6"
+      pos: {type:"jitter", scale: 0.2}
 
     }
   ]
@@ -66,7 +67,7 @@ suite.addBatch
 
     "can run": (graphic) ->
       svg = d3.select("body").append("svg")
-      graphic.render 500, 500, svg, makeTable(5000)
+      graphic.render 500, 500, svg, makeTable(500)
 
 
 suite.export module

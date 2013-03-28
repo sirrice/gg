@@ -1,5 +1,37 @@
 #<< gg/util
 
+class gg.Layers
+    constructor: (@g, @spec) ->
+      @layers = []
+      @parseSpec()
+
+    parseSpec: ->
+      _.each @spec, (layerspec) => @addLayer layerspec
+
+    # @return [ [node,...], ...] a list of nodes for each layer
+    compile: -> _.map @layers, (l) -> l.compile()
+
+    getLayer: (layerIdx) ->
+      if layerIdx >= @layers.length
+        throw Error("Layer with idx #{layerIdx} does not exist.
+          Max layer is #{@layers.length}")
+      @layers[layerIdx]
+    get: (layerIdx) -> @getLayer layerIdx
+
+    addLayer: (layerOrSpec) ->
+      layerIdx = @layers.length
+
+      if _.isSubclass layerOrSpec, gg.Layer
+        layer = layerOrSpec
+      else
+        spec = _.clone layerOrSpec
+        spec.layerIdx = layerIdx
+        layer = new gg.Layer @g, spec
+
+      layer.layerIdx = layerIdx
+      @layers.push layer
+
+
 
 
 
@@ -134,14 +166,14 @@ class gg.Layer
       nodes.push @statXForms()
 
       nodes.push @g.facets.labelers
-      nodes.push new gg.wf.Stdout {name: "pre-geom", n: 10}
+      nodes.push new gg.wf.Stdout {name: "pre-geom", n: 1}
 
 
       # geom: map attributes to aesthetic names, and to pixels
       nodes.push @geom.mappingXForm()
       # scales: train scales after the final aesthetic mapping (inputs are data values)
       nodes.push @g.scales.pregeomNode
-      nodes.push new gg.wf.Stdout {name: "post-geom", n: 10}
+      nodes.push new gg.wf.Stdout {name: "post-geom", n: 1}
 
       # layout the overall graphic, allocate space for facets
       nodes.push @g.layoutNode()
@@ -149,21 +181,21 @@ class gg.Layer
       nodes.push @g.facets.allocatePanesNode()
 
       # geom: facets have set the ranges so transform data values to pixel values
-      nodes.push new gg.wf.Stdout {name: "pre-pixel", n: 10}
+      nodes.push new gg.wf.Stdout {name: "pre-pixel", n: 1}
       nodes.push @geom.transformDomainXForm()
-      nodes.push new gg.wf.Stdout {name: "topixel", n: 10}
       # geom: position transformation
       nodes.push @geom.positionXForm()
 
       # facets: retrain scales (inputs are pixel values)
       #         this training is necessary to ensure axes are rendered correctly!
-      #nodes.push @g.scales.prerenderNode
+      nodes.push new gg.wf.Stdout {name: "pre-scales:pixel", n: 1}
+      nodes.push @g.scales.prerenderNode
       # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
 
       # facets: render axes  XXX: not implemented
       # nodes.push @g.facets.renderPanes()
       # render: render geometries
-      nodes.push new gg.wf.Stdout {name: "position pixel", n: 10}
+      nodes.push new gg.wf.Stdout {name: "position pixel", n: 1}
       nodes.push @geom.renderXForm()
 
 

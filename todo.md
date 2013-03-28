@@ -1,9 +1,9 @@
 # TODOs
 
 
-1. make sure retraining scales after positioning works
+1. draw facet labels after geometries
 
-1. make positioning and stats work
+1. make stats work
 
 1. support tables as columns (for lines)
 
@@ -19,3 +19,15 @@
 
   fill: "attr2"
   stroke: "attr2"
+
+
+# DONE
+
+
+x. make positioning work
+x. make sure retraining scales after positioning works
+   -> facets set position range in allocatePanes.  need to make sure if
+      ranges are set that they will be used in future.
+   -> stop overwriting existing scales objects?
+
+

@@ -47,6 +47,7 @@ class gg.GeomRender extends gg.XForm
     klasses = gg.GeomRender.klasses()
     if _.isString spec
       type = spec
+      spec = {type: type}
     else
       type = findGood [spec.geom, spec.type, spec.shape, "point"]
     klass = klasses[type] or gg.GeomRenderPointSvg
