@@ -53,12 +53,32 @@ class gg.Graphic
     # Barrier that renders guides, title, margins, layout, etc
     layoutNode: ->
       f = (tables, envs, node) =>
-        @svgFacet = @svg.append("svg")
+        @svg = @svg.append("svg")
           .attr("width", @w)
           .attr("height", @h)
+        @svg.append("rect")
+          .attr("class", "graphic-background")
+          .attr("width", "100%")
+          .attr("height", "100%")
+
+        hTitle = 40
+
         @wFacet = @w
-        @hFacet = @h
+        @hFacet = @h - hTitle
+        @svgFacet = @svg.append("g")
+          .attr("transform", "translate(0, #{hTitle})")
+          .attr("width", @wFacet)
+          .attr("height", @hFacet)
         @renderGuides()
+
+        # title sits on the top, so draw it last
+        svgTitle = @svg.append("g")
+          .append("text")
+            .text("Title of Graph")
+            .attr("class", "graphic-title")
+            .attr("style", "font-size: 30px")
+            .attr("dy", "1em")
+
         tables
       new gg.wf.Barrier
         name: "layoutNode"
@@ -68,8 +88,11 @@ class gg.Graphic
 
     # XXX: at what point do we render the title/guides etc?
     render: (@w, @h, @svg, table) ->
-        @compile()
-        @workflow.run table
+      if _.isArray table
+        table = new gg.RowTable table
+
+      @compile()
+      @workflow.run table
 
 
 class gg.Layers

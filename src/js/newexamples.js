@@ -6,9 +6,12 @@
   $(document).ready(function() {
 
       var specs = {
-        layers: [ {geom: "point", aes: {x: 'x', y: 'y'}} ],
-        facets: {x: 'a', y: 'b'},
-        scales: {x: {type: 'linear'}}
+        layers: [ {geom: "point", aes: {x: 'd', y: 'r', fill: 't', r:'r', "fill-opacity": 0.6}} ],
+        facets: {x: 'f', y: 'g', fontSize: "15pt"},
+        scales: {
+          x: {type: 'linear'},
+          r: {type: 'linear', range: [2,15]}
+        }
       }
 
 
@@ -16,14 +19,14 @@
       var w    = 1300;
       var h    = 1000;
       var ex   = function () { return d3.select('#examples').append('span'); };
-      var bigdata = _.map(_.range(0, 5000), function(d) {
+      var bigdata = _.map(_.range(0, 1000), function(d) {
           g = Math.floor(Math.random() * 3);
           f = Math.floor(Math.random() * 3) * 10;
           t = Math.floor(Math.random() * 3)
-          return {d:d, r: t * 0.05 + Math.random() + g, g: g, f:f, t:t};
+          return {d:d, r: t * 0.05 + Math.random() + g, g: g, f:"f: "+f, t:t};
       })
 
-      var scatterplot = gg.gg(specs)
+      var scatterplot = gg(specs)
       scatterplot.render(w, h, ex(), bigdata)
   });
 })();

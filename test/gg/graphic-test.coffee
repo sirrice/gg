@@ -54,7 +54,7 @@ spec =
       type: "linear"
     r:
       type: "linear"
-      range: [2, 10]
+      range: [2, 5]
 
 
 suite.addBatch
@@ -66,8 +66,7 @@ suite.addBatch
 
     "can run": (graphic) ->
       svg = d3.select("body").append("svg")
-      graphic.render 500, 500, svg, makeTable(500)
-      console.log svg.html()
+      graphic.render 500, 500, svg, makeTable(5000)
 
 
 suite.export module

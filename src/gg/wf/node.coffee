@@ -180,7 +180,7 @@ class gg.wf.Node extends events.EventEmitter
     throw Error("input index #{idx} >= #{@inputs.length}") if idx >= @inputs.length
 
     (node, data) =>
-      if isSubclass data, gg.Table
+      if _.isSubclass data, gg.Table
         data = new gg.wf.Data data
 
       if @inputs[idx]?

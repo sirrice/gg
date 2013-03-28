@@ -38,6 +38,7 @@ _.extend @, gg
 # this sets MODULE.gg as the fromSpec method
 fromSpec = (spec) -> new gg.Graphic spec
 @gg = fromSpec
+_.extend @gg, gg
 
 
 

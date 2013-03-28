@@ -28,75 +28,83 @@ _ = require 'underscore'
         groups['data'] = _.pluck data, variable
     groups
 
-findGood = (list) ->
-    ret = _.find list, (v)->v != null and v?
-    if typeof ret is "undefined"
-        if list.length then _.last(list) else undefined
-    else
-        ret
+class gg.Util
 
-isSubclass = (instance, partype) ->
-    c = instance
-    while c?
-        if c.constructor.name is partype.name
-            return yes
-        unless c.constructor.__super__?
-            return no
-        c = c.constructor.__super__
+  @findGood: (list) ->
+      ret = _.find list, (v)->v != null and v?
+      if typeof ret is "undefined"
+          if list.length then _.last(list) else undefined
+      else
+          ret
 
-exSize = (() ->
-  cache = {}
-  _f = (pt=12) ->
-    if pt of cache
-      cache["#{pt}"]
+  @isSubclass: (instance, partype) ->
+      c = instance
+      while c?
+          if c.constructor.name is partype.name
+              return yes
+          unless c.constructor.__super__?
+              return no
+          c = c.constructor.__super__
+
+  @_exSizeCache = {}
+  @exSize: (opts) ->
+    optsJson = JSON.stringify opts
+    if optsJson of gg.Util._exSizeCache
+      gg.Util._exSizeCache[optsJson]
     else
       try
         alphas = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         body = document.getElementsByTagName("body")[0]
         div = document.createElement("div")
         div.textContent = alphas
-        size = if _.isNumber(pt) then "#{pt}pt" else pt
         css =
-          display: "none"
-          "font-size": size
-          padding: "none"
-          margin: "none"
+          opacity: 0
+          "font-size": "12pt"
+          "font-family": "arial"
+          padding: 0
+          margin: 0
+        _.extend css, opts
+
         _.each css,  (v,k) -> div.style[k] = v
-        body.appendChild(div)
+
+        body.appendChild div
         width = div.clientWidth / alphas.length
         height = div.clientHeight
+        body.removeChild div
+
         width = 12 if width is 0
-        height = 12 if height is 0
+        height = 20 if height is 0
 
         if _.any [width, height], _.isNaN
           throw Error("exSize: width(#{width}), height(#{height})")
 
-        {
+        ret = {
           width: width
           height: height
           w: width
           h: height
         }
+
+        gg.Util._exSizeCache[optsJson] = ret
+        ret
       catch error
+        console.log error
         {
           width: 20
           height: 20
           w: 20
           h: 20
         }
-  _f
-)()
 
-# search for the optimal size for text to be contained within
-# a bounding box.  Useful for text/label layout
-fontSize = (() ->
-  larger = (div, size) ->
+  # search for the optimal size for text to be contained within
+  # a bounding box.  Useful for text/label layout
+  @larger: (div, size) ->
     div.style["font-size"] = "#{size}pt"
     [sw, sh] = [div[0].scrollWidth, div[0].scrollHeight]
     sw > div.clientWidth or sh > div.clientHeight
 
 
-  f = (text, width, height, font="arial") ->
+  @fontSize: (text, width, height, font="arial") ->
     body = document.getElementsByTagName("body")[0]
     div = document.createElement("div")
     _.extend div.style, {
@@ -116,41 +124,41 @@ fontSize = (() ->
     n = 0
     while n < 100
       n += 1
-      if larger div, size
+      if gg.Util.larger div, size
          if size > 50
            size /= 2
          else
            size -= 1
       else
-         if larger div, size + 1
+         if gg.Util.larger div, size + 1
            break
          size += 5
 
     body.removeChild(div)
     size
-  f
-)()
 
-subSvg = (svg, opts, tag="g") ->
-  el = svg.append(tag)
-  left = findGood [opts.left, 0]
-  top = findGood [opts.top, 0]
-  el.attr("transform", "translate(#{left},#{top})")
-  _.each opts, (val, attr) ->
-    el.attr(attr, val) unless attr in ['left', 'top']
-  el
+  @subSvg: (svg, opts, tag="g") ->
+    el = svg.append(tag)
+    left = findGood [opts.left, 0]
+    top = findGood [opts.top, 0]
+    el.attr("transform", "translate(#{left},#{top})")
+    _.each opts, (val, attr) ->
+      el.attr(attr, val) unless attr in ['left', 'top']
+    el
 
-repeat = (n, val) -> _.times(n, (->val))
+  @repeat: (n, val) -> _.times(n, (->val))
 
+
+findGood = gg.Util.findGood
 
 _.mixin
-  findGood: findGood
-  isSubclass: isSubclass
+  findGood: gg.Util.findGood
+  isSubclass: gg.Util.isSubclass
   cross: @cross
-  exSize: exSize
-  fontsize: fontSize
-  subSvg: subSvg
-  repeat: repeat
+  exSize: gg.Util.exSize
+  fontsize: gg.Util.fontSize
+  subSvg: gg.Util.subSvg
+  repeat: gg.Util.repeat
 
 
 

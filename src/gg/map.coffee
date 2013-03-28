@@ -35,7 +35,10 @@ class gg.Mapper extends gg.XForm
     table.transform @mapping, yes
     table
 
-  compile: -> new gg.wf.Exec @spec
+  compile: -> new gg.wf.Exec
+    name: @name
+    aes: @mapping
+    f: @spec.f
 
   invertColName: (outColName) -> @inverse[outColName]
 

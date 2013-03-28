@@ -1,8 +1,12 @@
 # TODOs
 
-1. ensure shorthand mapping actually performs correctly
-   somewhere in the workflow, the mapping is lost!  where do
-   the mappings need to be established?
+1. render axes properly
+
+1. make sure retraining scales after positioning works
+
+1. make positioning and stats work
+
+1. support tables as columns (for lines)
 
 2. Support grouping and propogating mapped aesthetics down the
    workflow

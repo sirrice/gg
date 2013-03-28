@@ -54,9 +54,13 @@ class gg.Facets
     @margin = findGood [@spec.margin, 10]
     @facetXLabel = findGood [@spec.xLabel, "Facet X"]
     @facetYLabel = findGood [@spec.yLabel, "Facet Y"]
-    @facetFontSize = findGood [@spec.facetFontSize, "12pt"]
-    @facetPadding = findGood [@spec.facetPadding, "5"]
-    @exSize = _.exSize @facetFontSize
+    @facetFontSize = findGood [@spec.fontSize, @spec['font-size'], "12pt"]
+    @facetFontFamily = findGood [@spec.fontFamily, @spec['font-family'],  "arial"]
+    @facetPadding = findGood [@spec.facetPadding, 5]
+    @panePadding = findGood [@spec.panePadding, 10]
+    @exSize = _.exSize
+      "font-size": @facetFontSize
+      "font-family": @facetFontFamily
 
 
 
@@ -166,7 +170,7 @@ class gg.Facets
               #{margin}, #{margin}"
     svg = @svg.append('g')
         .attr('class', 'graphic-with-margin')
-        .attr('transform', "matrix(#{matrix})")
+        #.attr('transform', "matrix(#{matrix})")
 
     svg.append('rect')
         .attr('class', 'plot-background')
@@ -213,8 +217,8 @@ class gg.Facets
 
     console.log @xs
     console.log @ys
-    xRange = d3.scale.ordinal().domain(@xs).rangeBands [0, paneWidth], 0.05
-    yRange = d3.scale.ordinal().domain(@ys).rangeBands [0, paneHeight], 0.05
+    xRange = d3.scale.ordinal().domain(@xs).rangeBands [0, paneWidth], 0.05, 0
+    yRange = d3.scale.ordinal().domain(@ys).rangeBands [0, paneHeight], 0.05, 0
     xBand = xRange.rangeBand()
     yBand = yRange.rangeBand()
     console.log "x/yBand: #{xBand} / #{yBand}\t#{paneWidth} / #{paneHeight}"
@@ -225,7 +229,7 @@ class gg.Facets
     #
     # create and populate svgs for the facet labels
     #
-    svgL = _.subSvg @svg, {class: "labels-container"}
+    svgL = _.subSvg svg, {class: "labels-container"}
     svgTopLabels = _.subSvg svgL, topFacetOpts
     @renderTopLabels svgTopLabels, xRange
     svgRightLabels = _.subSvg svgL, rightFacetOpts
@@ -234,7 +238,7 @@ class gg.Facets
     #
     # create svg elements for each pane, and add them to the map
     #
-    svgPanes = _.subSvg @svg, paneOpts
+    svgPanes = _.subSvg svg, paneOpts
     _.each @xs, (x, xidx) =>
       _.each @ys, (y, yidx) =>
         left = xRange x
@@ -247,8 +251,39 @@ class gg.Facets
           id: "facet-grid-#{xidx}-#{yidx}"
           class: "facet-grid"
         }
+        _.subSvg svgPane, {
+          width: xBand
+          height: yBand
+          left: 0
+          top: 0
+          class: "facet-grid-background"
+        }, "rect"
+
+
         @paneSvgMapper[x] = {} unless x of @paneSvgMapper
         @paneSvgMapper[x][y] = svgPane
+
+        scales = @g.scales.facetScales(x, y)
+
+        if xidx == 0 # render y axis
+
+          console.log "range of y-axis"
+          console.log scales.scale('y').range()
+          yAxis = d3.svg.axis()
+            .scale(scales.scale('y').d3Scale)
+            .ticks(5)
+            .tickSize(2*@panePadding - xBand)
+            .orient('left')
+
+          #yAxis.tickFormat('')
+
+          svg.append('g')
+             .attr('class', 'y axis')
+             .attr('fill', 'none')
+             .attr('transform', "translate(#{left+@panePadding},#{top})")
+             .call(yAxis)
+
+
 
 
     # update ranges for the scales
@@ -264,10 +299,10 @@ class gg.Facets
     # finally, update ranges of all the scales
     _.each @g.scales.scalesList, (ss) =>
       _.each gg.Scale.xs, (aes) =>
-        ss.scale(aes).range [0, xBand]
+        ss.scale(aes).range [0+@panePadding, xBand-@panePadding]
         console.log "scales(#{aes}): #{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
       _.each gg.Scale.ys, (aes) =>
-        ss.scale(aes).range [0, yBand]
+        ss.scale(aes).range [yBand-@panePadding, 0+@panePadding]
         console.log "scales(#{aes}): #{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
 
 
@@ -338,7 +373,9 @@ class gg.Facets
     enter.select("text")
       .attr("x", (d) -> xRange(d) + xRange.rangeBand()/2)
       .attr("y", @facetPadding)
-      .attr("dy", "0.5em")
+      .attr("dy", "1em")
+      .style("font-size", @facetFontSize)
+      .style("font-family", @facetFontFamily)
     enter.select("rect")
       .attr("x", xRange)
       .attr("y", 0)
@@ -353,9 +390,11 @@ class gg.Facets
 
     labels.select("text").text(String)
     enter.select("text")
-      .attr("dx", "0.2em")
+      .attr("dx", ".5em")
       .attr("y", (d) -> yRange(d) + yRange.rangeBand()/2)
       .attr("rotate", 90)
+      .style("font-size", @facetFontSize)
+      .style("font-family", @facetFontFamily)
     enter.select("rect")
       .attr("x", 0)
       .attr("y", yRange)

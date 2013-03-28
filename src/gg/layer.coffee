@@ -56,7 +56,7 @@ class gg.Layer
 
         # NOTE: mapper defines the initial aesthetics mapping
         console.log "mapperSpec: #{JSON.stringify mappingSpec}"
-        @mapper = new gg.Mapper @g, {aes: mappingSpec}
+        @mapper = new gg.Mapper @g, {aes: mappingSpec, name: "initialmap"}
         @stats = [gg.Stat.fromSpec(@, statSpec)]
         @geom = gg.Geom.fromSpec @, geomSpec
 
@@ -127,6 +127,7 @@ class gg.Layer
 
       nodes.push @labelerXForm()
       # stats: pre-stats aesthetics mapping
+      nodes.push new gg.wf.Stdout {name: "initial data", n: 10}
       nodes.push @mapXForm()
       # scales: train scales (inputs are data values)
       nodes.push @g.scales.prestatsNode
@@ -155,9 +156,8 @@ class gg.Layer
       nodes.push @geom.positionXForm()
 
       # facets: retrain scales (inputs are pixel values)
-      #nodes.push new gg.wf.Stdout {name: "pre-render"}
+      #         this training is necessary to ensure axes are rendered correctly!
       #nodes.push @g.scales.prerenderNode
-      #nodes.push new gg.wf.Stdout {name: "prerender"}
       # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
 
       # facets: render axes  XXX: not implemented
