@@ -7,14 +7,15 @@
 
       var specs = {
         layers: [ {
-          geom: "point",
-          aes: {x: 'd', y: 'r', fill: 'f', r:'r', "fill-opacity": 0.9},
-          pos: {type: "jitter", scale:0.5}
+          geom: { type:"point", aes: {y: 'total', r: 'total'} },
+          aes: {x: 'd', y: 'r', 'fill': 'f',  "fill-opacity": 0.9},
+          pos: {type: "jitter", scale:0.05},
+          stat: "bin"
         } ],
         facets: {x: 'f', y: 'g', fontSize: "15pt"},
         scales: {
           x: {type: 'linear'},
-          r: {type: 'linear', range: [0.5,4]}
+          r: {type: 'linear', range: [1,4]}
         }
       }
 

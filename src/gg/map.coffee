@@ -14,8 +14,8 @@
 #
 class gg.Mapper extends gg.XForm
   constructor: (@g, @spec) ->
-    @parseSpec()
     super @g, @spec
+    @parseSpec()
 
     @type = "mapper"
     @name = findGood [@spec.name, "mapper-#{@id}"]
@@ -25,20 +25,17 @@ class gg.Mapper extends gg.XForm
     console.log "mapper spec: #{JSON.stringify @mapping}"
 
     @aesthetics = _.keys @mapping
-    @spec.f = (args...) => @compute(args...)
+    @spec.aes = @mapping
     @inverse = {}
     _.each @mapping, (val, key) => @inverse[val] = key
+    super
 
   compute: (table, env, node) ->
     console.log "transform: #{JSON.stringify @mapping}"
+    console.log "table:     #{JSON.stringify table.colNames()}"
     table = table.clone()
     table.transform @mapping, yes
     table
-
-  compile: -> new gg.wf.Exec
-    name: @name
-    aes: @mapping
-    f: @spec.f
 
   invertColName: (outColName) -> @inverse[outColName]
 

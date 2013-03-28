@@ -44,6 +44,7 @@ spec =
         r: "r"
         "fill-opacity": "0.6"
       pos: {type:"jitter", scale: 0.2}
+      stat: "bin"
 
     }
   ]

@@ -14,7 +14,7 @@ class gg.Position extends gg.XForm
     ]
     ret = {}
     _.each klasses, (klass) ->
-      if _.isArray klasses.aliases
+      if _.isArray klass.aliases
         _.each klass.aliases, (alias) -> ret[alias] = klass
       else
         ret[klass.aliases] = klass
@@ -22,8 +22,6 @@ class gg.Position extends gg.XForm
 
   @fromSpec: (layer, spec) ->
     klasses = gg.Position.klasses()
-    console.log "XXX"
-    console.log klasses
     if _.isString spec
       type = spec
       spec = {}
@@ -64,9 +62,7 @@ class gg.JitterPosition extends gg.Position
     super
 
   compute: (table, env) ->
-    console.log "HOLLA"
-    info = @paneInfo table, env
-    scales = @g.scales.scales(info.facetX, info.facetY, info.layer)
+    scales = @scales table, env
     xRange = scales.scale("x").range()
     yRange = scales.scale("y").range()
     xScale = (xRange[1] - xRange[0]) * @scale

@@ -134,15 +134,18 @@ class gg.Scale
 
 
     defaultDomain: (col) ->
-        @min = if @min? then @min else _.min col
-        @max = if @max? then @max else _.max col
-        interval = []
-        if @center?
-            extreme = Math.max @max-@center, Math.abs(@min-@center)
-            interval = [@center - extreme, @center + extreme]
-        else
-            interval = [@min, @max]
-        interval
+      #@min = if @min? then @min else _.min col
+      #@max = if @max? then @max else _.max col
+      @min = _.min col
+      @max = _.max col
+
+      interval = []
+      if @center?
+          extreme = Math.max @max-@center, Math.abs(@min-@center)
+          interval = [@center - extreme, @center + extreme]
+      else
+          interval = [@min, @max]
+      interval
 
      # @param domain is output of gg.scale.domain()
      # Assume domain is [min, max] interval

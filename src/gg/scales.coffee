@@ -353,7 +353,9 @@ class gg.ScalesSet
       col = table.getColumn(aes)
       # XXX: perform type checking.  Just assume all continuous for now
       if col?
-        scale.mergeDomain scale.defaultDomain col
+        range = scale.defaultDomain col
+        scale.mergeDomain range
+        console.log "scale.train: #{aes} has domain #{range}"
     @
 
   setRanges: (pane) ->

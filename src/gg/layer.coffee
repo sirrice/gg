@@ -79,15 +79,20 @@ class gg.Layer
         # Shorthand style similar to ggplot2
         console.log "shorthand"
         console.log @spec
+
         statSpec = findGood [spec.stat, spec.stats, spec.statistic, "identity"]
         mappingSpec = findGood [spec.aes, spec.aesthetic, spec.mapping, {}]
         geomSpec =
           geom: findGood [spec.geom, "point"]
           pos: findGood [spec.pos, spec.position, "identity"]
 
+        statSpec = {stat: statSpec} if _.isString statSpec
+        statSpec.name = statSpec.name or "stat"
+
 
         # NOTE: mapper defines the initial aesthetics mapping
         console.log "mapperSpec: #{JSON.stringify mappingSpec}"
+        console.log "statSpec: #{JSON.stringify statSpec}"
         @mapper = new gg.Mapper @g, {aes: mappingSpec, name: "initialmap"}
         @stats = [gg.Stat.fromSpec(@, statSpec)]
         @geom = gg.Geom.fromSpec @, geomSpec
@@ -159,7 +164,7 @@ class gg.Layer
 
       nodes.push @labelerXForm()
       # stats: pre-stats aesthetics mapping
-      nodes.push new gg.wf.Stdout {name: "initial data", n: 10}
+      nodes.push new gg.wf.Stdout {name: "initial data", n: 1}
       nodes.push @mapXForm()
       # scales: train scales (inputs are data values)
       nodes.push @g.scales.prestatsNode

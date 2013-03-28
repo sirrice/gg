@@ -43,11 +43,20 @@ class gg.GeomTransform extends gg.XForm
 #
 # layershorthand:
 #   {
-#     geom: STRING,
+#     geom: STRING | { type: STRING, (aes|map|mapping): aesmapping }
 #     (aes|aesthetic|mapping): aesmapping,
 #     (stat|stats|statistic): xformspec
 #     pos: posspec
 #   }
+#
+#
+# spec.geom.aes maps the output of the stats xforms into
+#               something the geometries can consume
+#               (e.g., picking if y should be sum or count)
+# spec.geom.type specifies what high level geometry to render
+# spec.aes:     the mapping to perform before statistics
+#               (XXX: fold into spec.stat?)
+# spec.pos:     position
 #
 class gg.Geom extends gg.XForm
 
@@ -64,21 +73,37 @@ class gg.Geom extends gg.XForm
     scales: -> @layer.scales()
 
     parseSpec: ->
-      aesSpec = findGood [@spec['post-stats'], @spec['pre-geom'], null]
+      geomSpec = @spec.geom
+      aesSpec = null
+      if not _.isString geomSpec
+        geomType = geomSpec.type
+        aesSpec = findGood [
+          geomSpec.aes,
+          geomSpec.aesthetics,
+          geomSpec.map,
+          geomSpec.mapping, null]
+        if aesSpec?
+          @mapping = new gg.Mapper @g,
+            aes:aesSpec
+            name:"post-stats mapping"
+      else
+        geomType = geomSpec
+      @render = gg.GeomRender.fromSpec @layer, geomType
+
+
       posSpec = findGood [@spec.pos, @spec.position, "identity"]
-
-      @mapping = new gg.Mapper @g, @spec if aesSpec?
       @position = gg.Position.fromSpec @layer, posSpec
-      @render = gg.GeomRender.fromSpec @layer, @spec.geom
-      @transformDomain = new gg.GeomTransform @layer, {name: "topixel"}
+      @transformDomain = new gg.GeomTransform @layer,
+        name: "topixel"
 
 
-    mappingXForm: -> if @mapping? then @mapping.compile() else []
+    mappingXForm: ->
+      ret = [if @mapping? then @mapping.compile() else []]
+      ret.push @geomMappingXForm()
+      _.flatten ret
+    geomMappingXForm: -> null
     transformDomainXForm: -> @transformDomain.compile()
-    positionXForm: ->
-      console.log "compiling position xform"
-      console.log @position.spec
-      @position.compile()
+    positionXForm: -> @position.compile()
     renderXForm: -> @render.compile()
     compile: -> _.flatten [@mappingXForm(), @positionXForm(), @renderXForm()]
     name: -> @constructor.name.toLowerCase()
@@ -131,7 +156,7 @@ class gg.Point extends gg.Geom
     inputSchema: ->
       ['x', 'y']
 
-    mappingXForm: ->
+    geomMappingXForm: ->
       (new gg.Mapper @g,
         name: "point-mapper"
         defaults: @defaults()

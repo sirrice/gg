@@ -44,16 +44,23 @@ class gg.XForm# extends gg.wf.Exec
 
   parseSpec: ->
     spec = _.clone @spec
+    console.log "xform spec:"
+    console.log @spec
 
     inputSchema = findGood [spec.inputSchema, null]
     if inputSchema?
-      inputSchema = (table, env) -> inputSchema unless _.isFunction(inputSchema)
-      @inputSchema = inputSchema
+      unless _.isFunction inputSchema
+        @inputSchema = (table, env) -> inputSchema
+      else
+        @inputSchema = inputSchema
 
     defaults = findGood [spec.defaults, null]
     if defaults?
-      defaults = (table, env) -> defaults unless _.isFunction(defaults)
-      @defaults = defaults
+      unless _.isFunction defaults
+        console.log "uuuuugh #{JSON.stringify defaults}"
+        @defaults = (table, env) -> defaults
+      else
+        @defaults = defaults
 
     @compute = spec.f or @compute
     _compute = (table, env, node) =>
@@ -77,6 +84,11 @@ class gg.XForm# extends gg.wf.Exec
     _.extend ret, @layerIdx(table, env)
     ret
 
+  scales: (table, env) ->
+    info = @paneInfo table, env
+    @g.scales.scales(info.facetX, info.facetY, info.layer)
+
+
   # Defaults for optional attributes
   defaults: (table, env) -> {}
   # Required input schema
@@ -92,7 +104,7 @@ class gg.XForm# extends gg.wf.Exec
       throw Error("#{@name}: input schema did not contain #{missing.join(",")}")
 
   addDefaults: (table, env) ->
-    console.log "adding defaults of #{JSON.stringify _.omit(@defaults(table, env), table.colNames())}"
+    console.log "adding defaults of #{JSON.stringify @defaults(table, env)}"
     console.log "                   #{JSON.stringify table.colNames()}"
     _.each @defaults(table, env), (val, col) ->
       unless col in table.colNames()

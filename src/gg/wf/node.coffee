@@ -326,7 +326,7 @@ class gg.wf.Stdout extends gg.wf.Exec
 
   compute: (table, env, node) ->
     table.each (row, idx) =>
-      if @n is null or idx <= @n
+      if @n is null or idx < @n
         console.log JSON.stringify(_.omit(row, ['get', 'ncols']))
     table
 
