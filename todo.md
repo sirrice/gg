@@ -1,7 +1,12 @@
 # TODOs
 
-1. scales.scale('x') returns same scale for all layers!
+1. render bars
 
+1. detect discrete aesthetics and split at the beginning of the workflow
+2. Support grouping and propogating mapped aesthetics down the
+   workflow
+
+1. allocate panes after computing the axis tick size of y axis to know how much spacing to give
 
 1. name the phases and the operators more consistently and predictably
 
@@ -9,12 +14,7 @@
 
 1. draw facet labels after geometries
 
-1. detect discrete aesthetics and split at the beginning of the workflow
-
 1. support tables as columns (for lines)
-
-2. Support grouping and propogating mapped aesthetics down the
-   workflow
 
 
 1. allow aesthetics aliases
@@ -29,7 +29,7 @@
 
 # DONE
 
-
+x. fixed problem where scales.scale('x') returns same gg.scale for all layers
 x. make stats work
 x. make positioning work
 x. make sure retraining scales after positioning works

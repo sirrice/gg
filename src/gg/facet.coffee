@@ -371,7 +371,7 @@ class gg.Facets
     console.log "facet.renderYAxis\t#{scale.domain()} -> #{scale.range()}"
     yAxis = d3.svg.axis()
       .scale(scales.scale('y').d3Scale)
-      .ticks(5)
+      .ticks(5, d3.format(",.0f"), 5)
       .tickSize(-xBand)
       .orient('left')
 
@@ -513,17 +513,6 @@ class gg.Facets
       .attr("height", yRange.rangeBand())
 
 
-
-  renderAxes: (xRange) ->
-    _.each @xs, (x, xidx) =>
-      left = xRange(x)
-      scales = @g.scales(x)
-      axis = d3.svg.axis()
-        .scale(scales.scale('x').d3Scale)
-        .ticks(5)
-        .tickSize(@h)
-        .orient("bottom")
-      axis.tickFormat('') unless text
 
 
 

@@ -190,8 +190,29 @@ class gg.Path extends gg.Geom
 class gg.Area extends gg.Geom
     @aliases: "area"
 
+# XXX: DOES NOT WORK YET!
 class gg.Interval extends gg.Geom
     @aliases: "interval"
+    defaults: -> {}
+
+    inputSchema: ->
+      ['x', 'y']
+
+    geomMappingXForm: ->
+      (new gg.Mapper @g,
+        name: "point-mapper"
+        defaults: @defaults()
+        inputSchema: @inputSchema()
+        map:
+          x: 'x'
+          y: 'y'
+          x0: 'x'
+          x1: 'x'
+          y0: 0
+          y1: 'y').compile()
+
+    renderXForm: -> (new gg.GeomRenderRectSvg @layer, {}).compile()
+
 
 class gg.Rect extends gg.Geom
     @aliases: "rect"

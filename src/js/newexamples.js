@@ -7,16 +7,16 @@
 
       var specs = {
         layers: [ {
-          geom: { type:"point", aes: {y: 'total', r: 'total', "fill-opacity": 0.6,  fill: 'f'} },
+          geom: { type:"point", aes: {y: 'count', r: 'count', "fill-opacity": 0.6,  fill: 'f'} },
           aes: {x: 'd', y: 'r', 'fill': 'f',  "fill-opacity": 0.9},
           pos: {type: "jitter", scale:0.05},
           stat: "bin"
         } ],
         facets: {x: 'f', y: 'g', fontSize: "15pt"},
         scales: {
-          x: {type: 'log'},
+          x: {type: 'linear'},
           y: {type: 'log'},
-          r: {type: 'linear', range: [1,4]}
+          r: {type: 'linear', range: [3,10]}
         }
       }
 

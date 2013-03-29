@@ -42,6 +42,7 @@ class gg.GeomRender extends gg.XForm
   @klasses: ->
     point: gg.GeomRenderPointSvg
     line: gg.GeomRenderLineSvg
+    rect: gg.GeomRenderRectSvg
 
   @fromSpec: (layer, spec) ->
     klasses = gg.GeomRender.klasses()
@@ -130,6 +131,48 @@ class gg.GeomRenderLineSvg extends gg.GeomRender
       "stroke-opacity": (t) -> t.get("stroke-opacity")
 
     exit.remove()
+
+# XXX: DOES NOT WORK
+class gg.GeomRenderRectSvg extends gg.GeomRender
+  @name = "rect"
+
+  defaults: (table, env) ->
+    "fill-opacity": 0.5
+    fill: "steelblue"
+    stroke: "steelblue"
+    "stroke-width": 0
+    "stroke-opacity": 0.5
+    group: 1
+
+  inputSchema: (table, env) ->
+    ['x0', 'x1', 'y0', 'y1']
+
+  render: (table, env, node) ->
+
+    data = table.asArray()
+    circles = @agroup(@svg(table, env), "circles geoms", data)
+      .selectAll("circle")
+      .data(data)
+    enter = circles.enter()
+    exit = circles.exit()
+    enterCircles = enter.append("circle")
+
+    @applyAttrs enterCircles,
+      class: "geom"
+      cx: (t) -> t.get('x')
+      cy: (t) -> t.get('y')
+      "fill-opacity": (t) -> t.get('fill-opacity')
+      "stroke-opacity": (t) -> t.get("stroke-opacity")
+      fill: (t) -> t.get('fill')
+      r: (t) -> t.get('r')
+
+    exit.transition()
+      .duration(500)
+      .attr("fill-opacity", 0)
+      .attr("stroke-opacity", 0)
+    .transition()
+      .remove()
+
 
 
 
