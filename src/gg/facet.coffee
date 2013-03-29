@@ -366,9 +366,9 @@ class gg.Facets
     top = 0#yRange y
     xBand = xRange.rangeBand()
     scales = @g.scales.facetScales x, y
+    scale = scales.scale 'y'
 
-    console.log "range of y-axis"
-    console.log scales.scale('y').range()
+    console.log "facet.renderYAxis\t#{scale.domain()} -> #{scale.range()}"
     yAxis = d3.svg.axis()
       .scale(scales.scale('y').d3Scale)
       .ticks(5)
@@ -383,8 +383,8 @@ class gg.Facets
        .call(yAxis)
 
   renderXAxis: (svg, x, y, xRange, yRange) ->
-    left = 0#xRange x
-    top = 0#yRange y
+    left = 0
+    top = 0
     yBand = yRange.rangeBand()
     scales = @g.scales.facetScales x, y
 
@@ -407,10 +407,10 @@ class gg.Facets
     _.each @g.scales.scalesList, (ss) =>
       _.each gg.Scale.xs, (aes) =>
         ss.scale(aes).range [0+@panePadding, xBand-@panePadding]
-        console.log "scales(#{aes}): #{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
+        console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
       _.each gg.Scale.ys, (aes) =>
         ss.scale(aes).range [yBand-@panePadding, 0+@panePadding]
-        console.log "scales(#{aes}): #{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
+        console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
 
 
 
@@ -432,7 +432,8 @@ class gg.Facets
   trainScales: ->
     @masterScales = gg.ScalesSet.merge @g.scales.scalesList
     if @scales is "fixed"
-      _.each @g.scales.scalesList, (scalesSet) => scalesSet.merge @masterScales, false
+      _.each @g.scales.scalesList, (scalesSet) =>
+        scalesSet.merge @masterScales, false
     else
       @trainFreeScales()
 

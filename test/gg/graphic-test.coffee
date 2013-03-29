@@ -4,8 +4,8 @@ assert = require "assert"
 
 makeTable = (nrows=100) ->
   rows = _.map _.range(0, nrows), (d) ->
-    g = Math.floor(Math.random() * 3)
-    f = Math.floor(Math.random() * 3) * 10
+    g = Math.floor(Math.random() * 2)
+    f = Math.floor(Math.random() * 2) * 10
     t = Math.floor(Math.random() * 3)
     {
       d:d
@@ -36,11 +36,11 @@ suite = vows.describe "graphic.coffee"
 spec =
   layers: [
     {
-      geom: "point"
+      geom: {type:"point", aes: {y:"total", r:"total"}},
       aes:
         x: "d"
         y: "r"
-        fill: 't'
+        fill: 'f'
         r: "r"
         "fill-opacity": "0.6"
       pos: {type:"jitter", scale: 0.2}
@@ -53,7 +53,7 @@ spec =
     y: "g"
   scales:
     x:
-      type: "linear"
+      type: "log"
     r:
       type: "linear"
       range: [2, 5]

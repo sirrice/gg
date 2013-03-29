@@ -138,7 +138,7 @@ class gg.Layer
 
     # TODO: merge pre and post stats aesthetic mappings so we can train properly
     #       currently only supports pre-stats mapping
-    aesthetics: -> if @mapper? then  @mapper.aesthetics else []
+    aesthetics: -> if @mapper? then  _.compact(@mapper.aesthetics) else []
 
 
     # add layerIdx to environment so xforms can track it
@@ -188,6 +188,7 @@ class gg.Layer
       # geom: facets have set the ranges so transform data values to pixel values
       nodes.push new gg.wf.Stdout {name: "pre-pixel", n: 1}
       nodes.push @geom.transformDomainXForm()
+      nodes.push new gg.wf.Stdout {name: "post-pixel", n: 1}
       # geom: position transformation
       nodes.push @geom.positionXForm()
 

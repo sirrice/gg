@@ -1,7 +1,7 @@
 #<< gg/wf/*
 #<< gg/facet
 #<< gg/layer
-#<< gg/scale
+#<< gg/scales
 #<< gg/stat
 #<< gg/geom
 

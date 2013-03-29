@@ -1,5 +1,8 @@
 # TODOs
 
+1. scales.scale('x') returns same scale for all layers!
+
+
 1. name the phases and the operators more consistently and predictably
 
 1. documentation

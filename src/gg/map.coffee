@@ -24,7 +24,7 @@ class gg.Mapper extends gg.XForm
     @mapping = findGood [@spec.mapping, @spec.map, @spec.aes, {}]
     console.log "mapper spec: #{JSON.stringify @mapping}"
 
-    @aesthetics = _.keys @mapping
+    @aes = @aesthetics = _.keys @mapping
     @spec.aes = @mapping
     @inverse = {}
     _.each @mapping, (val, key) => @inverse[val] = key

@@ -12,12 +12,14 @@ class gg.GeomTransform extends gg.XForm
 
   compute: (table, env) ->
     info = @paneInfo table, env
-    scalesSet = @g.scales.scales(info.facetX, info.facetY, info.layer)
+    scalesSet = @scales table, env
     table = table.clone()
+
+    console.log "topixel:aesthetics: #{scalesSet.aesthetics()}"
     _.each scalesSet.aesthetics(), (aes) =>
-      scale = scalesSet.scale(aes)
+      scale = scalesSet.scale aes
       f = (v) -> scale.scale(v)
-      #console.log "topixel: #{aes} scale is (#{scale.domain()}) -> (#{scale.range()})"
+      console.log "topixel: #{aes} scale is (#{scale.domain()}) -> (#{scale.range()})"
       table.map f, aes if table.contains aes
     table
 
@@ -75,13 +77,14 @@ class gg.Geom extends gg.XForm
     parseSpec: ->
       geomSpec = @spec.geom
       aesSpec = null
-      if not _.isString geomSpec
+      unless _.isString geomSpec
         geomType = geomSpec.type
         aesSpec = findGood [
           geomSpec.aes,
           geomSpec.aesthetics,
           geomSpec.map,
           geomSpec.mapping, null]
+        console.log "post-stats mapping spec: #{JSON.stringify aesSpec}"
         if aesSpec?
           @mapping = new gg.Mapper @g,
             aes:aesSpec

@@ -26,6 +26,7 @@ class gg.Table
     merge: (table)-> throw "not implemented"
     split: (gbfunc)-> throw "not implemented"
     transform: (colname, func)-> throw "not implemented"
+    filter: (f) -> throw Error("not implemented")
     addConstColumn: (name, val, type=null) -> throw "not implemented"
     addColumn: (name, vals, type=null) -> throw "not implemented"
     addRow: (row) -> throw "not implemented"
@@ -159,6 +160,13 @@ class gg.RowTable extends gg.Table
                     console.log error
                     throw error
         ret
+
+
+    filter: (f) ->
+      newrows = []
+      @each (row, idx) -> newrows.push row if f(row)
+      new gg.RowTable newrows
+
 
     map: (fOrMap, colName=null) ->
       if _.isFunction fOrMap

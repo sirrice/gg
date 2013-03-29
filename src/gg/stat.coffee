@@ -49,14 +49,13 @@ class gg.Bin1DStat extends gg.Stat
     ['x', 'y', 'bin', 'count', 'total']
 
   compute: (table, env, node) ->
-    console.log "BIN!"
     scales = @scales table, env
 
     domain = scales.scale('x').domain()
     domain = scales.scale('x').defaultDomain table.getColumn('x')
     range = domain[1] - domain[0]
     binSize = Math.ceil(range / (@nbins))
-    console.log "nbins: #{@nbins}\tdomain: #{domain}\tbinSize: #{binSize}"
+    console.log "nbins: #{@nbins}\tscaleid: #{scales.scale('x').id}\tscaledomain: #{scales.scale('x').domain()}\tdomain: #{domain}\tbinSize: #{binSize}"
 
     stats = _.map _.range(Math.ceil(range / binSize)+1), (binidx) ->
       {bin: binidx, count: 0, total: 0}
@@ -68,10 +67,10 @@ class gg.Bin1DStat extends gg.Stat
       try
         stats[binidx].count += 1
       catch error
-        console.log "fuck"
-        console.log "fetch bin: #{x}:  #{binidx} of #{stats.length}"
+        console.log "Bin1D.compute: #{error}"
+        console.log "fetch bin: val(#{x}):  #{binidx} of #{stats.length}"
         console.log stats
-        throw error
+        return
       if _.isNumber y
         stats[binidx].total += y
       else
