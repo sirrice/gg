@@ -30,12 +30,20 @@ _ = require 'underscore'
 
 class gg.Util
 
+  @sum: (arr) -> _.reduce arr, ((a,b) -> a+b), 0
+
   @findGood: (list) ->
-      ret = _.find list, (v)->v != null and v?
-      if typeof ret is "undefined"
-          if list.length then _.last(list) else undefined
-      else
-          ret
+    ret = _.find list, (v)->v != null and v?
+    if typeof ret is "undefined"
+        if list.length then _.last(list) else undefined
+    else
+        ret
+
+  @findGoodAttr: (obj, attrs, defaultVal=null) ->
+    unless obj?
+      return defaultVal
+    attr = _.find attrs, (attr) -> obj[attr] != null and obj[attr]?
+    if typeof attr is "undefined" then defaultVal else obj[attr]
 
   @isSubclass: (instance, partype) ->
       c = instance
@@ -150,9 +158,12 @@ class gg.Util
 
 
 findGood = gg.Util.findGood
+findGoodAttr = gg.Util.findGoodAttr
 
 _.mixin
+  sum: gg.Util.sum
   findGood: gg.Util.findGood
+  findGoodAttr: gg.Util.findGoodAttr
   isSubclass: gg.Util.isSubclass
   cross: @cross
   exSize: gg.Util.exSize

@@ -5,8 +5,10 @@
 #
 class gg.GeomRender extends gg.XForm
   constructor: (@layer, @spec={}) ->
+    @spec.name = findGoodAttr @spec, ['name'], @constructor.name
     super @layer.g, @spec
     @parseSpec()
+
 
   parseSpec: ->
     super
@@ -40,9 +42,19 @@ class gg.GeomRender extends gg.XForm
   render: (table) -> throw Error("#{@name}.render() not implemented")
 
   @klasses: ->
-    point: gg.GeomRenderPointSvg
-    line: gg.GeomRenderLineSvg
-    rect: gg.GeomRenderRectSvg
+    klasses = [
+      gg.GeomRenderPointSvg,
+      gg.GeomRenderLineSvg,
+      gg.GeomRenderRectSvg
+    ]
+    ret = {}
+    _.each klasses, (klass) ->
+      if _.isArray klass.aliases
+        _.each klass.aliases, (alias) -> ret[alias] = klass
+      else
+        ret[klass.aliases] = klass
+    ret
+
 
   @fromSpec: (layer, spec) ->
     klasses = gg.GeomRender.klasses()
@@ -50,15 +62,17 @@ class gg.GeomRender extends gg.XForm
       type = spec
       spec = {type: type}
     else
-      type = findGood [spec.geom, spec.type, spec.shape, "point"]
+      type = findGoodAttr spec, ['geom', 'type', 'shape'], 'point'
+    console.log klasses
     klass = klasses[type] or gg.GeomRenderPointSvg
+    console.log "geom-render klass #{type} -> #{klass.name}"
     new klass layer, spec
 
 
 
 
 class gg.GeomRenderPointSvg extends gg.GeomRender
-  @name = "point"
+  @aliases = ["point", "pt"]
 
   defaults: (table, env) ->
     r: 2
@@ -104,7 +118,7 @@ class gg.GeomRenderPointSvg extends gg.GeomRender
 
 
 class gg.GeomRenderLineSvg extends gg.GeomRender
-  @name = "line"
+  @aliases = "line"
 
   defaults: (table) ->
     stroke-width: 1
@@ -134,7 +148,7 @@ class gg.GeomRenderLineSvg extends gg.GeomRender
 
 # XXX: DOES NOT WORK
 class gg.GeomRenderRectSvg extends gg.GeomRender
-  @name = "rect"
+  @aliases = "rect"
 
   defaults: (table, env) ->
     "fill-opacity": 0.5
@@ -148,23 +162,25 @@ class gg.GeomRenderRectSvg extends gg.GeomRender
     ['x0', 'x1', 'y0', 'y1']
 
   render: (table, env, node) ->
+    console.log 'rendering rectangles!'
 
     data = table.asArray()
-    circles = @agroup(@svg(table, env), "circles geoms", data)
-      .selectAll("circle")
+    rects = @agroup(@svg(table, env), "intervals geoms", data)
+      .selectAll("rect")
       .data(data)
-    enter = circles.enter()
-    exit = circles.exit()
-    enterCircles = enter.append("circle")
+    enter = rects.enter()
+    exit = rects.exit()
+    enterRects = enter.append("rect")
 
-    @applyAttrs enterCircles,
+    @applyAttrs enterRects,
       class: "geom"
-      cx: (t) -> t.get('x')
-      cy: (t) -> t.get('y')
+      x: (t) -> t.get('x0')
+      y: (t) -> Math.min(t.get('y0'), t.get('y1'))
+      width: (t) -> t.get('x1') - t.get('x0')
+      height: (t) -> Math.abs(t.get('y1') - t.get('y0'))
       "fill-opacity": (t) -> t.get('fill-opacity')
       "stroke-opacity": (t) -> t.get("stroke-opacity")
       fill: (t) -> t.get('fill')
-      r: (t) -> t.get('r')
 
     exit.transition()
       .duration(500)

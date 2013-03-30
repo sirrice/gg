@@ -103,7 +103,10 @@ vendor = (callback) ->
 
     # FontAwesome for icons.
     ['https://github.com/FortAwesome/Font-Awesome/archive/v3.0.1.zip',
-     'vendor/tmp/font_awesome.zip']
+     'vendor/tmp/font_awesome.zip'],
+
+    # SeedRandom (http://davidbau.com/archives/2010/01/30/random_seeds_coded_hints_and_quintillions.html)
+    ['http://davidbau.com/encode/seedrandom.js', 'vendor/js/seedrandom.js']
 
     # Require.js
     #['http://requirejs.org/docs/release/2.1.5/minified/require.js', 'vendor/js/require.js'],

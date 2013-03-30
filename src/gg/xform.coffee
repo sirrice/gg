@@ -38,6 +38,14 @@
 #   inputSchema: Array or Function
 #
 #
+# General spec transform format:
+# {
+#   type: XXX
+#   aes: { .. mapping inserted before actual xform .., group: xxx }
+#   args: { .. parameters accessible through @param .. }
+# }
+#
+#
 class gg.XForm# extends gg.wf.Exec
 
   constructor: (@g, @spec={}) ->

@@ -156,6 +156,7 @@ class gg.wf.Node extends events.EventEmitter
   # - f() is the input handler associated with the node
   #
   clone: (stop, klass=null) ->
+    @log "clone"
     klass = @constructor unless klass?
     clone = new klass @toSpec()
     [clone, clone.getAddInputCB 0]
@@ -191,7 +192,8 @@ class gg.wf.Node extends events.EventEmitter
   addInput: (idx, node, data) ->
     @getAddInputCB(idx)(node, data)
 
-  tables: -> _.pluck @inputs, "table"
+  log: (text) ->
+    console.log "#{@name}-#{@id}\t#{@constructor.name}\t#{text}"
 
   ready: -> _.all @inputs, (val) -> val?
 
@@ -201,15 +203,17 @@ class gg.wf.Node extends events.EventEmitter
     @on outidx, cb if outidx >= 0 and outidx < @children.length
 
   output: (outidx, data) ->
+    @log "outputing to port #{outidx}"
     @emit outidx, @, data
     @emit "output", @, data
 
   addParent: (node) ->
+    @log "addParent #{node.name}-#{node.id} #{node.constructor.name}"
     @parents.push node
 
   addChild: (node, inputCb=null) ->
     if @children[0]?
-      throw Error("Single Output node already has a child")
+      throw Error("#{@name}: Single Output node already has a child")
     @children[0] = node
     @addOutputHandler 0, inputCb if inputCb?
     node.addParent @
@@ -344,38 +348,55 @@ class gg.wf.Barrier extends gg.wf.Node
     @type = "barrier"
     @name = findGood [@spec.name, "barrier-#{@id}"]
 
+    # pointer to the next workflow child to clone when
+    # cloneSubplan is called.
+    #
+    # each call to cloneSubplan increments clonePtr
+    #
+    # if clonePtr < number of children in the @wf
+    #   return existing input callback
+    # otherwise
+    #   clone child clonePtr%nChildren
+    #   return new child's input cb
+    #
+    @clonePtr = 0
+
   compute: (tables, env, node) -> tables
 
 
   cloneSubplan: (stop) ->
-    idx = @inputs.length
-    @inputs.push null
+    #@inputs.push null
 
-    # we know that clone == this, so we use @ as shorthand
-    #console.log "#{@name} cloneSubplan: #{@children[0]}"
-    if @children[0]?
-      [child, childInputCB] = @children[0].cloneSubplan stop
-      @addChild child, childInputCB
-      if @inputs.length != @children.length
-        throw Error("# inputs not same as # children (#{@inputs.length}!=#{@children.length}")
-      #console.log "#{@name} has #{@inputs.length} inputs and #{@children.length} children #{@nChildren()}"
+    # clone @children[0..n] where n is the number of
+    # children in the workflow
+    nChildren = @wf.children(@base()).length
 
-    [this, @getAddInputCB idx]
+    idx = @clonePtr % nChildren
+    [child, childInputCB] = @children[idx].cloneSubplan stop
+    @addChild child, childInputCB
+    @clonePtr = (@clonePtr+1) % nChildren
+
+    [this, @getAddInputCB @nChildren()-1]
 
   addChild: (child, inputCb=null) ->
     if @children[0]?
       @children.push child
+      @inputs.push null
     else
       @children[0] = child
-    @addOutputHandler @children.length-1, inputCb if inputCb?
+
+    @addOutputHandler @nChildren()-1, inputCb if inputCb?
     child.addParent @
-    #console.log "#{@name}: addChild #{@children.length}\t#{child.name}, #{inputCb}"
+
+    @log "addChild #{child.name}-#{child.id} to port #{@nChildren()-1}\t #{@inputs.length} in #{@nChildren()} out"
+
 
   run: ->
     throw Error("Node not ready") unless @ready()
     tables = _.pluck @inputs, 'table'
     envs = _.pluck @inputs, 'env'
     outputs = @compute tables, envs, @
+    console.log "#{@name} barrier got #{tables.length}"
     for output, idx in outputs
       @output idx, new gg.wf.Data(output, envs[idx].clone())
     outputs

@@ -170,11 +170,12 @@ class gg.Layer
       nodes.push @g.scales.prestatsNode
       nodes.push @statXForms()
 
-      nodes.push @g.facets.labelers
+      # facet join
+      nodes.push @g.facets.labelerNodes()
       nodes.push new gg.wf.Stdout {name: "pre-geom", n: 1}
 
 
-      # geom: map attributes to aesthetic names, and to pixels
+      # geom: map attributes to aesthetic names
       nodes.push @geom.mappingXForm()
       # scales: train scales after the final aesthetic mapping (inputs are data values)
       nodes.push @g.scales.pregeomNode
@@ -189,6 +190,8 @@ class gg.Layer
       nodes.push new gg.wf.Stdout {name: "pre-pixel", n: 1}
       nodes.push @geom.transformDomainXForm()
       nodes.push new gg.wf.Stdout {name: "post-pixel", n: 1}
+      # geom: map minimum attributes (x,y) to base attributes (x0, y0, x1, y1)
+      nodes.push @geom.geomMappingXForm()
       # geom: position transformation
       nodes.push @geom.positionXForm()
 

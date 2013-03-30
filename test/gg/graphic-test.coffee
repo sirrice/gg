@@ -32,21 +32,48 @@ outputsProperlyGen = (check) ->
 
 
 suite = vows.describe "graphic.coffee"
+Math.seedrandom "zero"
+
+# spec formats:
+# {
+#   type: XXX
+#   aes: { .. mapping inserted before actual xform .., group: xxx }
+#   args: { .. parameters accessible through @param .. }
+# }
 
 spec =
   layers: [
     {
-      geom: {type:"point", aes: {y:"total", r:"total"}},
+      # post-stats mapping (e.g., count --> y)
+      geom: {type:"interval", aes: {y:"total", r:"total"}},
+      # pre-stats mapping (to be consumed, and to split on discrete attributes)
       aes:
         x: "d"
         y: "r"
         fill: 'f'
         r: "r"
-        "fill-opacity": "0.6"
+        "fill-opacity": 0.6
+      # positioning
       pos: {type:"jitter", scale: 0.2}
-      stat: "bin"
+      stat: {type:"bin", name: "rect-bin"}
 
     }
+   ,{
+      # post-stats mapping (e.g., count --> y)
+      geom: {type:"point", aes: {y:"total", r:"total"}},
+      # pre-stats mapping (to be consumed, and to split on discrete attributes)
+      aes:
+        x: "d"
+        y: "r"
+        fill: 'f'
+        r: "r"
+        "fill-opacity": 0.6
+      # positioning
+      #pos: {type:"jitter", scale: 0.2}
+      stat: {type:"bin", name: "point-bin"}
+
+    }
+
   ]
   facets:
     x: "f"

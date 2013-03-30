@@ -93,7 +93,7 @@ class gg.Scale
       @range @spec.range
       @rangeSet = yes
 
-    domain = findGood [@spec.domain, @spec.lim, null]
+    domain = findGoodAttr @spec, ['domain','limit','limits','lims','lim'], null
     if domain?
       @domain domain
       @domainSet = yes
@@ -138,13 +138,8 @@ class gg.Scale
     klasses = gg.Scale.klasses()
     klass = klasses[type] or gg.IdentityScale
 
-    spec.aes = findGood [
-      spec.aesthetics,
-      spec.aesthetic,
-      spec.aes,
-      spec.var,
-      null]
-
+    aesAttrs = ['aesthetics', 'aesthetic', 'aes', 'var']
+    spec.aes = findGoodAttr spec,  aesAttrs, null
     s = new klass spec
     s
 
@@ -197,7 +192,6 @@ class gg.Scale
        else
          @domain domain
 
-  valid: (v) -> yes
 
   domain: (interval) ->
     if interval? and not @domainSet
@@ -214,6 +208,11 @@ class gg.Scale
   # XXX: need method to apply transformation but not scale to range
   #
 
+  minDomain: -> @domain()[0]
+  maxDomain: -> @domain()[1]
+  minRange: -> @range()[0]
+  maxRange: -> @range()[1]
+  valid: (v) -> yes
   scale: (v) -> @d3Scale v
   invert: (v) -> @d3Scale.invert(v)
 

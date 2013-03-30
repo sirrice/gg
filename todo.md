@@ -1,6 +1,16 @@
 # TODOs
 
+1. in aesthetic mappings, differentiate evaled expressions and string constants
+
 1. render bars
+
+1. FIX THIS
+   var __func__ = function(row) {
+     var d = row['d'];var r = row['r'];var g = row['g'];var f = row['f'];var t = row['t'];var get = row['get'];var ncols = row['ncols'];var x = row['x'];var y = row['y'];var fill = row['fill'];
+
+     var fill-opacity = row['fill-opacity']; // <----------------- error!
+     return 0.6;
+   }
 
 1. detect discrete aesthetics and split at the beginning of the workflow
 2. Support grouping and propogating mapped aesthetics down the

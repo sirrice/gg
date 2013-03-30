@@ -69,7 +69,6 @@ class gg.Bin1DStat extends gg.Stat
       catch error
         console.log "Bin1D.compute: #{error}"
         console.log "fetch bin: val(#{x}):  #{binidx} of #{stats.length}"
-        console.log stats
         return
       if _.isNumber y
         stats[binidx].total += y

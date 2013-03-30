@@ -129,28 +129,31 @@ class gg.RowTable extends gg.Table
                 @transformRow row, mapping, funcs, strings
             new gg.RowTable newrows
 
-    transformRow: (row, mapping, funcs, strings) ->
+    # constructs a new object and populates it using mapping specs
+    transformRow: (row, mapping, funcs={}, strings={}) ->
         ret = {}
         map = (oldattr, newattr) =>
-            if _.isFunction oldattr
-                oldattr row[newattr], row
-            else if oldattr of row
-                row[oldattr]
-            else if newattr of strings
-                oldattr
-            else if newattr isnt 'text'
-                if oldattr.length is 0 or (oldattr[0] is '{' and oldattr[1] is '}')
-                    strings[newattr] = oldattr
-                else if not (newattr of funcs)
-                  cmds = (_.map row, (val, k) => "var #{k} = row['#{k}'];")
-                  cmds.push "return #{oldattr};"
-                  cmd = cmds.join('')
-                  fcmd = "var __func__ = function(row) {#{cmd}}"
-                  eval fcmd
-                  funcs[newattr] = __func__
-                funcs[newattr](row)
-            else
-                oldattr
+          if _.isFunction oldattr
+            oldattr row
+          else if oldattr of row
+            row[oldattr]
+          else if newattr of strings
+            oldattr
+          else if newattr isnt 'text' and _.isString oldattr
+            if oldattr.length is 0 or (oldattr[0] is '{' and oldattr[1] is '}')
+                strings[newattr] = oldattr
+            else if not (newattr of funcs)
+              cmds = (_.map row, (val, k) => "var #{k} = row['#{k}'];")
+              cmds.push "return #{oldattr};"
+              cmd = cmds.join('')
+              fcmd = "var __func__ = function(row) {#{cmd}}"
+              console.log fcmd
+              eval fcmd
+              funcs[newattr] = __func__
+            funcs[newattr](row)
+          else
+            # for constrants (date, number)
+            oldattr
 
 
         _.each mapping, (oldattr, newattr) =>

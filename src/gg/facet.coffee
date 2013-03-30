@@ -30,8 +30,6 @@ class gg.Facets
     @parseSpec()
 
     @splitter = @splitterNodes()
-    @labelers = @labelerNodes()
-
 
     @panes = []
     # paneSvgMapper[x val][y val] -> svg for the pane
@@ -80,8 +78,8 @@ class gg.Facets
   createSplitterNode: (facet, name) ->
       if _.isString facet
           new gg.wf.Partition {f: ((row) -> row.get(facet)), name: name}
-      else if _.isFunction {f: facet, name: name}
-          new gg.wf.Partition facet
+      else if _.isFunction facet
+          new gg.wf.Partition {f: facet, name: name}
       else if _.isArray(facet) and facet.length > 0
           if _.isString facet[0]
               colnames = facet
@@ -108,6 +106,16 @@ class gg.Facets
     [facetXNode, facetYNode]
 
   labelerNodes: ->
+    xyjoin = new gg.wf.Barrier
+      name: "facetxy-join"
+      f: (ts,es,n) =>
+        newts = _.map ts, (t) =>
+          t = t.clone()
+          t.addConstColumn @facetXKey, e.group(@facetXKey, "1")
+          t.addConstColumn @facetYKey, e.group(@facetYKey, "1")
+          t
+        newts
+
     xjoin = new gg.wf.Exec
       name: "facetx-join"
       f: (t,e,n) =>
@@ -120,7 +128,6 @@ class gg.Facets
         t = t.clone()
         t.addConstColumn @facetYKey, e.group(@facetYKey, "1")
         t
-
     [xjoin, yjoin]
 
   #########################

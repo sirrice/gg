@@ -100,11 +100,8 @@ class gg.Geom extends gg.XForm
         name: "topixel"
 
 
-    mappingXForm: ->
-      ret = [if @mapping? then @mapping.compile() else []]
-      ret.push @geomMappingXForm()
-      _.flatten ret
-    geomMappingXForm: -> null
+    mappingXForm: ->if @mapping? then @mapping.compile() else []
+    geomMappingXForm: -> []
     transformDomainXForm: -> @transformDomain.compile()
     positionXForm: -> @position.compile()
     renderXForm: -> @render.compile()
@@ -136,14 +133,17 @@ class gg.Geom extends gg.XForm
 
     @fromSpec: (layer, spec) ->
         klasses = gg.Geom.klasses()
-        if _.isString spec
-          type = spec
-          spec = { geom: type }
+        geomSpec = spec.geom
+        if _.isString geomSpec
+          type = geomSpec
         else
-          type = findGood [spec.geom, spec.type,  "point"]
-
+          geomAttrs = ["geom", "type"]
+          type = findGood geomSpec, geomAttrs, "point"
+        console.log klasses
+        console.log spec
 
         klass = findGood [klasses[type], gg.Point]
+        console.log "geom klass: #{type} -> #{klass.name}"
         spec["name"] = klass.name unless spec["name"]?
         geom = new klass(layer, spec)
         geom
@@ -159,9 +159,10 @@ class gg.Point extends gg.Geom
     inputSchema: ->
       ['x', 'y']
 
+    # called reparameterize in ggplot2
     geomMappingXForm: ->
       (new gg.Mapper @g,
-        name: "point-mapper"
+        name: "point-reparam"
         defaults: @defaults()
         inputSchema: @inputSchema()
         map:
@@ -192,26 +193,52 @@ class gg.Area extends gg.Geom
 
 # XXX: DOES NOT WORK YET!
 class gg.Interval extends gg.Geom
-    @aliases: "interval"
+    @aliases: ["interval", "rect"]
     defaults: -> {}
 
     inputSchema: ->
       ['x', 'y']
 
     geomMappingXForm: ->
-      (new gg.Mapper @g,
-        name: "point-mapper"
-        defaults: @defaults()
-        inputSchema: @inputSchema()
-        map:
-          x: 'x'
-          y: 'y'
-          x0: 'x'
-          x1: 'x'
-          y0: 0
-          y1: 'y').compile()
+      xform = new gg.Foo @g, { name: "interval-reparam"}
+      xform.compile()
 
     renderXForm: -> (new gg.GeomRenderRectSvg @layer, {}).compile()
+
+class gg.Foo extends gg.XForm
+  constructor: (@g, @spec) ->
+    super
+    @parseSpec()
+
+  parseSpec: ->
+    super
+
+  inputSchema: ->
+    ['x', 'y']
+
+  compute: (table, env, node) ->
+    scales = @scales(table, env)
+    yscale = scales.scale 'y'
+
+
+    # XXX: assume xs is numerical!!
+    xs = _.uniq(table.getColumn("x")).sort (a,b)->a-b
+    diffs = _.map _.range(xs.length-1), (idx) ->
+      xs[idx+1]-xs[idx]
+    mindiff = _.min diffs or 1
+    width = mindiff * 0.8
+
+
+    table.transform {
+        x: 'x'
+        y: 'y'
+        r: 'r'
+        x0: (row) -> row.get('x') - width/2.0
+        x1: (row) -> row.get('x') + width/2.0
+        y0: (row) -> yscale.scale(Math.min(yscale.minDomain(), yscale.invert(row.get 'y')))
+        y1: (row) -> yscale.scale(Math.max(yscale.minDomain(), yscale.invert(row.get 'y')))
+    }, yes
+    table
 
 
 class gg.Rect extends gg.Geom
