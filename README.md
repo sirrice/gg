@@ -27,7 +27,8 @@ Compile
 Current Implementation can render
 ---------------
 
-<html>
+<iframe>
+< html>
 <ggplot2js!doctype html>
 <script src="https://raw.github.com/sirrice/gg/new-model/lib/gg.js"></script>
 <link rel="stylesheet" type="text/css" href="https://raw.github.com/sirrice/gg/new-model/lib/gg.css">
@@ -77,6 +78,7 @@ Current Implementation can render
 <div id="examples"></div>
 </ggplot2js!doctype>
 </html>
+</iframe>
 
 TODOs
 ---------
