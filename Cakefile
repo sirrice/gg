@@ -101,7 +101,7 @@ vendor = (callback) ->
      'vendor/js/json2.js'],
 
     # underscore.js
-    ['http://underscorejs.org/underscore-min.js', 'vendor/js/underscore-min.js'],
+    ['http://underscorejs.org/underscore-min.js', 'vendor/js/underscore.min.js'],
 
     # FontAwesome for icons.
     ['https://github.com/FortAwesome/Font-Awesome/archive/v3.0.1.zip',
