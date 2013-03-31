@@ -33,53 +33,48 @@
 #
 #
 # Spec:
-#
-#   defaults: Array or Function
-#   inputSchema: Array or Function
-#
-#
-# General spec transform format:
 # {
-#   type: XXX
-#   aes: { .. mapping inserted before actual xform .., group: xxx }
-#   args: { .. parameters accessible through @param .. }
+#   f: Compute Function
+#   params: {
+#      [attr: Object or Function]*
+#   }
+#   ... other gg.wf.Node spec entries ...
 # }
 #
 #
-class gg.XForm# extends gg.wf.Exec
+class gg.XForm
 
   constructor: (@g, @spec={}) ->
+    unless _.isSubclass @g, gg.Graphic
+      throw Error("Xform passed non-graphic as first argument")
+
+    @params = {}
 
   parseSpec: ->
+    console.log "XForm spec: #{JSON.stringify @spec}"
+
     spec = _.clone @spec
-    console.log "xform spec:"
-    console.log @spec
 
-    inputSchema = findGood [spec.inputSchema, null]
-    if inputSchema?
-      unless _.isFunction inputSchema
-        @inputSchema = (table, env) -> inputSchema
-      else
-        @inputSchema = inputSchema
-
-    defaults = findGood [spec.defaults, null]
-    if defaults?
-      unless _.isFunction defaults
-        console.log "uuuuugh #{JSON.stringify defaults}"
-        @defaults = (table, env) -> defaults
-      else
-        @defaults = defaults
+    @inputSchema = @extractAttr "inputSchema"
+    @defaults = @extractAttr "defaults"
 
     @compute = spec.f or @compute
-    _compute = (table, env, node) =>
-      @addDefaults table, env
-      @validateInput table, env
-      @compute table, env, node
-    spec.f = _compute
-
     @spec = spec
 
+  extractAttr: (attr, spec={}) ->
+    spec = @spec unless spec?
+    val = findGood spec, [attr], null
+    if val?
+      unless _.isFunction val
+        (table, env) -> val
+      else
+        val
+    else
+      @[attr]
 
+
+  # Convenience functions during workflow execution
+  # All functions take (table, env) as input
   facetGroups: (table, env) ->
     facetX: env.group(@g.facets.facetXKey, "")
     facetY: env.group(@g.facets.facetYKey, "")
@@ -96,31 +91,52 @@ class gg.XForm# extends gg.wf.Exec
     info = @paneInfo table, env
     @g.scales.scales(info.facetX, info.facetY, info.layer)
 
+  param: (table, env, attr, defaultVal=null) ->
+    if attr of @params
+      ret = @params[attr]
+    else
+      if attr of @
+        ret = @[attr]
+      else
+        return defaultVal
+
+    if _.isFunction ret then ret(table, env) else ret
 
   # Defaults for optional attributes
   defaults: (table, env) -> {}
+
   # Required input schema
   inputSchema: (table, env) -> table.colNames()
-  #outputSchema: (table, env) -> table.colNames()
 
   # throws exception if inputs don't validate with schema
   validateInput: (table, env) ->
     tableCols = table.colNames()
-    iSchema = @inputSchema table, env
+    iSchema = @param table, env, "inputSchema"
     missing = _.reject iSchema, (attr) -> attr in tableCols
     if missing.length > 0
       throw Error("#{@name}: input schema did not contain #{missing.join(",")}")
 
   addDefaults: (table, env) ->
-    console.log "adding defaults of #{JSON.stringify @defaults(table, env)}"
+    defaults = @param table, env, "defaults"
+    console.log "adding defaults of #{JSON.stringify defaults}"
     console.log "                   #{JSON.stringify table.colNames()}"
-    _.each @defaults(table, env), (val, col) ->
+    _.each defaults, (val, col) ->
       unless col in table.colNames()
         table.addConstColumn col, val
 
   compute: (table, env, node) -> table
 
-  compile: -> [new gg.wf.Exec @spec]
+
+
+  # Wraps @compute to validate inputs and add defaults
+  compile: ->
+    spec = _.clone @spec
+    _compute = (table, env, node) =>
+      @addDefaults table, env
+      @validateInput table, env
+      @compute table, env, node
+    spec.f = _compute
+    [new gg.wf.Exec spec]
 
   @fromSpec: (spec) ->
       xformName = findGood [spec.xform, "identity"]
@@ -128,3 +144,5 @@ class gg.XForm# extends gg.wf.Exec
       }[xformName] or gg.XForm
 
 
+  log: (text) ->
+    console.log "#{@spec.name} #{@constructor.name}:\t#{text}"

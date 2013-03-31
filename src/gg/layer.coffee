@@ -26,7 +26,7 @@ class gg.Layers
       else
         spec = _.clone layerOrSpec
         spec.layerIdx = layerIdx
-        layer = new gg.Layer @g, spec
+        layer = gg.Layer.fromSpec @g, spec
 
       layer.layerIdx = layerIdx
       @layers.push layer
@@ -36,182 +36,221 @@ class gg.Layers
 
 
 class gg.Layer
-    constructor: (@g, @spec={}) ->
+  constructor: (@g, @spec={}) ->
+    # which index in the specification
+    @layerIdx = @spec.layerIdx if @spec.layerIdx?
+    @type = "layer"
+    @name = findGood [@spec.name, "node-#{@id}"]
 
-      # which index in the specification
-      @layerIdx = @spec.layerIdx if @spec.layerIdx?
-      @type = "node"
-      @name = findGood [@spec.name, "node-#{@id}"]
+    @parseSpec()
+  @id: -> gg.wf.Node::_id += 1
+  _id: 0
 
-      @mapper = null
-      @stats = []
-      @geoms = []
-      @renders = []
-      @flow = []
-      @labeler = new gg.wf.Label
-        key: "layer"
-        val: @layerIdx
 
-      @parseSpec()
+  parseSpec: -> null
 
-    @id: -> gg.wf.Node::_id += 1
-    _id: 0
+  @fromSpec: (g, spec) ->
+    if _.isArray spec
+      throw Error("layer currently only supports shorthand style")
+    else
+      new gg.LayerShorthand g, spec
 
 
 
-    # every transform is decoupled into the series:
-    # - mapping
-    # - split?
-    # - exec
-    # - join?
-    #
-    # Mapping exists if there are any aesthetic mappings
-    # Split/Join will exist if there is an explicit/implicit grouping
-    #
-    # TODO: figure out how to programatically change ala ggplot2
-    #
-    parseSpec: ->
-      spec = @spec
-      if _.isArray spec
-        throw Error("layer currently only supports shorthand style")
-        @parseArraySpec spec
+class gg.LayerShorthand extends gg.Layer
+  constructor: (@g, @spec={}) ->
+    @type = "layershort"
+    super
+
+
+  # TODO: merge pre and post stats aesthetic mappings so we can train properly
+  #       currently only supports pre-stats mapping
+  aesthetics: ->
+    subSpecs = [@mapSpec, @geomSpec, @statSpec, @posSpec]
+    aess = _.uniq _.compact _.union(_.map subSpecs, (s) -> _.keys(s.aes))
+    aess
+
+
+  #
+  # spec:
+  #
+  # {
+  #  geom: geomspec
+  #  pos: posspec
+  #  stat: statspec
+  #  map: {}
+  # }
+  #
+  # geomspec/posspec/statspec:
+  #
+  # {
+  #  type: ""
+  #  aes: { ..., group: 1 }
+  #  param/args: {}
+  #  name: "...-shorthand"
+  # }
+  #
+  # map is a pre-stats mapping, if desired (for compatibility with ggplot2)
+  # it can be replicated by adding an aes attribute to statspec
+  #
+  parseSpec: ->
+    spec = @spec
+
+    @geomSpec = @extractSpec "geom"
+    @statSpec = @extractSpec "stat"
+    @posSpec  = @extractSpec "pos"
+    mapSpec  = findGoodAttr spec, ['aes', 'aesthetic', 'mapping'], {}
+    @mapSpec = {aes: mapSpec, name: "map-shorthand"}
+    @labelSpec = {key: "layer", val: @layerIdx}
+
+    @geom = gg.Geom.fromSpec @, @geomSpec
+    @stat = gg.Stat.fromSpec @, @statSpec
+    @pos = gg.Position.fromSpec @, @posSpec
+    @map = new gg.Mapper @g, @mapSpec
+    @labelNode = new gg.wf.Label @labelSpec
+
+    super
+
+
+  # extract the geom/stat/pos specific spec from
+  # the shorthand spec
+  #
+  # @param xform geom/stat/pos
+  # @param spec  defaults to @spec
+  # @return consistently formatted sub-spec of the form
+  #         { type: , aes:, param: }
+  extractSpec: (xform, spec=null) ->
+    spec = @spec unless spec?
+
+    [aliases, defaultType] = switch xform
+      when "geom"
+        [['geom', 'geometry'], "point"]
+      when "stat"
+        [['stat', 'stats', 'statistic'], "identity"]
+      when "pos"
+        [["pos", "position"], "identity"]
       else
-        # Shorthand style similar to ggplot2
-        console.log "shorthand"
-        console.log @spec
+        [[], "identity"]
 
-        statSpec = findGood [spec.stat, spec.stats, spec.statistic, "identity"]
-        mappingSpec = findGood [spec.aes, spec.aesthetic, spec.mapping, {}]
-        geomSpec =
-          geom: findGood [spec.geom, "point"]
-          pos: findGood [spec.pos, spec.position, "identity"]
+    subSpec = findGoodAttr spec, aliases, defaultType
 
-        statSpec = {stat: statSpec} if _.isString statSpec
-        statSpec.name = statSpec.name or "stat"
+    if _.isString subSpec
+      subSpec =
+        type: subSpec
+        aes: {}
+        param: {}
+    else
+      subSpec.aes = {} unless subSpec.aes?
+      subSpec.param = {} unless subSpec.param?
+
+    subSpec.name = "#{xform}-shorthand" unless subSpec.name?
+    subSpec
+
+  compile: ->
+    console.log "layer.compile called"
+    nodes = []
+
+    # pre-stats transforms
+    nodes.push new gg.wf.Stdout {name: "initial data", n: 1}
+    nodes.push @labelNode
+    nodes.push @map
 
 
-        # NOTE: mapper defines the initial aesthetics mapping
-        console.log "mapperSpec: #{JSON.stringify mappingSpec}"
-        console.log "statSpec: #{JSON.stringify statSpec}"
-        @mapper = new gg.Mapper @g, {aes: mappingSpec, name: "initialmap"}
-        @stats = [gg.Stat.fromSpec(@, statSpec)]
-        @geom = gg.Geom.fromSpec @, geomSpec
+    # Statistics transforms
+    nodes.push @g.scales.prestatsNode
+    nodes.push @stat
 
-      @flow = _.flatten [@stats, @geom.compile()]
+    # facet join -- add facetX/Y columns to table
+    nodes.push @g.facets.labelerNodes()
 
-    xformToString: (xform) ->
-      if _.isSubclass xform, gg.Stat
-        "S"
-      else if _.isSubclass xform, gg.Mapper
-        "M"
-      else if _.isSubclass xform, gg.Position
-        "P"
-      else if _.isSubclass xform, gg.GeomRender
-        "R"
-      else if _.isSubclass xform, gg.Geom
-        "G"
+    #####
+    # Geometry Part of Workflow
+    #####
 
-    parseArraySpec: (spec) ->
-      # Explicit list of transformations
-      # ensure that the list ends with geom/render nodes
-      @xforms = _.map spec, (xformspec) -> gg.XForm.fromSpec xformspec
-      klasses = _.map @xforms, (xform) => @xformToString xform
-      klassStr = klasses.join ""
-      validregex = /^([MS]*)(G|(?:M?P?R))$/
-      unless regex.test klassStr
-        throw Error("Layer: series of XForms not valid (#{klassStr})")
+    # geom: map attributes to aesthetic names
+    # scales: train scales after the final aesthetic mapping (inputs are data values)
+    nodes.push new gg.wf.Stdout {name: "pre-geom", n: 1}
+    nodes.push @geom.map
+    nodes.push @g.scales.pregeomNode
+    nodes.push new gg.wf.Stdout {name: "post-geom", n: 1}
 
-      [entireStr, statChars, geomChars] = validregex.exec(klassStr)
-      [sidx, eidx] = [s, statChars.length()]
-      @stats = @xforms[sidx...eidx]
-      [sidx, eidx] = [eidx, eidx+geomChars.length()]
-      throw Error("gg.Geom.parseArraySpec: not implemented. Needs to be thought through")
-      @geoms = @xforms[sidx...eidx]
-      if geomChars is "G"
-        geom = @geoms[0]
-        @geoms = [geom.mappingXForm(), geom.positionXForm()]
-        @renders = [geom.renderXForm()]
+    # Rendering
+    # layout the overall graphic, allocate space for facets
+    # facets: allocate containers and compute ranges for the scales
+    nodes.push @g.layoutNode()
+    nodes.push @g.facets.allocatePanesNode()
+
+    # geom: facets have set the ranges so transform data values to pixel values
+    # geom: map minimum attributes (x,y) to base attributes (x0, y0, x1, y1)
+    # geom: position transformation
+    nodes.push new gg.wf.Stdout {name: "pre-pixel", n: 1}
+    nodes.push @geom.applyScales
+    nodes.push @geom.reparam
+    nodes.push @pos
+    nodes.push new gg.wf.Stdout {name: "post:pixel", n: 1}
+
+    # facets: retrain scales after positioning (jitter) (inputs are pixel values)
+    nodes.push @g.scales.prerenderNode
+
+    # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
+
+
+    # render: render geometries
+    nodes.push new gg.wf.Stdout {name: "position pixel", n: 1}
+    nodes.push @geom.render
+
+    nodes = @compileNodes nodes
+    console.log "returing nodes"
+    nodes
+
+  compileNodes: (nodes) ->
+    nodes = _.map _.compact(nodes), (node) ->
+      if _.isSubclass node, gg.XForm
+        node.compile()
       else
-        @renders = [_.last @geoms]
-        @geoms = _.initial @geoms
+        node
+    _.compact _.flatten nodes
 
 
-    # TODO: merge pre and post stats aesthetic mappings so we can train properly
-    #       currently only supports pre-stats mapping
-    aesthetics: -> if @mapper? then  _.compact(@mapper.aesthetics) else []
 
 
-    # add layerIdx to environment so xforms can track it
-    labelerXForm: -> [@labeler]
-    # initial aesthetics mapping
-    mapXForm: ->  @compileXForms [@mapper]
-    # statistics
-    statXForms: -> @compileXForms @stats
-    # map + position
-    geomXForms: -> @compileXForms [@geom]
-    # geom-rendering
-    renderXForms: -> @compileXForms @renders
-    scales: ->
-      @g
-      throw Error("gg.Layer.scales not implemented")# @g.scales.getLayerScales(@)
-
-    compileXForms: (xforms) ->
-      _.flatten(_.map _.compact(xforms), (xform) -> xform.compile())
-
-    compile: ->
-      console.log "layer.compile called"
-      nodes = []
-
-      nodes.push @labelerXForm()
-      # stats: pre-stats aesthetics mapping
-      nodes.push new gg.wf.Stdout {name: "initial data", n: 1}
-      nodes.push @mapXForm()
-      # scales: train scales (inputs are data values)
-      nodes.push @g.scales.prestatsNode
-      nodes.push @statXForms()
-
-      # facet join
-      nodes.push @g.facets.labelerNodes()
-      nodes.push new gg.wf.Stdout {name: "pre-geom", n: 1}
 
 
-      # geom: map attributes to aesthetic names
-      nodes.push @geom.mappingXForm()
-      # scales: train scales after the final aesthetic mapping (inputs are data values)
-      nodes.push @g.scales.pregeomNode
-      nodes.push new gg.wf.Stdout {name: "post-geom", n: 1}
+class gg.LayerArray
+  xformToString: (xform) ->
+    if _.isSubclass xform, gg.Stat
+      "S"
+    else if _.isSubclass xform, gg.Mapper
+      "M"
+    else if _.isSubclass xform, gg.Position
+      "P"
+    else if _.isSubclass xform, gg.GeomRender
+      "R"
+    else if _.isSubclass xform, gg.Geom
+      "G"
 
-      # layout the overall graphic, allocate space for facets
-      nodes.push @g.layoutNode()
-      # facets: allocate containers and compute ranges for the scales
-      nodes.push @g.facets.allocatePanesNode()
+  parseArraySpec: (spec) ->
+    # Explicit list of transformations
+    # ensure that the list ends with geom/render nodes
+    @xforms = _.map spec, (xformspec) -> gg.XForm.fromSpec xformspec
+    klasses = _.map @xforms, (xform) => @xformToString xform
+    klassStr = klasses.join ""
+    validregex = /^([MS]*)(G|(?:M?P?R))$/
+    unless regex.test klassStr
+      throw Error("Layer: series of XForms not valid (#{klassStr})")
 
-      # geom: facets have set the ranges so transform data values to pixel values
-      nodes.push new gg.wf.Stdout {name: "pre-pixel", n: 1}
-      nodes.push @geom.transformDomainXForm()
-      nodes.push new gg.wf.Stdout {name: "post-pixel", n: 1}
-      # geom: map minimum attributes (x,y) to base attributes (x0, y0, x1, y1)
-      nodes.push @geom.geomMappingXForm()
-      # geom: position transformation
-      nodes.push @geom.positionXForm()
-
-      # facets: retrain scales (inputs are pixel values)
-      #         this training is necessary to ensure axes are rendered correctly!
-      nodes.push new gg.wf.Stdout {name: "pre-scales:pixel", n: 1}
-      nodes.push @g.scales.prerenderNode
-      # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
-
-      # facets: render axes  XXX: not implemented
-      # nodes.push @g.facets.renderPanes()
-      # render: render geometries
-      nodes.push new gg.wf.Stdout {name: "position pixel", n: 1}
-      nodes.push @geom.renderXForm()
-
-
-      nodes = _.compact _.flatten(nodes)
-      console.log "returing nodes"
-      nodes
-
-
+    [entireStr, statChars, geomChars] = validregex.exec(klassStr)
+    [sidx, eidx] = [s, statChars.length()]
+    @stats = @xforms[sidx...eidx]
+    [sidx, eidx] = [eidx, eidx+geomChars.length()]
+    throw Error("gg.Geom.parseArraySpec: not implemented. Needs to be thought through")
+    @geoms = @xforms[sidx...eidx]
+    if geomChars is "G"
+      geom = @geoms[0]
+      @geoms = [geom.mappingXForm(), geom.positionXForm()]
+      @renders = [geom.renderXForm()]
+    else
+      @renders = [_.last @geoms]
+      @geoms = _.initial @geoms
 
 

@@ -48,6 +48,7 @@ class gg.Scales extends gg.XForm
 
 
   constructor: (@g, @spec) ->
+    super
     @scalesFactory = null
     @mappings = {}     # facetX -> facetY -> layerIdx -> scalesSet
     @scalesList = []  # list of the scalesSet objects
@@ -345,18 +346,13 @@ class gg.ScalesSet
           return
 
       _.each scales.scales[aes], (scale, type) =>
-        #console.log "merge(#{aes})#{@id}: other:  #{scale.constructor.name}\t#{scale.domain()} "
-
         if @contains aes, type
           mys = @scale aes, type
-          #console.log "\tcontains #{mys.domain()} -> #{mys.range()}"
           @scale(aes, type).mergeDomain scale.domain()
         else if insert
-          #console.log "\tinsert"
           @scale scale.clone()
 
         mys = @scale aes, type
-        #console.log "merge(#{aes})#{@id}: mine:  #{mys.constructor.name}\t#{mys.domain()}"
 
     @
 
@@ -399,6 +395,29 @@ class gg.ScalesSet
     table
 
   labelFor: -> null
+
+
+
+# transforms data -> pixel/aesthetic values
+class gg.ScalesApply extends gg.XForm
+  constructor: (@layer, @spec) ->
+    super @layer.g, @spec
+    @parseSpec()
+
+  compute: (table, env) ->
+    info = @paneInfo table, env
+    scalesSet = @scales table, env
+    table = table.clone()
+
+    @log ":aesthetics: #{scalesSet.aesthetics()}"
+    _.each scalesSet.aesthetics(), (aes) =>
+      scale = scalesSet.scale aes
+      @log "#{aes} scale is (#{scale.domain()}) -> (#{scale.range()})"
+
+      f = (v) -> scale.scale(v)
+      table.map f, aes if table.contains aes
+
+    table
 
 
 

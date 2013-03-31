@@ -96,7 +96,7 @@ class gg.Util
         gg.Util._exSizeCache[optsJson] = ret
         ret
       catch error
-        console.log error
+        console.log "exSize returning defaults because of: #{error}"
         {
           width: 20
           height: 20

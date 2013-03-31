@@ -8,12 +8,12 @@
 
     var specs = {
       layers: [
-/*      {
+      {
         geom: { type:"interval", aes: {y: 'total', r: 'total'} },
         aes: {x: 'd', y: 'r', 'fill': 'f',  "fill-opacity": 0.9},
         stat: "bin"
       }
-     ,*/{
+     ,{
         geom: { type:"point"},//, aes: {y: 'total', r: 'total', fill: 'red'} },
         aes: {x: 'd', y: 'r', fill: 'g'},
         pos: { type: 'jitter', y:0.1, x:0}
