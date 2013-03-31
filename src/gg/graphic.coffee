@@ -64,16 +64,16 @@ class gg.Graphic
 
         # height of title TODO: use _.exSize or _.fontSize instead
         # Draw Title.  Draw last so it's at the top
-        title = null
+        title = @options.title
         hTitle = 0
         if title?
-          hTitle = _.exSize "font-size": "30px"
+          hTitle = _.exSize({"font-size": "30pt"}).h
           svgTitle = @svg.append("g")
             .append("text")
               .text(title)
               .attr("text-anchor", "middle")
               .attr("class", "graphic-title")
-              .attr("style", "font-size: 30px")
+              .attr("style", "font-size: 30pt")
               .attr("dx", @w/2)
               .attr("dy", "1em")
 

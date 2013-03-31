@@ -19,7 +19,6 @@ Scales
 
 Rendering
 
-1. allocate panes after computing the axis tick size of y axis to know how much spacing to give
 1. draw facet labels after geometries
 
 
@@ -36,6 +35,7 @@ Tables
 
 # DONE
 
+x. allocate panes after computing the axis tick size of y axis to know how much spacing to give
 x. allow aesthetics with dashes in name (e.g., fill-opacity) in evaled JS scripts
    -> currently var fill-opacity = row['fill-opacity']
 x. render bars

@@ -50,8 +50,8 @@ class gg.Facets
 
     # rendering options
     @margin = findGood [@spec.margin, 10]
-    @facetXLabel = findGood [@spec.xLabel, "Facet X"]
-    @facetYLabel = findGood [@spec.yLabel, "Facet Y"]
+    @facetXLabel = findGoodAttr @spec, ['xlabel', 'xLabel', null]
+    @facetYLabel = findGoodAttr @spec, ['ylabel', 'yLabel', null]
     @facetFontSize = findGood [@spec.fontSize, @spec['font-size'], "12pt"]
     @facetFontFamily = findGood [@spec.fontFamily, @spec['font-family'],  "arial"]
     @facetPadding = findGood [@spec.facetPadding, 5]
@@ -191,7 +191,7 @@ class gg.Facets
 
 
     svgFacet.append("g").append("text")
-      .text(@x)
+      .text(@facetXLabel or @x)
       .attr("transform", "translate(#{hTitle}, #{@facetPadding/2})")
       .attr("dy", "1em")
       .attr("dx", (w-2*hTitle) / 2)
@@ -201,7 +201,7 @@ class gg.Facets
       .style("font-family", "arial")
 
     svgFacet.append("g").append("text")
-      .text(@y + " blah")
+      .text(@facetYLabel or @y)
       .attr("transform", "rotate(90)translate(#{hTitle+(h-2*hTitle)/2},-#{w-hTitle-@facetPadding})")
       .attr("text-anchor", "middle")
       .attr("class", "facet-title")

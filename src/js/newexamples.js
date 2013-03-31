@@ -22,12 +22,17 @@
 
 
       ],
-      facets: {x: 'f', y: 'g', fontSize: "10pt"},
+      facets: {x: 'f', y: 'g', xLabel: "XFACET!", fontSize: "10pt"},
       scales: {
         x: {type: 'linear'},
         y: {type: 'linear'},//, lim: [0, 500]},
         r: {type: 'linear', range: [3,6]}
+      },
+      opts: {
+        title: "baller plot!"
       }
+
+
     }
 
 
