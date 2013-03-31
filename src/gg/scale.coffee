@@ -162,10 +162,9 @@ class gg.Scale
     s
 
   clone: ->
+    spec = _.clone @spec
+    spec.aes = @aes
     ret = gg.Scale.fromSpec @spec
-    _.extend ret, _.pick(@, [
-      'mergeDomain', 'domain', 'range',
-      'scale', 'invert', 'aes'])
     ret.d3Scale = @d3Scale.copy() if @d3Scale?
     ret
 
@@ -195,24 +194,25 @@ class gg.Scale
 
   domain: (interval) ->
     if interval? and not @domainSet
-        @domainUpdated = yes
-        @d3Scale =  @d3Scale.domain interval
+      @domainUpdated = yes
+      @d3Scale.domain interval
     @d3Scale.domain()
 
   range: (interval) ->
     if interval? and not @rangeSet
-      @d3Scale = @d3Scale.range interval
+      @d3Scale.range interval
     @d3Scale.range()
 
   #
   # XXX: need method to apply transformation but not scale to range
   #
 
+  d3: -> @d3Scale
+  valid: (v) -> yes
   minDomain: -> @domain()[0]
   maxDomain: -> @domain()[1]
   minRange: -> @range()[0]
   maxRange: -> @range()[1]
-  valid: (v) -> yes
   scale: (v) -> @d3Scale v
   invert: (v) -> @d3Scale.invert(v)
 
@@ -232,9 +232,9 @@ class gg.IdentityScale extends gg.Scale
 class gg.LinearScale extends gg.Scale
   @aliases = "linear"
   constructor: () ->
-      @d3Scale = d3.scale.linear().clamp(true)
-      @type = 'continuous'
-      super
+    @d3Scale = d3.scale.linear().clamp(true)
+    @type = 'continuous'
+    super
 
 
 class gg.TimeScale extends gg.Scale
@@ -267,18 +267,16 @@ class gg.LogScale extends gg.Scale
     else
         interval = [@min, @max]
 
-    console.log "logScale defaultdomain: #{interval}"
     interval
 
-  scale: (v) ->
-    console.log "scaling #{v} -> #{@d3Scale(v)}"
-    if v is 0 then -1 else @d3Scale(v)
+  scale: (v) -> if v is 0 then -1 else @d3Scale(v)
 
 
 class gg.CategoricalScale extends gg.Scale
   @aliases = "categorical"
-  constructor: (@padding=1) ->
-      @d3Scale = d3.scale.ordinal()
+
+  # subclasses are responsible for instantiating @d3Scale and @invertScale
+  constructor: (@padding=.05) ->
       @type = 'ordinal'
       super
 
@@ -287,13 +285,27 @@ class gg.CategoricalScale extends gg.Scale
       vals.sort (a,b)->a-b
       vals
 
+  clone: ->
+    ret = super
+    ret.invertScale = @invertScale.copy()
+    ret
+
   defaultDomain: (col) -> gg.CategoricalScale.defaultDomain col
 
-  mergeDomain: (domain) -> @domain _.uniq(_.union domain, @domain())
+  mergeDomain: (domain) ->
+    newDomain = _.uniq(_.union domain, @domain())
+    console.log "#{@constructor.name}-#{@type} merging #{newDomain}"
+    @domain newDomain
+
+  domain: (interval) ->
+    if interval?
+      @invertScale.range interval
+    super
 
   range: (interval) ->
     if interval? and not @rangeSet
-      @d3Scale = @d3Scale.rangeBands interval, @padding
+      @d3Scale.rangeBands interval, @padding
+      @invertScale.domain @d3Scale.range()
     @d3Scale.range()
 
 class gg.ShapeScale extends gg.CategoricalScale
@@ -303,68 +315,111 @@ class gg.ShapeScale extends gg.CategoricalScale
       customTypes = ['star', 'ex']
       @symbolTypes = d3.svg.symbolTypes.concat customTypes
       @d3Scale = d3.scale.ordinal().range @symbolTypes
+      @invertScale = d3.scale.ordinal().domain @d3Scale.range()
       @symbScale = d3.svg.symbol()
       @type = 'shape'
       super
 
   range: (interval) -> # not allowed
   scale: (v, data, args...) ->
-      size = args[0] if args? and args.length
-      type = @d3Scale v
-      r = Math.sqrt(size / 5) / 2
-      diag = Math.sqrt(2) * r
-      switch type
-          when 'ex'
-              "M#{-diag},#{-diag}L#{diag},#{diag}" +
-                  "M#{diag},#{-diag}L#{-diag},#{diag}"
-          when 'cross'
-              "M#{-3*r},0H#{3*r}M0,#{3*r}V#{-3*r}"
-          when 'star'
-              tr = 3*r
-              "M#{-tr},0H#{tr}M0,#{tr}V#{-tr}" +
-                  "M#{-tr},#{-tr}L#{tr},#{tr}" +
-                  "M#{tr},#{-tr}L#{-tr},#{tr}"
-          else
-              @symbScale.size(size).type(@d3Scale v)()
+    throw Error("shape scale not thought through yet")
+    size = args[0] if args? and args.length
+    type = @d3Scale v
+    r = Math.sqrt(size / 5) / 2
+    diag = Math.sqrt(2) * r
+    switch type
+      when 'ex'
+          "M#{-diag},#{-diag}L#{diag},#{diag}" +
+              "M#{diag},#{-diag}L#{-diag},#{diag}"
+      when 'cross'
+          "M#{-3*r},0H#{3*r}M0,#{3*r}V#{-3*r}"
+      when 'star'
+          tr = 3*r
+          "M#{-tr},0H#{tr}M0,#{tr}V#{-tr}" +
+              "M#{-tr},#{-tr}L#{tr},#{tr}" +
+              "M#{tr},#{-tr}L#{-tr},#{tr}"
+      else
+          @symbScale.size(size).type(@d3Scale v)()
 
 
 
 
 
+class gg.ColorScaleCont extends gg.Scale
+  @aliases = "color_cont"
+  constructor: (@spec={}) ->
+    @d3Scale = d3.scale.linear().clamp(true)
+    super
 
-class gg.ColorScale extends gg.Scale
+  parseSpec: ->
+    super
+
+    @startColor = @spec.startColor or d3.rgb 255, 247, 251
+    @endColor = @spec.endColor or d3.rgb 2, 56, 88
+    @d3Scale.range [@startColor, @endColor]
+
+  # read only
+  range: -> @d3Scale.range()
+
+class gg.ColorScale extends gg.CategoricalScale
   @aliases = "color"
 
   constructor: (@spec={}) ->
-      @d3Scale = d3.scale.linear().clamp(true) # default to linear scale
-      @type = 'color'
-      @startColor = @spec.startColor or d3.rgb 255, 247, 251
-      @endColor = @spec.endColor or d3.rgb 2, 56, 88
-      @fixedScale = d3.scale.linear().range [@startColor, @endColor]
-      super
+    super
+    @d3Scale = d3.scale.category20()
+    @invertScale = d3.scale.ordinal()
+    @invertScale.domain(@d3Scale.range()).range(@d3Scale.domain())
+    @type = "color"
+
+
+  invert: (v) -> @invertScale v
+
+
+class gg.ColorScaleFuck extends gg.Scale
+  @aliases = "color"
+
+  constructor: (@spec={}) ->
+    super
+    @isDiscrete = no
+    @cScale = new gg.ColorScaleCont @spec
+    @dScale = new gg.ColorScaleDisc @spec
+    @type = 'color'
+
 
 
   isNumeric: (col) -> _.every _.compact(col), _.isNumber
+  myScale: -> if @isDiscrete then @dScale else @cScale
+  d3: -> @myScale().d3()
+  invert: (v) -> @myScale().invert v
+  scale: (v) -> @myScale().scale v
+  domain: (v) -> @myScale().domain v
+  range: (v) -> @myScale().range v
+  minDomain: -> @myScale().minDomain()
+  maxDomain: -> @myScale().maxDomain()
+  minRange: -> @myScale().minRange()
+  maxRange: -> @myScale().maxRange()
 
 
-  defaultDomain: (col) ->
-      uniqueVals = gg.CategoricalScale.defaultDomain col
+  clone: ->
+    spec = _.clone @spec
+    ret = new gg.ColorScale spec
+    ret.isDiscrete = @isDiscrete
+    ret.cScale = @cScale.clone()
+    ret.dScale = @dScale.clone()
+    ret
 
-      if @isNumeric(col) and uniqueVals.length > 20
-          @d3Scale = @fixedScale
-          _.extend @, _.pick(gg.Scale.prototype,
-              'mergeDomain', 'domain', 'range', 'scale', 'invert')
-          @mergeDomain super(col)
-      else
-          @d3Scale = d3.scale.category20()
-          @.range = (interval=null) =>
-            @d3Scale = @d3Scale.range(interval) if interval?
-            @d3Scale.range()
-          _.extend @, _.pick(gg.CategoricalScale.prototype,
-              'mergeDomain', 'domain', 'scale')
-          @mergeDomain uniqueVals
-          @invertScale = d3.scale.ordinal().domain(@d3Scale.range()).range(@d3Scale.domain())
-          @.invert = (v) => @invertScale(v)
+
+  mergeDomain: (interval) ->
+    console.log "scale.mergeDomain #{@isNumeric interval}  #{interval.length}"
+    uniqs = _.uniq _.compact interval
+    @isDiscrete = not (@isNumeric(uniqs) and uniqs.length > 20)
+
+    domain = @defaultDomain interval
+    @myScale().mergeDomain domain
+    @domain()
+
+  defaultDomain: (col) -> @myScale().defaultDomain col
+
 
 
 

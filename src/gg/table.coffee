@@ -1,4 +1,6 @@
 class gg.Table
+    @reEvalJS = /^{.*}$/
+
     type: (colname) ->
         val = @get(0, colname)
         if val? then typeof val else 'unknown'
@@ -65,20 +67,20 @@ class gg.RowTable extends gg.Table
 
 
     merge: (table) ->
-        if @constructor.name is "RowTable"
-            @rows.push.apply @rows, table.rows
-        else
-            throw Error("merge not implemented for #{@constructor.name}")
-        @
+      if @constructor.name is "RowTable"
+          @rows.push.apply @rows, table.rows
+      else
+          throw Error("merge not implemented for #{@constructor.name}")
+      @
 
     @merge: (tables) ->
-        if tables.length == 0
-            new gg.RowTable []
-        else
-            t = tables[0].cloneShallow()
-            for t2, idx in tables
-                t.merge(t2) if idx > 0
-            t
+      if tables.length == 0
+          new gg.RowTable []
+      else
+          t = tables[0].cloneShallow()
+          for t2, idx in tables
+              t.merge(t2) if idx > 0
+          t
 
     # gbfunc's output will be JSON encoded and used as key
     # @param {Function} gbfunc (row) -> key
@@ -110,59 +112,57 @@ class gg.RowTable extends gg.Table
     #        false if rows should be new, with only columns specified by transformation
     #
     transform: (colname, funcOrUpdate=yes, update=yes) ->
-        if _.isObject colname
-            mapping = colname
-            update = funcOrUpdate
-        else
-            mapping = {}
-            mapping[colname] = funcOrUpdate
+      if _.isObject colname
+          mapping = colname
+          update = funcOrUpdate
+      else
+          mapping = {}
+          mapping[colname] = funcOrUpdate
 
-        funcs = {}
-        strings = {}
-        if update
-            _.each @rows, (row) =>
-                newrow = @transformRow row, mapping, funcs, strings
-                _.extend row, newrow
-            @
-        else
-            newrows = _.map @rows, (row) =>
-                @transformRow row, mapping, funcs, strings
-            new gg.RowTable newrows
+      funcs = {}
+      strings = {}
+      if update
+          _.each @rows, (row) =>
+              newrow = @transformRow row, mapping, funcs, strings
+              _.extend row, newrow
+          @
+      else
+          newrows = _.map @rows, (row) =>
+              @transformRow row, mapping, funcs, strings
+          new gg.RowTable newrows
 
     # constructs a new object and populates it using mapping specs
     transformRow: (row, mapping, funcs={}, strings={}) ->
-        ret = {}
-        map = (oldattr, newattr) =>
-          if _.isFunction oldattr
-            oldattr row
-          else if oldattr of row
-            row[oldattr]
-          else if newattr of strings
-            oldattr
-          else if newattr isnt 'text' and _.isString oldattr
-            if oldattr.length is 0 or (oldattr[0] is '{' and oldattr[1] is '}')
-                strings[newattr] = oldattr
-            else if not (newattr of funcs)
-              cmds = (_.map row, (val, k) => "var #{k} = row['#{k}'];")
-              cmds.push "return #{oldattr};"
-              cmd = cmds.join('')
-              fcmd = "var __func__ = function(row) {#{cmd}}"
-              console.log fcmd
-              eval fcmd
-              funcs[newattr] = __func__
-            funcs[newattr](row)
-          else
-            # for constrants (date, number)
-            oldattr
+      ret = {}
+      map = (oldattr, newattr) =>
+        if _.isFunction oldattr
+          oldattr row
+        else if oldattr of row
+          row[oldattr]
+        else if newattr of strings
+          strings[newattr]
+        else if newattr isnt 'text' and gg.Table.reEvalJS.test oldattr
+          unless newattr of funcs
+            cmds = (_.map row, (val, k) => "var #{k} = row['#{k}'];")
+            cmds.push "return #{oldattr[1...oldattr.length-1]};"
+            cmd = cmds.join('')
+            fcmd = "var __func__ = function(row) {#{cmd}}"
+            console.log fcmd
+            eval fcmd
+            funcs[newattr] = __func__
+          funcs[newattr](row)
+        else
+          # for constrants (date, number)
+          oldattr
 
 
-        _.each mapping, (oldattr, newattr) =>
-            ret[newattr] = try
-                    map oldattr, newattr
-                catch error
-                    console.log error
-                    throw error
-        ret
+      _.each mapping, (oldattr, newattr) =>
+        ret[newattr] = try
+          map oldattr, newattr
+        catch error
+          console.log error
+          throw error
+      ret
 
 
     filter: (f) ->

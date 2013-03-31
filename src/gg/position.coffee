@@ -59,14 +59,21 @@ class gg.JitterPosition extends gg.Position
 
   parseSpec: ->
     @scale = findGood [@spec.scale, 0.2]
+    @xScale = findGood [@spec.xScale, @spec.x, null]
+    @yScale = findGood [@spec.yScale, @spec.y, null]
+    if @xScale? or @yScale?
+      @xScale = @xScale or 0
+      @yScale = @yScale or 0
+    else
+      @xScale = @yScale = @scale
     super
 
   compute: (table, env) ->
     scales = @scales table, env
     xRange = scales.scale("x").range()
     yRange = scales.scale("y").range()
-    xScale = (xRange[1] - xRange[0]) * @scale
-    yScale = (yRange[1] - yRange[0]) * @scale
+    xScale = (xRange[1] - xRange[0]) * @xScale
+    yScale = (yRange[1] - yRange[0]) * @yScale
 
     map =
       x: (v) -> v + (0.5 - Math.random()) * xScale

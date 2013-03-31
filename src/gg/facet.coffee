@@ -377,7 +377,7 @@ class gg.Facets
 
     console.log "facet.renderYAxis\t#{scale.domain()} -> #{scale.range()}"
     yAxis = d3.svg.axis()
-      .scale(scales.scale('y').d3Scale)
+      .scale(scales.scale('y').d3())
       .ticks(5, d3.format(",.0f"), 5)
       .tickSize(-xBand)
       .orient('left')
@@ -396,7 +396,7 @@ class gg.Facets
     scales = @g.scales.facetScales x, y
 
     xAxis = d3.svg.axis()
-        .scale(scales.scale('x').d3Scale)
+        .scale(scales.scale('x').d3())
         .ticks(5)
         .tickSize(- yBand)
         .orient('bottom')
@@ -438,6 +438,12 @@ class gg.Facets
   # train fixed scales (every pane has the same x,y domains)
   trainScales: ->
     @masterScales = gg.ScalesSet.merge @g.scales.scalesList
+    _.each @g.scales.scalesList, (s) ->
+      fs = s.scale 'fill'
+      console.log "facet.trainScales facet-fill-#{fs.id}: #{fs.domain()}"
+
+    fscale = @masterScales.scale 'fill'
+    console.log "facet.trainScales: #{fscale.domain()} -> #{fscale.range()}"
     if @scales is "fixed"
       _.each @g.scales.scalesList, (scalesSet) =>
         scalesSet.merge @masterScales, false

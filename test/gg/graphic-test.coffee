@@ -43,24 +43,25 @@ Math.seedrandom "zero"
 
 spec =
   layers: [
+    #    {
+    #      # post-stats mapping (e.g., count --> y)
+    #      geom: {type:"interval", aes: {y:"total", r:"total", fill: "red"}},
+    #      # pre-stats mapping (to be consumed, and to split on discrete attributes)
+    #      aes:
+    #        x: "d"
+    #        y: "r"
+    #        fill: 'f'
+    #        r: "r"
+    #        "fill-opacity": 0.6
+    #      # positioning
+    #      pos: {type:"jitter", scale: 0.2}
+    #      stat: {type:"bin", name: "rect-bin"}
+    #
+    #    }
+    #   ,
     {
       # post-stats mapping (e.g., count --> y)
-      geom: {type:"interval", aes: {y:"total", r:"total"}},
-      # pre-stats mapping (to be consumed, and to split on discrete attributes)
-      aes:
-        x: "d"
-        y: "r"
-        fill: 'f'
-        r: "r"
-        "fill-opacity": 0.6
-      # positioning
-      pos: {type:"jitter", scale: 0.2}
-      stat: {type:"bin", name: "rect-bin"}
-
-    }
-   ,{
-      # post-stats mapping (e.g., count --> y)
-      geom: {type:"point", aes: {y:"total", r:"total"}},
+      geom: {type:"point"} #, aes: {y:"total", r:"total",}},
       # pre-stats mapping (to be consumed, and to split on discrete attributes)
       aes:
         x: "d"
@@ -70,7 +71,7 @@ spec =
         "fill-opacity": 0.6
       # positioning
       #pos: {type:"jitter", scale: 0.2}
-      stat: {type:"bin", name: "point-bin"}
+      #stat: {type:"bin", name: "point-bin"}
 
     }
 

@@ -23,6 +23,6 @@ assert.lessThanEqual = assert.lte = function(actual, comparison, message) {
 
 assert.arrayEqual = function(actual, expected, message) {
   _.each(_.zip(actual, expected), function(pair) {
-    assert.equal(pair[0], pair[1], message);
+    assert.equal(pair[0], pair[1], message || "expected {actual} = {expected}");
   })
 }

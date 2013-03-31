@@ -8,26 +8,25 @@
 
     var specs = {
       layers: [
-      {
-        geom: { type:"interval", aes: {y: 'total', r: 'total', "fill-opacity": 0.6,  fill: 'f'} },
+/*      {
+        geom: { type:"interval", aes: {y: 'total', r: 'total'} },
         aes: {x: 'd', y: 'r', 'fill': 'f',  "fill-opacity": 0.9},
-        pos: {type: "jitter", scale:0.5},
         stat: "bin"
       }
-     ,{
-        geom: { type:"point", aes: {y: 'total', r: 'total', fill: 'f'} },
-        aes: {x: 'd', y: 'r', 'fill': 'f',  "fill-opacity": 0.9},
-        //pos: {type: "jitter", scale:0.5},
-        stat: "bin"
+     ,*/{
+        geom: { type:"point"},//, aes: {y: 'total', r: 'total', fill: 'red'} },
+        aes: {x: 'd', y: 'r', fill: 'g'},
+        pos: { type: 'jitter', y:0.1, x:0}
+        //stat: "bin"
       }
 
 
       ],
-      facets: {x: 'f', y: 'g', fontSize: "15pt"},
+      facets: {x: 'f', y: 'g', fontSize: "10pt"},
       scales: {
         x: {type: 'linear'},
         y: {type: 'linear'},//, lim: [0, 500]},
-        r: {type: 'linear', range: [3,10]}
+        r: {type: 'linear', range: [3,6]}
       }
     }
 

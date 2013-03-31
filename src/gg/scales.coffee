@@ -345,12 +345,19 @@ class gg.ScalesSet
           return
 
       _.each scales.scales[aes], (scale, type) =>
+        #console.log "merge(#{aes})#{@id}: other:  #{scale.constructor.name}\t#{scale.domain()} "
+
         if @contains aes, type
-          domain = scales.scale(aes, type).domain()
-          @scale(aes, type).mergeDomain domain
+          mys = @scale aes, type
+          #console.log "\tcontains #{mys.domain()} -> #{mys.range()}"
+          @scale(aes, type).mergeDomain scale.domain()
         else if insert
+          #console.log "\tinsert"
           @scale scale.clone()
-      #console.log "merge(#{aes}): #{scales.scale(aes).range()}\t#{@scale(aes).range()}"
+
+        mys = @scale aes, type
+        #console.log "merge(#{aes})#{@id}: mine:  #{mys.constructor.name}\t#{mys.domain()}"
+
     @
 
 
@@ -365,9 +372,8 @@ class gg.ScalesSet
       col = table.getColumn(aes)
       # XXX: perform type checking.  Just assume all continuous for now
       if col?
-        domain = scale.defaultDomain col
-        scale.mergeDomain domain
-        console.log "scale.train: #{aes} has domain #{domain}"
+        scale.mergeDomain scale.defaultDomain col
+        console.log "scalesSet.train: #{aes} has domain.length #{scale.domain().length}"
     @
 
 
