@@ -29,7 +29,7 @@ Current Implementation can render
 
 Screenshot!
 
-
+<img src="https://raw.github.com/sirrice/gg/new-model/docs/imgs/screenshot.png"/>
 
 
 TODOs
