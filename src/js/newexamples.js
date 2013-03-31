@@ -15,8 +15,8 @@
       }
      ,{
         geom: { type:"point"},//, aes: {y: 'total', r: 'total', fill: 'red'} },
-        aes: {x: 'd', y: 'r', fill: 'g'},
-        pos: { type: 'jitter', y:0.1, x:0}
+        aes: {x: 'd', y: 'r', fill: '{g*10 + f}', stroke: "black", "fill-opacity": 0.4},
+        //pos: { type: 'jitter', y:0.1, x:0}
         //stat: "bin"
       }
 
@@ -35,7 +35,7 @@
     var w    = 800;
     var h    = 600;
     var ex   = function () { return d3.select('#examples').append('span'); };
-    var bigdata = _.map(_.range(0, 1000), function(d) {
+    var bigdata = _.map(_.range(0, 5000), function(d) {
       g = Math.floor(Math.random() * 3);
       f = Math.floor(Math.random() * 3);
       t = Math.floor(Math.random() * 3);

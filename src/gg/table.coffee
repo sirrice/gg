@@ -1,5 +1,6 @@
 class gg.Table
     @reEvalJS = /^{.*}$/
+    @reVariable = /^[a-zA-Z]\w*$/
 
     type: (colname) ->
         val = @get(0, colname)
@@ -143,8 +144,15 @@ class gg.RowTable extends gg.Table
           strings[newattr]
         else if newattr isnt 'text' and gg.Table.reEvalJS.test oldattr
           unless newattr of funcs
-            cmds = (_.map row, (val, k) => "var #{k} = row['#{k}'];")
-            cmds.push "return #{oldattr[1...oldattr.length-1]};"
+            userCode = oldattr[1...oldattr.length-1]
+            variableF = (val, k) =>
+              if gg.Table.reVariable.test(k)
+                "var #{k} = row['#{k}'];"
+              else
+                null
+
+            cmds = _.compact _.map(row, variableF)
+            cmds.push "return #{userCode};"
             cmd = cmds.join('')
             fcmd = "var __func__ = function(row) {#{cmd}}"
             console.log fcmd
