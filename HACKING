@@ -13,10 +13,10 @@ unimportant (and invisible) changes in spacing.
 Add the following to your ~/.vimrc file, as you like, removing the
 lines that start with the `-` character.
 
-- 4 space tabs
-set tabstop=4
-set shiftwidth=4
-set softtabstop=4
+- 2 space tabs
+set tabstop=2
+set shiftwidth=2
+set softtabstop=2
 set expandtab
 
 - Remove trailing whitespaces on save (:w)

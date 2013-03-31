@@ -58,8 +58,9 @@ build = (callback) ->
 
     #commands.push "#{coffeebin} --output build/js --compile src/gg/*.coffee"
     commands.push "#{coffeebin} --output test/js --compile  test/gg/*.coffee"
-    commands.push 'cp build/js/ggplotjs2*js .'
+    commands.push 'cp build/js/ggplotjs2.js .'
     commands.push "./node_modules/browserify/bin/cmd.js -e ggplotjs2.js >  build/js/gg.js"
+    commands.push "cp build/js/gg.js lib/"
 
 
     async.forEachSeries commands, run, ->
