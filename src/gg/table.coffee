@@ -143,6 +143,10 @@ class gg.RowTable extends gg.Table
         else if newattr of strings
           strings[newattr]
         else if newattr isnt 'text' and gg.Table.reEvalJS.test oldattr
+          #
+          # XXX: WARNING!! This entire functionality is really dangerous and
+          #      can easily be abused!!  WARNING!
+          #
           unless newattr of funcs
             userCode = oldattr[1...oldattr.length-1]
             variableF = (val, k) =>
@@ -160,7 +164,7 @@ class gg.RowTable extends gg.Table
             funcs[newattr] = __func__
           funcs[newattr](row)
         else
-          # for constrants (date, number)
+          # for constrants (e.g., date, number)
           oldattr
 
 

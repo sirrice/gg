@@ -35,11 +35,11 @@
     var w    = 800;
     var h    = 600;
     var ex   = function () { return d3.select('#examples').append('span'); };
-    var bigdata = _.map(_.range(0, 5000), function(d) {
+    var bigdata = _.map(_.range(0, 500), function(d) {
       g = Math.floor(Math.random() * 3);
       f = Math.floor(Math.random() * 3);
       t = Math.floor(Math.random() * 3);
-      return {d:d, r: d, g: g, f:f, t:t};
+      return {d:d, r: d*100, g: g, f:f, t:t};
     })
 
     var scatterplot = gg(specs)

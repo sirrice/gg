@@ -161,17 +161,15 @@ class gg.Facets
     new gg.wf.Barrier {
       f: (tables, envs, node) =>
         @collectXYs(tables, envs, node)
-        @layoutFacets()
-        @allocatePanes()
+        @layoutFacets(tables, envs, node)
+        @allocatePanes(tables, envs, node)
         tables
     }
 
-  layoutFacets: ->
-    # facet X title
-    # facet Y title
-    # add plot backgroundrect
-    # panes container
-
+  #
+  # layout labels, background and container for the facet panes
+  #
+  layoutFacets: (tables, envs, node) ->
     w = @g.wFacet
     h = @g.hFacet
     svgFacet = @g.svgFacet
@@ -224,7 +222,6 @@ class gg.Facets
 
 
 
-
     pDims =
       left: hTitle
       top: hTitle
@@ -246,7 +243,7 @@ class gg.Facets
 
 
 
-  allocatePanes: ->
+  allocatePanes: (tables, envs, node) ->
     #margin = @margin / 2
     #matrix = "#{1.0-2*margin/@w},0,0,
     #          #{1.0-2*margin/@h},
@@ -262,23 +259,31 @@ class gg.Facets
     # top facet space
     console.log "exSize: #{JSON.stringify @exSize}"
 
+
+    formatter = d3.format(",.0f")
+    maxValF = (s) ->
+      if _.isNumber s.scale('y').maxDomain()then s.scale('y').maxDomain() else 0
+    maxVal = _.max(_.map @g.scales.scalesList, maxValF)
+    dims = _.textSize(formatter(maxVal), {"font-size":"10pt", "font-family":"arial"})
+    yAxisWidth = dims.w + 2*@facetPadding
+
     facetSize = @exSize.h + 2*@facetPadding
-    paneWidth = @w - 2 * facetSize
+    paneWidth = @w - yAxisWidth - facetSize
     paneHeight = @h - 2 * facetSize
     yAxisOpts =
       left: 0
       top: facetSize
-      width: facetSize
+      width: yAxisWidth#  facetSize
       height: @h - facetSize
       class: "y-axis axis"
     xAxisOpts =
-      left: facetSize
+      left: yAxisWidth# facetSize
       top: @h - facetSize
-      width: @w - facetSize
+      width: paneWidth#@w - facetSize
       height: facetSize
       class: "x-axis axis"
     topFacetOpts =
-      left: facetSize
+      left: yAxisWidth# facetSize
       top: 0
       width: paneWidth
       height: facetSize
@@ -288,10 +293,10 @@ class gg.Facets
       width: facetSize
       height: paneHeight
     paneOpts =
-      left: facetSize
+      left: yAxisWidth#facetSize
       top: facetSize
-      width: @w - 2* facetSize
-      height: @h - 2*facetSize
+      width: paneWidth
+      height: paneHeight
       class: "facet-grid-container"
 
     console.log @xs
@@ -410,83 +415,6 @@ class gg.Facets
         .call(xAxis)
 
 
-  setScalesRanges: (xBand, yBand) ->
-    _.each @g.scales.scalesList, (ss) =>
-      _.each gg.Scale.xs, (aes) =>
-        ss.scale(aes).range [0+@panePadding, xBand-@panePadding]
-        console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
-      _.each gg.Scale.ys, (aes) =>
-        ss.scale(aes).range [yBand-@panePadding, 0+@panePadding]
-        console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
-
-
-
-
-
-
-
-  ###########################
-  #
-  # Make row/col-wise scales consistent
-  #
-  ###########################
-
-  expandDomains: (scalesSet) ->
-    # XXX: this should be done in the scales/scalesSet object!!!
-
-
-  # train fixed scales (every pane has the same x,y domains)
-  trainScales: ->
-    @masterScales = gg.ScalesSet.merge @g.scales.scalesList
-    _.each @g.scales.scalesList, (s) ->
-      fs = s.scale 'fill'
-      console.log "facet.trainScales facet-fill-#{fs.id}: #{fs.domain()}"
-
-    fscale = @masterScales.scale 'fill'
-    console.log "facet.trainScales: #{fscale.domain()} -> #{fscale.range()}"
-    if @scales is "fixed"
-      _.each @g.scales.scalesList, (scalesSet) =>
-        scalesSet.merge @masterScales, false
-    else
-      @trainFreeScales()
-
-
-  trainFreeScales: ->
-    # now compute the shared scales for each column and row
-    @xScales = _.map @xs, (x) =>
-        gg.ScalesSet.merge(_.map @ys, (y) => @subFacets[x][y].scales)
-            .exclude(gg.Scale.ys)
-
-    @yScales = _.map @ys, (y) =>
-        gg.ScalesSet.merge(_.map @xs, (x) => @subFacets[x][y].scales)
-           .exclude(gg.Scale.xs)
-
-
-    # TODO: expand their domains -- or this should be a separate operation?
-    #
-
-    # expand each layer's scalesSet's domains
-    _.each @xs, (x, xidx) =>
-      _.each @ys, (y, yidx) =>
-        layerScalesSets = @g.scales.scales(x, y)
-        _.each layerScalesSets, (ss) =>
-          ss.merge @xScales[xidx], no
-          ss.merge @yScales[yidx], no
-
-
-
-
-
-
-  ########################
-  #
-  # Rendering Nodes
-  # TODO: separate steps to
-  #   1) compute container offsets/sizes -- know scale ranges for each facet/layer
-  #   2) actually rendering axes etc.
-  #
-  ########################
-
   renderTopLabels: (svg, xRange) ->
     labels = svg.selectAll("g").data(@xs)
     enter = labels.enter().insert("g").attr("class", "facet-label x")
@@ -524,6 +452,70 @@ class gg.Facets
       .attr("y", yRange)
       .attr("width", svg.attr("width"))
       .attr("height", yRange.rangeBand())
+
+
+
+
+
+
+
+
+  ###########################
+  #
+  # Scales related Methods
+  #
+  ###########################
+
+  expandDomains: (scalesSet) ->
+    # XXX: this should be done in the scales/scalesSet object!!!
+
+
+  # train fixed scales (every pane has the same x,y domains)
+  trainScales: ->
+    @masterScales = gg.ScalesSet.merge @g.scales.scalesList
+    @expandDomains @masterScales
+
+    if @scales is "fixed"
+      _.each @g.scales.scalesList, (scalesSet) =>
+        scalesSet.merge @masterScales, false
+    else
+      @trainFreeScales()
+
+
+  trainFreeScales: ->
+    # now compute the shared scales for each column and row
+    @xScales = _.map @xs, (x) =>
+        gg.ScalesSet.merge(_.map @ys, (y) => @subFacets[x][y].scales)
+            .exclude(gg.Scale.ys)
+
+    @yScales = _.map @ys, (y) =>
+        gg.ScalesSet.merge(_.map @xs, (x) => @subFacets[x][y].scales)
+           .exclude(gg.Scale.xs)
+
+
+    # TODO: expand their domains -- or this should be a separate operation?
+    #
+
+    # expand each layer's scalesSet's domains
+    _.each @xs, (x, xidx) =>
+      _.each @ys, (y, yidx) =>
+        layerScalesSets = @g.scales.scales(x, y)
+        _.each layerScalesSets, (ss) =>
+          ss.merge @xScales[xidx], no
+          ss.merge @yScales[yidx], no
+
+
+
+
+  setScalesRanges: (xBand, yBand) ->
+    _.each @g.scales.scalesList, (ss) =>
+      _.each gg.Scale.xs, (aes) =>
+        ss.scale(aes).range [0+@panePadding, xBand-@panePadding]
+        console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
+      _.each gg.Scale.ys, (aes) =>
+        ss.scale(aes).range [yBand-@panePadding, 0+@panePadding]
+        console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
+
 
 
 

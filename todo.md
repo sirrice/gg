@@ -4,8 +4,7 @@ XForms
 
 1. support params/args in xforms
    -> add @param() to xform method list
-2. Support grouping and propogating mapped aesthetics down the workflow
-1. detect discrete aesthetics and split at the beginning of the workflow
+2. Support grouping and propogating mapped discrete aesthetics down the workflow
 1. allow aesthetics aliases
     color: "attr2"
    actually compiles to
@@ -34,12 +33,11 @@ Tables
 
 1. add types to tables
 1. support tables as columns (for lines)
-1. allow aesthetics with dashes in name (e.g., fill-opacity) in evaled JS scripts
-   -> currently var fill-opacity = row['fill-opacity']
-
 
 # DONE
 
+x. allow aesthetics with dashes in name (e.g., fill-opacity) in evaled JS scripts
+   -> currently var fill-opacity = row['fill-opacity']
 x. render bars
 x. in aesthetic mappings, differentiate evaled expressions and string constants
    -> evaled expressions are of form: "{ JAVASCRIPT }"
