@@ -50,7 +50,5 @@
     var scatterplot = gg(specs)
     scatterplot.render(w, h, ex(), bigdata)
 
-
-
   });
 })();
