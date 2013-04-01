@@ -157,6 +157,8 @@ class gg.ReparamInterval extends gg.XForm
       xs[idx+1]-xs[idx]
     mindiff = _.min diffs or 1
     width = mindiff * 0.8
+    minY = yscale.minDomain()
+    getHeight = (row) -> yscale.scale(Math.abs(yscale.invert(row.get('y')) - minY))
 
 
     table.transform {
@@ -165,8 +167,11 @@ class gg.ReparamInterval extends gg.XForm
         r: 'r'
         x0: (row) -> row.get('x') - width/2.0
         x1: (row) -> row.get('x') + width/2.0
-        y0: (row) -> yscale.scale(Math.min(yscale.minDomain(), yscale.invert(row.get 'y')))
-        y1: (row) -> yscale.scale(Math.max(yscale.minDomain(), yscale.invert(row.get 'y')))
+        y0: (row) -> Math.min(yscale.scale(minY), row.get('y'))
+        y1: (row) -> Math.max(yscale.scale(minY), row.get('y'))
+        width: width
+        height: (row) -> Math.abs(row.get('y') - yscale.scale(minY))
+
     }, yes
     table
 

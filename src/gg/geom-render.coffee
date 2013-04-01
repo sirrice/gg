@@ -89,7 +89,8 @@ class gg.GeomRenderPointSvg extends gg.GeomRender
   render: (table, env, node) ->
 
     data = table.asArray()
-    circles = @agroup(@svg(table, env), "circles geoms", data)
+    svg = @svg table, env
+    circles = @agroup(svg, "circles geoms", data)
       .selectAll("circle")
       .data(data)
     enter = circles.enter()
@@ -104,6 +105,21 @@ class gg.GeomRenderPointSvg extends gg.GeomRender
       "stroke-opacity": (t) -> t.get("stroke-opacity")
       fill: (t) -> t.get('fill')
       r: (t) -> t.get('r')
+
+    cssOver =
+      fill: (t) -> d3.rgb(t.get("fill")).darker(2)
+      "fill-opacity": 1
+      r: (t) -> t.get('r') + 2
+    cssOut =
+      fill: (t) -> t.get('fill')
+      "fill-opacity": (t) -> t.get('fill-opacity')
+      r: (t) -> t.get('r')
+
+    _this = @
+    circles
+      .on("mouseover", (d, idx) -> _this.applyAttrs d3.select(@), cssOver)
+      .on("mouseout", (d, idx) ->  _this.applyAttrs d3.select(@), cssOut)
+
 
     exit.transition()
       .duration(500)
@@ -144,6 +160,7 @@ class gg.GeomRenderLineSvg extends gg.GeomRender
       "stroke-width": (t) -> t.get("stroke-width")
       "stroke-opacity": (t) -> t.get("stroke-opacity")
 
+
     exit.remove()
 
 # XXX: DOES NOT WORK
@@ -175,12 +192,35 @@ class gg.GeomRenderRectSvg extends gg.GeomRender
     @applyAttrs enterRects,
       class: "geom"
       x: (t) -> t.get('x0')
-      y: (t) -> Math.min(t.get('y0'), t.get('y1'))
-      width: (t) -> t.get('x1') - t.get('x0')
-      height: (t) -> Math.abs(t.get('y1') - t.get('y0'))
+      y: (t) -> t.get('y0')
+      width: (t) -> t.get('width')
+      height: (t) -> t.get('height')
       "fill-opacity": (t) -> t.get('fill-opacity')
       "stroke-opacity": (t) -> t.get("stroke-opacity")
       fill: (t) -> t.get('fill')
+
+    cssOver =
+      x: (t) -> t.get('x0') - t.get('width') * 0.05
+      y: (t) -> t.get('y0') - t.get('height') * 0.05
+      width: (t) -> t.get('width') * 1.1
+      height: (t) -> t.get('height') * 1.1
+      fill: (t) -> d3.rgb(t.get("fill")).darker(2)
+      "fill-opacity": 1
+
+    cssOut =
+      x: (t) -> t.get('x0')
+      y: (t) -> t.get('y0')
+      width: (t) -> t.get('width')
+      height: (t) -> t.get('height')
+      fill: (t) -> t.get('fill')
+      "fill-opacity": (t) -> t.get('fill-opacity')
+
+    _this = @
+    rects
+      .on("mouseover", (d, idx) -> _this.applyAttrs d3.select(@), cssOver)
+      .on("mouseout", (d, idx) ->  _this.applyAttrs d3.select(@), cssOut)
+
+
 
     exit.transition()
       .duration(500)
