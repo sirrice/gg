@@ -27,7 +27,8 @@ Compile
 Current Implementation can render
 ---------------
 
-Screenshot!
+Screenshot!  Notice the darkened bar in the upper left facet -- this is the
+result of the mouse hovering over it.
 
 <img src="https://raw.github.com/sirrice/gg/new-model/docs/imgs/screenshot.png"/>
 
