@@ -24,7 +24,7 @@ Compile
     cake build
     cake release
 
-Current Implementation can render
+Current Implementation
 ---------------
 
 Screenshot!  Notice the darkened bar in the upper left facet -- this is the
@@ -111,7 +111,12 @@ DONE!
 
 
 
-Original code jacked from [http://gigamonkey.github.com/gg/](http://gigamonkey.github.com/gg/).
+Acknowledgements
+-----------
+
+* Original code jacked from [http://gigamonkey.github.com/gg/](http://gigamonkey.github.com/gg/).
+* Lots of inspiration from the fantastic [http://ggplot2.org/](ggplot2).
+* [http://en.wikipedia.org/wiki/Leland_Wilkinson](Leland Wilkinson's) grammar of graphics is what started this all.
 
 
 

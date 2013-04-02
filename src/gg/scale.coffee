@@ -136,7 +136,7 @@ class gg.Scale
   @fromSpec: (spec={}) ->
     type = spec.type
     klasses = gg.Scale.klasses()
-    klass = klasses[type] or gg.IdentityScale
+    klass = klasses[type] or gg.LinearScale
 
     aesAttrs = ['aesthetics', 'aesthetic', 'aes', 'var']
     spec.aes = findGoodAttr spec,  aesAttrs, null

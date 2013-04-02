@@ -25,6 +25,11 @@ task 'build', ->
   vendor ->
     build()
 
+task 'release', ->
+  vendor ->
+    build ->
+      release()
+
 task 'vendor', ->
   vendor()
 
@@ -35,6 +40,13 @@ task 'test', ->
 task 'clean', ->
   clean()
 
+
+release = (callback) ->
+  commands = []
+  commands.push "phantomjs vendor/js/rasterize.js build/html/index.html docs/imgs/screenshot.png"
+
+  async.forEachSeries commands, run, ->
+    callback() if callback
 
 
 build = (callback) ->
@@ -60,6 +72,9 @@ build = (callback) ->
     commands.push "#{coffeebin} --output test/js --compile  test/gg/*.coffee"
     commands.push 'cp build/js/ggplotjs2.js .'
     commands.push "./node_modules/browserify/bin/cmd.js -e ggplotjs2.js >  build/js/gg.js"
+
+
+    # copy final sources into lib/
     commands.push "cp build/js/gg.js lib/"
     commands.push "cp build/css/gg.css lib/"
 
@@ -108,7 +123,10 @@ vendor = (callback) ->
      'vendor/tmp/font_awesome.zip'],
 
     # SeedRandom (http://davidbau.com/archives/2010/01/30/random_seeds_coded_hints_and_quintillions.html)
-    ['http://davidbau.com/encode/seedrandom.js', 'vendor/js/seedrandom.js']
+    ['http://davidbau.com/encode/seedrandom.js', 'vendor/js/seedrandom.js'],
+
+    # rasterize for rendering html pages
+    ["https://raw.github.com/ariya/phantomjs/master/examples/rasterize.js", "vendor/js/rasterize.js"]
 
     # Require.js
     #['http://requirejs.org/docs/release/2.1.5/minified/require.js', 'vendor/js/require.js'],
