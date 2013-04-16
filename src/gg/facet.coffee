@@ -511,11 +511,13 @@ class gg.Facets
   setScalesRanges: (xBand, yBand) ->
     _.each @g.scales.scalesList, (ss) =>
       _.each gg.Scale.xs, (aes) =>
-        ss.scale(aes).range [0+@panePadding, xBand-@panePadding]
+        ss.scale(aes).range [0, xBand]
+        #ss.scale(aes).range [0+@panePadding, xBand-@panePadding]
         console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
       _.each gg.Scale.ys, (aes) =>
         #ss.scale(aes).range [yBand-@panePadding, 0+@panePadding]
-        ss.scale(aes).range [0+@panePadding, yBand-@panePadding]
+        #ss.scale(aes).range [0+@panePadding, yBand-@panePadding]
+        ss.scale(aes).range [0, yBand]
         console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
 
 

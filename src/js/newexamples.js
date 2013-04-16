@@ -6,11 +6,29 @@
   $(document).ready(function() {
     Math.seedrandom("zero");
 
+    groupf = function(row){
+              return {
+                color: row.get('t'),
+                fill: row.get('t')
+              }
+            }
+
+
     var specs = {
       layers: [
       {
-        geom: { type: "area", aes: {x: "d", y: "r", group: 't', "fill-opacity": 1, fill: 't', stroke: 't'}},
-        pos: "stack"
+        geom: {
+          type: "area",
+          aes: {
+            x: "d",
+            y: "r",
+            group: "{{color: t, fill: t}}",
+            "fill-opacity": .1,
+            fill: 't',
+            stroke: 't'
+          }
+        }
+        ,pos: "stack"
       }
   /*
      ,
@@ -41,12 +59,14 @@
 
     }
 
+    console.log(JSON.stringify(specs));
+
 
 
     var w    = 800;
     var h    = 600;
     var ex   = function () { return d3.select('#examples').append('span'); };
-    var bigdata = _.map(_.range(0, 500), function(d) {
+    var bigdata = _.map(_.range(0, 200), function(d) {
       g = Math.floor(Math.random() * 3);
       f = Math.floor(Math.random() * 3);
       t = Math.floor(Math.random() * 5);

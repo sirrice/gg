@@ -70,7 +70,10 @@ class gg.Scales extends gg.XForm
     @prerenderNode = new gg.wf.Barrier
       name: "scales:postgeom"
       #f: (args...) => @trainOnPixels(args..., gg.Scales.POSTRENDER)
-      f: (args...) => @trainOnData(args..., gg.Scales.POSTRENDER)
+      f: (args...) =>
+        _.each @scalesList, (scales) ->
+          _.each scales.scalesList(), (scale) -> scale.resetDomain()
+        @trainOnData(args..., gg.Scales.POSTRENDER)
 
     # XXX: I don't rememebr why this exists
     @facetNode = new gg.wf.Barrier
@@ -92,9 +95,12 @@ class gg.Scales extends gg.XForm
       info = @paneInfo t, e
       aess = @aesthetics info.layer
       scales = @scales info.facetX, info.facetY, info.layer
-      t = t.filter (row) =>
-        not (_.any aess, (aes) => not scales.scale(aes).valid row.get(aes))
+      console.log JSON.stringify(t.raw())
+      filtered = t.filter (row) =>
+        filteredAess = aess.filter (aes) => not scales.scale(aes).valid row.get(aes)
+        filteredAess.length is 0
 
+      @log "train on #{aess}"
       scales.train t, aess
 
     @state = nextState if nextState?
@@ -141,7 +147,8 @@ class gg.Scales extends gg.XForm
   aesthetics: (layerIdx) ->
     scalesAess = @scalesFactory.aesthetics()
     layerAess =  @layer(layerIdx).aesthetics()
-    aess = _.compact _.uniq _.flatten([scalesAess, layerAess, ['y', 'x']])
+    # XXX: incorporate coordinate based x/y attributes instead
+    aess = _.compact _.uniq _.flatten([scalesAess, layerAess, gg.Scale.xys])
     aess
 
   facetScales: (facetX, facetY) ->
@@ -280,10 +287,10 @@ class gg.ScalesSet
 
   aesthetics: ->
     keys = _.keys @scales
-    _.map keys, (key) ->
-      if key of gg.Scale.xs
+    keys = _.map keys, (key) ->
+      if key in gg.Scale.xs
         gg.Scale.xs
-      else if key of gg.Scale.ys
+      else if key in gg.Scale.ys
         gg.Scale.ys
       else
         key
@@ -326,6 +333,8 @@ class gg.ScalesSet
       @scales[aes][null] = scale
       #console.log "setting #{aes}-null to #{scale.range()}"
       scale
+
+  scalesList: -> _.map @aesthetics(), (aes) => @scale(aes)
 
 
 
@@ -374,6 +383,9 @@ class gg.ScalesSet
       if col?
         scale.mergeDomain scale.defaultDomain col
         console.log "scalesSet.train: #{aes} has domain.length #{scale.domain().length}"
+      else
+        if table.nrows() > 0
+          console.log "scalesSet.train: #{aes} did not have a column in table with cols: #{table.colNames()}!"
     @
 
 
@@ -385,7 +397,7 @@ class gg.ScalesSet
     arr.join('\n')
 
   apply: (table, aess=null) ->
-    aess = _.keys @scales unless aess?
+    aess = @aesthetics() unless aess?
 
     table = table.clone()
     _.each aess, (aes) =>
@@ -395,17 +407,16 @@ class gg.ScalesSet
 
     table
 
-  # destructively invert table on aess columns
-  #
   # @param {gg.Table} table
   invert: (table, aess=null) ->
-    aess = _.keys @scales unless aess?
+    aess = @aesthetics() unless aess?
 
-    table = table.clone()
-    table.each (row, idx) =>
+    newTable = table.clone()
+    newTable.each (row, idx) =>
       _.each aess, (aes) =>
-        row.set(aes, @scale(aes).invert(row.get(aes))) if aes of row
-    table
+        val = row.get(aes)
+        row.set(aes, @scale(aes).invert(val)) if row.hasAttr(aes)
+    newTable
 
   labelFor: -> null
 

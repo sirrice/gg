@@ -68,6 +68,14 @@ class gg.LayerShorthand extends gg.Layer
   aesthetics: ->
     subSpecs = [@mapSpec, @geomSpec, @statSpec, @posSpec]
     aess = _.uniq _.compact _.union(_.map subSpecs, (s) -> _.keys(s.aes))
+    aess = _.map aess, (aes) ->
+      if aes in gg.Scale.xs
+        gg.Scale.xs
+      else if aes in gg.Scale.ys
+        gg.Scale.ys
+      else
+        aes
+    aess = _.uniq _.flatten aess
     aess
 
 
@@ -109,6 +117,12 @@ class gg.LayerShorthand extends gg.Layer
     @map = new gg.Mapper @g, @mapSpec
     @labelNode = new gg.wf.Label @labelSpec
 
+    console.log "### layer parsed xforms ###"
+    console.log @stat.constructor.name
+    console.log @geom.constructor.name
+    console.log @pos.constructor.name
+    console.log @map.constructor.name
+
     super
 
 
@@ -135,7 +149,7 @@ class gg.LayerShorthand extends gg.Layer
 
     subSpec = findGoodAttr spec, aliases, defaultType
 
-    console.log "layer.extractSpec got subspec #{JSON.stringify subSpec}"
+    console.log "layer.extractSpec got subspec for #{xform}:  #{JSON.stringify subSpec}"
 
     if _.isString subSpec
       subSpec =
@@ -188,26 +202,36 @@ class gg.LayerShorthand extends gg.Layer
     # geom: position transformation
     nodes.push new gg.wf.Stdout {name: "pre-pixel", n: 1}
     nodes.push @geom.applyScales
+    nodes.push new gg.wf.Stdout {name: "pre-reparam", n: 5}
     nodes.push @geom.reparam
+    nodes.push new gg.wf.Stdout {name: "post-reparam", n: 5}
     nodes.push @pos
-    nodes.push new gg.wf.Stdout {name: "post:pixel", n: 1}
+    nodes.push new gg.wf.Stdout {name: "post-position", n: 1}
+    nodes.push @geom.unparam if @geom.unparam?
+    nodes.push new gg.wf.Stdout {name: "post-unparam", n: 1}
 
     # facets: retrain scales after positioning (jitter) (inputs are pixel values)
     # this isn't working because reparam creates an array column
     # that isn't supported here
     nodes.push new gg.wf.Scales {name: "scales-preinvert", scales: @g.scales}
+    nodes.push new gg.wf.Stdout {name: "pre-invert", n: 5}
     nodes.push @geom.invertScales
     nodes.push new gg.wf.Scales {name: "scales-postinvert", scales: @g.scales}
+    nodes.push new gg.wf.Stdout {name: "post-invert", n: 5}
     nodes.push @g.scales.prerenderNode
     nodes.push new gg.wf.Scales {name: "scales-posttrain", scales: @g.scales}
     nodes.push @geom.applyScales
     nodes.push new gg.wf.Scales {name: "scales-postapply", scales: @g.scales}
+    nodes.push new gg.wf.Stdout {name: "post-apply", n: 5}
+
+
+    nodes.push @geom.reparam if @geom.unparam?
+    nodes.push new gg.wf.Stdout {name: "post-reparam2", n: 2}
 
     # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
 
 
     # render: render geometries
-    nodes.push new gg.wf.Stdout {name: "position pixel", n: 1}
     nodes.push @geom.render
 
     nodes = @compileNodes nodes

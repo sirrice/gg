@@ -115,8 +115,8 @@ class gg.Scale
 
   @xs = ['x', 'x0', 'x1']
   @ys = ['y', 'y0', 'y1']
-  @xys = @xs.concat @ys
-  @legendAess = ['size', 'group', 'color']
+  @xys = _.union @xs, @ys
+  @legendAess = ['size', 'group', 'color', 'fill', 'fill-opacity']
 
   @klasses: ->
     klasses = [
@@ -213,15 +213,17 @@ class gg.Scale
   #
 
   d3: -> @d3Scale
-  valid: (v) -> yes
+  valid: (v) -> v?
   minDomain: -> @domain()[0]
   maxDomain: -> @domain()[1]
+  resetDomain: ->
+    @domainUpdated = false
+    @domain([0,1])
   minRange: -> @range()[0]
   maxRange: -> @range()[1]
   scale: (v) -> @d3Scale v
   invert: (v) -> @d3Scale.invert(v)
-  toString: () ->
-    "#{@aes}: \t#{@domain()}\t#{@range()}"
+  toString: () -> "#{@aes}: \t#{@domain()}\t#{@range()}"
 
 
 class gg.IdentityScale extends gg.Scale
@@ -315,6 +317,10 @@ class gg.CategoricalScale extends gg.Scale
       @invertScale.domain @d3Scale.range()
     @d3Scale.range()
 
+  resetDomain: ->
+    @domainUpdated = false
+    @domain([])
+
 class gg.ShapeScale extends gg.CategoricalScale
   @aliases = "shape"
 
@@ -403,6 +409,7 @@ class gg.ColorScaleFuck extends gg.Scale
   range: (v) -> @myScale().range v
   minDomain: -> @myScale().minDomain()
   maxDomain: -> @myScale().maxDomain()
+  resetDomain: -> @myScale().resetDomain()
   minRange: -> @myScale().minRange()
   maxRange: -> @myScale().maxRange()
 

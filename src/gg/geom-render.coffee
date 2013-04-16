@@ -132,47 +132,6 @@ class gg.GeomRenderPointSvg extends gg.GeomRender
 
 
 
-
-class gg.GeomRenderLineSvg extends gg.GeomRender
-  @aliases = "line"
-
-  defaults: (table) ->
-    stroke-width: 1
-    stroke: "black"
-
-  inputSchema: (table, env) -> ['x1', 'y1', 'x2', 'y2']
-
-  render: (table, env) ->
-    svg = @svg table, env
-    data = table.asArray()
-
-    # attributes should be imported in bulk using
-    # .attr( {} ) where {} is @attrs
-    lines = @groups(svg, 'lines', data).selectAll('polyline')
-        .data((d) -> [d.pts])
-    enter = areas.enter()
-    enterLines = enter.append("polyline")
-    exit = areas.exit()
-
-    liner = d3.svg.line()
-        .x((d) -> d.x)
-        .y((d) -> d.y)
-        .interpolate('basis')
-
-
-    @applyAttrs enterLines,
-      class: "geom"
-      x1: (t) -> t.get('x1')
-      x2: (t) -> t.get('x2')
-      y1: (t) -> t.get('y1')
-      y2: (t) -> t.get('y2')
-      "stroke": (t) -> t.get("stroke")
-      "stroke-width": (t) -> t.get("stroke-width")
-      "stroke-opacity": (t) -> t.get("stroke-opacity")
-
-
-    exit.remove()
-
 class gg.GeomRenderRectSvg extends gg.GeomRender
   @aliases = "rect"
 
@@ -239,17 +198,57 @@ class gg.GeomRenderRectSvg extends gg.GeomRender
       .remove()
 
 
+class gg.GeomRenderLineSvg extends gg.GeomRender
+  @aliases = "line"
+
+  defaults: (table) ->
+    "stroke-width": 1
+    "stroke-opacity": 0.7
+    stroke: "black"
+    fill: "none"
+    group: '1'
+
+  inputSchema: (table, env) -> ['pts', 'group']
+
+  render: (table, env) ->
+    svg = @svg table, env
+    data = table.asArray()
+
+    # attributes should be imported in bulk using
+    # .attr( {} ) where {} is @attrs
+    lines = @groups(svg, 'line', data).selectAll('path')
+        .data((d) -> [d])
+    enter = lines.enter()
+    enterLines = enter.append("path")
+    exit = lines.exit()
+
+    liner = d3.svg.line()
+        .x((d) -> d.x)
+        .y((d) -> d.y1)
+        #.interpolate('basis')
+
+
+    @applyAttrs enterLines,
+      class: "geom"
+      d: (d) -> liner(d.get 'pts')
+      "stroke": (t) -> t.get("stroke")
+      "stroke-width": (t) -> t.get("stroke-width")
+      "stroke-opacity": (t) -> t.get("stroke-opacity")
+      "fill": "none"
+
+
+    exit.remove()
+
+
 class gg.GeomRenderAreaSvg extends gg.GeomRender
   defaults: (table, env) ->
     "stroke-width": 1
-    stroke: "black"
+    stroke: "steelblue"
     fill: "grey"
-    "fill-opacity": 1
+    "fill-opacity": 0.7
     group: 1
 
-  inputSchema: (table, env) ->
-    ['pts']
-    #['x', 'y0', 'y1']
+  inputSchema: (table, env) -> ['pts']
 
   render: (table, env, node) ->
     svg = @svg table, env
@@ -258,26 +257,26 @@ class gg.GeomRenderAreaSvg extends gg.GeomRender
 
     area = d3.svg.area()
         .x((d) -> d.x)
-        .y1((d) -> d.y1)
         .y0((d) -> d.y0)
+        .y1((d) -> d.y1)
         #.interpolate('basis')
 
     # attributes should be imported in bulk using
     # .attr( {} ) where {} is @attrs
-    areas = @groups(svg, 'areas', data).selectAll('polyline')
+    areas = @groups(svg, 'areas', data).selectAll('path')
         .data((d) -> [d])
     enter = areas.enter()
-    enterAreas = enter.append("svg:path")
+    enterAreas = enter.append("path")
     exit = areas.exit()
 
     @applyAttrs enterAreas,
-      class: "polyline"
-      d: (d) -> area(d.pts)
-      "stroke": (t) -> t["stroke"]
-      "stroke-width": (t) -> t['stroke-width']
-      "stroke-opacity": (t) -> t["stroke-opacity"]
-      fill: (t) -> t['fill']
-      "fill-opacity": (t) -> t['fill-opacity']
+      class: "path"
+      d: (d) -> area(d.get 'pts')
+      "stroke": (t) -> t.get "stroke"
+      "stroke-width": (t) -> t.get('stroke-width')
+      "stroke-opacity": (t) -> t.get("stroke-opacity")
+      fill: (t) -> t.get('fill')
+      "fill-opacity": (t) -> t.get('fill-opacity')
 
 
 

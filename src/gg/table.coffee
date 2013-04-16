@@ -88,20 +88,40 @@ class gg.Row
       else
         @data[attr] = val
 
+  hasAttr: (attr) -> attr of @data or @getNested(attr)?
+
   attrs: ->
     rawattrs = []
     nestedattrs = []
     for k,v of @data
       if _.isObject(v) and not _.isArray(v)
         nestedattrs.push k
-      else
-        rawattrs.push k
+      rawattrs.push k
     nestedattrs = _.flatten _.map(nestedattrs, (attr) => _.keys(@data[attr]))
     _.union rawattrs, nestedattrs
 
   merge: (row) -> _.extend @data, row.data
 
-  hasAttr: (attr) -> attr of @data or @getNested(attr)?
+  flatten: ->
+    arrays = _.values(@data).filter (v) -> _.isArray(v)
+    nonArrayAttrs = _.keys(@data).filter (k) => not _.isArray(@data[k])
+    maxLen = _.max _.map(arrays, (arr)->arr.length)
+
+    unless maxLen? and maxLen > 0
+      return new gg.RowTable
+
+    rowDatas = _.map _.range(maxLen), (idx) =>
+      rowData = _.pick @data, nonArrayAttrs
+      _.each arrays, (arr) ->
+        _.extend rowData, arr[idx] if idx < arr.length
+      rowData
+
+    new gg.RowTable rowDatas
+
+
+
+
+
 
   addColumn: (attr, val) -> @data[attr] = val
 
@@ -179,6 +199,12 @@ class gg.RowTable extends gg.Table
       _.each groups, (partition, jsonKey) ->
         ret.push {key: keys[jsonKey], table: partition}
       ret
+
+    flatten: ->
+      table = new gg.RowTable()
+      @each (row) ->
+        table.merge row.flatten()
+      table
 
     # @param colname either a string, or an object of {key: xform} pairs
     # @param {Function|boolean} funcOrUpdate
@@ -314,8 +340,9 @@ class gg.RowTable extends gg.Table
       else
         null
 
-    asArray: -> _.map @rows, (row) -> row.raw()
-    raw: -> @asArray()
+    asArray: -> _.map @rows, (row) -> row
+    raw: -> _.map @rows, (row) -> row.raw()
+    rows: @rows
 
 
 class gg.ColTable extends gg.Table

@@ -43,8 +43,14 @@ Math.seedrandom "zero"
 
 spec =
   layers: [
-
-     { geom: { type: "area", aes: {x: 'd', y: 'r'} } }
+    {
+      geom:
+        type: "area"
+        aes:
+          x: 'd'
+          y: 'r'
+      pos: "stack"
+    }
   ]
   ###
     {
@@ -85,8 +91,8 @@ spec =
     x: "f"
     y: "g"
   scales:
-    x:
-      type: "log"
+    #x:
+    #  type: "log"
     r:
       type: "linear"
       range: [2, 5]

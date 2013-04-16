@@ -44,6 +44,7 @@ class gg.Geom # not an XForm!! #extends gg.XForm
     @applyScales = null
     @map = null
     @reparam = null
+    @unparam = null
 
     @parseSpec()
 
@@ -52,6 +53,7 @@ class gg.Geom # not an XForm!! #extends gg.XForm
     @render = gg.GeomRender.fromSpec @layer, @spec.type
     @applyScales = new gg.ScalesApply @layer, {name: "applyScales"}
     @invertScales = new gg.ScalesInvert @layer, {name: "invertScales"}
+    console.log "#####: #{JSON.stringify @spec}"
     @map = new gg.Mapper @g, @spec
 
   name: -> @constructor.name.toLowerCase()
@@ -123,6 +125,7 @@ class gg.Line extends gg.Geom
     super
     @reparam = new gg.ReparamLine @g, {name: "line-reparam"}
     @render = new gg.GeomRenderLineSvg @layer, {}
+    @unparam = new gg.UnparamLine @g, {name: "line-unparam"}
 
 class gg.ReparamLine extends gg.XForm
   constructor: (@g, @spec) ->
@@ -131,16 +134,26 @@ class gg.ReparamLine extends gg.XForm
 
   parseSpec: -> super
 
-  defaults: ->
-    group: '1'
+  defaults: (table, env, node) ->
+    #scales = @scales table, env
+    #y0 = scales.scale('y').minRange()
+
+    {
+      group: '1'
+    #  y0: y0
+    #  y1: (row) -> row.get 'y'
+    }
 
   inputSchema: -> ['x', 'y']
 
   compute: (table, env, node) ->
     scales = @scales table, env
+    y0 = scales.scale('y').minRange()
+    console.log "gg.ReparamLine.compute: y0 set to #{y0}"
     table.each (row) ->
-      row.set('y1', row.get('y'))
-      row.set('y0', scales.scale('y').minRange())
+      row.set('y1', row.get('y')) unless row.hasAttr('y1')
+      row.set('y0', y0) unless row.hasAttr('y0')
+
 
     scales = @scales(table, env)
     _.map table.get(0), (val, key) =>
@@ -155,8 +168,20 @@ class gg.ReparamLine extends gg.XForm
         pts: groupTable.raw()
         group: groupKey
       rowData
+
     new gg.RowTable rows
 
+class gg.UnparamLine extends gg.XForm
+  constructor: (@g, @spec) ->
+    super
+    @parseSpec()
+
+  inputSchema: -> ['group', 'pts']
+
+  compute: (table, env, node) ->
+    rawrow = table.get(1).flatten().raw() if table.nrows() > 1
+    console.log "unparamline rawrow: #{JSON.stringify rawrow}"
+    table.flatten()
 
 
 
@@ -173,6 +198,7 @@ class gg.Area extends gg.Geom
     super
     @reparam = new gg.ReparamLine @g, {name: "area-reparam"}
     @render = new gg.GeomRenderAreaSvg @layer, {}
+    @unparam = new gg.UnparamLine @g, {name: "area-unparam"}
 
 
 class gg.Interval extends gg.Geom

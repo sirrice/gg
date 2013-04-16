@@ -120,6 +120,7 @@ class gg.XForm
     defaults = @param table, env, "defaults"
     console.log "adding defaults of #{JSON.stringify defaults}"
     console.log "                   #{JSON.stringify table.colNames()}"
+    console.log table.raw()
     _.each defaults, (val, col) ->
       unless col in table.colNames()
         table.addConstColumn col, val
