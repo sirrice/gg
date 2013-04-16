@@ -26,8 +26,8 @@ suite = vows.describe "xform.coffee"
 
 suite.addBatch
   "single node xform" :
-    topic: new gg.wf.Exec {f:(table) ->
-        table.transform('a', (v) -> -v)}
+    topic: new gg.wf.Exec
+      f:(table) -> table.transform 'a', (v) -> -v.get('a')
 
     "runs compute correctly": (node) ->
         [node, x] = node.cloneSubplan()

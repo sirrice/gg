@@ -423,13 +423,14 @@ class gg.wf.Split extends gg.wf.Node
     unless groups? and _.isArray groups
       throw Error("#{@name}: Non-array result from calling split function")
 
-    numDuplicates = groups.length
 
     # TODO: parameterize MAXGROUPS threshold
+    numDuplicates = groups.length
     if numDuplicates > 1000
       throw Error("I don't want to support more than 1000 groups!")
-
     @allocateChildren numDuplicates
+
+
     idx = 0
     _.each groups, (group) =>
       subtable = group.table

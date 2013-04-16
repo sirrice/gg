@@ -14,7 +14,7 @@ suite.addBatch
     "Single Node Flow":
         topic: ->
             flow = new gg.wf.Flow
-            flow.exec (table) -> table.transform('b', (v)->v*100)
+            flow.exec (table) -> table.transform('b', (v)->v.get('b')*100)
             flow
 
         "can print": (flow) ->
@@ -133,10 +133,10 @@ suite.addBatch
             truth = [460, 470, 480, 490, 500, 510, 520, 530, 540, 550]
             groupKeys = _.range 10
             flow.on "output", (id, table) ->
-                table.each (row) ->
-                    assert.include truth, row.get('sum')
-                    assert.equal row.get('n'), 10
-                    assert.include groupKeys, row.get('groupKey')
+              table.each (row) ->
+                  assert.include truth, row.get('sum')
+                  assert.equal row.get('n'), 10
+                  assert.include groupKeys, row.get('groupKey')
             flow.run makeTable(100)
 
     "multicast-[exec,exec]":

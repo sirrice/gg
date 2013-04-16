@@ -14,59 +14,6 @@
 # 1) check for attributes containing atomic data types
 # 2) check each column that is of type object
 
-class gg.Row
-  constructor: (@data) ->
-  get: (attr) ->
-    if attr of @data
-      val = @data[attr]
-      if _.isFunction val then val() else val
-    else
-      maps = _.values(@data).filter _.isObject
-      for map, idx in maps
-        if attr of map
-          return map[attr]
-      return null
-
-  # retrieve the object field that contains attr as an attribute
-  # @param attr attribute to search for
-  getNested: (attr) ->
-    for k, v of @data
-      if _.isObject(v) and attr of v
-          return v
-    null
-
-  set: (attr, val) ->
-    if attr of @data
-      @data[attr] = val
-    else
-      nested = @getNested attr
-      if nested?
-        nested[attr] = val
-      else
-        @data[attr] = val
-
-  attrs: ->
-    rawattrs = []
-    nestedattrs = []
-    for k,v of @data
-      if _.isObject v
-        nestedattrs.push k
-      else
-        rawattrs.push k
-    nestedattrs = _.flatten _.map(nestedattrs, (attr) => _.keys(@data[attr]))
-    _.union rawattrs, nestedattrs
-
-  hasAttr: (attr) -> attr of @data or @getNested(attr)?
-
-  addColumn: (attr, val) -> @data[attr] = val
-
-  ncols: -> _.size(@data)
-
-  clone: -> new gg.Row _.clone(@data)
-
-  raw: -> @data
-
-
 
 class gg.Table
     @reEvalJS = /^{.*}$/
@@ -110,6 +57,61 @@ class gg.Table
 
 
 
+class gg.Row
+  constructor: (@data) ->
+  get: (attr) ->
+    if attr of @data
+      val = @data[attr]
+      if _.isFunction val then val() else val
+    else
+      maps = _.values(@data).filter ((v) -> _.isObject(v) and not _.isArray(v))
+      for map, idx in maps
+        if attr of map
+          return map[attr]
+      return null
+
+  # retrieve the object field that contains attr as an attribute
+  # @param attr attribute to search for
+  getNested: (attr) ->
+    for k, v of @data
+      if _.isObject(v) and (not _.isArray(v)) and attr of v
+          return v
+    null
+
+  set: (attr, val) ->
+    if attr of @data
+      @data[attr] = val
+    else
+      nested = @getNested attr
+      if nested?
+        nested[attr] = val
+      else
+        @data[attr] = val
+
+  attrs: ->
+    rawattrs = []
+    nestedattrs = []
+    for k,v of @data
+      if _.isObject(v) and not _.isArray(v)
+        nestedattrs.push k
+      else
+        rawattrs.push k
+    nestedattrs = _.flatten _.map(nestedattrs, (attr) => _.keys(@data[attr]))
+    _.union rawattrs, nestedattrs
+
+  merge: (row) -> _.extend @data, row.data
+
+  hasAttr: (attr) -> attr of @data or @getNested(attr)?
+
+  addColumn: (attr, val) -> @data[attr] = val
+
+  ncols: -> _.size(@data)
+
+  clone: -> new gg.Row _.clone(@data)
+
+  raw: -> @data
+
+
 
 
 
@@ -120,8 +122,10 @@ class gg.RowTable extends gg.Table
         _.each rows, (row) => @addRow row
 
     @toRow: (data) ->
-      newrow = new gg.Row data
-      newrow
+      if _.isSubclass data, gg.Row
+        data
+      else
+        new gg.Row data
 
     nrows: -> @rows.length
     ncols: -> if @nrows() > 0 then @rows[0].ncols() else 0
@@ -129,7 +133,7 @@ class gg.RowTable extends gg.Table
       if @nrows() is 0
         throw Error("no rows to extract schema from")
       else
-        _.keys @get(0)
+        @get(0).attrs()
 
     cloneShallow: -> new gg.RowTable(@rows.map (row) -> row)
     cloneDeep: -> new gg.RowTable(@rows.map (row) => row.clone())
@@ -165,10 +169,11 @@ class gg.RowTable extends gg.Table
       groups = {}
       @rows.forEach (row) ->
         # NOTE: also gbfunc.apply(row) to set this?
-        key = JSON.stringify(gbfunc(row))
-        groups[key] = new gg.RowTable() if key not of groups
-        groups[key].addRow row
-        keys[key] = key
+        key = gbfunc row
+        jsonKey = JSON.stringify key
+        groups[jsonKey] = new gg.RowTable() if jsonKey not of groups
+        groups[jsonKey].addRow row
+        keys[jsonKey] = key
 
       ret = []
       _.each groups, (partition, jsonKey) ->
@@ -197,8 +202,8 @@ class gg.RowTable extends gg.Table
       if update
         @each (row) =>
           newrow = @transformRow row, mapping, funcs, strings
-          _.extend row, newrow
-          @
+          row.merge newrow
+        @
       else
         newrows = _.map @rows, (row) =>
           @transformRow row, mapping, funcs, strings
@@ -247,7 +252,7 @@ class gg.RowTable extends gg.Table
         catch error
           console.log error
           throw error
-      ret
+      new gg.Row ret
 
 
     # create new table containing the (exactly same)
@@ -310,7 +315,7 @@ class gg.RowTable extends gg.Table
         null
 
     asArray: -> _.map @rows, (row) -> row.raw()
-    raw: -> asArray()
+    raw: -> @asArray()
 
 
 class gg.ColTable extends gg.Table

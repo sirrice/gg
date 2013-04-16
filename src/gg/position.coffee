@@ -145,7 +145,7 @@ class gg.StackPosition extends gg.Position
 
     table.each (row) ->
       pts = row.get 'pts'
-      newpts = pts.sort((r1, r2) -> r1.get('x') - r2.get('x'))
+      newpts = pts.sort((r1, r2) -> r1.x - r2.x)
       newpts = gg.StackPosition.interpolate xs, newpts
       row.set 'pts', newpts
 

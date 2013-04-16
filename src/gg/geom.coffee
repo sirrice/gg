@@ -149,12 +149,12 @@ class gg.ReparamLine extends gg.XForm
 
     groups = table.split 'group'
     rows = _.map groups, (group) ->
-      group['pts'] = group.table.asArray()
-      group['group'] = group['key']
-      _.extend group, group['pts'][0]
-      delete group['table']
-      delete group['key']
-      group
+      groupTable = group.table
+      groupKey = group.key
+      rowData =
+        pts: groupTable.raw()
+        group: groupKey
+      rowData
     new gg.RowTable rows
 
 
