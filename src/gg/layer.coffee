@@ -195,7 +195,6 @@ class gg.LayerShorthand extends gg.Layer
     # facets: retrain scales after positioning (jitter) (inputs are pixel values)
     # this isn't working because reparam creates an array column
     # that isn't supported here
-    # TODO: allow single level nesting in the table model
     nodes.push new gg.wf.Scales {name: "scales-preinvert", scales: @g.scales}
     nodes.push @geom.invertScales
     nodes.push new gg.wf.Scales {name: "scales-postinvert", scales: @g.scales}

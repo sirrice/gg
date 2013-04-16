@@ -404,7 +404,7 @@ class gg.ScalesSet
     table = table.clone()
     table.each (row, idx) =>
       _.each aess, (aes) =>
-        row[aes] = @scale(aes).invert(row[aes]) if aes of row
+        row.set(aes, @scale(aes).invert(row.get(aes))) if aes of row
     table
 
   labelFor: -> null
