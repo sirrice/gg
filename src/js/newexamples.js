@@ -9,29 +9,35 @@
     var specs = {
       layers: [
       {
+        geom: { type: "area", aes: {x: "d", y: "r", group: 't', "fill-opacity": 1, fill: 't', stroke: 't'}},
+        pos: "stack"
+      }
+  /*
+     ,
+      {
         geom: { type:"interval", aes: {y: 'total', r: 'total'} },
         aes: {x: 'd', y: 'r', 'fill': 'f',  "fill-opacity": 0.9},
         stat: "bin"
       }
-     ,{
+      ,
+      {
         geom: { type:"point"},//, aes: {y: 'total', r: 'total', fill: 'red'} },
-        aes: {x: 'd', y: 'r', fill: '{g*10 + f}', stroke: "black", "fill-opacity": 0.4},
-        //pos: { type: 'jitter', y:0.1, x:0}
+        aes: {x: 'd', y: 'r', r: 'g', fill: '{g*10 + f}', stroke: "black"},//, "fill-opacity": 0.4},
+        pos: { type: 'jitter', y:0.5, x:0}
         //stat: "bin"
       }
-
+      */
 
       ],
-      facets: {x: 'f', y: 'g', xLabel: "XFACET!", fontSize: "10pt"},
+      //facets: {x: 'f', y: 'g', xLabel: "XFACET!", fontSize: "10pt"},
       scales: {
         x: {type: 'linear'},
-        y: {type: 'linear'},//, lim: [0, 500]},
+       y: {type: 'linear'},//, lim: [0, 500]},
         r: {type: 'linear', range: [3,6]}
       },
       opts: {
         title: "baller plot!"
       }
-
 
     }
 
@@ -43,8 +49,8 @@
     var bigdata = _.map(_.range(0, 500), function(d) {
       g = Math.floor(Math.random() * 3);
       f = Math.floor(Math.random() * 3);
-      t = Math.floor(Math.random() * 3);
-      return {d:d, r: d*100, g: g, f:f, t:t};
+      t = Math.floor(Math.random() * 5);
+      return {d:d, r: d + d*Math.random(), g: g, f:f, t:t};
     })
 
     var scatterplot = gg(specs)

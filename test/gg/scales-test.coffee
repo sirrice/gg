@@ -36,9 +36,8 @@ suite.addBatch
         s
 
       "can call the functions": (s) ->
-        console.log s.domain().length
+        s.domain().length
         s.range()
-        console.log s.d3()
         s.minDomain()
         s.maxDomain()
         s.minRange()
@@ -51,9 +50,7 @@ suite.addBatch
         s
 
       "can call the functions": (s) ->
-        console.log s.domain().length
         s.range()
-        console.log s.d3()
         s.minDomain()
         s.maxDomain()
         s.minRange()
@@ -229,7 +226,21 @@ suite.addBatch
           assert.arrayEqual scales.scale('a').domain(), _.map(_.range(5), String)
           #assert.equal scales.scale('a').isDiscrete,  yes
 
+  "scales inverse":
+    topic: new gg.ScaleFactory
+      a:
+        type: "linear"
+        domain: [0, 100]
+        range: [10, 0]
 
+    "inverse works": (sf) ->
+      table = new gg.RowTable _.map(_.range(10), (i)->{a:i*10})
+      scales = sf.scales(['a'])
+      scales.train table
+      newTable = scales.invert table
+      console.log newTable
+      origTable = scales.apply newTable
+      console.log origTable
 
 
 

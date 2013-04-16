@@ -69,7 +69,8 @@ class gg.Scales extends gg.XForm
     # trains scales on the pixel domain
     @prerenderNode = new gg.wf.Barrier
       name: "scales:postgeom"
-      f: (args...) => @trainOnPixels(args..., gg.Scales.POSTRENDER)
+      #f: (args...) => @trainOnPixels(args..., gg.Scales.POSTRENDER)
+      f: (args...) => @trainOnData(args..., gg.Scales.POSTRENDER)
 
     # XXX: I don't rememebr why this exists
     @facetNode = new gg.wf.Barrier
@@ -115,13 +116,16 @@ class gg.Scales extends gg.XForm
 
       scales = @scales info.facetX, info.facetY, info.layer
       inverted = scales.invert t, aess
+      console.log "Scales.trainOnPixels\tinverted table on aes #{aess}"
       inverted = inverted.filter (row) =>
         not (_.any aess, (aes) => not scales.scale(aes).valid row.get(aes))
 
       scales.train inverted, aess
 
+
+
     @state = nextState if nextState?
-    #@g.facets.trainScales()
+    @g.facets.trainScales()
     tables
 
   trainForFacets: (tables, envs, node, nextState) ->
@@ -380,7 +384,16 @@ class gg.ScalesSet
             _.flatten([aes, '->', type, d3Scale.domain(), d3Scale.range()]).join(' ')
     arr.join('\n')
 
-  apply: -> null
+  apply: (table, aess=null) ->
+    aess = _.keys @scales unless aess?
+
+    table = table.clone()
+    _.each aess, (aes) =>
+      scale = @scale(aes)
+      f = (v) -> scale.scale v
+      table.map f, aes if table.contains aes
+
+    table
 
   # destructively invert table on aess columns
   #
@@ -388,7 +401,7 @@ class gg.ScalesSet
   invert: (table, aess=null) ->
     aess = _.keys @scales unless aess?
 
-    table = table.cloneShallow()
+    table = table.clone()
     table.each (row, idx) =>
       _.each aess, (aes) =>
         row[aes] = @scale(aes).invert(row[aes]) if aes of row
@@ -405,18 +418,22 @@ class gg.ScalesApply extends gg.XForm
     @parseSpec()
 
   compute: (table, env) ->
-    info = @paneInfo table, env
-    scalesSet = @scales table, env
-    table = table.clone()
+    scales = @scales table, env
+    @log ":aesthetics: #{scales.aesthetics()}"
+    table = scales.apply table, scales.aesthetics()
+    table
 
-    @log ":aesthetics: #{scalesSet.aesthetics()}"
-    _.each scalesSet.aesthetics(), (aes) =>
-      scale = scalesSet.scale aes
-      @log "#{aes} scale is (#{scale.domain()}) -> (#{scale.range()})"
 
-      f = (v) -> scale.scale(v)
-      table.map f, aes if table.contains aes
+# transforms pixel -> data
+class gg.ScalesInvert extends gg.XForm
+  constructor: (@layer, @spec) ->
+    super @layer.g, @spec
+    @parseSpec()
 
+  compute: (table, env) ->
+    scales = @scales table, env
+    @log ":aesthetics: #{scales.aesthetics()}"
+    table = scales.invert table, scales.aesthetics()
     table
 
 

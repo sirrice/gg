@@ -67,6 +67,9 @@ class gg.Scale
   @aliases = "scale"
   _id: 0
   constructor: (@spec={}) ->
+    @aes = null
+
+
     # Whether or not the domain/range was set from the Spec
     # -> don't update at all
     # -> overrides @domainUpdated
@@ -154,6 +157,8 @@ class gg.Scale
           y1: gg.LinearScale
           color: gg.ColorScale
           fill: gg.ColorScale
+          stroke: gg.ColorScale
+          "fill-opacity": gg.LinearScale
           size: gg.LinearScale
           text: gg.TextScale
           shape: gg.ShapeScale
@@ -215,6 +220,8 @@ class gg.Scale
   maxRange: -> @range()[1]
   scale: (v) -> @d3Scale v
   invert: (v) -> @d3Scale.invert(v)
+  toString: () ->
+    "#{@aes}: \t#{@domain()}\t#{@range()}"
 
 
 class gg.IdentityScale extends gg.Scale
@@ -232,7 +239,7 @@ class gg.IdentityScale extends gg.Scale
 class gg.LinearScale extends gg.Scale
   @aliases = "linear"
   constructor: () ->
-    @d3Scale = d3.scale.linear().clamp(true)
+    @d3Scale = d3.scale.linear()
     @type = 'continuous'
     super
 
@@ -240,14 +247,14 @@ class gg.LinearScale extends gg.Scale
 class gg.TimeScale extends gg.Scale
   @aliases = "time"
   constructor: () ->
-      @d3Scale = d3.time.scale().clamp(true)
+      @d3Scale = d3.time.scale()
       @type = 'time'
       super
 
 class gg.LogScale extends gg.Scale
   @aliases = "log"
   constructor: () ->
-      @d3Scale = d3.scale.log().clamp(true)
+      @d3Scale = d3.scale.log()
       @type = 'continuous'
       super
 
@@ -348,7 +355,7 @@ class gg.ShapeScale extends gg.CategoricalScale
 class gg.ColorScaleCont extends gg.Scale
   @aliases = "color_cont"
   constructor: (@spec={}) ->
-    @d3Scale = d3.scale.linear().clamp(true)
+    @d3Scale = d3.scale.linear()
     super
 
   parseSpec: ->

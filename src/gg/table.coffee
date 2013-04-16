@@ -1,3 +1,73 @@
+
+
+#
+# The data model consists of a list of tuples (rows)
+#
+# Each tuple (row) contains a list of columns
+# The data types include
+# 1) atomic datatypes -- numeric, string, datetime
+# 2) function datatype
+# 3) object data type -- tuple knows how to inspect into it
+# 3) array data type of mappings -- not inspected
+#
+# Attribute resolution
+# 1) check for attributes containing atomic data types
+# 2) check each column that is of type object
+
+class gg.Row
+  constructor: (@data) ->
+  get: (attr) ->
+    if attr of @data
+      val = @data[attr]
+      if _.isFunction val then val() else val
+    else
+      maps = _.values(@data).filter _.isObject
+      for map, idx in maps
+        if attr of map
+          return map[attr]
+      return null
+
+  # retrieve the object field that contains attr as an attribute
+  # @param attr attribute to search for
+  getNested: (attr) ->
+    for k, v of @data
+      if _.isObject(v) and attr of v
+          return v
+    null
+
+  set: (attr, val) ->
+    if attr of @data
+      @data[attr] = val
+    else
+      nested = @getNested attr
+      if nested?
+        nested[attr] = val
+      else
+        @data[attr] = val
+
+  attrs: ->
+    rawattrs = []
+    nestedattrs = []
+    for k,v of @data
+      if _.isObject v
+        nestedattrs.push k
+      else
+        rawattrs.push k
+    nestedattrs = _.flatten _.map(nestedattrs, (attr) => _.keys(@data[attr]))
+    _.union rawattrs, nestedattrs
+
+  hasAttr: (attr) -> attr of @data or @getNested(attr)?
+
+  addColumn: (attr, val) -> @data[attr] = val
+
+  ncols: -> _.size(@data)
+
+  clone: -> new gg.Row _.clone(@data)
+
+  raw: -> @data
+
+
+
 class gg.Table
     @reEvalJS = /^{.*}$/
     @reVariable = /^[a-zA-Z]\w*$/
@@ -40,20 +110,18 @@ class gg.Table
 
 
 
+
+
+
+
 class gg.RowTable extends gg.Table
     constructor: (rows=[]) ->
         @rows = []
         _.each rows, (row) => @addRow row
 
-    @toTuple: (row) ->
-        row.get = (attr, defaultVal=null) ->
-            val = row[attr]
-            if _.isFunction val
-                val(row)
-            else
-                if val? then val else defaultVal
-        row.ncols = -> _.size(row) - 2 # for row.get & row.ncols
-        row
+    @toRow: (data) ->
+      newrow = new gg.Row data
+      newrow
 
     nrows: -> @rows.length
     ncols: -> if @nrows() > 0 then @rows[0].ncols() else 0
@@ -64,11 +132,11 @@ class gg.RowTable extends gg.Table
         _.keys @get(0)
 
     cloneShallow: -> new gg.RowTable(@rows.map (row) -> row)
-    cloneDeep: -> new gg.RowTable(@rows.map (row) => gg.RowTable.toTuple(_.clone(row)))
+    cloneDeep: -> new gg.RowTable(@rows.map (row) => row.clone())
 
 
     merge: (table) ->
-      if @constructor.name is "RowTable"
+      if _.isSubclass table, gg.RowTable
           @rows.push.apply @rows, table.rows
       else
           throw Error("merge not implemented for #{@constructor.name}")
@@ -83,7 +151,9 @@ class gg.RowTable extends gg.Table
               t.merge(t2) if idx > 0
           t
 
-    # gbfunc's output will be JSON encoded and used as key
+
+    # gbfunc's output will be JSON encoded to differentiate groups
+    # however the actual key will be the original gbfunc's output
     # @param {Function} gbfunc (row) -> key
     # @return {Array} of objects: {key: group key, table: partition}
     split: (gbfunc) ->
@@ -91,16 +161,18 @@ class gg.RowTable extends gg.Table
         gbfunc = ((key) -> (tuple) -> tuple.get(key))(gbfunc)
 
 
+      keys = {}
       groups = {}
       @rows.forEach (row) ->
         # NOTE: also gbfunc.apply(row) to set this?
         key = JSON.stringify(gbfunc(row))
         groups[key] = new gg.RowTable() if key not of groups
         groups[key].addRow row
+        keys[key] = key
 
       ret = []
-      _.each groups, (partition, key) ->
-        ret.push {key: JSON.parse(key), table: partition}
+      _.each groups, (partition, jsonKey) ->
+        ret.push {key: keys[jsonKey], table: partition}
       ret
 
     # @param colname either a string, or an object of {key: xform} pairs
@@ -123,14 +195,14 @@ class gg.RowTable extends gg.Table
       funcs = {}
       strings = {}
       if update
-          _.each @rows, (row) =>
-              newrow = @transformRow row, mapping, funcs, strings
-              _.extend row, newrow
+        @each (row) =>
+          newrow = @transformRow row, mapping, funcs, strings
+          _.extend row, newrow
           @
       else
-          newrows = _.map @rows, (row) =>
-              @transformRow row, mapping, funcs, strings
-          new gg.RowTable newrows
+        newrows = _.map @rows, (row) =>
+          @transformRow row, mapping, funcs, strings
+        new gg.RowTable newrows
 
     # constructs a new object and populates it using mapping specs
     transformRow: (row, mapping, funcs={}, strings={}) ->
@@ -138,8 +210,8 @@ class gg.RowTable extends gg.Table
       map = (oldattr, newattr) =>
         if _.isFunction oldattr
           oldattr row
-        else if oldattr of row
-          row[oldattr]
+        else if row.hasAttr oldattr
+          row.get oldattr
         else if newattr of strings
           strings[newattr]
         else if newattr isnt 'text' and gg.Table.reEvalJS.test oldattr
@@ -149,13 +221,14 @@ class gg.RowTable extends gg.Table
           #
           unless newattr of funcs
             userCode = oldattr[1...oldattr.length-1]
-            variableF = (val, k) =>
-              if gg.Table.reVariable.test(k)
-                "var #{k} = row['#{k}'];"
+            variableF = (key) =>
+              # if the key is a well-specified variable name
+              if gg.Table.reVariable.test(key)
+                "var #{key} = row.get('#{key}');"
               else
                 null
 
-            cmds = _.compact _.map(row, variableF)
+            cmds = _.compact _.map(row.attrs(), variableF)
             cmds.push "return #{userCode};"
             cmd = cmds.join('')
             fcmd = "var __func__ = function(row) {#{cmd}}"
@@ -177,27 +250,32 @@ class gg.RowTable extends gg.Table
       ret
 
 
+    # create new table containing the (exactly same)
+    # rows from current table, with rows failing the filter
+    # test not present
     filter: (f) ->
       newrows = []
       @each (row, idx) -> newrows.push row if f(row)
       new gg.RowTable newrows
 
 
+    # transforms the values of column(s) on a per-column basis
+    # Destructively updates!
+    # Each mapping function takes the current field as input
     map: (fOrMap, colName=null) ->
       if _.isFunction fOrMap
         f = fOrMap
         if colName?
-          @each (row, idx) -> row[colName] = f(row[colName])
+          @each (row, idx) -> row.set(colName, f(row.get(colName)))
         else
           throw Error("RowTable.map without a colname is not implemented")
       else if _.isObject fOrMap
         @each (row, idx) ->
-          _.each fOrMap, (f, col) -> row[col] = f row[col]
+          _.each fOrMap, (f, col) -> row.set(col, f row.get(col))
       else
         throw Error("RowTable.map: invalid arguments: #{arguments}")
 
       @
-
 
 
     addConstColumn: (name, val, type=null) ->
@@ -206,32 +284,33 @@ class gg.RowTable extends gg.Table
     addColumn: (name, vals, type=null) ->
       if vals.length != @nrows()
           throw Error("column has #{vals.length} values, table has #{@rows.length} rows")
-      @rows.forEach (row, idx) => row[name] = vals[idx]
+      @rows.forEach (row, idx) => row.addColumn(name, vals[idx])
       @
 
     addRow: (row) ->
-      @rows.push gg.RowTable.toTuple row
+      @rows.push gg.RowTable.toRow row
       @
 
 
     get: (row, col=null) ->
-        if row >= 0 and row < @rows.length
-            if col?
-                @rows[row][col]
-            else
-                @rows[row]
+      if row >= 0 and row < @rows.length
+        if col?
+            @rows[row].get col
         else
-            null
+            @rows[row]
+      else
+        null
 
-    getCol: (col) ->
+    getCol: (col) -> @getColumn col
+    getColumn: (col) ->
       # XXX: hack.  make it do the right thing if no rows
       if @nrows() > 0 and @get(1, col)?
         _.times @nrows(), (idx) => @get(idx, col)
       else
         null
-    getColumn: (col) -> @getCol col
 
-    asArray: -> @rows
+    asArray: -> _.map @rows, (row) -> row.raw()
+    raw: -> asArray()
 
 
 class gg.ColTable extends gg.Table

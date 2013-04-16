@@ -45,8 +45,8 @@
 class gg.XForm
 
   constructor: (@g, @spec={}) ->
-    unless _.isSubclass @g, gg.Graphic
-      throw Error("Xform passed non-graphic as first argument")
+    #unless _.isSubclass @g, gg.Graphic
+    #  throw Error("Xform passed non-graphic as first argument")
 
     @params = {}
 

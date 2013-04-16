@@ -259,7 +259,8 @@ class gg.Facets
     # top facet space
     console.log "exSize: #{JSON.stringify @exSize}"
 
-
+    # compute pixel size of largest y-axis value
+    # used to compute y-axis label spacing
     formatter = d3.format(",.0f")
     maxValF = (s) ->
       if _.isNumber s.scale('y').maxDomain()then s.scale('y').maxDomain() else 0
@@ -513,7 +514,8 @@ class gg.Facets
         ss.scale(aes).range [0+@panePadding, xBand-@panePadding]
         console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
       _.each gg.Scale.ys, (aes) =>
-        ss.scale(aes).range [yBand-@panePadding, 0+@panePadding]
+        #ss.scale(aes).range [yBand-@panePadding, 0+@panePadding]
+        ss.scale(aes).range [0+@panePadding, yBand-@panePadding]
         console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
 
 

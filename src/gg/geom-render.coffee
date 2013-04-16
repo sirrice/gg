@@ -143,12 +143,22 @@ class gg.GeomRenderLineSvg extends gg.GeomRender
   inputSchema: (table, env) -> ['x1', 'y1', 'x2', 'y2']
 
   render: (table, env) ->
-    lines = @groups(@svg(table, env), "lines geoms", table.asArray())
-      .selectAll("line")
-      .data(Object)
-    enter = lines.enter()
-    exit = lines.exit()
-    enterLines = enter.append("line")
+    svg = @svg table, env
+    data = table.asArray()
+
+    # attributes should be imported in bulk using
+    # .attr( {} ) where {} is @attrs
+    lines = @groups(svg, 'lines', data).selectAll('polyline')
+        .data((d) -> [d.pts])
+    enter = areas.enter()
+    enterLines = enter.append("polyline")
+    exit = areas.exit()
+
+    liner = d3.svg.line()
+        .x((d) -> d.x)
+        .y((d) -> d.y)
+        .interpolate('basis')
+
 
     @applyAttrs enterLines,
       class: "geom"
@@ -163,7 +173,6 @@ class gg.GeomRenderLineSvg extends gg.GeomRender
 
     exit.remove()
 
-# XXX: DOES NOT WORK
 class gg.GeomRenderRectSvg extends gg.GeomRender
   @aliases = "rect"
 
@@ -229,6 +238,46 @@ class gg.GeomRenderRectSvg extends gg.GeomRender
     .transition()
       .remove()
 
+
+class gg.GeomRenderAreaSvg extends gg.GeomRender
+  defaults: (table, env) ->
+    "stroke-width": 1
+    stroke: "black"
+    fill: "grey"
+    "fill-opacity": 1
+    group: 1
+
+  inputSchema: (table, env) ->
+    ['pts']
+    #['x', 'y0', 'y1']
+
+  render: (table, env, node) ->
+    svg = @svg table, env
+    data = table.asArray()
+    console.log "table has #{table.nrows()} rows"
+
+    area = d3.svg.area()
+        .x((d) -> d.x)
+        .y1((d) -> d.y1)
+        .y0((d) -> d.y0)
+        #.interpolate('basis')
+
+    # attributes should be imported in bulk using
+    # .attr( {} ) where {} is @attrs
+    areas = @groups(svg, 'areas', data).selectAll('polyline')
+        .data((d) -> [d])
+    enter = areas.enter()
+    enterAreas = enter.append("svg:path")
+    exit = areas.exit()
+
+    @applyAttrs enterAreas,
+      class: "polyline"
+      d: (d) -> area(d.pts)
+      "stroke": (t) -> t["stroke"]
+      "stroke-width": (t) -> t['stroke-width']
+      "stroke-opacity": (t) -> t["stroke-opacity"]
+      fill: (t) -> t['fill']
+      "fill-opacity": (t) -> t['fill-opacity']
 
 
 

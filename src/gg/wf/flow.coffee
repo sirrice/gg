@@ -1,5 +1,7 @@
 #<< gg/util
 #<< gg/wf/node
+#<< gg/wf/debug
+#<< gg/wf/label
 events = require 'events'
 
 

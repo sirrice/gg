@@ -40,6 +40,7 @@ class gg.Geom # not an XForm!! #extends gg.XForm
     @g = @layer.g
 
     @render = null
+    @invertScales = null
     @applyScales = null
     @map = null
     @reparam = null
@@ -50,6 +51,7 @@ class gg.Geom # not an XForm!! #extends gg.XForm
   parseSpec: ->
     @render = gg.GeomRender.fromSpec @layer, @spec.type
     @applyScales = new gg.ScalesApply @layer, {name: "applyScales"}
+    @invertScales = new gg.ScalesInvert @layer, {name: "invertScales"}
     @map = new gg.Mapper @g, @spec
 
   name: -> @constructor.name.toLowerCase()
@@ -98,7 +100,6 @@ class gg.Point extends gg.Geom
 
   parseSpec: ->
     super
-    console.log "hello"
     reparamSpec =
       name: "point-reparam"
       inputSchema: ['x', 'y']
@@ -118,6 +119,47 @@ class gg.Point extends gg.Geom
 class gg.Line extends gg.Geom
   @aliases: "line"
 
+  parseSpec: ->
+    super
+    @reparam = new gg.ReparamLine @g, {name: "line-reparam"}
+    @render = new gg.GeomRenderLineSvg @layer, {}
+
+class gg.ReparamLine extends gg.XForm
+  constructor: (@g, @spec) ->
+    super
+    @parseSpec()
+
+  parseSpec: -> super
+
+  defaults: ->
+    group: '1'
+
+  inputSchema: -> ['x', 'y']
+
+  compute: (table, env, node) ->
+    scales = @scales table, env
+    table.each (row) ->
+      row.set('y1', row.get('y'))
+      row.set('y0', scales.scale('y').minRange())
+
+    scales = @scales(table, env)
+    _.map table.get(0), (val, key) =>
+      scales.scale(key).type
+
+
+    groups = table.split 'group'
+    rows = _.map groups, (group) ->
+      group['pts'] = group.table.asArray()
+      group['group'] = group['key']
+      _.extend group, group['pts'][0]
+      delete group['table']
+      delete group['key']
+      group
+    new gg.RowTable rows
+
+
+
+
 class gg.Step extends gg.Geom
   @aliases: "step"
 
@@ -126,6 +168,12 @@ class gg.Path extends gg.Geom
 
 class gg.Area extends gg.Geom
   @aliases: "area"
+
+  parseSpec: ->
+    super
+    @reparam = new gg.ReparamLine @g, {name: "area-reparam"}
+    @render = new gg.GeomRenderAreaSvg @layer, {}
+
 
 class gg.Interval extends gg.Geom
   @aliases: ["interval", "rect"]

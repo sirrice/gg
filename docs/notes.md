@@ -331,6 +331,7 @@ Other Libraries
 ### Javascript
 
 1. d3
+1. [https://github.com/trifacta/vega/wiki/Data-Transforms]Vega.
 1. protovis
 1. [Polychart](http://polychart.com/js) inspired by grammar of graphics
 1. [DVL](https://github.com/vogievetsky/DVL)

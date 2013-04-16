@@ -479,6 +479,15 @@ Geometries are split into a component that maps input tables into an internal sc
 Geometries like line, path, etc that return schemas containing tables can be compiled into
 
     Split(grouping keys) -> Map -> Join()
+    
+Actually, they use:
+
+    aes map
+    reparam: take a "dirty" input, and formalize the output schema as described below.
+             no computation, just re-naming, and grouping. 
+    positioning
+    coord
+    render
 
 0-D
 

@@ -2,7 +2,8 @@
 
 class gg.Position extends gg.XForm
   constructor: (@layer, @spec={}) ->
-    super @layer.g, @spec
+    g = @layer.g if @layer?
+    super g, @spec
     @parseSpec()
 
 
@@ -10,7 +11,8 @@ class gg.Position extends gg.XForm
     klasses = [
       gg.IdentityPosition,
       gg.ShiftPosition,
-      gg.JitterPosition
+      gg.JitterPosition,
+      gg.StackPosition
     ]
     ret = {}
     _.each klasses, (klass) ->
@@ -30,6 +32,8 @@ class gg.Position extends gg.XForm
 
     klass = klasses[type] or gg.IdentityPosition
 
+    console.log "Position.fromSpec #{type.name} from #{JSON.stringify spec}"
+
     ret = new klass layer, spec
     ret
 
@@ -39,6 +43,8 @@ class gg.IdentityPosition extends gg.Position
 
 class gg.ShiftPosition extends gg.Position
   @aliases = ["shift"]
+
+  inputSchema: -> ['x', 'y']
 
   parseSpec: ->
     @xShift = findGood [@spec.x, 10]
@@ -56,6 +62,8 @@ class gg.ShiftPosition extends gg.Position
 
 class gg.JitterPosition extends gg.Position
   @aliases = "jitter"
+
+  inputSchema: -> ['x', 'y']
 
   parseSpec: ->
     @scale = findGood [@spec.scale, 0.2]
@@ -82,4 +90,77 @@ class gg.JitterPosition extends gg.Position
     table
 
 
+
+class gg.StackPosition extends gg.Position
+  @aliases = ["stack", "stacked"]
+
+  inputSchema: -> ['group', 'pts']
+  outputSchema: ->
+    ['group', 'x', 'y0', 'y1']
+
+  parseSpec: ->
+    super
+
+  #
+  # @param xs sorted list of x values
+  # @param pts array of gg.rows sorted on 'x', has 'y' values
+  # @return array of {x:, y:} where y values are linearly interpolated
+  # TODO: use d3 library
+  @interpolate: (xs, pts) ->
+    if pts.length == 0
+      return pts
+
+    minx = _.first(pts).x
+    maxx = _.last(pts).x
+    ptsidx = 0
+    ret = []
+    for x, idx in xs
+      if x < minx or x > maxx
+        ret.push {x:x, y:null}
+        continue
+      while ptsidx+1 <= pts.length and pts[ptsidx].x < x
+        ptsidx += 1
+      if x is pts[ptsidx].x
+        ret.push {x:x, y: pts[ptsidx].y}
+      else
+        prev = pts[ptsidx-1]
+        cur = pts[ptsidx]
+        perc = (x-prev.x) / (cur.x - prev.x)
+        y = perc * (cur.y - prev.y) + prev.y
+        ret.push {x:x, y:y}
+    ret
+
+
+  compute: (table, env) ->
+    # collect sorted list of x coords
+    xscache = {}
+    xs = []
+    table.each (row) ->
+      pts = row.get 'pts'
+      _.each pts, (pt) ->
+        x = pt.x
+        xs.push x unless x of xscache
+        xscache[x] = yes
+    xs.sort((a,b)->a-b)
+
+    table.each (row) ->
+      pts = row.get 'pts'
+      newpts = pts.sort((r1, r2) -> r1.get('x') - r2.get('x'))
+      newpts = gg.StackPosition.interpolate xs, newpts
+      row.set 'pts', newpts
+
+    # now stack them up!
+    _.each xs, (x, idx) ->
+      sum = 0
+      table.each (row) ->
+        pts = row.get('pts')
+        presum = sum
+        sum += pts[idx].y if pts[idx].y?
+        pts[idx].y0 = presum
+        pts[idx].y1 = sum
+
+
+    console.log "computed area: #{table.getColumn('pts')[0]}"
+
+    table
 

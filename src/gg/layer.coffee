@@ -132,7 +132,10 @@ class gg.LayerShorthand extends gg.Layer
       else
         [[], "identity"]
 
+
     subSpec = findGoodAttr spec, aliases, defaultType
+
+    console.log "layer.extractSpec got subspec #{JSON.stringify subSpec}"
 
     if _.isString subSpec
       subSpec =
@@ -190,7 +193,16 @@ class gg.LayerShorthand extends gg.Layer
     nodes.push new gg.wf.Stdout {name: "post:pixel", n: 1}
 
     # facets: retrain scales after positioning (jitter) (inputs are pixel values)
+    # this isn't working because reparam creates an array column
+    # that isn't supported here
+    # TODO: allow single level nesting in the table model
+    nodes.push new gg.wf.Scales {name: "scales-preinvert", scales: @g.scales}
+    nodes.push @geom.invertScales
+    nodes.push new gg.wf.Scales {name: "scales-postinvert", scales: @g.scales}
     nodes.push @g.scales.prerenderNode
+    nodes.push new gg.wf.Scales {name: "scales-posttrain", scales: @g.scales}
+    nodes.push @geom.applyScales
+    nodes.push new gg.wf.Scales {name: "scales-postapply", scales: @g.scales}
 
     # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
 

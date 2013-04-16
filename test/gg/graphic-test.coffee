@@ -43,6 +43,10 @@ Math.seedrandom "zero"
 
 spec =
   layers: [
+
+     { geom: { type: "area", aes: {x: 'd', y: 'r'} } }
+  ]
+  ###
     {
       # post-stats mapping (e.g., count --> y)
       geom: {type:"interval", aes: {y:"total", r:"total", fill: "red"}},
@@ -75,8 +79,8 @@ spec =
       #stat: {type:"bin", name: "point-bin"}
 
     }
+    ###
 
-  ]
   facets:
     x: "f"
     y: "g"
