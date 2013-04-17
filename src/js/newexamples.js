@@ -17,6 +17,28 @@
     var specs = {
       layers: [
       {
+        geom: {
+          type: "area",
+          aes: {
+            x: "d",
+            y: "r",
+            //group: "{{color: t, fill: t, stroke: t, \"fill-opacity\": 0.4}}"
+            group: function(row) {
+              t = row.get('t')
+              return {
+                color: t,
+                fill: t,
+                stroke: t,
+                "fill-opacity": 0.4
+              }
+            }
+          }
+        }
+        ,pos: "stack"
+      }
+  /*
+     ,
+      {
         geom: { type:"interval", aes: {y: 'total', r: 'total'} },
         aes: {x: 'd', y: 'r', 'fill': 'f',  "fill-opacity": 0.9},
         stat: "bin"
@@ -28,21 +50,7 @@
         //,pos: { type: 'jitter', y:0.5, x:0}
         //stat: "bin"
       }
-      ,
-      {
-        geom: {
-          type: "area",
-          aes: {
-            x: "d",
-            y: "r",
-            group: "{{color: t, fill: t}}",
-            "fill-opacity": 0.1,
-            fill: 't',
-            stroke: 't'
-          }
-        }
-        ,pos: "stack"
-      }
+      */
 
       ],
       //facets: {x: 'f', y: 'g', xLabel: "XFACET!", fontSize: "10pt"},

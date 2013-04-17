@@ -93,7 +93,11 @@ class gg.Scales extends gg.XForm
   trainOnData: (tables, envs, node, nextState=null) ->
     _.each _.zip(tables, envs), ([t,e]) =>
       info = @paneInfo t, e
+      # XXX: ack, this is just really ugly.
+      # @aesthetics() is for user-specified aesthetics
+      # t.colNames is for everything else
       aess = @aesthetics info.layer
+      aess = _.compact _.flatten _.union(aess, t.colNames())
       scales = @scales info.facetX, info.facetY, info.layer
       console.log JSON.stringify(t.raw())
       filtered = t.filter (row) =>

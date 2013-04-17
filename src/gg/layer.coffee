@@ -65,9 +65,19 @@ class gg.LayerShorthand extends gg.Layer
 
   # TODO: merge pre and post stats aesthetic mappings so we can train properly
   #       currently only supports pre-stats mapping
+  aestheticsFromSpec: (spec) ->
+    aess = _.keys spec
+    nestedAess = _.map spec, (v, k) ->
+      if _.isObject(v) and not _.isArray(v)
+        _.keys v
+      else
+        null
+    aess = _.compact _.flatten _.union(aess, nestedAess)
+    aess
+
   aesthetics: ->
     subSpecs = [@mapSpec, @geomSpec, @statSpec, @posSpec]
-    aess = _.uniq _.compact _.union(_.map subSpecs, (s) -> _.keys(s.aes))
+    aess = _.uniq _.compact _.union(_.map subSpecs, (s) => @aestheticsFromSpec s.aes)
     aess = _.map aess, (aes) ->
       if aes in gg.Scale.xs
         gg.Scale.xs

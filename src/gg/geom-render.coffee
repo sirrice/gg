@@ -87,7 +87,6 @@ class gg.GeomRenderPointSvg extends gg.GeomRender
     ['x', 'y']
 
   render: (table, env, node) ->
-    console.log table.get(0)
 
     data = table.asArray()
     svg = @svg table, env
@@ -102,9 +101,7 @@ class gg.GeomRenderPointSvg extends gg.GeomRender
       class: "geom"
       cx: (t) -> t.get('x')
       cy: (t) -> t.get('y')
-      "fill-opacity": (t) ->
-        console.log t.raw()
-        t.get('fill-opacity')
+      "fill-opacity": (t) -> t.get('fill-opacity')
       "stroke-opacity": (t) -> t.get("stroke-opacity")
       fill: (t) -> t.get('fill')
       r: (t) -> t.get('r')
@@ -276,10 +273,33 @@ class gg.GeomRenderAreaSvg extends gg.GeomRender
       class: "path"
       d: (d) -> area(d.get 'pts')
       "stroke": (t) -> t.get "stroke"
-      "stroke-width": (t) -> t.get('stroke-width')
-      "stroke-opacity": (t) -> t.get("stroke-opacity")
+      "stroke-width": (t) -> t.get 'stroke-width'
+      "stroke-opacity": (t) -> t.get "stroke-opacity"
+      fill: (t) -> t.get 'fill'
+      "fill-opacity": (t) -> t.get 'fill-opacity'
+
+
+    cssOver =
+      fill: (t) -> d3.rgb(t.get("fill")).darker(2)
+      "fill-opacity": 1
+
+    cssOut =
       fill: (t) -> t.get('fill')
       "fill-opacity": (t) -> t.get('fill-opacity')
+
+    _this = @
+    areas
+      .on("mouseover", (d, idx) -> _this.applyAttrs d3.select(@), cssOver)
+      .on("mouseout", (d, idx) ->  _this.applyAttrs d3.select(@), cssOut)
+
+
+
+    exit.transition()
+      .duration(500)
+      .attr("fill-opacity", 0)
+      .attr("stroke-opacity", 0)
+    .transition()
+      .remove()
 
 
 
