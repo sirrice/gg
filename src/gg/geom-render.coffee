@@ -76,7 +76,7 @@ class gg.GeomRenderPointSvg extends gg.GeomRender
 
   defaults: (table, env) ->
     r: 2
-    "fill-opacity": 0.5
+    "fill-opacity": "0.5"
     fill: "steelblue"
     stroke: "steelblue"
     "stroke-width": 0
@@ -87,6 +87,7 @@ class gg.GeomRenderPointSvg extends gg.GeomRender
     ['x', 'y']
 
   render: (table, env, node) ->
+    console.log table.get(0)
 
     data = table.asArray()
     svg = @svg table, env
@@ -101,7 +102,9 @@ class gg.GeomRenderPointSvg extends gg.GeomRender
       class: "geom"
       cx: (t) -> t.get('x')
       cy: (t) -> t.get('y')
-      "fill-opacity": (t) -> t.get('fill-opacity')
+      "fill-opacity": (t) ->
+        console.log t.raw()
+        t.get('fill-opacity')
       "stroke-opacity": (t) -> t.get("stroke-opacity")
       fill: (t) -> t.get('fill')
       r: (t) -> t.get('r')

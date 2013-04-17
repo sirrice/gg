@@ -120,9 +120,9 @@ class gg.XForm
     defaults = @param table, env, "defaults"
     console.log "adding defaults of #{JSON.stringify defaults}"
     console.log "                   #{JSON.stringify table.colNames()}"
-    console.log table.raw()
     _.each defaults, (val, col) ->
       unless col in table.colNames()
+        console.log "adding default    #{col} -> #{val}"
         table.addConstColumn col, val
 
   compute: (table, env, node) -> table
@@ -133,6 +133,7 @@ class gg.XForm
   compile: ->
     spec = _.clone @spec
     _compute = (table, env, node) =>
+      table = table.cloneDeep()
       @addDefaults table, env
       @validateInput table, env
       @compute table, env, node

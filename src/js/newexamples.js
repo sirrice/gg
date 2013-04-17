@@ -17,34 +17,32 @@
     var specs = {
       layers: [
       {
-        geom: {
-          type: "area",
-          aes: {
-            x: "d",
-            y: "r",
-            group: "{{color: t, fill: t}}",
-            "fill-opacity": .1,
-            fill: 't',
-            stroke: 't'
-          }
-        }
-        ,pos: "stack"
-      }
-  /*
-     ,
-      {
         geom: { type:"interval", aes: {y: 'total', r: 'total'} },
         aes: {x: 'd', y: 'r', 'fill': 'f',  "fill-opacity": 0.9},
         stat: "bin"
       }
       ,
       {
-        geom: { type:"point"},//, aes: {y: 'total', r: 'total', fill: 'red'} },
-        aes: {x: 'd', y: 'r', r: 'g', fill: '{g*10 + f}', stroke: "black"},//, "fill-opacity": 0.4},
-        pos: { type: 'jitter', y:0.5, x:0}
+        geom: { type:"point"}//, aes: {y: 'total', r: 'total', fill: 'red'} }
+        ,aes: {x: 'd', y: 'r', r: 'g', fill: '{g*10 + f}', stroke: "black", "fill-opacity": 0.4},
+        //,pos: { type: 'jitter', y:0.5, x:0}
         //stat: "bin"
       }
-      */
+      ,
+      {
+        geom: {
+          type: "area",
+          aes: {
+            x: "d",
+            y: "r",
+            group: "{{color: t, fill: t}}",
+            "fill-opacity": 0.1,
+            fill: 't',
+            stroke: 't'
+          }
+        }
+        ,pos: "stack"
+      }
 
       ],
       //facets: {x: 'f', y: 'g', xLabel: "XFACET!", fontSize: "10pt"},
@@ -66,7 +64,7 @@
     var w    = 800;
     var h    = 600;
     var ex   = function () { return d3.select('#examples').append('span'); };
-    var bigdata = _.map(_.range(0, 200), function(d) {
+    var bigdata = _.map(_.range(0, 100), function(d) {
       g = Math.floor(Math.random() * 3);
       f = Math.floor(Math.random() * 3);
       t = Math.floor(Math.random() * 5);

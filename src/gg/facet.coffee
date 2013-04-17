@@ -36,6 +36,7 @@ class gg.Facets
     @paneSvgMapper = {}
     @xAxisSvgMapper = {}
     @yAxisSvgMapper = {}
+    @axesSvgMapper = {}
 
 
 
@@ -158,13 +159,24 @@ class gg.Facets
     @ys.sort()
 
   allocatePanesNode: ->
-    new gg.wf.Barrier {
-      f: (tables, envs, node) =>
-        @collectXYs(tables, envs, node)
-        @layoutFacets(tables, envs, node)
-        @allocatePanes(tables, envs, node)
-        tables
-    }
+    unless @_allocatePanesNode?
+      @_allocatePanesNode = new gg.wf.Barrier {
+        f: (tables, envs, node) =>
+          @collectXYs(tables, envs, node)
+          @layoutFacets(tables, envs, node)
+          @allocatePanes(tables, envs, node)
+          tables
+      }
+    @_allocatePanesNode
+
+  renderAxesNode: ->
+    unless @_renderAxesNode?
+      @_renderAxesNode = new gg.wf.Barrier {
+        f: (tables, envs, nodes) =>
+          @renderAxes tables, envs, nodes
+          tables
+      }
+    @_renderAxesNode
 
   #
   # layout labels, background and container for the facet panes
@@ -243,6 +255,7 @@ class gg.Facets
 
 
 
+  # allocate SVG objects for all the facet's graphic components
   allocatePanes: (tables, envs, node) ->
     #margin = @margin / 2
     #matrix = "#{1.0-2*margin/@w},0,0,
@@ -302,8 +315,10 @@ class gg.Facets
 
     console.log @xs
     console.log @ys
-    xRange = d3.scale.ordinal().domain(@xs).rangeBands [0, paneWidth], 0.05, 0
-    yRange = d3.scale.ordinal().domain(@ys).rangeBands [0, paneHeight], 0.05, 0
+    @xRange = d3.scale.ordinal().domain(@xs).rangeBands [0, paneWidth], 0.05, 0
+    @yRange = d3.scale.ordinal().domain(@ys).rangeBands [0, paneHeight], 0.05, 0
+    xRange = @xRange
+    yRange = @yRange
     xBand = xRange.rangeBand()
     yBand = yRange.rangeBand()
     console.log "x/yBand: #{xBand} / #{yBand}\t#{paneWidth} / #{paneHeight}"
@@ -353,26 +368,23 @@ class gg.Facets
           class: "facet-grid-background"
         }, "rect"
 
-        # render the axes!
-        @renderYAxis svgBg, x, y, xRange, yRange
-        @renderXAxis svgBg, x, y, xRange, yRange
-
-
         # save the pane
         @paneSvgMapper[x] = {} unless x of @paneSvgMapper
         @paneSvgMapper[x][y] = svgPane
 
+        # save the background axes containers
+        @axesSvgMapper[x] = {} unless x of @axesSvgMapper
+        @axesSvgMapper[x][y] = svgBg
 
 
-    # update ranges for the scales
+  renderAxes: (tables, envs, nodes) ->
+    _.each @xs, (x, xidx) =>
+      _.each @ys, (y, yidx) =>
+        # render the axes!
+        svgBg = @axesSvgMapper[x][y]
+        @renderYAxis svgBg, x, y, @xRange, @yRange
+        @renderXAxis svgBg, x, y, @xRange, @yRange
 
-    #
-    # create svgs for axes
-    #
-    #_.each @xs, (x) => @xAxisSvgMapper[x] = _.subSvg @svg, xAxisOpts
-    #_.each @ys, (y) => @yAxisSvgMapper[y] = _.subSvg @svg, yAxisOpts
-    #@renderXAxes xRange
-    #@renderYAxes yRange
 
   renderYAxis: (svg, x, y, xRange, yRange) ->
     left = 0#xRange x

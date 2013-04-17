@@ -231,6 +231,9 @@ class gg.LayerShorthand extends gg.Layer
     # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
 
 
+    # render: render axes
+    nodes.push @g.facets.renderAxesNode()
+
     # render: render geometries
     nodes.push @geom.render
 
