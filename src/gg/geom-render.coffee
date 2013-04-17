@@ -173,17 +173,13 @@ class gg.GeomRenderRectSvg extends gg.GeomRender
 
     cssOver =
       x: (t) -> t.get('x0') - width(t) * 0.05
-      y: (t) -> y(t) - height(t)*0.1
       width: (t) -> width(t) * 1.1
-      height: (t) -> height(t) + 20
       fill: (t) -> d3.rgb(t.get("fill")).darker(2)
       "fill-opacity": 1
 
     cssOut =
       x: (t) -> t.get('x0')
-      y: y
       width: width
-      height: height
       fill: (t) -> t.get('fill')
       "fill-opacity": (t) -> t.get('fill-opacity')
 
