@@ -40,7 +40,8 @@
       {
         geom: { type:"interval", aes: {y: 'total', r: 'total'} },
         aes: {x: 'd', y: 'r', 'fill': 'f',  "fill-opacity": 0.9},
-        stat: "bin"
+        stat: "bin",
+        coord: "yflip"
       }
       ,
       {
