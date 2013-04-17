@@ -217,7 +217,7 @@ class gg.wf.Node extends events.EventEmitter
     @on outidx, cb if outidx >= 0 and outidx < @children.length
 
   output: (outidx, data) ->
-    @log "outputing to port #{outidx}"
+    @log "outputing to port #{outidx} env: #{data.env.toString()}"
     @emit outidx, @, data
     @emit "output", @, data
 

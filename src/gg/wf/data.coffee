@@ -50,3 +50,5 @@ class gg.wf.Env
 
   clone: -> new gg.wf.Env _.clone(@groupPairs)
 
+  toString: -> JSON.stringify @groupPairs
+

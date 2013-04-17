@@ -36,7 +36,6 @@
         }
         ,pos: "stack"
       }
-  /*
      ,
       {
         geom: { type:"interval", aes: {y: 'total', r: 'total'} },
@@ -46,11 +45,11 @@
       ,
       {
         geom: { type:"point"}//, aes: {y: 'total', r: 'total', fill: 'red'} }
-        ,aes: {x: 'd', y: 'r', r: 'g', fill: '{g*10 + f}', stroke: "black", "fill-opacity": 0.4},
+        ,aes: {x: 'd', y: 'r', r: 'g', fill: '{g*10 + f}', stroke: "black", "fill-opacity": 0.4}
         //,pos: { type: 'jitter', y:0.5, x:0}
         //stat: "bin"
+
       }
-      */
 
       ],
       //facets: {x: 'f', y: 'g', xLabel: "XFACET!", fontSize: "10pt"},
@@ -72,7 +71,7 @@
     var w    = 800;
     var h    = 600;
     var ex   = function () { return d3.select('#examples').append('span'); };
-    var bigdata = _.map(_.range(0, 100), function(d) {
+    var bigdata = _.map(_.range(0, 1000), function(d) {
       g = Math.floor(Math.random() * 3);
       f = Math.floor(Math.random() * 3);
       t = Math.floor(Math.random() * 5);

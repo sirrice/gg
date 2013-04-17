@@ -244,8 +244,6 @@ class gg.ReparamInterval extends gg.XForm
         y0: (row) -> Math.min(yscale.scale(minY), row.get('y'))
         y1: (row) -> Math.max(yscale.scale(minY), row.get('y'))
         width: width
-        height: (row) -> Math.abs(row.get('y') - yscale.scale(minY))
-
     }, yes
     table
 

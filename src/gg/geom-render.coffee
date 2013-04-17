@@ -157,29 +157,33 @@ class gg.GeomRenderRectSvg extends gg.GeomRender
     exit = rects.exit()
     enterRects = enter.append("rect")
 
+    y = (t) -> Math.min(t.get('y0'), t.get('y1'))
+    height = (t) -> Math.abs(t.get('y1') - t.get('y0'))
+    width = (t) -> t.get('x1') - t.get('x0')
+
     @applyAttrs enterRects,
       class: "geom"
       x: (t) -> t.get('x0')
-      y: (t) -> t.get('y0')
-      width: (t) -> t.get('width')
-      height: (t) -> t.get('height')
+      y: y
+      width: width
+      height: height
       "fill-opacity": (t) -> t.get('fill-opacity')
       "stroke-opacity": (t) -> t.get("stroke-opacity")
       fill: (t) -> t.get('fill')
 
     cssOver =
-      x: (t) -> t.get('x0') - t.get('width') * 0.05
-      y: (t) -> t.get('y0') - t.get('height') * 0.05
-      width: (t) -> t.get('width') * 1.1
-      height: (t) -> t.get('height') * 1.1
+      x: (t) -> t.get('x0') - width(t) * 0.05
+      y: (t) -> y(t) - height(t)*0.1
+      width: (t) -> width(t) * 1.1
+      height: (t) -> height(t) + 20
       fill: (t) -> d3.rgb(t.get("fill")).darker(2)
       "fill-opacity": 1
 
     cssOut =
       x: (t) -> t.get('x0')
-      y: (t) -> t.get('y0')
-      width: (t) -> t.get('width')
-      height: (t) -> t.get('height')
+      y: y
+      width: width
+      height: height
       fill: (t) -> t.get('fill')
       "fill-opacity": (t) -> t.get('fill-opacity')
 

@@ -119,13 +119,16 @@ class gg.LayerShorthand extends gg.Layer
     @posSpec  = @extractSpec "pos"
     mapSpec  = findGoodAttr spec, ['aes', 'aesthetic', 'mapping'], {}
     @mapSpec = {aes: mapSpec, name: "map-shorthand"}
+    @coordSpec = @extractSpec "coord"
     @labelSpec = {key: "layer", val: @layerIdx}
+
 
     @geom = gg.Geom.fromSpec @, @geomSpec
     @stat = gg.Stat.fromSpec @, @statSpec
     @pos = gg.Position.fromSpec @, @posSpec
     @map = new gg.Mapper @g, @mapSpec
     @labelNode = new gg.wf.Label @labelSpec
+    @coord = gg.Coordinate.fromSpec @, @coordSpec
 
     console.log "### layer parsed xforms ###"
     console.log @stat.constructor.name
@@ -134,6 +137,7 @@ class gg.LayerShorthand extends gg.Layer
     console.log @map.constructor.name
 
     super
+
 
 
   # extract the geom/stat/pos specific spec from
@@ -153,6 +157,8 @@ class gg.LayerShorthand extends gg.Layer
         [['stat', 'stats', 'statistic'], "identity"]
       when "pos"
         [["pos", "position"], "identity"]
+      when "coord"
+        [["coord", "coordinate", "coordinates"], "identity"]
       else
         [[], "identity"]
 
@@ -233,6 +239,7 @@ class gg.LayerShorthand extends gg.Layer
     nodes.push @geom.applyScales
     nodes.push new gg.wf.Scales {name: "scales-postapply", scales: @g.scales}
     nodes.push new gg.wf.Stdout {name: "post-apply", n: 5}
+    nodes.push @coord
 
 
     nodes.push @geom.reparam if @geom.unparam?
