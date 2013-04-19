@@ -7,19 +7,20 @@ class gg.wf.Stdout extends gg.wf.Exec
     @type = "stdout"
     @name = findGood [@spec.name, "#{@type}-#{@id}"]
     @n = findGood [@spec.n, null]
+    @aess = @spec.aess or null
 
   compute: (table, env, node) ->
     n = if @n? then @n else table.nrows()
     blockSize = Math.max(Math.floor(table.nrows() / n), 1)
     idx = 0
-    @log "Stdout Schema: #{table.colNames()}"
+    @log "Schema: #{table.colNames()}"
     while idx < table.nrows()
       row = table.get(idx)
+      row = row.project @aess if @aess?
       raw = _.clone row.raw()
       _.each raw, (v, k) ->
         raw[k] = v[0..4] if _.isArray v
-      str = JSON.stringify raw
-      @log "Stdout: #{str}"
+      @log JSON.stringify raw
       idx += blockSize
     table
 
@@ -34,10 +35,12 @@ class gg.wf.Scales extends gg.wf.Exec
     @scales = @spec.scales
 
   compute: (table, env, node) ->
-    scales = @scales.scalesList[0]
-    _.each scales.aesthetics(), (aes) =>
-      str = scales.scale(aes).toString()
-      @log "ScaleOut: #{str}"
+    _.each @scales.scalesList, (scales, idx) =>
+      @log "Out: scales #{scales.id}"
+      _.each scales.aesthetics(), (aes) =>
+        scale = scales.scale(aes)
+        str = scale.toString()
+        @log "Out: layer#{idx},scaleId#{scale.id} #{scale.type}\t#{str}"
     table
 
 

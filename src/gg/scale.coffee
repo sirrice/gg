@@ -114,7 +114,7 @@ class gg.Scale
   ########
 
   @xs = ['x', 'x0', 'x1']
-  @ys = ['y', 'y0', 'y1']
+  @ys = ['y', 'y0', 'y1', 'q1', 'median', 'q3', 'lower', 'upper', 'min', 'max']
   @xys = _.union @xs, @ys
   @legendAess = ['size', 'group', 'color', 'fill', 'fill-opacity']
 
@@ -124,7 +124,7 @@ class gg.Scale
       gg.LinearScale,
       gg.TimeScale,
       gg.LogScale,
-      gg.CategoricalScale,
+      gg.OrdinalScale,
       gg.ColorScale,
       gg.ShapeScale,
     ]
@@ -281,13 +281,14 @@ class gg.LogScale extends gg.Scale
   scale: (v) -> if v is 0 then -1 else @d3Scale(v)
 
 
-class gg.CategoricalScale extends gg.Scale
-  @aliases = "categorical"
+class gg.BaseCategoricalScale extends gg.Scale
 
   # subclasses are responsible for instantiating @d3Scale and @invertScale
   constructor: (@padding=.05) ->
-      @type = 'ordinal'
-      super
+    @type = 'ordinal'
+    @d3Scale = d3.scale.ordinal()
+    @invertScale = d3.scale.ordinal()
+    super
 
   @defaultDomain: (col) ->
       vals = _.uniq _.flatten(col)
@@ -299,11 +300,11 @@ class gg.CategoricalScale extends gg.Scale
     ret.invertScale = @invertScale.copy()
     ret
 
-  defaultDomain: (col) -> gg.CategoricalScale.defaultDomain col
+  defaultDomain: (col) -> gg.BaseCategoricalScale.defaultDomain col
 
   mergeDomain: (domain) ->
     newDomain = _.uniq(_.union domain, @domain())
-    console.log "#{@constructor.name}-#{@type} merging #{newDomain}"
+    #console.log "#{@constructor.name}-#{@type} merging #{newDomain}"
     @domain newDomain
 
   domain: (interval) ->
@@ -311,17 +312,34 @@ class gg.CategoricalScale extends gg.Scale
       @invertScale.range interval
     super
 
+  d3Range: ->
+    range = @d3Scale.range()
+    rangeBand = @d3Scale.rangeBand()
+    range = _.map range, (v) -> v + rangeBand/2.0
+    range
+
   range: (interval) ->
     if interval? and not @rangeSet
-      @d3Scale.rangeBands interval, @padding
-      @invertScale.domain @d3Scale.range()
-    @d3Scale.range()
+      @d3Scale.rangeBands interval#, @padding
+      @invertScale.domain @d3Range()
+    @d3Range()
 
   resetDomain: ->
     @domainUpdated = false
     @domain([])
+    @invertScale.domain []
 
-class gg.ShapeScale extends gg.CategoricalScale
+  invert: (v) -> @invertScale v
+
+class gg.OrdinalScale extends gg.BaseCategoricalScale
+  @aliases = ['ordinal', 'categorical']
+
+  scale: (v) ->
+    res = super
+    res + @d3Scale.rangeBand()/2.0
+
+
+class gg.ShapeScale extends gg.BaseCategoricalScale
   @aliases = "shape"
 
   constructor: (@padding=1) ->
@@ -334,7 +352,7 @@ class gg.ShapeScale extends gg.CategoricalScale
       super
 
   range: (interval) -> # not allowed
-  scale: (v, data, args...) ->
+  scale: (v) ->
     throw Error("shape scale not thought through yet")
     size = args[0] if args? and args.length
     type = @d3Scale v
@@ -374,7 +392,7 @@ class gg.ColorScaleCont extends gg.Scale
   # read only
   range: -> @d3Scale.range()
 
-class gg.ColorScale extends gg.CategoricalScale
+class gg.ColorScale extends gg.BaseCategoricalScale
   @aliases = "color"
 
   constructor: (@spec={}) ->

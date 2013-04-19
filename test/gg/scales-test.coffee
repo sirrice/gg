@@ -12,11 +12,12 @@ makeTable = (nrows=100) ->
       d: d%5
       e: d%10
     }
-  new gg.RowTable rows
+  gg.RowTable.fromArray rows
 
 
 
 suite.addBatch
+  ###
   "color scale":
     topic: -> new gg.ColorScale {aes: "fill"}
 
@@ -180,7 +181,7 @@ suite.addBatch
 
           "has domain [0, 499]": (scales) ->
             assert.arrayEqual scales.scale('a').domain(), [0, 499]
-
+  ###
   "color scales factory":
     topic:
       new gg.ScaleFactory
@@ -196,8 +197,10 @@ suite.addBatch
 
       "when trained on small table":
         topic: (scales) ->
+          console.log "pre aess: #{scales.aesthetics()}"
           scales = scales.clone()
-          table = new gg.RowTable _.map(_.range(10), (i) -> {a:i})
+          console.log "post aess: #{scales.aesthetics()}"
+          table = gg.RowTable.fromArray _.map(_.range(10), (i) -> {a:i})
           scales.train table
           scales
 
@@ -208,7 +211,7 @@ suite.addBatch
       "when trained on big numeric table":
         topic: (scales) ->
           scales = scales.clone()
-          table = new gg.RowTable _.map(_.range(50), (i) -> {a:i})
+          table = gg.RowTable.fromArray _.map(_.range(50), (i) -> {a:i})
           scales.train table
           scales
 
@@ -218,7 +221,7 @@ suite.addBatch
       "when trained on small string table":
         topic: (scales) ->
           scales = scales.clone()
-          table = new gg.RowTable _.map(_.range(5), (v) -> {a: ""+v})
+          table = gg.RowTable.fromArray _.map(_.range(5), (v) -> {a: ""+v})
           scales.train table
           scales
 
@@ -234,7 +237,7 @@ suite.addBatch
         range: [10, 0]
 
     "inverse works": (sf) ->
-      table = new gg.RowTable _.map(_.range(10), (i)->{a:i*10})
+      table = gg.RowTable.fromArray _.map(_.range(10), (i)->{a:i*10})
       scales = sf.scales(['a'])
       scales.train table
       newTable = scales.invert table

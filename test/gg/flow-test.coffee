@@ -4,7 +4,7 @@ assert = require "assert"
 
 makeTable = (nrows=100) ->
     rows = _.map _.range(nrows), (i) -> {a:1+i, b:i%10, c: i%2, id:i}
-    new gg.RowTable(rows)
+    gg.RowTable.fromArray (rows)
 
 
 
@@ -126,7 +126,7 @@ suite.addBatch
                 col = table.getCol 'a'
                 total = _.foldr col, ((a,b)->a+b), 0
                 n = col.length
-                new gg.RowTable [{sum: total, n: n, avg: total / n}]
+                gg.RowTable.fromArray  [{sum: total, n: n, avg: total / n}]
             flow.join {name: "join"}
 
         "runs": (flow) ->

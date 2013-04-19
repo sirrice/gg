@@ -51,9 +51,9 @@ class gg.XForm
     @params = {}
 
   parseSpec: ->
-    console.log "XForm spec: #{JSON.stringify @spec}"
 
     spec = _.clone @spec
+    console.log "XForm spec: #{JSON.stringify spec}"
 
     @inputSchema = @extractAttr "inputSchema"
     @defaults = @extractAttr "defaults"
@@ -61,9 +61,9 @@ class gg.XForm
     @compute = spec.f or @compute
     @spec = spec
 
-  extractAttr: (attr, spec={}) ->
+  extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?
-    val = findGood spec, [attr], null
+    val = findGoodAttr spec, [attr], null
     if val?
       unless _.isFunction val
         (table, env) -> val

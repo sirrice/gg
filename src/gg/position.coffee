@@ -185,24 +185,14 @@ class gg.StackPosition extends gg.Position
         pt.y1 = pt.y + pt.y0
       table.get(rowidx).set('pts', layer)
 
-    # now stack them up!
-    ###
-    _.each xs, (x, idx) ->
-      sum = null
-      table.each (row) ->
-        pts = row.get('pts')
-        presum = sum or pts.y0 or 0
-        console.log pts[idx]
-        sum += pts[idx].y if pts[idx].y?
-        pts[idx].y0 = presum
-        pts[idx].y1 = sum
-    ###
+
 
     console.log "gg.StackPosition: nrows       : #{table.nrows()}"
     console.log "gg.StackPosition: final schema: #{table.colNames()}"
 
     ptsCol = if table.contains 'pts' then table.getColumn('pts')
     ptsCol = [] unless ptsCol?
+
     console.log "computed area(0): #{JSON.stringify ptsCol[0][0..10]}" if ptsCol.length > 0
     console.log "computed area(1): #{JSON.stringify ptsCol[1][0..10]}" if ptsCol.length > 1
     console.log "computed area(2): #{JSON.stringify ptsCol[2][0..10]}" if ptsCol.length > 2

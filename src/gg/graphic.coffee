@@ -95,7 +95,7 @@ class gg.Graphic
 
     inputToTable: (input, cb) ->
       if _.isArray input
-        table = new gg.RowTable input
+        table = gg.RowTable.fromArray input
       else if _.isSubclass input, gg.Table
         table = input
       else if _.isString input

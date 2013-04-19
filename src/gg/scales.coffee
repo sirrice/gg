@@ -56,33 +56,26 @@ class gg.Scales extends gg.XForm
 
     @parseSpec()
 
-    # Initial training before running stats
-    @prestatsNode = new gg.wf.Barrier
-      name: "scales:prestats"
-      f: (args...) => @trainOnData(args..., gg.Scales.PREGEOM)
-
-    # Training after stats, before geometry section
-    @pregeomNode = new gg.wf.Barrier
-      name: "scales:poststats"
-      f: (args...) => @trainOnData(args..., gg.Scales.PRERENDER)
-
-    # trains scales on the pixel domain
-    @prerenderNode = new gg.wf.Barrier
-      name: "scales:postgeom"
-      #f: (args...) => @trainOnPixels(args..., gg.Scales.POSTRENDER)
-      f: (args...) =>
-        _.each @scalesList, (scales) ->
-          _.each scales.scalesList(), (scale) -> scale.resetDomain()
-        @trainOnData(args..., gg.Scales.POSTRENDER)
-
-    # XXX: I don't rememebr why this exists
-    @facetNode = new gg.wf.Barrier
-      name: "scales:facet"
-      f: (args...) => @trainForFacets(args..., gg.Scales.POSTFACET)
 
   parseSpec: ->
     # setup the scales factory
+    # XXX: we probably want different scale factories per layer
     @scalesFactory = new gg.ScaleFactory @spec
+
+  # @param spec
+  #   nextState
+  #   name
+  #   attrToAes: mapping from table attribute to aesthetic
+  #              e.g., q1 -> y, q3 -> y
+  trainDataNode: (spec={}) ->
+    new gg.wf.Barrier
+      name: spec.name
+      f: (args...) => @trainOnData args...,spec
+
+  trainPixelNode: (spec={}) ->
+    new gg.wf.Barrier
+      name: spec.name
+      f: (args...) => @trainOnPixels args...,spec
 
 
   # these training methods assume that the tables's attribute names
@@ -90,78 +83,96 @@ class gg.Scales extends gg.XForm
   # expect
   #
   # also removes invalid tuples
-  trainOnData: (tables, envs, node, nextState=null) ->
+  trainOnData: (tables, envs, node, spec={}) ->
     _.each _.zip(tables, envs), ([t,e]) =>
       info = @paneInfo t, e
       # XXX: ack, this is just really ugly.
       # @aesthetics() is for user-specified aesthetics
       # t.colNames is for everything else
-      aess = @aesthetics info.layer
+      #aess = @aesthetics info.layer
       aess = _.compact _.flatten _.union(aess, t.colNames())
+
       scales = @scales info.facetX, info.facetY, info.layer
-      console.log JSON.stringify(t.raw())
-      filtered = t.filter (row) =>
-        filteredAess = aess.filter (aes) => not scales.scale(aes).valid row.get(aes)
-        filteredAess.length is 0
 
-      @log "train on #{aess}"
-      scales.train t, aess
+      console.log "Scales.trainOnData table:      #{t.colNames()}"
+      console.log "Scales.trainOnData scaleSet.id #{scales.id}"
+      console.log "Scales.trainOnData aes         #{aess}"
 
-    @state = nextState if nextState?
+      scales.train t, aess, spec.posMapping
+
+    @state = spec.nextState if spec.nextState?
     @g.facets.trainScales()
     tables
 
+  ###
+      filtered = t.filter (row) =>
+        f = (aes) => not scales.scale(aes).valid row.get(aes)
+        filteredAess = aess.filter f
+        filteredAess.length is 0
+  ###
 
   # Train on a table that has been mapped to aesthetic domain.
   #
   # Need to invert the aesthetic columns to be in the value domain
   # before training
   #
-  trainOnPixels: (tables, envs, node, nextState=null) ->
-
-    _.each _.zip(tables, envs), ([table,e]) =>
-      t = table.cloneDeep()
+  trainOnPixels: (tables, envs, node, spec={}) ->
+    inverteds = _.map _.zip(tables, envs), ([t,e]) =>
       info = @paneInfo t, e
       aess = @aesthetics info.layer
+      aess = _.compact _.flatten _.union(aess, t.colNames())
 
       scales = @scales info.facetX, info.facetY, info.layer
-      inverted = scales.invert t, aess
-      console.log "Scales.trainOnPixels\tinverted table on aes #{aess}"
-      inverted = inverted.filter (row) =>
-        not (_.any aess, (aes) => not scales.scale(aes).valid row.get(aes))
 
-      scales.train inverted, aess
+      console.log "Scales.trainOnPixels table:      #{t.colNames()}"
+      console.log "Scales.trainOnPixels scaleSet.id (#{scales.id})"
+      console.log "Scales.trainOnPixels inverted aes #{aess}"
+
+      inverted = scales.invert t, aess, spec.posMapping
+      _.each scales.scalesList(), (scale) -> scale.resetDomain()
+      scales.train inverted, aess, spec.posMapping
+      inverted
+
+    newTables = _.map _.zip(tables, inverteds, envs), ([t,i,e]) =>
+      info = @paneInfo t, e
+      aess = @aesthetics info.layer
+      aess = _.compact _.flatten _.union(aess, t.colNames())
+
+      scales = @scales info.facetX, info.facetY, info.layer
+      scales.apply i, aess, spec.posMapping
 
 
-
-    @state = nextState if nextState?
+    @state = spec.nextState if spec.nextState?
     @g.facets.trainScales()
-    tables
+    newTables
 
   trainForFacets: (tables, envs, node, nextState) ->
-    unless @state is gg.Scales.POSTRENDER
-      throw Error("gg.Scales.trainForFacets: state (#{@state}) != POSTRENDER")
     @g.facets.trainScales()
     @state = nextState
 
 
   layer: (layerIdx) -> @g.layers.getLayer layerIdx
 
-  # XXX: layer aesthetics should differentiate between pre-post stats aesthetic mappings!
+  # XXX: layer aesthetics should differentiate between
+  #      pre and post stats aesthetic mappings!
   aesthetics: (layerIdx) ->
     scalesAess = @scalesFactory.aesthetics()
     layerAess =  @layer(layerIdx).aesthetics()
     # XXX: incorporate coordinate based x/y attributes instead
-    aess = _.compact _.uniq _.flatten([scalesAess, layerAess, gg.Scale.xys])
-    aess
+    aess = [scalesAess, layerAess, gg.Scale.xys]
+    _.compact _.uniq _.flatten aess
 
+  # return the overall scalesSet for a given facet
   facetScales: (facetX, facetY) ->
     try
-      mapping = @mappings[facetX][facetY]
-      gg.ScalesSet.merge _.values(mapping)
+      scaleSets = @scales facetX, facetY
+      ret = gg.ScalesSet.merge scaleSets
+      ret
     catch error
-      throw Error("gg.ScalesfacetScales: could not find scales\n\t#{error}")
+      throw Error("gg.Scales.facetScales: not scales found\n\t#{error}")
 
+  # retrieve all scales sets for a facet pane, or a specific
+  # layer's scales set
   scales: (facetX=null, facetY=null, layerIdx=null) ->
     @mappings[facetX] = {} unless facetX of @mappings
     @mappings[facetX][facetY] = {} unless facetY of @mappings[facetX]
@@ -170,6 +181,7 @@ class gg.Scales extends gg.XForm
     if layerIdx?
       unless layerIdx of map
         aess = @aesthetics layerIdx
+        # XXX: support other factories for per-layer scales
         newScalesSet = @scalesFactory.scales aess
         map[layerIdx] = newScalesSet
         @scalesList.push newScalesSet
@@ -309,6 +321,7 @@ class gg.ScalesSet
 
 
   contains: (aes, type=null) -> aes of @scales and (not type or type of @scales[aes])
+  types: (aes) -> if aes of @scales then _.keys @scales[aes] else []
   scale: (aesOrScale, type=null) ->
     if _.isString aesOrScale
         aes = aesOrScale
@@ -334,8 +347,8 @@ class gg.ScalesSet
       aes = scale.aes
       @scales[aes] = {} unless aes of @scales
       @scales[aes][scale.type] = scale
-      @scales[aes][null] = scale
-      #console.log "setting #{aes}-null to #{scale.range()}"
+      @scales[aes][null] = scale unless null of @scales[aes]
+      console.log "gg.ScaleSet.scale#{@id} setting #{aes}-#{scale.type} to #{scale.toString()}" if aes is 'x'
       scale
 
   scalesList: -> _.map @aesthetics(), (aes) => @scale(aes)
@@ -363,11 +376,16 @@ class gg.ScalesSet
           return
 
       _.each scales.scales[aes], (scale, type) =>
+        return unless scale.domainUpdated
+
         if @contains aes, type
           mys = @scale aes, type
           @scale(aes, type).mergeDomain scale.domain()
+        else if @contains aes
+          mys = @scale aes
+          @scale(aes).mergeDomain scale.domain()
         else if insert
-          @scale scale.clone()
+          @scale scale.clone(), type
 
         mys = @scale aes, type
 
@@ -377,49 +395,62 @@ class gg.ScalesSet
   # each aesthetic will be trained
   # multiple layers may use same aesthetics so need to cope with
   # overlaps
-  train: (table, aess=null) ->
+  # @param posMapping maps table attr to aesthetic with scale
+  #        attr -> aes
+  #        attr -> [aes, type]
+  train: (table, aess=null, posMapping={}) ->
     aess = _.uniq _.keys @scales unless aess?
+    console.log "gg.ScalesSet.train aess #{aess}"
     _.each aess, (aes) =>
-      scale = @scale(aes)
+      scale = @scale(posMapping[aes] or aes)
 
       col = table.getColumn(aes)
-      # XXX: perform type checking.  Just assume all continuous for now
+      # XXX: perform type checking.  Just assume all
+      #      continuous for now
       if col?
         scale.mergeDomain scale.defaultDomain col
-        console.log "scalesSet.train: #{aes} has domain.length #{scale.domain().length}"
-      else
-        if table.nrows() > 0
-          console.log "scalesSet.train: #{aes} did not have a column in table with cols: #{table.colNames()}!"
+      else if table.nrows() > 0
+        console.log "scalesSet.train: #{aes} not in table:
+          #{table.colNames()}!"
     @
 
 
   toString: ->
     arr = _.flatten _.map @scales, (map, aes) =>
-        _.map map, (scale, type) =>
-            d3Scale = scale.d3Scale
-            _.flatten([aes, '->', type, d3Scale.domain(), d3Scale.range()]).join(' ')
+        _.map map, (scale, type) => scale.toString()
     arr.join('\n')
 
-  apply: (table, aess=null) ->
+  # @param posMapping maps aesthetic names to the scale that
+  #        should be used
+  #        e.g., median, q1, q3 should use 'y' position scale
+  apply: (table, aess=null, posMapping={}) ->
     aess = @aesthetics() unless aess?
 
     table = table.clone()
     _.each aess, (aes) =>
-      scale = @scale(aes)
+      scale = @scale(posMapping[aes] or aes)
       f = (v) -> scale.scale v
       table.map f, aes if table.contains aes
 
     table
 
+  # @param posMapping maps aesthetic names to the scale that should be used
+  #        e.g., median, q1, q3 should use 'y' position scale
   # @param {gg.Table} table
-  invert: (table, aess=null) ->
+  invert: (table, aess=null, posMapping={}) ->
     aess = @aesthetics() unless aess?
+    console.log "gg.ScaleSet.invert: aess #{aess} table #{table.colNames()}"
 
     newTable = table.clone()
-    newTable.each (row, idx) =>
-      _.each aess, (aes) =>
-        val = row.get(aes)
-        row.set(aes, @scale(aes).invert(val)) if row.hasAttr(aes)
+    _.each aess, (aes) =>
+      scale = @scale(posMapping[aes] or aes)
+      console.log "gg.ScaleSet.invert #{aes}:  scale #{scale.toString()}"
+      if newTable.contains aes
+        f = (v) -> if v? then scale.invert(v) else null
+        newTable.map f, aes
+      else
+        console.log "gg.ScaleSet.invert notfound: #{aes}"
+
     newTable
 
   labelFor: -> null
@@ -432,10 +463,16 @@ class gg.ScalesApply extends gg.XForm
     super @layer.g, @spec
     @parseSpec()
 
+  parseSpec: ->
+    super
+    @aess = findGoodAttr @spec, ['aess'], []
+    @posMapping = @spec.posMapping or {}
+
   compute: (table, env) ->
     scales = @scales table, env
-    @log ":aesthetics: #{scales.aesthetics()}"
-    table = scales.apply table, scales.aesthetics()
+    aess = _.compact(_.union scales.aesthetics(), @aess)
+    @log ":aesthetics: #{aess}"
+    table = scales.apply table, aess, @posMapping
     table
 
 
@@ -445,10 +482,16 @@ class gg.ScalesInvert extends gg.XForm
     super @layer.g, @spec
     @parseSpec()
 
+  parseSpec: ->
+    super
+    @aess = findGoodAttr @spec, ['aess'], []
+    @posMapping = @spec.posMapping or {}
+
   compute: (table, env) ->
     scales = @scales table, env
-    @log ":aesthetics: #{scales.aesthetics()}"
-    table = scales.invert table, scales.aesthetics()
+    aess = _.compact(_.union scales.aesthetics(), @aess)
+    @log ":aesthetics: #{aess}"
+    table = scales.invert table, aess, @posMapping
     table
 
 

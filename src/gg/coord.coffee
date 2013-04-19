@@ -51,7 +51,7 @@ class gg.IdentityCoordinate extends gg.Coordinate
     yRange = scales.scale('y').range()
     yRange = [yRange[1], yRange[0]]
     scales.scale('y').range(yRange)
-    table = scales.apply table, gg.Scale.ys
+    table = scales.apply inverted, gg.Scale.ys
     table
 
 class gg.YFlipCoordinate extends gg.Coordinate
@@ -78,7 +78,7 @@ class gg.XFlipCoordinate extends gg.Coordinate
 
     @log "map: xrange: #{xRange}\tyrange: #{yRange}"
 
-    table = scales.apply table, gg.Scale.xys
+    table = scales.apply inverted, gg.Scale.xys
 
     if table.contains('x0') and table.contains('x1')
       table.each (row) ->
@@ -104,7 +104,7 @@ class gg.FlipCoordinate extends gg.Coordinate
 
     @log "map: xrange: #{xRange}"
 
-    table = scales.apply table, gg.Scale.xs
+    table = scales.apply inverted, gg.Scale.xs
 
     if table.contains('x0') and table.contains('x1')
       table.each (row) ->

@@ -136,6 +136,9 @@ class gg.LayerShorthand extends gg.Layer
     console.log @pos.constructor.name
     console.log @map.constructor.name
 
+
+    @pos = null if _.isSubclass @pos, gg.IdentityPosition
+
     super
 
 
@@ -190,8 +193,19 @@ class gg.LayerShorthand extends gg.Layer
 
 
     # Statistics transforms
-    nodes.push @g.scales.prestatsNode
+    nodes.push @g.scales.trainDataNode {name: "scales:prestats"}
+    nodes.push new gg.wf.Scales
+      name: "pre-stat"
+      scales: @g.scales
     nodes.push @stat
+    nodes.push new gg.wf.Scales
+      name: "post-stat"
+      scales: @g.scales
+    nodes.push new gg.wf.Stdout
+      name: "post-stat"
+      n: 5
+      aess: ['x', 'x0', 'x1', 'y']
+
 
     # facet join -- add facetX/Y columns to table
     nodes.push @g.facets.labelerNodes()
@@ -202,10 +216,14 @@ class gg.LayerShorthand extends gg.Layer
 
     # geom: map attributes to aesthetic names
     # scales: train scales after the final aesthetic mapping (inputs are data values)
-    nodes.push new gg.wf.Stdout {name: "pre-geom", n: 1}
+    #nodes.push new gg.wf.Stdout {name: "pre-geom-map", n: 1}
     nodes.push @geom.map
-    nodes.push @g.scales.pregeomNode
-    nodes.push new gg.wf.Stdout {name: "post-geom", n: 1}
+    #nodes.push new gg.wf.Stdout {name: "post-geom-map", n: 1}
+    nodes.push @g.scales.trainDataNode {name: "scales:postgeommap"}
+    nodes.push new gg.wf.Stdout
+      name: "post-geom"
+      n: 5
+      aess: ['x', 'x0', 'x1', 'y']
 
     # Rendering
     # layout the overall graphic, allocate space for facets
@@ -216,36 +234,41 @@ class gg.LayerShorthand extends gg.Layer
     # geom: facets have set the ranges so transform data values to pixel values
     # geom: map minimum attributes (x,y) to base attributes (x0, y0, x1, y1)
     # geom: position transformation
-    nodes.push new gg.wf.Stdout {name: "pre-pixel", n: 1}
-    nodes.push @geom.applyScales
-    nodes.push new gg.wf.Stdout {name: "pre-reparam", n: 5}
+    #nodes.push new gg.wf.Stdout {name: "pre-pixel", n: 1}
+    nodes.push new gg.ScalesApply @,
+      posMapping: @geom.posMapping()
+    #nodes.push new gg.wf.Stdout {name: "pre-reparam", n: 5}
     nodes.push @geom.reparam
-    nodes.push new gg.wf.Stdout {name: "post-reparam", n: 5}
+    #nodes.push new gg.wf.Stdout {name: "post-reparam", n: 5}
     nodes.push @pos
-    nodes.push new gg.wf.Stdout {name: "post-position", n: 1}
-    nodes.push @geom.unparam if @geom.unparam?
-    nodes.push new gg.wf.Stdout {name: "post-unparam", n: 1}
+    nodes.push new gg.wf.Stdout
+      name: "post-position"
+      n: 5
+      aess: ['x', 'x0', 'x1', 'y']
 
     # facets: retrain scales after positioning (jitter) (inputs are pixel values)
     # this isn't working because reparam creates an array column
     # that isn't supported here
-    nodes.push new gg.wf.Scales {name: "scales-preinvert", scales: @g.scales}
-    nodes.push new gg.wf.Stdout {name: "pre-invert", n: 5}
-    nodes.push @geom.invertScales
-    nodes.push new gg.wf.Scales {name: "scales-postinvert", scales: @g.scales}
-    nodes.push new gg.wf.Stdout {name: "post-invert", n: 5}
-    nodes.push @g.scales.prerenderNode
-    nodes.push new gg.wf.Scales {name: "scales-posttrain", scales: @g.scales}
-    nodes.push @geom.applyScales
-    nodes.push new gg.wf.Scales {name: "scales-postapply", scales: @g.scales}
-    nodes.push new gg.wf.Stdout {name: "post-apply", n: 5}
-    nodes.push @coord
+    if @pos?
+      nodes.push new gg.wf.Scales
+        name: "prepixeltrain scale"
+        scales: @g.scales
+      nodes.push @g.scales.trainPixelNode
+        name: "scales:pixel"
+        posMapping: @geom.posMapping()
+      nodes.push new gg.wf.Stdout {name: "post-pixeltrain", n: 50}
 
 
-    nodes.push @geom.reparam if @geom.unparam?
-    nodes.push new gg.wf.Stdout {name: "post-reparam2", n: 2}
 
     # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
+    nodes.push @coord
+
+    #nodes.push @geom.reparam #if @geom.unparam?
+    nodes.push new gg.wf.Stdout
+      name: "post-coord"
+      n: 5
+      aess: ['x', 'x0', 'x1', 'y']
+
 
 
     # render: render axes
@@ -259,7 +282,7 @@ class gg.LayerShorthand extends gg.Layer
     nodes
 
   compileNodes: (nodes) ->
-    nodes = _.map _.compact(nodes), (node) ->
+    nodes = _.map _.compact(_.flatten nodes), (node) ->
       if _.isSubclass node, gg.XForm
         node.compile()
       else

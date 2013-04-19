@@ -34,7 +34,7 @@ class gg.Mapper extends gg.XForm
     console.log "transform: #{JSON.stringify @mapping}"
     console.log "table:     #{JSON.stringify table.colNames()}"
     table = table.clone()
-    table.transform @mapping, yes
+    table = table.transform @mapping, yes
     table
 
   invertColName: (outColName) -> @inverse[outColName]

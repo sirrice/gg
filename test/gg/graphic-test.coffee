@@ -14,7 +14,7 @@ makeTable = (nrows=100) ->
       f:f
       t:t
     }
-  new gg.RowTable rows
+  gg.RowTable.fromArray rows
 
 
 outputsProperlyGen = (check) ->

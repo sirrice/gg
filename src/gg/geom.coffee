@@ -40,8 +40,6 @@ class gg.Geom # not an XForm!! #extends gg.XForm
     @g = @layer.g
 
     @render = null
-    @invertScales = null
-    @applyScales = null
     @map = null
     @reparam = null
     @unparam = null
@@ -51,12 +49,12 @@ class gg.Geom # not an XForm!! #extends gg.XForm
   # { type:, aes:, param:}
   parseSpec: ->
     @render = gg.GeomRender.fromSpec @layer, @spec.type
-    @applyScales = new gg.ScalesApply @layer, {name: "applyScales"}
-    @invertScales = new gg.ScalesInvert @layer, {name: "invertScales"}
     console.log "#####: #{JSON.stringify @spec}"
     @map = new gg.Mapper @g, @spec
 
   name: -> @constructor.name.toLowerCase()
+  posMapping: -> {}
+
 
   @klasses: ->
       klasses = [
@@ -104,6 +102,7 @@ class gg.Point extends gg.Geom
     super
     reparamSpec =
       name: "point-reparam"
+      defaults: { r: 1 }
       inputSchema: ['x', 'y']
       map:
         x: 'x'
@@ -135,16 +134,11 @@ class gg.ReparamLine extends gg.XForm
   parseSpec: -> super
 
   defaults: (table, env, node) ->
-    #scales = @scales table, env
-    #y0 = scales.scale('y').minRange()
+    { group: '1' }
 
-    {
-      group: '1'
-    #  y0: y0
-    #  y1: (row) -> row.get 'y'
-    }
-
-  inputSchema: -> ['x', 'y']
+  inputSchema: (table, env) ->
+    console.log table
+    ['x', 'y']
 
   compute: (table, env, node) ->
     scales = @scales table, env
@@ -156,9 +150,6 @@ class gg.ReparamLine extends gg.XForm
 
 
     scales = @scales(table, env)
-    _.map table.get(0), (val, key) =>
-      scales.scale(key).type
-
 
     groups = table.split 'group'
     rows = _.map groups, (group) ->
@@ -169,7 +160,7 @@ class gg.ReparamLine extends gg.XForm
         group: groupKey
       rowData
 
-    new gg.RowTable rows
+    gg.RowTable.fromArray rows
 
 class gg.UnparamLine extends gg.XForm
   constructor: (@g, @spec) ->
@@ -215,9 +206,6 @@ class gg.ReparamInterval extends gg.XForm
     super
     @parseSpec()
 
-  parseSpec: ->
-    super
-
   inputSchema: ->
     ['x', 'y']
 
@@ -259,7 +247,65 @@ class gg.Hex extends gg.Geom
 
 # boxplot
 class gg.Schema extends gg.Geom
-    @aliases: "schema"
+  @aliases: ["schema", "boxplot"]
+
+  parseSpec: ->
+    super
+
+    @reparam = new gg.ReparamSchema @g, {name: "schema-reparam"}
+    @render = new gg.GeomRenderSchemaSvg @layer, {}
+
+  posMapping: ->
+    ys = ['q1', 'median', 'q3', 'lower', 'upper',
+      'min', 'max', 'lower', 'upper', 'outlier']
+    xs = ['x', 'x0', 'x1']
+    map = {}
+    _.each ys, (y) -> map[y] = 'y'
+    _.each xs, (x) -> map[x] = 'x'
+    map
+
+
+class gg.ReparamSchema extends gg.XForm
+  defaults: ->
+    x: 1
+
+  # outliers is an array with schema {outlier:}
+  inputSchema: ->
+    ['x', 'q1', 'median', 'q3', 'lower', 'upper',
+      'outliers', 'min', 'max']
+
+  # outliers is an array with schema {outlier:}
+  outputSchema: ->
+    ['x', 'x0', 'x1', 'y0', 'width', 'y1',
+      'q1', 'median', 'q3', 'lower', 'upper',
+      'outliers', 'min', 'max']
+
+  compute: (table, env, node) ->
+    scales = @scales table, env
+    yscale = scales.scale 'y'
+
+    # XXX: currently assumes xs is numerical!!
+    #      xs should always be pixel values (numerical)
+    xs = _.uniq(table.getColumn("x")).sort d3.ascending
+    @log "xs: #{xs}"
+    diffs = _.map _.range(xs.length-1), (idx) ->
+      xs[idx+1]-xs[idx]
+    mindiff = _.min diffs or 1
+    width = mindiff * 0.8
+    width = Math.min width, 40
+
+    table.transform {
+        x0: (row) -> row.get('x') - width/2.0
+        x1: (row) -> row.get('x') + width/2.0
+        y0: 'min'
+        y1: 'max'
+        width: width
+    }, yes
+    table
+
+
+
+
 
 class gg.Glyph extends gg.Geom
     @aliases: "glyph"

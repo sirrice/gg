@@ -393,7 +393,7 @@ class gg.Facets
     scales = @g.scales.facetScales x, y
     scale = scales.scale 'y'
 
-    console.log "facet.renderYAxis\t#{scale.domain()} -> #{scale.range()}"
+    console.log "gg.Facet.renderYAxis, scaleid #{scale.id}\t#{scale.toString()}"
     yAxis = d3.svg.axis()
       .scale(scales.scale('y').d3())
       .ticks(5, d3.format(",.0f"), 5)
@@ -488,11 +488,17 @@ class gg.Facets
     @masterScales = gg.ScalesSet.merge @g.scales.scalesList
     @expandDomains @masterScales
 
+    _.each @masterScales.aesthetics(), (aes) =>
+      scale = @masterScales.scale aes
+      console.log "gg.Facet.trainScales: masterScales #{aes}\t #{scale.toString()}"
+
+
     if @scales is "fixed"
       _.each @g.scales.scalesList, (scalesSet) =>
         scalesSet.merge @masterScales, false
     else
       @trainFreeScales()
+
 
 
   trainFreeScales: ->
@@ -521,16 +527,21 @@ class gg.Facets
 
 
   setScalesRanges: (xBand, yBand) ->
+    range = [0+@panePadding, xBand-@panePadding]
+    console.log "facet.setScalesRanges range: #{range}"
     _.each @g.scales.scalesList, (ss) =>
       _.each gg.Scale.xs, (aes) =>
-        #ss.scale(aes).range [0, xBand]
-        ss.scale(aes).range [0+@panePadding, xBand-@panePadding]
-        console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
+        _.each ss.types(aes), (type) =>
+          #ss.scale(aes, type).range [0, xBand]
+          ss.scale(aes, type).range range
+          console.log "facet.setScalesRanges(#{aes},#{type}):\t#{ss.scale(aes, type).toString()}"
+
       _.each gg.Scale.ys, (aes) =>
-        #ss.scale(aes).range [yBand-@panePadding, 0+@panePadding]
-        ss.scale(aes).range [0+@panePadding, yBand-@panePadding]
-        #ss.scale(aes).range [0, yBand]
-        console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).domain()} -> #{ss.scale(aes).range()}"
+        _.each ss.types(aes), (type) =>
+          #ss.scale(aes, type).range [yBand-@panePadding, 0+@panePadding]
+          ss.scale(aes, type).range [0+@panePadding, yBand-@panePadding]
+          #ss.scale(aes, type).range [0, yBand]
+        console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).toString()}"
 
 
 

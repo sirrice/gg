@@ -16,6 +16,7 @@
 
     var specs = {
       layers: [
+
       {
         geom: {
           type: "area",
@@ -35,7 +36,16 @@
           }
         }
         ,pos: "stack"
+        ,coord: "flip"
       }
+      ,
+        /*
+      {
+        geom: { type: "boxplot", aes: {x: '{String(group)+"q"}', fill: "group", "stroke-width": 2, stroke: "group" } },
+        stat: { type: "boxplot", aes: {group: 't', x: 'r'} }
+      }
+      */
+      /*
      ,
       {
         geom: { type:"interval", aes: {y: 'total', r: 'total'} },
@@ -43,6 +53,8 @@
         stat: "bin",
         coord: "yflip"
       }
+      */
+      /*
       ,
       {
         geom: { type:"point"}//, aes: {y: 'total', r: 'total', fill: 'red'} }
@@ -51,12 +63,13 @@
         //stat: "bin"
 
       }
+      */
 
       ],
-      facets: {x: 'f', y: 'g', xLabel: "XFACET!", fontSize: "10pt"},
+      //facets: {x: 'f', y: 'g', xLabel: "XFACET!", fontSize: "10pt"},
       scales: {
         x: {type: 'linear'},
-       y: {type: 'linear'},//, lim: [0, 500]},
+        y: {type: 'linear'},//, lim: [0, 500]},
         r: {type: 'linear', range: [3,6]}
       },
       opts: {
@@ -72,10 +85,10 @@
     var w    = 800;
     var h    = 600;
     var ex   = function () { return d3.select('#examples').append('span'); };
-    var bigdata = _.map(_.range(0, 1000), function(d) {
-      g = Math.floor(Math.random() * 3);
+    var bigdata = _.map(_.range(0, 50), function(d) {
+      g = Math.floor(Math.random() * 2);
       f = Math.floor(Math.random() * 3);
-      t = Math.floor(Math.random() * 5);
+      t = Math.floor(Math.random() * 3);
       return {d:d, r: d + d*Math.random(), g: g, f:f, t:t};
     })
 

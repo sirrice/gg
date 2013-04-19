@@ -5,7 +5,7 @@ assert = require "assert"
 
 makeTable = (nrows=100) ->
     rows = _.map _.range(nrows), (i) -> {a:1+i, b:i%10, id:i}
-    new gg.RowTable(rows)
+    gg.RowTable.fromArray rows
 
 
 
@@ -16,7 +16,7 @@ suite.addBatch
   "interpolate":
     topic: ->
       pts = _.map _.range(5), (i) -> {x:(1+i)*5, y:i}
-      table = new gg.RowTable pts
+      table = gg.RowTable.fromArray pts
       xs = [-1, 1, 5, 9, 10, 25, 100]
       [xs, table.raw()]
     "runs": ([xs, pts]) ->
@@ -41,7 +41,7 @@ suite.addBatch
         {group: 'line2', 'pts': line2}
       ]
 
-      new gg.RowTable table
+      gg.RowTable.fromArray table
     "can be stackde": (table) ->
       pos = new gg.StackPosition# {g: new gg.Graphic}
       pos.compute table
