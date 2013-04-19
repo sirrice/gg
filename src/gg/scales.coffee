@@ -89,9 +89,7 @@ class gg.Scales extends gg.XForm
       # XXX: ack, this is just really ugly.
       # @aesthetics() is for user-specified aesthetics
       # t.colNames is for everything else
-      #aess = @aesthetics info.layer
-      aess = _.compact _.flatten _.union(aess, t.colNames())
-
+      aess = t.colNames()
       scales = @scales info.facetX, info.facetY, info.layer
 
       console.log "Scales.trainOnData table:      #{t.colNames()}"
@@ -119,8 +117,8 @@ class gg.Scales extends gg.XForm
   trainOnPixels: (tables, envs, node, spec={}) ->
     inverteds = _.map _.zip(tables, envs), ([t,e]) =>
       info = @paneInfo t, e
-      aess = @aesthetics info.layer
-      aess = _.compact _.flatten _.union(aess, t.colNames())
+      #aess = @aesthetics info.layer
+      aess = _.compact _.flatten [aess, t.colNames()]
 
       scales = @scales info.facetX, info.facetY, info.layer
 
