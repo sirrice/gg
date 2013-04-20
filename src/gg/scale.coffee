@@ -233,7 +233,7 @@ class gg.Scale
   maxRange: -> @range()[1]
   scale: (v) -> @d3Scale v
   invert: (v) -> @d3Scale.invert(v)
-  toString: () -> "#{@aes}: \t#{@domain()}\t#{@range()}"
+  toString: () -> "#{@aes}.#{@id} (#{@type}): \t#{@domain()}\t#{@range()}"
 
 
 class gg.IdentityScale extends gg.Scale

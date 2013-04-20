@@ -119,7 +119,14 @@ class gg.Scales extends gg.XForm
       console.log "Scales.trainOnPixels scaleSet.id (#{scales.id})"
       console.log "Scales.trainOnPixels inverted aes #{aess}"
 
+
+      fillScale = scales.get('fill', gg.Schema.ordinal)
+      console.log "PreInvert: #{t.getColumn("fill")}"
+      console.log "TheScales: #{fillScale}"
+      console.log "FillType:  #{t.schema.type 'fill'}"
+      console.log "Invert something: #{fillScale.invert "#aec7e80"}"
       inverted = scales.invert t, aess, spec.posMapping
+      console.log "Inverted: #{inverted.getColumn("fill")}"
       scales.resetDomain()
       scales.train inverted, aess, spec.posMapping
       inverted
@@ -349,7 +356,7 @@ class gg.ScalesSet
       else
         console.log "creating scaleset.get #{aes} #{type}"
         # in the future, return default scale?
-        @set @factory.scale(aes, type)
+        @set @factory.scale aes
         #throw Error("gg.ScaleSet.get(#{aes}) doesn't have any scales")
 
     else
@@ -359,8 +366,7 @@ class gg.ScalesSet
 
 
   scalesList: ->
-    f =  (aes) =>_.values(@scale[aes] or {})
-    _.uniq _.flatten _.map(@aesthetics(),f)
+    _.flatten _.map(@scales, (map, aes) -> _.values(map))
 
 
   resetDomain: ->
@@ -420,6 +426,7 @@ class gg.ScalesSet
       type = table.schema.type(aes)
       scale = @scale(aes, type, posMapping)
 
+
       unless table.contains aes
         attrs = table.colNames()
         console.log "scalesSet.train: #{aes} not in table: #{attrs}"
@@ -429,6 +436,7 @@ class gg.ScalesSet
       #      continuous for now
       col = table.getColumn(aes)
       scale.mergeDomain scale.defaultDomain col if col?
+      console.log "scalesSet.train: #{aes}\t#{scale}"
 
     @
 
@@ -468,7 +476,13 @@ class gg.ScalesSet
       str = scale.toString()
       #console.log "gg.ScaleSet.invert #{aes}:  scale #{str}"
 
-      f = (v) -> if v? then scale.invert(v) else null
+      f = (v) ->
+        if aes == 'fill'
+          console.log "\tinvert fill #{type}: #{v} -> #{scale.invert v}\t#{scale.toString()}"
+        if v?
+          scale.invert(v)
+        else
+          null
       table.map f, aes if table.contains aes
 
     table

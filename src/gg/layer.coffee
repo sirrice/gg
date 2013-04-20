@@ -257,7 +257,10 @@ class gg.LayerShorthand extends gg.Layer
       nodes.push @g.scales.trainPixelNode
         name: "scales:pixel"
         posMapping: @geom.posMapping()
-      nodes.push new gg.wf.Stdout {name: "post-pixeltrain", n: 50}
+      nodes.push new gg.wf.Stdout
+        name: "post-pixeltrain"
+        n: 5
+        aess: ['x', 'x0', 'fill', 'y']
 
 
 
@@ -268,6 +271,7 @@ class gg.LayerShorthand extends gg.Layer
     nodes.push new gg.wf.Stdout
       name: "post-coord"
       n: 5
+      aess: ['x', 'x0', 'fill', 'y']
 
 
 

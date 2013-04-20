@@ -35,8 +35,8 @@ class gg.wf.Scales extends gg.wf.Exec
     @scales = @spec.scales
 
   compute: (table, env, node) ->
-    _.each @scales.scalesList, (scales, idx) =>
-      @log "Out: scales #{scales.id}"
+    _.each @scales.scalesList[0..2], (scales, idx) =>
+      @log "Out: scales #{scales.id}, #{scales.scales}"
       _.each scales.scalesList(), (scale) =>
         aes = scale.aes
         str = scale.toString()
