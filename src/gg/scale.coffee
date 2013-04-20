@@ -1,4 +1,5 @@
 #<< gg/util
+#<< gg/schema
 
 
 
@@ -147,7 +148,7 @@ class gg.Scale
     s
 
 
-  @defaultFor: (aes) ->
+  @defaultFor: (aes, type) ->
     klass = {
           x: gg.LinearScale
           x0: gg.LinearScale
@@ -163,6 +164,15 @@ class gg.Scale
           text: gg.TextScale
           shape: gg.ShapeScale
       }[aes] or gg.IdentityScale
+
+    if type?
+      if _.isSubclass klass, gg.ColorScale
+        unless type is gg.Schema.ordinal
+          klass = gg.ColorScaleCont
+      else if _.isSubclass klass, gg.LinearScale
+        if type is gg.Schema.ordinal
+          klass = gg.OrdinalScale
+
     s = new klass {aes: aes}
     s
 
@@ -230,7 +240,7 @@ class gg.IdentityScale extends gg.Scale
   @aliases = "identity"
   constructor: () ->
     @d3Scale = d3.scale.linear()
-    @type = 'identity'
+    @type = gg.Schema.numeric
     super
 
   scale: (v) -> v
@@ -242,7 +252,7 @@ class gg.LinearScale extends gg.Scale
   @aliases = "linear"
   constructor: () ->
     @d3Scale = d3.scale.linear()
-    @type = 'continuous'
+    @type = gg.Schema.numeric
     super
 
 
@@ -250,14 +260,14 @@ class gg.TimeScale extends gg.Scale
   @aliases = "time"
   constructor: () ->
       @d3Scale = d3.time.scale()
-      @type = 'time'
+      @type = gg.Schema.date
       super
 
 class gg.LogScale extends gg.Scale
   @aliases = "log"
   constructor: () ->
       @d3Scale = d3.scale.log()
-      @type = 'continuous'
+      @type = gg.Schema.numeric
       super
 
   valid: (v) -> v > 0
@@ -285,7 +295,7 @@ class gg.BaseCategoricalScale extends gg.Scale
 
   # subclasses are responsible for instantiating @d3Scale and @invertScale
   constructor: (@padding=.05) ->
-    @type = 'ordinal'
+    @type = gg.Schema.ordinal
     @d3Scale = d3.scale.ordinal()
     @invertScale = d3.scale.ordinal()
     super
@@ -348,7 +358,7 @@ class gg.ShapeScale extends gg.BaseCategoricalScale
       @d3Scale = d3.scale.ordinal().range @symbolTypes
       @invertScale = d3.scale.ordinal().domain @d3Scale.range()
       @symbScale = d3.svg.symbol()
-      @type = 'shape'
+      @type = gg.Schema.ordinal
       super
 
   range: (interval) -> # not allowed
@@ -400,7 +410,7 @@ class gg.ColorScale extends gg.BaseCategoricalScale
     @d3Scale = d3.scale.category20()
     @invertScale = d3.scale.ordinal()
     @invertScale.domain(@d3Scale.range()).range(@d3Scale.domain())
-    @type = "color"
+    @type = gg.Schema.ordinal
 
 
   invert: (v) -> @invertScale v
@@ -414,7 +424,7 @@ class gg.ColorScaleFuck extends gg.Scale
     @isDiscrete = no
     @cScale = new gg.ColorScaleCont @spec
     @dScale = new gg.ColorScaleDisc @spec
-    @type = 'color'
+    @type = gg.Schema.ordinal
 
 
 
@@ -458,7 +468,7 @@ class gg.ColorScaleFuck extends gg.Scale
 class gg.TextScale extends gg.Scale
   @aliases = "text"
   constructor: () ->
-      @type = 'text'
+      @type = gg.Schema.ordinal
       super
 
   prepare: (layer, newData, aes) ->

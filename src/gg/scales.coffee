@@ -40,19 +40,12 @@
 # be used for rendering geometries.
 #
 class gg.Scales extends gg.XForm
-  @UNTRAINED = 0
-  @PREGEOM = 1
-  @PRERENDER = 2
-  @POSTRENDER = 3
-  @POSTFACET = 4
-
 
   constructor: (@g, @spec) ->
     super
-    @scalesFactory = null
+    @scalesConfig = null
     @mappings = {}     # facetX -> facetY -> layerIdx -> scalesSet
     @scalesList = []  # list of the scalesSet objects
-    @state = gg.Scales.UNTRAINED
 
     @parseSpec()
 
@@ -60,7 +53,8 @@ class gg.Scales extends gg.XForm
   parseSpec: ->
     # setup the scales factory
     # XXX: we probably want different scale factories per layer
-    @scalesFactory = new gg.ScaleFactory @spec
+    @scalesConfig = gg.ScaleConfig.fromSpec @spec
+    # scan through @g.layers for more scales specs
 
   # @param spec
   #   nextState
@@ -98,7 +92,6 @@ class gg.Scales extends gg.XForm
 
       scales.train t, aess, spec.posMapping
 
-    @state = spec.nextState if spec.nextState?
     @g.facets.trainScales()
     tables
 
@@ -115,38 +108,33 @@ class gg.Scales extends gg.XForm
   # before training
   #
   trainOnPixels: (tables, envs, node, spec={}) ->
-    inverteds = _.map _.zip(tables, envs), ([t,e]) =>
-      info = @paneInfo t, e
-      #aess = @aesthetics info.layer
-      aess = _.compact _.flatten [aess, t.colNames()]
+    infos = _.map _.zip(tables, envs), ([t,e]) => @paneInfo t, e
 
+    inverteds = _.map _.zip(tables, infos), ([t,info]) =>
       scales = @scales info.facetX, info.facetY, info.layer
+      #aess = @aesthetics info.layer
+      aess = t.colNames()
 
       console.log "Scales.trainOnPixels table:      #{t.colNames()}"
       console.log "Scales.trainOnPixels scaleSet.id (#{scales.id})"
       console.log "Scales.trainOnPixels inverted aes #{aess}"
 
       inverted = scales.invert t, aess, spec.posMapping
-      _.each scales.scalesList(), (scale) -> scale.resetDomain()
+      scales.resetDomain()
       scales.train inverted, aess, spec.posMapping
       inverted
 
-    newTables = _.map _.zip(tables, inverteds, envs), ([t,i,e]) =>
-      info = @paneInfo t, e
-      aess = @aesthetics info.layer
-      aess = _.compact _.flatten _.union(aess, t.colNames())
-
+    newTables = _.map _.zip(inverteds, infos), ([t,info]) =>
       scales = @scales info.facetX, info.facetY, info.layer
-      scales.apply i, aess, spec.posMapping
+      aess = t.colNames()
 
+      scales.apply t, aess, spec.posMapping
 
-    @state = spec.nextState if spec.nextState?
     @g.facets.trainScales()
     newTables
 
-  trainForFacets: (tables, envs, node, nextState) ->
+  trainForFacets: (tables, envs, node) ->
     @g.facets.trainScales()
-    @state = nextState
 
 
   layer: (layerIdx) -> @g.layers.getLayer layerIdx
@@ -154,7 +142,8 @@ class gg.Scales extends gg.XForm
   # XXX: layer aesthetics should differentiate between
   #      pre and post stats aesthetic mappings!
   aesthetics: (layerIdx) ->
-    scalesAess = @scalesFactory.aesthetics()
+    throw Error("gg.Scales.aesthetics not implemented")
+    scalesAess = []#@scalesConfig.aesthetics()
     layerAess =  @layer(layerIdx).aesthetics()
     # XXX: incorporate coordinate based x/y attributes instead
     aess = [scalesAess, layerAess, gg.Scale.xys]
@@ -178,9 +167,10 @@ class gg.Scales extends gg.XForm
 
     if layerIdx?
       unless layerIdx of map
-        aess = @aesthetics layerIdx
+        #aess = @aesthetics layerIdx
+        aess = []
         # XXX: support other factories for per-layer scales
-        newScalesSet = @scalesFactory.scales aess
+        newScalesSet = @scalesConfig.scales layerIdx
         map[layerIdx] = newScalesSet
         @scalesList.push newScalesSet
       map[layerIdx]
@@ -189,13 +179,10 @@ class gg.Scales extends gg.XForm
 
 
 
-
-
-# Convenience class that creates identical gg.Scales objects
-# from a single spec
+# the scale config can be used as a scale factory with
+# just the default scales
 #
-# Used to create layer, panel and facet level copies of gg.Scales
-# when training the scales
+# also creates layer specific scale factories
 #
 # spec:
 #
@@ -212,56 +199,72 @@ class gg.Scales extends gg.XForm
 #   label:
 # }
 #
-class gg.ScaleFactory
-  constructor: (@spec, @layersSpecs=[]) ->
-    @paneDefaults = {}      # aes -> scale object
-    @layerDefaults = {}     # [layerid,aes] -> scale object
+class gg.ScaleConfig
 
-    @setup()
+  # @param defaults:        aes -> scale
+  # @param layerDefaults:   layer -> {aes -> scale}
+  constructor: (@defaults, @layerDefaults)  ->
 
-  setup: ->
+  @fromSpec: (spec, layerSpecs={}) ->
+    config = new gg.ScaleConfig
 
     # load graphic defaults
-    _.each @spec, (s, aes) =>
-      # XXX: notice that scale spec expects an aes key
-      s = _.clone s
-      s.aes = aes
-      scale = gg.Scale.fromSpec s
-      @paneDefaults[scale.aes] = scale
+    defaults = gg.ScaleConfig.loadSpec spec
 
     # load layer defaults
-    if @layerSpecs? and @layerSpecs.length > 0
-      _.each @layerSpecs, (lspec, idx) =>
-        if lspec.scales?
-          _.each lspec.scales, (s) =>
-            scale = gg.Scale.fromSpec s
-            key = [idx, scale.aes]
-            @layerDefaults[key] = scale
+    layerDefaults = {}
+    _.each layerSpecs, (layerSpec, layerIdx) =>
+      scalesSpec = layerSpec.scales
+      layerConfig = gg.ScaleConfig.loadSpec scalesSpec
+      layerDefaults[layerIdx] = layerConfig
 
-  aesthetics: -> _.compact _.keys @paneDefaults
+    new gg.ScaleConfig defaults, layerDefaults
 
-  addLayerDefaults: (layerIdx, lspec) ->
-    throw Error("gg.ScaleFactory: layer scales not implemented")
+  @loadSpec: (spec) ->
+    ret = {}
+    if spec?
+      _.each spec, (scaleSpec, aes) ->
+        scaleSpec = _.clone scaleSpec
+        scaleSpec.aes = aes
+        scale = gg.Scale.fromSpec scaleSpec
+        ret[aes] = scale
+    ret
 
-  scale: (aes, layerIdx=null) ->
-    scale = (
-      if layerIdx? and [layerIdx, aes] of @layerDefaults
-        @layerDefaults[[layerIdx, aes]].clone()
-      else if aes of @paneDefaults
-        @paneDefaults[aes].clone()
+  factoryFor: (layerIdx) ->
+    spec = _.clone @defaults
+    lspec = @layerDefaults[layerIdx] or {}
+    _.extend spec, lspec
+    gg.ScaleFactory.fromSpec spec
+
+  scale: (aes, type) -> @factoryFor().scale(aes, type)
+  scales: (layerIdx) -> new gg.ScalesSet @factoryFor(layerIdx)
+
+
+class gg.ScaleFactory
+  constructor: (@defaults) ->
+
+  @fromSpec: (spec) ->
+    sf = new gg.ScaleFactory spec
+    sf
+
+  scale: (aes, type) ->
+    unless aes?
+      throw Error()
+    unless type?
+      throw Error()
+
+    scale =
+      if aes of @defaults
+        @defaults[aes].clone()
       else
-        gg.Scale.defaultFor aes
-    )
+        gg.Scale.defaultFor aes, type
+
     scale
 
+  scales: (layerIdx) -> new gg.ScalesSet @
 
-  scales: (aesthetics, layerIdx=null) ->
-      scales = new gg.ScalesSet @
-      _.each aesthetics, (aes) =>
-          scales.scale(@scale aes, layerIdx)
-          if typeof aes is "undefined"
-            throw Error()
-      scales
+
+
 
 
 
@@ -271,6 +274,9 @@ class gg.ScaleFactory
 #
 # Manage a graphic/pane/layer's set of scales
 # a Wrapper around {aes -> {type -> scale} } + utility functions
+#
+# lazily instantiates scale objects as they are requests.
+# uses internal scalesFactory for creation
 #
 class gg.ScalesSet
   constructor: (@factory) ->
@@ -301,56 +307,64 @@ class gg.ScalesSet
 
   aesthetics: ->
     keys = _.keys @scales
-    keys = _.map keys, (key) ->
-      if key in gg.Scale.xs
-        gg.Scale.xs
-      else if key in gg.Scale.ys
-        gg.Scale.ys
-      else
-        key
     _.uniq _.compact _.flatten keys
 
+  contains: (aes, type=null) ->
+    aes of @scales and (not type or type of @scales[aes])
 
+  types: (aes) ->
+    if aes of @scales then _.keys @scales[aes] else []
 
-  ensureScales: (aess) ->
-    _.each aess, (aes) =>
-        @scale(gg.Scale.defaultFor aes) if ! @scale(aes)
-    @
-
-
-  contains: (aes, type=null) -> aes of @scales and (not type or type of @scales[aes])
-  types: (aes) -> if aes of @scales then _.keys @scales[aes] else []
-  scale: (aesOrScale, type=null) ->
+  # @param type.  the only time type should be null is when
+  #        retrieving the "master" scale to render for guides
+  scale: (aesOrScale, type=null, posMapping={}) ->
     if _.isString aesOrScale
-        aes = aesOrScale
-        aes = 'x' if aes in gg.Scale.xs
-        aes = 'y' if aes in gg.Scale.ys
-        @scales[aes] = {} if aes not of @scales
-
-        if type is null
-          if type of @scales[aes]
-            @scales[aes][type]
-          else
-            vals = _.values @scales[aes]
-            unless vals? and vals.length > 0
-              @scales[aes][null] = @factory.scale aes
-            (_.values @scales[aes])[0]
-        else
-          unless type of @scales[aes]
-            @scales[aes][type] = @factory.scale aes
-          @scales[aes][type]
-
+      @get aesOrScale, type, posMapping
     else if aesOrScale?
-      scale = aesOrScale
-      aes = scale.aes
-      @scales[aes] = {} unless aes of @scales
-      @scales[aes][scale.type] = scale
-      @scales[aes][null] = scale unless null of @scales[aes]
-      console.log "gg.ScaleSet.scale#{@id} setting #{aes}-#{scale.type} to #{scale.toString()}" if aes is 'x'
-      scale
+      @set aesOrScale
 
-  scalesList: -> _.map @aesthetics(), (aes) => @scale(aes)
+  set: (scale) ->
+    aes = scale.aes
+    @scales[aes] = {} unless aes of @scales
+    @scales[aes][scale.type] = scale
+    scale
 
+
+  get: (aes, type, posMapping={}) ->
+    unless type?
+      throw Error("type cannot be null anymore: #{aes}")
+
+    aes = 'x' if aes in gg.Scale.xs
+    aes = 'y' if aes in gg.Scale.ys
+    aes = posMapping[aes] or aes
+    @scales[aes] = {} unless aes of @scales
+
+    if type is gg.Schema.unknown
+      if type of @scales[aes]
+        throw Error("#{aes}: stored scale type shouldn't be unknown")
+
+      vals = _.values @scales[aes]
+      if vals.length > 0
+        vals[0]
+      else
+        console.log "creating scaleset.get #{aes} #{type}"
+        # in the future, return default scale?
+        @set @factory.scale(aes, type)
+        #throw Error("gg.ScaleSet.get(#{aes}) doesn't have any scales")
+
+    else
+      unless type of @scales[aes]
+        @scales[aes][type] = @factory.scale aes, type
+      @scales[aes][type]
+
+
+  scalesList: ->
+    f =  (aes) =>_.values(@scale[aes] or {})
+    _.uniq _.flatten _.map(@aesthetics(),f)
+
+
+  resetDomain: ->
+    _.each @scalesList(), (scale) -> scale.resetDomain()
 
 
 
@@ -397,37 +411,42 @@ class gg.ScalesSet
   #        attr -> aes
   #        attr -> [aes, type]
   train: (table, aess=null, posMapping={}) ->
+    aess = table.colNames() unless aess?
     aess = _.uniq _.keys @scales unless aess?
-    console.log "gg.ScalesSet.train aess #{aess}"
-    _.each aess, (aes) =>
-      scale = @scale(posMapping[aes] or aes)
+    console.log "gg.ScalesSet.train: #{aess}"
 
-      col = table.getColumn(aes)
+    _.each aess, (aes) =>
+      return unless table.contains aes
+      type = table.schema.type(aes)
+      scale = @scale(aes, type, posMapping)
+
+      unless table.contains aes
+        attrs = table.colNames()
+        console.log "scalesSet.train: #{aes} not in table: #{attrs}"
+
+
       # XXX: perform type checking.  Just assume all
       #      continuous for now
-      if col?
-        scale.mergeDomain scale.defaultDomain col
-      else if table.nrows() > 0
-        console.log "scalesSet.train: #{aes} not in table:
-          #{table.colNames()}!"
+      col = table.getColumn(aes)
+      scale.mergeDomain scale.defaultDomain col if col?
+
     @
 
-
-  toString: ->
-    arr = _.flatten _.map @scales, (map, aes) =>
-        _.map map, (scale, type) => scale.toString()
-    arr.join('\n')
 
   # @param posMapping maps aesthetic names to the scale that
   #        should be used
   #        e.g., median, q1, q3 should use 'y' position scale
   apply: (table, aess=null, posMapping={}) ->
+    aess = table.colNames() unless aess?
     aess = @aesthetics() unless aess?
 
     table = table.clone()
+    console.log "gg.ScaleSet.apply: #{aess}\t#{table.colNames()}"
     _.each aess, (aes) =>
-      scale = @scale(posMapping[aes] or aes)
-      f = (v) -> scale.scale v
+      return unless table.contains aes
+      type = table.schema.type(aes)
+      scale = @scale(aes, type, posMapping)
+      f = (v) -> scale.scale v, type
       table.map f, aes if table.contains aes
 
     table
@@ -436,22 +455,30 @@ class gg.ScalesSet
   #        e.g., median, q1, q3 should use 'y' position scale
   # @param {gg.Table} table
   invert: (table, aess=null, posMapping={}) ->
+    aess = table.colNames() unless aess?
     aess = @aesthetics() unless aess?
-    console.log "gg.ScaleSet.invert: aess #{aess} table #{table.colNames()}"
 
-    newTable = table.clone()
+    table = table.clone()
+    console.log "gg.ScaleSet.invert #{aess}"
     _.each aess, (aes) =>
-      scale = @scale(posMapping[aes] or aes)
-      console.log "gg.ScaleSet.invert #{aes}:  scale #{scale.toString()}"
-      if newTable.contains aes
-        f = (v) -> if v? then scale.invert(v) else null
-        newTable.map f, aes
-      else
-        console.log "gg.ScaleSet.invert notfound: #{aes}"
+      return unless table.contains aes
+      type = table.schema.type(aes)
+      scale = @scale(aes, type, posMapping)
 
-    newTable
+      str = scale.toString()
+      #console.log "gg.ScaleSet.invert #{aes}:  scale #{str}"
+
+      f = (v) -> if v? then scale.invert(v) else null
+      table.map f, aes if table.contains aes
+
+    table
 
   labelFor: -> null
+
+  toString: ->
+    arr = _.flatten _.map @scales, (map, aes) =>
+      _.map map, (scale, type) => scale.toString()
+    arr.join('\n')
 
 
 

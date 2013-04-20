@@ -67,7 +67,7 @@ class gg.Geom # not an XForm!! #extends gg.XForm
           gg.Rect,
           gg.Polygon,
           gg.Hex,
-          gg.Schema,
+          gg.Boxplot,
           gg.Glyph,
           gg.Edge
       ]
@@ -142,7 +142,8 @@ class gg.ReparamLine extends gg.XForm
 
   compute: (table, env, node) ->
     scales = @scales table, env
-    y0 = scales.scale('y').minRange()
+    type = table.schema.type('y')
+    y0 = scales.scale('y', type).minRange()
     console.log "gg.ReparamLine.compute: y0 set to #{y0}"
     table.each (row) ->
       row.set('y1', row.get('y')) unless row.hasAttr('y1')
@@ -211,7 +212,8 @@ class gg.ReparamInterval extends gg.XForm
 
   compute: (table, env, node) ->
     scales = @scales table, env
-    yscale = scales.scale 'y'
+    type = table.schema.type 'y'
+    yscale = scales.scale 'y', type
 
     # XXX: assume xs is numerical!!
     xs = _.uniq(table.getColumn("x")).sort (a,b)->a-b
@@ -246,14 +248,14 @@ class gg.Hex extends gg.Geom
     @aliases: "hex"
 
 # boxplot
-class gg.Schema extends gg.Geom
+class gg.Boxplot extends gg.Geom
   @aliases: ["schema", "boxplot"]
 
   parseSpec: ->
     super
 
-    @reparam = new gg.ReparamSchema @g, {name: "schema-reparam"}
-    @render = new gg.GeomRenderSchemaSvg @layer, {}
+    @reparam = new gg.ReparamBoxplot @g, {name: "schema-reparam"}
+    @render = new gg.GeomRenderBoxplotSvg @layer, {}
 
   posMapping: ->
     ys = ['q1', 'median', 'q3', 'lower', 'upper',
@@ -265,7 +267,7 @@ class gg.Schema extends gg.Geom
     map
 
 
-class gg.ReparamSchema extends gg.XForm
+class gg.ReparamBoxplot extends gg.XForm
   defaults: ->
     x: 1
 
@@ -282,7 +284,8 @@ class gg.ReparamSchema extends gg.XForm
 
   compute: (table, env, node) ->
     scales = @scales table, env
-    yscale = scales.scale 'y'
+    type = table.schema.type 'y'
+    yscale = scales.scale 'y', type
 
     # XXX: currently assumes xs is numerical!!
     #      xs should always be pixel values (numerical)

@@ -16,6 +16,7 @@ class gg.Layers
         throw Error("Layer with idx #{layerIdx} does not exist.
           Max layer is #{@layers.length}")
       @layers[layerIdx]
+
     get: (layerIdx) -> @getLayer layerIdx
 
     addLayer: (layerOrSpec) ->
@@ -223,7 +224,7 @@ class gg.LayerShorthand extends gg.Layer
     nodes.push new gg.wf.Stdout
       name: "post-geom"
       n: 5
-      aess: ['x', 'x0', 'x1', 'y']
+      aess: ['x', 'x0', 'fill', 'y', "fill-opacity"]
 
     # Rendering
     # layout the overall graphic, allocate space for facets
@@ -244,7 +245,7 @@ class gg.LayerShorthand extends gg.Layer
     nodes.push new gg.wf.Stdout
       name: "post-position"
       n: 5
-      aess: ['x', 'x0', 'x1', 'y']
+      aess: ['x', 'x0', 'fill',  'y', "fill-opacity"]
 
     # facets: retrain scales after positioning (jitter) (inputs are pixel values)
     # this isn't working because reparam creates an array column
@@ -267,7 +268,6 @@ class gg.LayerShorthand extends gg.Layer
     nodes.push new gg.wf.Stdout
       name: "post-coord"
       n: 5
-      aess: ['x', 'x0', 'x1', 'y']
 
 
 

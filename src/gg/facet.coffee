@@ -276,7 +276,11 @@ class gg.Facets
     # used to compute y-axis label spacing
     formatter = d3.format(",.0f")
     maxValF = (s) ->
-      if _.isNumber s.scale('y').maxDomain()then s.scale('y').maxDomain() else 0
+      100
+      #if _.isNumber s.scale('y').maxDomain()
+      #  s.scale('y').maxDomain()
+      #else
+      #  0
     maxVal = _.max(_.map @g.scales.scalesList, maxValF)
     dims = _.textSize(formatter(maxVal), {"font-size":"10pt", "font-family":"arial"})
     yAxisWidth = dims.w + 2*@facetPadding
@@ -391,11 +395,11 @@ class gg.Facets
     top = 0#yRange y
     xBand = xRange.rangeBand()
     scales = @g.scales.facetScales x, y
-    scale = scales.scale 'y'
+    scale = scales.scale 'y', gg.Schema.unknown
 
     console.log "gg.Facet.renderYAxis, scaleid #{scale.id}\t#{scale.toString()}"
     yAxis = d3.svg.axis()
-      .scale(scales.scale('y').d3())
+      .scale(scales.scale('y',gg.Schema.unknown).d3())
       .ticks(5, d3.format(",.0f"), 5)
       .tickSize(-xBand)
       .orient('left')
@@ -414,7 +418,7 @@ class gg.Facets
     scales = @g.scales.facetScales x, y
 
     xAxis = d3.svg.axis()
-        .scale(scales.scale('x').d3())
+        .scale(scales.scale('x',gg.Schema.unknown).d3())
         .ticks(5)
         .tickSize(- yBand)
         .orient('bottom')
@@ -488,10 +492,8 @@ class gg.Facets
     @masterScales = gg.ScalesSet.merge @g.scales.scalesList
     @expandDomains @masterScales
 
-    _.each @masterScales.aesthetics(), (aes) =>
-      scale = @masterScales.scale aes
-      console.log "gg.Facet.trainScales: masterScales #{aes}\t #{scale.toString()}"
-
+    str = @masterScales.toString()
+    console.log "gg.Facet.trainScales: master scales #{str}"
 
     if @scales is "fixed"
       _.each @g.scales.scalesList, (scalesSet) =>
@@ -541,7 +543,7 @@ class gg.Facets
           #ss.scale(aes, type).range [yBand-@panePadding, 0+@panePadding]
           ss.scale(aes, type).range [0+@panePadding, yBand-@panePadding]
           #ss.scale(aes, type).range [0, yBand]
-        console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).toString()}"
+        #console.log "facet.setScalesRanges(#{aes}):\t#{ss.scale(aes).toString()}"
 
 
 

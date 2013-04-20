@@ -48,9 +48,10 @@ class gg.IdentityCoordinate extends gg.Coordinate
   map: (table, env) ->
     scales = @scales table, env
     inverted = scales.invert table, gg.Scale.ys
-    yRange = scales.scale('y').range()
+    type = table.schema.type 'y'
+    yRange = scales.scale('y', type).range()
     yRange = [yRange[1], yRange[0]]
-    scales.scale('y').range(yRange)
+    scales.scale('y', type).range(yRange)
     table = scales.apply inverted, gg.Scale.ys
     table
 
@@ -67,14 +68,16 @@ class gg.XFlipCoordinate extends gg.Coordinate
   map: (table, env) ->
     scales = @scales table, env
     inverted = scales.invert table, gg.Scale.xys
+    xtype = table.schema.type 'x'
+    ytype = table.schema.type 'y'
 
-    xRange = scales.scale('x').range()
+    xRange = scales.scale('x', xtype).range()
     xRange = [xRange[1], xRange[0]]
-    scales.scale('x').range(xRange)
+    scales.scale('x', xtype).range(xRange)
 
-    yRange = scales.scale('y').range()
+    yRange = scales.scale('y', ytype).range()
     yRange = [yRange[1], yRange[0]]
-    scales.scale('y').range(yRange)
+    scales.scale('y', ytype).range(yRange)
 
     @log "map: xrange: #{xRange}\tyrange: #{yRange}"
 
@@ -97,10 +100,11 @@ class gg.FlipCoordinate extends gg.Coordinate
   map: (table, env) ->
     scales = @scales table, env
     inverted = scales.invert table, gg.Scale.xs
+    type = table.schema.type 'x'
 
-    xRange = scales.scale('x').range()
+    xRange = scales.scale('x', type).range()
     xRange = [xRange[1], xRange[0]]
-    scales.scale('x').range(xRange)
+    scales.scale('x', type).range(xRange)
 
     @log "map: xrange: #{xRange}"
 

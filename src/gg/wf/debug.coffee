@@ -37,10 +37,11 @@ class gg.wf.Scales extends gg.wf.Exec
   compute: (table, env, node) ->
     _.each @scales.scalesList, (scales, idx) =>
       @log "Out: scales #{scales.id}"
-      _.each scales.aesthetics(), (aes) =>
-        scale = scales.scale(aes)
+      _.each scales.scalesList(), (scale) =>
+        aes = scale.aes
         str = scale.toString()
-        @log "Out: layer#{idx},scaleId#{scale.id} #{scale.type}\t#{str}"
+        type = scale.type
+        @log "Out: layer#{idx},scaleId#{scale.id} #{type}\t#{str}"
     table
 
 

@@ -47,6 +47,7 @@ class gg.XForm
   constructor: (@g, @spec={}) ->
     #unless _.isSubclass @g, gg.Graphic
     #  throw Error("Xform passed non-graphic as first argument")
+    @state = {}
 
     @params = {}
 
@@ -76,22 +77,33 @@ class gg.XForm
   # Convenience functions during workflow execution
   # All functions take (table, env) as input
   facetGroups: (table, env) ->
-    facetX: env.group(@g.facets.facetXKey, "")
-    facetY: env.group(@g.facets.facetYKey, "")
+    env = @state.env unless env
+    {
+      facetX: env.group(@g.facets.facetXKey, "")
+      facetY: env.group(@g.facets.facetYKey, "")
+    }
 
   layerIdx: (table, env) ->
-    layer: env.group("layer", "")
+    env = @state.env unless env
+    {layer: env.group("layer", "")}
 
   paneInfo: (table, env) ->
+    table = @state.table unless table?
+    env = @state.env unless env
     ret = @facetGroups table, env
     _.extend ret, @layerIdx(table, env)
     ret
 
   scales: (table, env) ->
+    table = @state.table unless table?
+    env = @state.env unless env
     info = @paneInfo table, env
     @g.scales.scales(info.facetX, info.facetY, info.layer)
 
   param: (table, env, attr, defaultVal=null) ->
+    table = @state.table unless table?
+    env = @state.env unless env
+
     if attr of @params
       ret = @params[attr]
     else
@@ -134,6 +146,10 @@ class gg.XForm
     spec = _.clone @spec
     _compute = (table, env, node) =>
       table = table.cloneDeep()
+      @_state =
+        table: table
+        env: env
+        node: node
       @addDefaults table, env
       @validateInput table, env
       @compute table, env, node

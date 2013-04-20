@@ -21,8 +21,7 @@ suite.addBatch
       [xs, table.raw()]
     "runs": ([xs, pts]) ->
       results =  gg.StackPosition.interpolate(xs, pts)
-      console.log results
-      assert.arrayEqual [null, null, 0, 0.9, 1, 4, null], _.pluck(results, 'y')
+      assert.arrayEqual [0, 0, 0, 0.8, 1, 4, 0], _.pluck(results, 'y')
 
   "stack":
     topic: ->

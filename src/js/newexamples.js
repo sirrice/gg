@@ -38,8 +38,8 @@
         ,pos: "stack"
         ,coord: "flip"
       }
-      ,
         /*
+      ,
       {
         geom: { type: "boxplot", aes: {x: '{String(group)+"q"}', fill: "group", "stroke-width": 2, stroke: "group" } },
         stat: { type: "boxplot", aes: {group: 't', x: 'r'} }

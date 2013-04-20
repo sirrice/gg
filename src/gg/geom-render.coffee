@@ -302,7 +302,7 @@ class gg.GeomRenderAreaSvg extends gg.GeomRender
     .transition()
       .remove()
 
-class gg.GeomRenderSchemaSvg extends gg.GeomRender
+class gg.GeomRenderBoxplotSvg extends gg.GeomRender
   defaults: (table, env) ->
     "stroke-width": 1
     stroke: "steelblue"

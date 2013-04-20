@@ -68,7 +68,7 @@ suite.addBatch
     "when scales are applied then inverted":
       topic: (table) ->
         table = table.clone()
-        sf = new gg.ScaleFactory {f: {domain: [0, 100], range: [500, 600]}}
+        sf = gg.ScaleConfig.fromSpec {f: {domain: [0, 100], range: [500, 600]}}
         scales = sf.scales(['f'])
         applied = scales.apply table, ['f']
         inverted = scales.invert applied, ['f']
@@ -97,7 +97,6 @@ suite.addBatch
     "flattens correctly": (table) ->
       flattened = table.flatten()
       _.each _.range(10), (idx) ->
-        #console.log flattened.get(idx)
         null
 
 
@@ -172,7 +171,6 @@ suite.addBatch
                 assert.lt 0, row.get('e')
                 _.each row.get('g'), (v) -> assert.lt 0, v
                 assert.include valid, row.get('a')
-
 
 
 
