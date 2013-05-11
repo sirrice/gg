@@ -61,7 +61,9 @@ XForms
 
 Scales
 
-- support detecting scales types (color scales esp)
+- use provenance data to decide the "correct" scales to use for a table column
+- allow position scales to use same units/pixel
+
 
 Coordinate System
 
@@ -76,21 +78,30 @@ Rendering
 
 Misc
 
+- remove nested arrays from tables, and support partition by clauses in xform operators
 - name the phases and the operators more consistently and predictably
 - documentation
 - Regularize/rationalize/document use of CSS for controlling appearence.
 - In-browser interactive graphic builder. (REPL?)
 
+Provenance
+
+- add provenance system
 
 
 Tables
 
-- support tables as columns (blocker for line charts).
-- add types to tables
+- figure out sane semantics for table mapping if a nested value is mapped
+
+
 
 DONE!
 -------------
 
+- support detecting scales types (color scales esp)
+- FIX COORD SWAP, AND CONSOLIDATE TABLE COLUMNS ONTO SINGLE SCALE OBJECT, TYPED SCHEMAS?
+- support tables as columns (blocker for line charts).
+- add types to tables
 - allocate panes after computing the a[x]s tick size of y a[x]s to know how much spacing to give
 - allow aesthetics with dashes in name (e.g., fill-opacity) in evaled JS scripts
     -> currently var fill-opacity = row['fill-opacity']

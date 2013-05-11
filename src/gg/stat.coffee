@@ -11,7 +11,7 @@ class gg.Stat extends gg.XForm
     if findGoodAttr(@spec, ['aes', 'aesthetic', 'mapping', 'map'], null)?
       mapSpec = _.clone @spec
       mapSpec.name = "stat-map" unless mapSpec.name?
-      @map = new gg.Mapper @g, mapSpec
+      @map = gg.Mapper.fromSpec @g, mapSpec
 
 
   @klasses: ->
@@ -19,6 +19,7 @@ class gg.Stat extends gg.XForm
       gg.IdentityStat
       gg.Bin1DStat
       gg.BoxplotStat
+      gg.LoessStat
     ]
     ret = {}
     _.each klasses, (klass) ->
@@ -45,7 +46,10 @@ class gg.Stat extends gg.XForm
 
   compile: ->
     node = super
-    _.compact _.flatten [@map.compile(), node]
+    ret = []
+    ret.push @map.compile() if @map?
+    ret.push node
+    _.compact _.flatten ret
 
 
 
@@ -64,23 +68,31 @@ class gg.Bin1DStat extends gg.Stat
 
   inputSchema: (table, env, node) -> ['x']
   outputSchema: (table, env, node) ->
-    ['x', 'y', 'bin', 'count', 'total']
+    gg.Schema.fromSpec
+      x: table.schema.type 'x'
+      bin: table.schema.type 'x'
+      y: gg.Schema.numeric
+      count: gg.Schema.numeric
+      total: gg.Schema.numeric
 
   compute: (table, env, node) ->
     scales = @scales table, env
+    xType = table.schema.type 'x'
 
-    domain = scales.scale('x').domain()
-    domain = scales.scale('x').defaultDomain table.getColumn('x')
-    range = domain[1] - domain[0]
-    binSize = Math.ceil(range / (@nbins))
-    @log "nbins: #{@nbins}\tscaleid: #{scales.scale('x').id}\tscaledomain: #{scales.scale('x').domain()}\tdomain: #{domain}\tbinSize: #{binSize}"
+    xScale = scales.scale 'x', xType
+    domain = xScale.domain()
+    #domain = xScale.defaultDomain table.getColumn('x')
+    binRange = domain[1] - domain[0]
+    binSize = Math.ceil(binRange / (@nbins))
+    nBins = Math.ceil(binRange / binSize) + 1
+    @log "nbins: #{@nbins}\tscaleid: #{xScale.id}\tscaledomain: #{xScale.domain()}\tdomain: #{domain}\tbinSize: #{binSize}"
 
-    stats = _.map _.range(Math.ceil(range / binSize)+1), (binidx) ->
+    stats = _.map _.range(nBins), (binidx) ->
       {bin: binidx, count: 0, total: 0}
 
     table.each (row) ->
       x = row.get('x')
-      y = row.get('y')
+      y = row.get('y') || 0
       binidx = Math.floor((x - domain[0]) / binSize)
       try
         stats[binidx].count += 1
@@ -93,13 +105,14 @@ class gg.Bin1DStat extends gg.Stat
       else
         stats[binidx].total += 1
 
+    # augment rows with additional attributes
     _.each stats, (stat) ->
       stat.bin = (stat.bin * binSize) + domain[0] + binSize/2
       stat.sum = stat.total
       stat.x = stat.bin
-      stat.y = stat.count
+      stat.y = stat.total
 
-    gg.RowTable.fromArray stats
+    new gg.RowTable @outputSchema(table, env, node), stats
 
 class gg.BoxplotStat extends gg.Stat
   @aliases = ['boxplot']
@@ -109,6 +122,7 @@ class gg.BoxplotStat extends gg.Stat
   inputSchema: (table, env, node) -> ['x', 'group']
   outputSchema: ->
     gg.Schema.fromSpec
+      group: gg.Schema.ordinal
       q1: gg.Schema.numeric
       q3: gg.Schema.numeric
       median: gg.Schema.numeric
@@ -160,10 +174,45 @@ class gg.BoxplotStat extends gg.Stat
       row.group = gKey
       row
 
-    new gg.RowTable.fromArray @outputSchema(), rows
+    table = new gg.RowTable @outputSchema(), rows
+    console.log table.raw()
+    table
 
 
 
 
 
 
+class gg.LoessStat extends gg.Stat
+  @aliases = ['loess', 'smooth']
+
+
+  parseSpec: ->
+    super
+
+  inputSchema: (table, env, node) -> ['x', 'y']
+  outputSchema: (table, env, node) ->
+    gg.Schema.fromSpec
+      x: gg.Schema.numeric
+      y: gg.Schema.numeric
+
+  compute: (table, env, node) ->
+    xs = table.getColumn('x')
+    ys = table.getColumn('y')
+    xys = _.zip(xs, ys)
+    xys.sort (xy1, xy2) -> xy1[0] - xy2[0]
+    xs = xys.map (xy) -> xy[0]
+    ys = xys.map (xy) -> xy[1]
+    loessfunc = science.stats.loess()
+
+    smoothys = loessfunc(xs, ys)
+    console.log xs
+    console.log ys
+    console.log smoothys
+    rows = []
+    _.times xs.length, (idx) ->
+      rows.push
+        x: xs[idx]
+        y: smoothys[idx]
+
+    new gg.RowTable @outputSchema(), rows

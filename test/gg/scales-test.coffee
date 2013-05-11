@@ -17,32 +17,22 @@ makeTable = (nrows=100) ->
 
 
 suite.addBatch
-  ###
   "color scale":
     topic: -> new gg.ColorScale {aes: "fill"}
 
-    "can call the functions": (s) ->
-      s.domain()
-      s.range()
-      s.d3()
-      s.minDomain()
-      s.maxDomain()
-      s.minRange()
-      s.maxRange()
+    "is ordinal and not domain": (s) ->
+      assert.arrayEqual [], s.domain()
+      assert.equal gg.Schema.ordinal, s.type
 
     "after merging as discrete":
       topic: (s) ->
         s = s.clone()
-        s.mergeDomain(_.range(10))
+        s.mergeDomain(_.range(5))
         s
 
-      "can call the functions": (s) ->
-        s.domain().length
-        s.range()
-        s.minDomain()
-        s.maxDomain()
-        s.minRange()
-        s.maxRange()
+      "scale is ordinal": (s) ->
+        assert.arrayEqual s.domain(), _.range(5)
+        assert.equal s.type, gg.Schema.ordinal
 
     "after merging 100 vals":
       topic: (s) ->
@@ -50,14 +40,12 @@ suite.addBatch
         s.mergeDomain(_.range(100))
         s
 
-      "can call the functions": (s) ->
-        s.range()
-        s.minDomain()
-        s.maxDomain()
-        s.minRange()
-        s.maxRange()
+      "scale is still ordinal": (s) ->
+        assert.equal s.type, gg.Schema.ordinal
+      "scale has discrete domain": (s) ->
+        assert.arrayEqual  s.domain(), _.range(100)
 
-
+  ###
 
   "default scales":
     topic: ->
@@ -181,7 +169,8 @@ suite.addBatch
 
           "has domain [0, 499]": (scales) ->
             assert.arrayEqual scales.scale('a', gg.Schema.unknown).domain(), [0, 499]
-  ###
+
+
   "color scales factory":
     topic:
       gg.ScaleConfig.fromSpec
@@ -245,7 +234,7 @@ suite.addBatch
       console.log newTable.raw()
       origTable = scales.apply newTable
       console.log origTable.raw()
-
+###
 
 
 

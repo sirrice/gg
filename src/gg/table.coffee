@@ -21,6 +21,7 @@
 class gg.Table
   @reEvalJS = /^{.*}$/
   @reVariable = /^[a-zA-Z]\w*$/
+  @reNestedAttr = /^[a-zA-Z]+\.[a-zA-Z]+$/
 
   type: (colname) ->
       val = @get(0, colname)
@@ -64,10 +65,60 @@ class gg.Table
     schema = new gg.Schema
     row = if rows.length > 0 then rows[0] else {}
     row = row.raw() if _.isSubclass row, gg.Row
-    _.each row, (v,k) ->
+    console.log row
+    _.each row, (v,k) =>
       type = gg.Schema.type v
+      vtype = type.type
+      vschema =  type.schema
+      #console.log "gg.Table.inferSchema #{k}: #{vtype}"
+
+      type = @findOrdinals rows, k, type
       schema.addColumn k, type.type, type.schema
     schema
+
+  @findOrdinals: (rows, key, type) ->
+    switch type.type
+      when gg.Schema.numeric
+        vals = _.map rows, (row) ->
+          if _.isSubclass row, gg.Row
+            row.get key
+          else
+            row[key]
+        console.log "isOrdinal (val): #{key}\t#{vals[0...20]}"
+        if gg.Table.isOrdinal vals
+          type.type = gg.Schema.ordinal
+
+      when gg.Schema.array, gg.Schema.nested
+        schema = new gg.Schema
+        schema.addColumn key, type.type, type.schema
+        console.log "isOrdinal schema: #{schema.toString()}\t#{schema.attrs()}"
+
+        _.each schema.attrs(), (attr) ->
+          if schema.isNumeric attr
+            vals = _.map rows, (row) ->
+              row = row.raw() if _.isSubclass row, gg.Row
+              schema.extract row, attr
+            vals = _.flatten vals
+            console.log "isOrdinal (arr): #{key}.#{attr}\t#{JSON.stringify vals[0...20]}"
+            console.log rows[0]
+
+            if gg.Table.isOrdinal vals
+              type.schema.setType attr, gg.Schema.ordinal
+    type
+
+
+
+
+
+  @isOrdinal: (vals) ->
+    counter = {}
+    for v in vals
+      counter[v] = true
+      if _.size(counter) > 10
+        break
+    _.size(counter) < 5
+
+
 
 
 
@@ -165,6 +216,8 @@ class gg.RowTable extends gg.Table
     @each (row) -> table.merge row.flatten()
     table
 
+  # 1 to 1 mapping function
+  #
   # @param colname either a string, or an object of {key: xform} pairs
   # @param {Function|boolean} funcOrUpdate
   #        if colname is a string, funcOrUpdate is a transformation
@@ -182,11 +235,10 @@ class gg.RowTable extends gg.Table
         mapping = {}
         mapping[colname] = funcOrUpdate
 
-    funcs = {}
-    strings = {}
+
     if update
       @each (row) =>
-        newrow = @transformRow row, mapping, funcs, strings
+        newrow = @transformRow row, mapping
         row.merge newrow
       @reloadSchema()
       @
@@ -196,48 +248,27 @@ class gg.RowTable extends gg.Table
       new gg.RowTable newrows
 
   # constructs a new object and populates it using mapping specs
-  transformRow: (row, mapping, funcs={}, strings={}) ->
+  transformRow: (row, mapping) ->
     ret = {}
-    map = (oldattr, newattr) =>
-      if _.isFunction oldattr
-        oldattr row
-      else if row.hasAttr oldattr
-        row.get oldattr
-      else if newattr of strings
-        strings[newattr]
-      else if newattr isnt 'text' and gg.Table.reEvalJS.test oldattr
-        #
-        # XXX: WARNING!! This entire functionality is really dangerous and
-        #      can easily be abused!!  WARNING!
-        #
-        unless newattr of funcs
-          userCode = oldattr[1...oldattr.length-1]
-          variableF = (key) =>
-            # if the key is a well-specified variable name
-            if gg.Table.reVariable.test(key)
-              "var #{key} = row.get('#{key}');"
-            else
-              null
-
-          cmds = _.compact _.map(row.attrs(), variableF)
-          cmds.push "return #{userCode};"
-          cmd = cmds.join('')
-          fcmd = "var __func__ = function(row) {#{cmd}}"
-          console.log fcmd
-          eval fcmd
-          funcs[newattr] = __func__
-        funcs[newattr](row)
-      else
-        # for constrants (e.g., date, number)
-        oldattr
-
-
-    _.each mapping, (oldattr, newattr) =>
-      ret[newattr] = try
-        map oldattr, newattr
+    _.each mapping, (f, newattr) =>
+      newvalue = try
+        f row
       catch error
         console.log error
         throw error
+
+      if _.isArray newvalue
+        if gg.Table.reNestedAttr.test newattr
+          [attr1, attr2] = newattr.split(".")
+          ret[attr1] = {} unless attr1 of ret
+          _.each newvalue, (el, idx) ->
+            if idx >= ret[attr1].length
+              ret[attr1].push {}
+            ret[attr1][attr2] = el
+        else
+          throw Error("mapping arrays need to be nested")
+      else
+        ret[newattr] = newvalue
     new gg.Row ret
 
 
@@ -247,7 +278,7 @@ class gg.RowTable extends gg.Table
   filter: (f) ->
     newrows = []
     @each (row, idx) -> newrows.push row if f(row, idx)
-    new gg.RowTable newrows, @schema
+    new gg.RowTable @schema, newrows
 
 
   # transforms the values of column(s) on a per-column basis

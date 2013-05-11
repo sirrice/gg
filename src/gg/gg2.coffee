@@ -1,6 +1,7 @@
 "use strict"
 
 events = require 'events'
+science = require 'science'
 _ = require 'underscore'
 
 # Need to do this because underscore is an asshole and sets the exports

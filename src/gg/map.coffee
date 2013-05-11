@@ -1,7 +1,7 @@
 #<< gg/wf/node
 
 #
-# A mapping XForm.  A mapping is defined with a dictionary of
+# A 1-to-1 mapping XForm.  A mapping is defined with a dictionary of
 #
 #   target-col-name: map-spec
 #
@@ -12,6 +12,9 @@
 # 3) function: (tuple) -> object
 # 4) ecmascript expression: will use eval() to transform into function
 #
+# under the covers, the map-specs are compiled into functions.
+#
+#
 class gg.Mapper extends gg.XForm
   constructor: (@g, @spec) ->
     super @g, @spec
@@ -20,21 +23,36 @@ class gg.Mapper extends gg.XForm
     @type = "mapper"
     @name = findGood [@spec.name, "mapper-#{@id}"]
 
+  @fromSpec: (g, spec) ->
+    spec = _.clone spec
+    attrs = ["mapping", "map", "aes", "aesthetic", "aesthetics"]
+    mapping = findGoodAttr spec, attrs, null
+    return null unless mapping?
+
+    aesthetics = _.keys mapping
+
+    # aes should be the mapping
+    spec.aes = mapping
+    inverse = {}
+    _.each mapping, (val, key) -> inverse[val] = key
+
+    new gg.Mapper g, spec
+
+
   parseSpec: ->
-    @mapping = findGood [@spec.mapping, @spec.map, @spec.aes, {}]
+    @mapping = @spec.aes
+    @aes = @aesthetics = _.keys @mapping
+    @inverse = @spec.inverse or {}
     console.log "mapper spec: #{JSON.stringify @mapping}"
 
-    @aes = @aesthetics = _.keys @mapping
-    @spec.aes = @mapping
-    @inverse = {}
-    _.each @mapping, (val, key) => @inverse[val] = key
     super
 
   compute: (table, env, node) ->
     console.log "transform: #{JSON.stringify @mapping}"
     console.log "table:     #{JSON.stringify table.colNames()}"
     table = table.clone()
-    table = table.transform @mapping, yes
+    functions = _.mappingToFunctions table, @mapping
+    table = table.transform functions, yes
     table
 
   invertColName: (outColName) -> @inverse[outColName]

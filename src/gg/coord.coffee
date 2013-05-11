@@ -46,13 +46,24 @@ class gg.IdentityCoordinate extends gg.Coordinate
   @aliases = ["identity"]
 
   map: (table, env) ->
+    schema = table.schema
     scales = @scales table, env
-    inverted = scales.invert table, gg.Scale.ys
-    type = table.schema.type 'y'
-    yRange = scales.scale('y', type).range()
+    posMapping = {}
+    _.each gg.Scale.ys, (y) ->
+      posMapping[y] = 'y' if table.contains y
+    console.log "gg.IdentityCoordinate\t#{_.keys(posMapping)}"
+    inverted = scales.invert table, _.keys(posMapping), posMapping
+    console.log "gg.IdentityCoordinate y0inverted: #{inverted.getColumn("y0")[0...10]}" if inverted.schema.contains 'y0'
+    console.log inverted.raw()
+    yScale = scales.scale 'y', table.schema.type('y')# gg.Schema.numeric
+    yRange = yScale.range()
+    console.log "gg.IdentityCoordinate yrange: #{yRange}"
     yRange = [yRange[1], yRange[0]]
-    scales.scale('y', type).range(yRange)
-    table = scales.apply inverted, gg.Scale.ys
+    yScale.range(yRange)
+    table = scales.apply inverted, gg.Scale.ys, posMapping
+    console.log "gg.IdentityCoordinate y0applied: #{table.getColumn("y0")[0...10]}"
+    console.log table.raw()
+    table.schema = schema
     table
 
 class gg.YFlipCoordinate extends gg.Coordinate
@@ -66,18 +77,23 @@ class gg.XFlipCoordinate extends gg.Coordinate
   @aliases = ["xflip"]
 
   map: (table, env) ->
+    console.log "gg.XFlipCoordinate"
     scales = @scales table, env
+    aessTypes = {}
+    _.each gg.Scale.xys, (xy) -> aessTypes[xy] = gg.Schema.numeric
     inverted = scales.invert table, gg.Scale.xys
     xtype = table.schema.type 'x'
     ytype = table.schema.type 'y'
 
-    xRange = scales.scale('x', xtype).range()
+    xScale = scales.scale 'x', xtype
+    xRange = xScale.range()
     xRange = [xRange[1], xRange[0]]
-    scales.scale('x', xtype).range(xRange)
+    xScale.range xRange
 
-    yRange = scales.scale('y', ytype).range()
+    yScale = scales.scale 'y', ytype
+    yRange = yScale.range()
     yRange = [yRange[1], yRange[0]]
-    scales.scale('y', ytype).range(yRange)
+    yScale.range yRange
 
     @log "map: xrange: #{xRange}\tyrange: #{yRange}"
 

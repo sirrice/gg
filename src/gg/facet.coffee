@@ -489,6 +489,9 @@ class gg.Facets
 
   # train fixed scales (every pane has the same x,y domains)
   trainScales: ->
+    console.log "gg.Facet.trainScales: number of scales: #{@g.scales.scalesList.length}"
+    console.log "gg.Facet.trainScales: first scales: #{@g.scales.scalesList[0].clone().toString()}" if @g.scales.scalesList.length > 0
+
     @masterScales = gg.ScalesSet.merge @g.scales.scalesList
     @expandDomains @masterScales
 

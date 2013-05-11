@@ -62,6 +62,7 @@ build = (callback) ->
     commands.push 'cp -r src/html build/'
     commands.push 'cp -r src/font build/'
     commands.push 'cp -r src/js build/'
+    commands.push 'cp -r src/data build/'
     # TODO: consider optipng
     commands.push 'cp -r src/images build/'
 
@@ -126,10 +127,13 @@ vendor = (callback) ->
     ['http://davidbau.com/encode/seedrandom.js', 'vendor/js/seedrandom.js'],
 
     # rasterize for rendering html pages
-    ["https://raw.github.com/ariya/phantomjs/master/examples/rasterize.js", "vendor/js/rasterize.js"]
+    ["https://raw.github.com/ariya/phantomjs/master/examples/rasterize.js", "vendor/js/rasterize.js"],
 
     # Require.js
     #['http://requirejs.org/docs/release/2.1.5/minified/require.js', 'vendor/js/require.js'],
+
+    # science
+    ["https://raw.github.com/jasondavies/science.js/master/science.v1.js", "vendor/js/science.js"]
 
   ]
 

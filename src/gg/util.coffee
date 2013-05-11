@@ -1,5 +1,7 @@
 _ = require 'underscore'
 
+
+
 @cross = (arr1, arr2) ->
     ret = []
     _.map arr1, (a1, i) ->
@@ -173,6 +175,47 @@ class gg.Util
 
   @repeat: (n, val) -> _.times(n, (->val))
 
+  @mappingToFunctions: (table, mapping) ->
+    ret = {}
+    _.each mapping, (val, key) ->
+      ret[key] = _.mapToFunction table, key, val
+    ret
+
+  @mapToFunction: (table, key, val) ->
+    if _.isFunction val
+      val
+    else if table.contains val
+      (row) -> row.get val
+    else if _.isObject val
+      funcs = _.mappingToFunctions table, val
+      (row) ->
+        ret = {}
+        _.each funcs, (f, subkey) ->
+          ret[subkey] = f row
+        return ret
+    else if key isnt 'text' and gg.Table.reEvalJS.test val
+      userCode = val[1...val.length-1]
+      varFunc = (k) ->
+        if gg.Table.reVariable.test k
+          "var #{k} = row.get('#{k}');"
+
+      cmds = _.compact _.map(table.schema.attrs(), varFunc)
+      cmds.push "return #{userCode};"
+      cmd = cmds.join ''
+      fcmd = "var __func__ = function(row) {#{cmd}}"
+      console.log fcmd
+      eval fcmd
+      __func__
+    else
+      # for constants (e.g., date, number)
+      console.log "mapToFunction: constant funct for : #{key}:#{val}"
+      (row) -> val
+
+
+
+
+
+
 
 findGood = gg.Util.findGood
 findGoodAttr = gg.Util.findGoodAttr
@@ -188,6 +231,8 @@ _.mixin
   fontsize: gg.Util.fontSize
   subSvg: gg.Util.subSvg
   repeat: gg.Util.repeat
+  mapToFunction: gg.Util.mapToFunction
+  mappingToFunctions: gg.Util.mappingToFunctions
 
 
 

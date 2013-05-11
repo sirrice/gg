@@ -7,13 +7,51 @@
 <script src="../vendor/js/underscore.min.js"></script>
 <script src="../js/gg.js"></script>
 <script src="../js/data.js"></script>
+<script src="../js/prettify.js"></script>
 <script src="../js/newexamples.js"></script>
 </head>
-<body>
-<h1>The Grammar of Graphics</h1>
+<body style="width:100%">
+  <!--<h1>The Grammar of Graphics</h1>-->
 
 
-<div id='examples'></div>
+  <style>
+    body {
+      font-size: 13pt;
+    }
+    table {
+      border-collapse: collapse;
+    }
+    td {
+      border: 1px solid gray;
+      padding: 5px;
+    }
+  </style>
+
+
+<div id="querydiv" style="float: left; width: 28em;">
+
+  <div id="controls" style=" margin-top: 10px; margin-bottom: 10px; font-size: 15pt;"></div>
+  <div>
+    <textarea rows=20 cols=35 id="query" style="font-size: 15pt;"> </textarea>
+  </div>
+  <button id="submit">Compile &amp; Render</button>
+  <div style="font-size: 5pt"> "opts": { "title": "baller plot!" }  </div>
+  <div style="font-size: 5pt"> "facets": { "x": "f" }  </div>
+  <div style="font-size: 5pt"> "coord": "yflip"  </div>
+
+  <h2>Data</h2>
+  <div>
+    <table style="font-size:15pt;" id="sample_data">
+      <tr>
+        <td>d (0-100)</td><td> e (d + noise)</td><td> g (0-3)</td><td> f (0-3)</td><td> t (0-3)</td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+
+
+<div id='examples' style="float:left; width: 50%; min-width: 800;"></div>
 
 </body>
 </html>

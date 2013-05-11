@@ -9,7 +9,13 @@ class gg.Layers
       _.each @spec, (layerspec) => @addLayer layerspec
 
     # @return [ [node,...], ...] a list of nodes for each layer
-    compile: -> _.map @layers, (l) -> l.compile()
+    compile: ->
+      _.map @layers, (l) ->
+        nodes = l.compile()
+        console.log "gg.Layers.compile layer #{l.layerIdx}"
+        _.each nodes, (node) ->
+          console.log "gg.Layers.compile node: #{node.name}"
+        nodes
 
     getLayer: (layerIdx) ->
       if layerIdx >= @layers.length
@@ -121,13 +127,14 @@ class gg.LayerShorthand extends gg.Layer
     mapSpec  = findGoodAttr spec, ['aes', 'aesthetic', 'mapping'], {}
     @mapSpec = {aes: mapSpec, name: "map-shorthand"}
     @coordSpec = @extractSpec "coord"
+    @coordSpec.name = "coord-#{@layerIdx}"
     @labelSpec = {key: "layer", val: @layerIdx}
 
 
     @geom = gg.Geom.fromSpec @, @geomSpec
     @stat = gg.Stat.fromSpec @, @statSpec
     @pos = gg.Position.fromSpec @, @posSpec
-    @map = new gg.Mapper @g, @mapSpec
+    @map = gg.Mapper.fromSpec @g, @mapSpec
     @labelNode = new gg.wf.Label @labelSpec
     @coord = gg.Coordinate.fromSpec @, @coordSpec
 
@@ -135,7 +142,7 @@ class gg.LayerShorthand extends gg.Layer
     console.log @stat.constructor.name
     console.log @geom.constructor.name
     console.log @pos.constructor.name
-    console.log @map.constructor.name
+    console.log @map.constructor.name if @map?
 
 
     @pos = null if _.isSubclass @pos, gg.IdentityPosition
@@ -185,6 +192,7 @@ class gg.LayerShorthand extends gg.Layer
 
   compile: ->
     console.log "layer.compile called"
+    debugaess = ['x', 'r', 'y', 'y0', 'y1', "stroke", "stroke-width"]
     nodes = []
 
     # pre-stats transforms
@@ -194,18 +202,15 @@ class gg.LayerShorthand extends gg.Layer
 
 
     # Statistics transforms
-    nodes.push @g.scales.trainDataNode {name: "scales:prestats"}
+    nodes.push @g.scales.prestats
     nodes.push new gg.wf.Scales
-      name: "pre-stat"
+      name: "pre-stat-#{@layerIdx}"
       scales: @g.scales
     nodes.push @stat
-    nodes.push new gg.wf.Scales
-      name: "post-stat"
-      scales: @g.scales
     nodes.push new gg.wf.Stdout
-      name: "post-stat"
+      name: "post-stat-#{@layerIdx}"
       n: 5
-      aess: ['x', 'x0', 'x1', 'y']
+      aess: debugaess
 
 
     # facet join -- add facetX/Y columns to table
@@ -219,12 +224,17 @@ class gg.LayerShorthand extends gg.Layer
     # scales: train scales after the final aesthetic mapping (inputs are data values)
     #nodes.push new gg.wf.Stdout {name: "pre-geom-map", n: 1}
     nodes.push @geom.map
-    #nodes.push new gg.wf.Stdout {name: "post-geom-map", n: 1}
-    nodes.push @g.scales.trainDataNode {name: "scales:postgeommap"}
     nodes.push new gg.wf.Stdout
-      name: "post-geom"
+      name: "pre-geomtrain-#{@layerIdx}"
       n: 5
-      aess: ['x', 'x0', 'fill', 'y', "fill-opacity"]
+      aess: debugaess
+
+
+    #nodes.push new gg.wf.Stdout {name: "post-geom-map", n: 1}
+    nodes.push @g.scales.postgeommap
+    nodes.push new gg.wf.Scales
+      name: "post-geommaptrain-#{@layerIdx}"
+      scales: @g.scales
 
     # Rendering
     # layout the overall graphic, allocate space for facets
@@ -238,29 +248,37 @@ class gg.LayerShorthand extends gg.Layer
     #nodes.push new gg.wf.Stdout {name: "pre-pixel", n: 1}
     nodes.push new gg.ScalesApply @,
       posMapping: @geom.posMapping()
+    nodes.push new gg.wf.Stdout
+      name: "post-scaleapply-#{@layerIdx}"
+      n: 5
+      aess: debugaess
+    nodes.push new gg.wf.Scales
+      name: "post-scaleapply-#{@layerIdx}"
+      scales: @g.scales
+
+
     #nodes.push new gg.wf.Stdout {name: "pre-reparam", n: 5}
     nodes.push @geom.reparam
     #nodes.push new gg.wf.Stdout {name: "post-reparam", n: 5}
     nodes.push @pos
     nodes.push new gg.wf.Stdout
-      name: "post-position"
+      name: "post-position-#{@layerIdx}"
       n: 5
-      aess: ['x', 'x0', 'fill',  'y', "fill-opacity"]
+      aess: debugaess
 
-    # facets: retrain scales after positioning (jitter) (inputs are pixel values)
-    # this isn't working because reparam creates an array column
-    # that isn't supported here
+    # scales: retrain scales after positioning (jitter)
+    #         (inputs are pixel values)
     if @pos?
       nodes.push new gg.wf.Scales
         name: "prepixeltrain scale"
         scales: @g.scales
-      nodes.push @g.scales.trainPixelNode
-        name: "scales:pixel"
-        posMapping: @geom.posMapping()
+
+      nodes.push @g.scales.trainpixel
+
       nodes.push new gg.wf.Stdout
         name: "post-pixeltrain"
         n: 5
-        aess: ['x', 'x0', 'fill', 'y']
+        aess: debugaess
 
 
 
@@ -269,9 +287,9 @@ class gg.LayerShorthand extends gg.Layer
 
     #nodes.push @geom.reparam #if @geom.unparam?
     nodes.push new gg.wf.Stdout
-      name: "post-coord"
+      name: "post-coord-#{@layerIdx}"
       n: 5
-      aess: ['x', 'x0', 'fill', 'y']
+      aess: debugaess
 
 
 

@@ -41,10 +41,10 @@ class gg.Graphic
       multicast = new gg.wf.Multicast
       wf.node multicast
       _.each @layers.compile(), (nodes) ->
-          prev = multicast
-          _.each nodes, (node) ->
-              wf.connect prev, node
-              prev = node
+        prev = multicast
+        _.each nodes, (node) ->
+            wf.connect prev, node
+            prev = node
 
       wf
 

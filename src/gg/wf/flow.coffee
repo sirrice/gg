@@ -255,13 +255,19 @@ class gg.wf.Runner extends events.EventEmitter
         for nextNode in _.compact(_.flatten cur.children)
           queue.push nextNode unless nextNode of seen
       else
+        filled = _.map cur.inputs, (v) -> v?
         console.log "not ready #{cur.name} id: #{cur.id}.  #{cur.inputs.length}, #{cur.children.length}"
         if firstUnready is cur
-          console.log "#{cur.name} inputs: #{cur.inputs.length}"
-          console.log "#{cur.name} parents: #{_.map(cur.parents, (p)->p.name).join(',')}"
-          console.log "#{cur.name} children: #{_.map(cur.children, (p)->p.name).join(',')}"
+          if nprocessed == 0
+            console.log "#{cur.name} inputs buffer: #{cur.inputs.length}"
+            console.log "#{cur.name} ninputs filled: #{filled}"
+            console.log "#{cur.name} parents: #{_.map(cur.parents, (p)->p.name).join(',')}"
+            console.log "#{cur.name} children: #{_.map(cur.children, (p)->p.name).join(',')}"
 
-          throw Error("could not make progress.  Stopping on #{cur.name}")
+            throw Error("could not make progress.  Stopping on #{cur.name}")
+          else
+            firstUnready = null
+
         unless firstUnready?
             firstUnready = cur
             nprocessed = 0

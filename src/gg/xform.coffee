@@ -47,6 +47,12 @@ class gg.XForm
   constructor: (@g, @spec={}) ->
     #unless _.isSubclass @g, gg.Graphic
     #  throw Error("Xform passed non-graphic as first argument")
+
+    # before executing the operator, we will add the table, environment and node
+    # objects to this state variable, so they can be accessed from the compute
+    # function
+    #
+    # The state variable is released after the operator exits
     @state = {}
 
     @params = {}
@@ -100,6 +106,8 @@ class gg.XForm
     info = @paneInfo table, env
     @g.scales.scales(info.facetX, info.facetY, info.layer)
 
+  # parameter accessor
+  #
   param: (table, env, attr, defaultVal=null) ->
     table = @state.table unless table?
     env = @state.env unless env
@@ -128,6 +136,22 @@ class gg.XForm
     if missing.length > 0
       throw Error("#{@name}: input schema did not contain #{missing.join(",")}")
 
+  # remove rows where a required attribute is null/nan/undefined
+  filterInput: (table, env) ->
+    iSchema = @param table, env, "inputSchema"
+    scales = @scales table, env
+    info = @paneInfo table, env
+    scales = @g.scales.facetScales info.facetX, info.facetY
+    console.log scales
+    table.filter (row) ->
+      _.every iSchema, (attr) ->
+        val = row.get(attr)
+        isDefined = not(
+          _.isNaN(val) or _.isNull(val) or _.isUndefined(val))
+        #scale = scales.scale(attr, table.schema.type attr)
+        isDefined #and scale.valid(val)
+
+
   addDefaults: (table, env) ->
     defaults = @param table, env, "defaults"
     console.log "adding defaults of #{JSON.stringify defaults}"
@@ -146,15 +170,19 @@ class gg.XForm
     spec = _.clone @spec
     _compute = (table, env, node) =>
       table = table.cloneDeep()
-      @_state =
+      @state =
         table: table
         env: env
         node: node
       @addDefaults table, env
       @validateInput table, env
+      table = @filterInput table, env
       @compute table, env, node
     spec.f = _compute
-    [new gg.wf.Exec spec]
+    node = new gg.wf.Exec spec
+    node.on "done", () =>
+      @state = {}
+    [node]
 
   @fromSpec: (spec) ->
       xformName = findGood [spec.xform, "identity"]

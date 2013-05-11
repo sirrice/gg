@@ -14,7 +14,8 @@ toast
       'vendor/js/jquery.min.js',
       'vendor/js/json2.js',
       'vendor/js/underscore.min.js',
-      'vendor/js/seedrandom.js'
+      'vendor/js/seedrandom.js',
+      'vendor/js/science.js'
   ]
 
 

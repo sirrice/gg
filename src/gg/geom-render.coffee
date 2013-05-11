@@ -76,7 +76,7 @@ class gg.GeomRenderPointSvg extends gg.GeomRender
   @aliases = ["point", "pt"]
 
   defaults: (table, env) ->
-    r: 2
+    r: 5
     "fill-opacity": "0.5"
     fill: "steelblue"
     stroke: "steelblue"
@@ -203,7 +203,7 @@ class gg.GeomRenderLineSvg extends gg.GeomRender
   @aliases = "line"
 
   defaults: (table) ->
-    "stroke-width": 1
+    "stroke-width": 1.5
     "stroke-opacity": 0.7
     stroke: "black"
     fill: "none"
@@ -214,6 +214,7 @@ class gg.GeomRenderLineSvg extends gg.GeomRender
   render: (table, env) ->
     svg = @svg table, env
     data = table.asArray()
+    console.log "table has #{table.nrows()} rows"
 
     # attributes should be imported in bulk using
     # .attr( {} ) where {} is @attrs
@@ -229,13 +230,30 @@ class gg.GeomRenderLineSvg extends gg.GeomRender
         #.interpolate('basis')
 
 
-    @applyAttrs enterLines,
-      class: "geom"
-      d: (d) -> liner(d.get 'pts')
+    cssNormal =
       "stroke": (t) -> t.get("stroke")
       "stroke-width": (t) -> t.get("stroke-width")
       "stroke-opacity": (t) -> t.get("stroke-opacity")
       "fill": "none"
+
+    cssOver =
+      stroke: (t) -> d3.rgb(t.get("fill")).darker(2)
+      "stroke-width": (t) -> t.get('stroke-width') + 1
+      "stroke-opacity": 1
+
+    @applyAttrs enterLines,
+      class: "geom"
+      d: (d) -> liner(d.get 'pts')
+    @applyAttrs enterLines,
+      cssNormal
+
+
+    _this = @
+    lines
+      .on("mouseover", (d, idx) ->
+        _this.applyAttrs d3.select(@), cssOver)
+      .on("mouseout", (d, idx) ->
+        _this.applyAttrs d3.select(@), cssNormal)
 
 
     exit.remove()
@@ -310,7 +328,7 @@ class gg.GeomRenderBoxplotSvg extends gg.GeomRender
     "fill-opacity": 0.5
 
   inputSchema: (table, env) ->
-    ['x', 'x0', 'x1', 'q1', 'median', 'q3', 'lower', 'upper', 'outliers', 'min', 'max']
+    ['x','q1', 'median', 'q3', 'lower', 'upper', 'outliers', 'min', 'max']
 
   render: (table, env, node) ->
     svg = @svg table, env
@@ -329,11 +347,12 @@ class gg.GeomRenderBoxplotSvg extends gg.GeomRender
       .attr("class", "boxplot")
     #enterCircles = enter.append("circle")
 
-
     y = (t) -> Math.min(t.get('y0'), t.get('y1'))
     height = (t) -> Math.abs(t.get('y1') - t.get('y0'))
     width = (t) -> t.get('x1') - t.get('x0')
     width = (t) -> t.get('width')
+    x0 = (t) -> t.get('x') - t.get('width') / 2.0
+    x1 = (t) -> t.get('x') + t.get('width') / 2.0
 
 
 
@@ -341,15 +360,15 @@ class gg.GeomRenderBoxplotSvg extends gg.GeomRender
     # iqr
     iqr = @applyAttrs enter.append('rect'),
       class: "boxplot iqr"
-      x: (t) -> t.get 'x0'
+      x: x0
       y: (t) -> Math.min(t.get('q3'), t.get('q1'))
       width: width
       height: (t) -> Math.abs(t.get('q1') - t.get('q3'))
 
     median = @applyAttrs enter.append('line'),
       class: "boxplot median"
-      x1: (t) -> t.get 'x0'
-      x2: (t) -> t.get 'x1'
+      x1: x0
+      x2: x1
       y1: (t) -> t.get 'median'
       y2: (t) -> t.get 'median'
 
@@ -386,6 +405,23 @@ class gg.GeomRenderBoxplotSvg extends gg.GeomRender
       x2: (t) -> t.get('x')+t.get('width')*0.2
       y1: (t) -> t.get 'lower'
       y2: (t) -> t.get 'lower'
+
+    circles = enter.selectAll("circle")
+      .data((d) -> _.map d.get('outlier'), (outlier) ->
+        {y: outlier, x: d.get('x')})
+    enterCircles = circles.enter().append("circle")
+
+    @applyAttrs enterCircles,
+      class: "boxplot outlier"
+      cx: (t) -> t.x
+      cy: (t) -> t.y
+      #"fill-opacity": (t) -> t.get('fill-opacity')
+      #"stroke-opacity": (t) -> t.get("stroke-opacity")
+      #fill: (t) -> t.get('fill')
+      #r: (t) -> t.get('r')
+
+
+
 
     gs = [enter]# [iqr, median, upperw, uppert, lowerw, lowert]
     _.each gs, (g) =>

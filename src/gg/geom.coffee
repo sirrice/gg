@@ -50,7 +50,7 @@ class gg.Geom # not an XForm!! #extends gg.XForm
   parseSpec: ->
     @render = gg.GeomRender.fromSpec @layer, @spec.type
     console.log "#####: #{JSON.stringify @spec}"
-    @map = new gg.Mapper @g, @spec
+    @map = gg.Mapper.fromSpec @g, @spec
 
   name: -> @constructor.name.toLowerCase()
   posMapping: -> {}
@@ -102,7 +102,7 @@ class gg.Point extends gg.Geom
     super
     reparamSpec =
       name: "point-reparam"
-      defaults: { r: 1 }
+      defaults: { r: 5 }
       inputSchema: ['x', 'y']
       map:
         x: 'x'
@@ -113,18 +113,9 @@ class gg.Point extends gg.Geom
         y0: 'y'
         y1: 'y'
 
-    @reparam = new gg.Mapper @g, reparamSpec
+    @reparam = gg.Mapper.fromSpec @g, reparamSpec
     @render = new gg.GeomRenderPointSvg @layer, {}
 
-
-class gg.Line extends gg.Geom
-  @aliases: "line"
-
-  parseSpec: ->
-    super
-    @reparam = new gg.ReparamLine @g, {name: "line-reparam"}
-    @render = new gg.GeomRenderLineSvg @layer, {}
-    @unparam = new gg.UnparamLine @g, {name: "line-unparam"}
 
 class gg.ReparamLine extends gg.XForm
   constructor: (@g, @spec) ->
@@ -142,8 +133,7 @@ class gg.ReparamLine extends gg.XForm
 
   compute: (table, env, node) ->
     scales = @scales table, env
-    type = table.schema.type('y')
-    y0 = scales.scale('y', type).minRange()
+    y0 = scales.scale('y', gg.Schema.numeric).minRange()
     console.log "gg.ReparamLine.compute: y0 set to #{y0}"
     table.each (row) ->
       row.set('y1', row.get('y')) unless row.hasAttr('y1')
@@ -183,6 +173,24 @@ class gg.Step extends gg.Geom
 class gg.Path extends gg.Geom
   @aliases: "path"
 
+class gg.Line extends gg.Geom
+  @aliases: "line"
+
+  parseSpec: ->
+    super
+    @reparam = new gg.ReparamLine @g, {name: "line-reparam"}
+    @render = new gg.GeomRenderLineSvg @layer, {}
+    @unparam = new gg.UnparamLine @g, {name: "line-unparam"}
+
+  posMapping: ->
+    y0: 'y'
+    y1: 'y'
+    x0: 'x'
+    x1: 'x'
+    width: 'x'
+
+
+
 class gg.Area extends gg.Geom
   @aliases: "area"
 
@@ -192,6 +200,14 @@ class gg.Area extends gg.Geom
     @render = new gg.GeomRenderAreaSvg @layer, {}
     @unparam = new gg.UnparamLine @g, {name: "area-unparam"}
 
+  posMapping: ->
+    y0: 'y'
+    y1: 'y'
+    x0: 'x'
+    x1: 'x'
+    width: 'x'
+
+
 
 class gg.Interval extends gg.Geom
   @aliases: ["interval", "rect"]
@@ -200,6 +216,13 @@ class gg.Interval extends gg.Geom
 
     @reparam = new gg.ReparamInterval @g, {name: "interval-reparam"}
     @render = new gg.GeomRenderRectSvg @layer, {}
+
+  posMapping: ->
+    y0: 'y'
+    y1: 'y'
+    x0: 'x'
+    x1: 'x'
+    width: 'x'
 
 
 class gg.ReparamInterval extends gg.XForm
@@ -212,29 +235,30 @@ class gg.ReparamInterval extends gg.XForm
 
   compute: (table, env, node) ->
     scales = @scales table, env
-    type = table.schema.type 'y'
-    yscale = scales.scale 'y', type
+    yscale = scales.scale 'y', gg.Schema.numeric
 
     # XXX: assume xs is numerical!!
     xs = _.uniq(table.getColumn("x")).sort (a,b)->a-b
     diffs = _.map _.range(xs.length-1), (idx) ->
       xs[idx+1]-xs[idx]
     mindiff = _.min diffs or 1
-    width = mindiff * 0.8
+    width = Math.max(1,mindiff * 0.8)
     minY = yscale.minDomain()
     getHeight = (row) -> yscale.scale(Math.abs(yscale.invert(row.get('y')) - minY))
 
 
-    table.transform {
-        x: 'x'
-        y: 'y'
-        r: 'r'
-        x0: (row) -> row.get('x') - width/2.0
-        x1: (row) -> row.get('x') + width/2.0
-        y0: (row) -> Math.min(yscale.scale(minY), row.get('y'))
-        y1: (row) -> Math.max(yscale.scale(minY), row.get('y'))
-        width: width
-    }, yes
+    mapping =
+      x: 'x'
+      y: 'y'
+      r: 'r'
+      x0: (row) -> row.get('x') - width/2.0
+      x1: (row) -> row.get('x') + width/2.0
+      y0: (row) -> Math.min(yscale.scale(minY), row.get('y'))
+      y1: (row) -> Math.max(yscale.scale(minY), row.get('y'))
+      width: width
+
+    mapping = _.mappingToFunctions table, mapping
+    table.transform mapping, yes
     table
 
 
@@ -260,13 +284,15 @@ class gg.Boxplot extends gg.Geom
   posMapping: ->
     ys = ['q1', 'median', 'q3', 'lower', 'upper',
       'min', 'max', 'lower', 'upper', 'outlier']
-    xs = ['x', 'x0', 'x1']
+    xs = ['x']
     map = {}
     _.each ys, (y) -> map[y] = 'y'
     _.each xs, (x) -> map[x] = 'x'
     map
 
 
+# reparameterization needs to separate the original data
+# from the derived data, and the bounding box data
 class gg.ReparamBoxplot extends gg.XForm
   defaults: ->
     x: 1
@@ -278,14 +304,13 @@ class gg.ReparamBoxplot extends gg.XForm
 
   # outliers is an array with schema {outlier:}
   outputSchema: ->
-    ['x', 'x0', 'x1', 'y0', 'width', 'y1',
+    ['x', 'y0', 'y1', 'width',
       'q1', 'median', 'q3', 'lower', 'upper',
       'outliers', 'min', 'max']
 
   compute: (table, env, node) ->
     scales = @scales table, env
-    type = table.schema.type 'y'
-    yscale = scales.scale 'y', type
+    yscale = scales.scale 'y', gg.Schema.numeric
 
     # XXX: currently assumes xs is numerical!!
     #      xs should always be pixel values (numerical)
@@ -297,16 +322,16 @@ class gg.ReparamBoxplot extends gg.XForm
     width = mindiff * 0.8
     width = Math.min width, 40
 
-    table.transform {
-        x0: (row) -> row.get('x') - width/2.0
-        x1: (row) -> row.get('x') + width/2.0
+    mapping = {
         y0: 'min'
         y1: 'max'
         width: width
-    }, yes
+    }
+
+
+    mapping = _.mappingToFunctions table, mapping
+    table.transform mapping, yes
     table
-
-
 
 
 

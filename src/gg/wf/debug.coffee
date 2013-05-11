@@ -13,7 +13,10 @@ class gg.wf.Stdout extends gg.wf.Exec
     n = if @n? then @n else table.nrows()
     blockSize = Math.max(Math.floor(table.nrows() / n), 1)
     idx = 0
-    @log "Schema: #{table.colNames()}"
+    schema = table.schema
+    arr = _.map schema.attrs(), (attr) ->
+      "\t#{attr}(#{schema.type(attr)})"
+    @log "Schema: #{arr.join "\n"}"
     while idx < table.nrows()
       row = table.get(idx)
       row = row.project @aess if @aess?

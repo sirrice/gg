@@ -166,20 +166,24 @@ class gg.Scale
       }[aes] or gg.IdentityScale
 
     if type?
-      if _.isSubclass klass, gg.ColorScale
+      if klass.name is "ColorScale"
         unless type is gg.Schema.ordinal
           klass = gg.ColorScaleCont
-      else if _.isSubclass klass, gg.LinearScale
+      else if klass.name is "LinearScale"
         if type is gg.Schema.ordinal
           klass = gg.OrdinalScale
 
-    s = new klass {aes: aes}
+    console.log "gg.Scale defaultFor(#{aes}, #{type}) -> #{klass.name}"
+
+    s = new klass {aes: aes, type: type}
     s
 
   clone: ->
+    klass = @constructor
     spec = _.clone @spec
     spec.aes = @aes
-    ret = gg.Scale.fromSpec @spec
+    spec.type = @type
+    ret = new klass spec
     ret.d3Scale = @d3Scale.copy() if @d3Scale?
     ret
 
@@ -223,7 +227,11 @@ class gg.Scale
   #
 
   d3: -> @d3Scale
-  valid: (v) -> v?
+  valid: (v) ->
+    if @domainUpdated
+      @minDomain() <= v and v <= @maxDomain()
+    else
+      v?
   minDomain: -> @domain()[0]
   maxDomain: -> @domain()[1]
   resetDomain: ->
@@ -233,18 +241,40 @@ class gg.Scale
   maxRange: -> @range()[1]
   scale: (v) -> @d3Scale v
   invert: (v) -> @d3Scale.invert(v)
-  toString: () -> "#{@aes}.#{@id} (#{@type}): \t#{@domain()}\t#{@range()}"
+  toString: () -> "#{@aes}.#{@id} (#{@type},#{@constructor.name}): \t#{@domain()}\t#{@range()}"
 
 
 class gg.IdentityScale extends gg.Scale
   @aliases = "identity"
   constructor: () ->
-    @d3Scale = d3.scale.linear()
+    @d3Scale = null
     @type = gg.Schema.numeric
     super
 
+  clone: -> @
+
+  valid: -> true
+  defaultDomain: ->
+    console.log "warning, gg.IdentityScale has no domain"
+  mergeDomain: ->
+    console.log "warning, gg.IdentityScale has no domain"
+  domain: ->
+    console.log "warning, gg.IdentityScale has no domain"
+  minDomain: ->
+    console.log "warning, gg.IdentityScale has no domain"
+  maxDomain: ->
+    console.log "warning, gg.IdentityScale has no domain"
+  resetDomain: ->
+  range: ->
+    console.log "warning, gg.IdentityScale has no range"
+  minRange: ->
+    console.log "warning, gg.IdentityScale has no range"
+  maxRange: ->
+    console.log "warning, gg.IdentityScale has no range"
+
   scale: (v) -> v
   invert: (v) -> v
+  toString: () -> "#{@aes}.#{@id} (#{@type}): identity"
 
 
 

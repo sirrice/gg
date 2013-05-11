@@ -78,14 +78,17 @@ class gg.JitterPosition extends gg.Position
 
   compute: (table, env) ->
     scales = @scales table, env
-    xRange = scales.scale("x").range()
-    yRange = scales.scale("y").range()
-    xScale = (xRange[1] - xRange[0]) * @xScale
-    yScale = (yRange[1] - yRange[0]) * @yScale
+    schema = table.schema
+    map = {}
+    if schema.type('x') is gg.Schema.numeric
+      xRange = scales.scale("x", gg.Schema.numeric).range()
+      xScale = (xRange[1] - xRange[0]) * @xScale
+      map['x'] = (v) -> v + (0.5 - Math.random()) * xScale
+    if schema.type('y') is gg.Schema.numeric
+      yRange = scales.scale("y", gg.Schema.numeric).range()
+      yScale = (yRange[1] - yRange[0]) * @yScale
+      map['y'] = (v) -> v + (0.5 - Math.random()) * yScale
 
-    map =
-      x: (v) -> v + (0.5 - Math.random()) * xScale
-      y: (v) -> v + (0.5 - Math.random()) * yScale
     table.map map
     table
 
