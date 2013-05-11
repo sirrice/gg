@@ -1,0 +1,50 @@
+<ggplot2js!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>The Grammar of Graphics</title>
+<link rel="stylesheet" type="text/css" href="../css/gg.css"/>
+<script src="../vendor/js/underscore.min.js"></script>
+<script src="../js/gg.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/prettify.js"></script>
+<script src="../js/csv.js"></script>
+</head>
+<body style="width:100%">
+  <!--<h1>The Grammar of Graphics</h1>-->
+
+
+  <style>
+    body {
+      font-size: 13pt;
+    }
+    table {
+      border-collapse: collapse;
+    }
+    td {
+      border: 1px solid gray;
+      padding: 5px;
+    }
+  </style>
+
+
+<div id="querydiv" style="float: left; width: 28em;">
+
+  <div>CSV File: <input id="csvname" value="/data/retailbakery.csv"/></div>
+  <div>
+    <textarea rows=20 cols=35 id="query" style="font-size: 15pt;"> </textarea>
+  </div>
+  <button id="submit">Compile &amp; Render</button>
+
+  <h2>Data</h2>
+  <div>
+    <table style="font-size:15pt;" id="sample_data"> </table>
+  </div>
+
+</div>
+
+
+<div id='examples' style="float:left; width: 50%; min-width: 800;"></div>
+
+</body>
+</html>
