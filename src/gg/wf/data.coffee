@@ -25,7 +25,7 @@ class gg.wf.Data
 #
 class gg.wf.Env
   constructor: (stack) ->
-    @groupPairs = findGood [stack, []]
+    @groupPairs = _.findGood [stack, []]
 
   #groupPairs: -> @env.groupPairs
   lastGroupPair: ->

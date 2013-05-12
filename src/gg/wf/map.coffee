@@ -16,7 +16,7 @@
 class gg.wf.Map extends gg.wf.Exec
 
     constructor: (@spec) ->
-        @mapping = findGood [@spec.aes, @spec.map, @spec.mapping]
+        @mapping = _.findGood [@spec.aes, @spec.map, @spec.mapping]
 
 
     # normalize mapping into functions and key lookups

@@ -8,22 +8,22 @@ _ = require 'underscore'
 # variable if we don't
 exports = module.exports = @
 
-#<< gg/util
-#<< gg/table
+#<< gg/util/*
+#<< gg/data/table
 #<< gg/wf/flow
-#<< gg/graphic
-#<< gg/facet
-#<< gg/layer
-#<< gg/geom
-#<< gg/scale
-#<< gg/stat
+#<< gg/core/graphic
+#<< gg/facet/facet
+#<< gg/layer/layers
+#<< gg/geom/geom
+#<< gg/scale/scales
+#<< gg/stat/stat
 
 
 # makes sure the gg namespace has all the classes defined
 _.extend @, gg
 
 # this sets MODULE.gg as the fromSpec method
-fromSpec = (spec) -> new gg.Graphic spec
+fromSpec = (spec) -> new gg.core.Graphic spec
 @gg = fromSpec
 _.extend @gg, gg
 

@@ -8,6 +8,7 @@ toast
   exclude: ['src/gg/old']
   # exclude: ['folder/to/exclude', 'another/folder/to/exclude', ... ]
 
+
   # => VENDORS (optional)
   vendors: [
       'vendor/js/d3.min.js',

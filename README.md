@@ -49,6 +49,20 @@ TODO
 
 XForms
 
+- Ues a consistent spec for an xform (layers also use this)
+
+    {
+      type: STRING
+      aes: {
+        [aesthetic: MAPPING SPEC]* //
+        [group: MAPPING SPEC]      // precede computation with split, follow with join/label
+      }
+      [param: [STRING | NUMBER | OBJECT | FUNCTION]]*
+    }
+
+- Support asynchronous operators (send to thread, send to REST API)
+- Support data/table spec option
+  - what should the API be?
 - support params/args in xforms
    -> add @param() to xform method list
 - Support grouping and propogating mapped discrete aesthetics down the workflow
@@ -58,6 +72,9 @@ XForms
     fill: "attr2"
     stroke: "attr2"
 
+Workflow
+
+- support
 
 Scales
 

@@ -1,4 +1,4 @@
-#<< gg/util
+#<< gg/util/*
 #<< gg/wf/node
 #<< gg/wf/debug
 #<< gg/wf/label
@@ -227,7 +227,7 @@ class gg.wf.Runner extends events.EventEmitter
   constructor: (@root) ->
 
   run: () ->
-    queue = new gg.UniqQueue [@root]
+    queue = new gg.util.UniqQueue [@root]
 
     seen = {}
     results = []

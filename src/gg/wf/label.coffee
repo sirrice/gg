@@ -17,9 +17,9 @@ class gg.wf.Label extends gg.wf.Node
     super @spec
 
     @key = @spec.key
-    @compute = findGood [@spec.val, @spec.value, @spec.f, null]
+    @compute = _.findGood [@spec.val, @spec.value, @spec.f, null]
     @type = "label"
-    @name = findGood [@spec.name, "#{@type}-#{@id}"]
+    @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
     unless @key?
       throw Error("#{@name}: Did not define a label key and value/value function)")
 

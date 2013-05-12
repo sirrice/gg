@@ -5,8 +5,8 @@ class gg.wf.Stdout extends gg.wf.Exec
     super @spec
 
     @type = "stdout"
-    @name = findGood [@spec.name, "#{@type}-#{@id}"]
-    @n = findGood [@spec.n, null]
+    @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
+    @n = _.findGood [@spec.n, null]
     @aess = @spec.aess or null
 
   compute: (table, env, node) ->
@@ -16,6 +16,7 @@ class gg.wf.Stdout extends gg.wf.Exec
     schema = table.schema
     arr = _.map schema.attrs(), (attr) ->
       "\t#{attr}(#{schema.type(attr)})"
+    @log "Number of rows: #{table.nrows()}"
     @log "Schema: #{arr.join "\n"}"
     while idx < table.nrows()
       row = table.get(idx)
@@ -34,7 +35,7 @@ class gg.wf.Scales extends gg.wf.Exec
     super @spec
 
     @type = "scaleout"
-    @name = findGood [@spec.name, "#{@type}-#{@id}"]
+    @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
     @scales = @spec.scales
 
   compute: (table, env, node) ->

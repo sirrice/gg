@@ -1,4 +1,5 @@
-#<< gg/util
+#<< gg/util/*
+#<< gg/data/table
 
 try
   events = require 'events'
@@ -128,12 +129,12 @@ class gg.wf.Node extends events.EventEmitter
     @wf = @spec.wf or null
 
     # if this object is a clone, or a blueprint
-    @isInstance = findGood [@spec.instance, no]
+    @isInstance = _.findGood [@spec.instance, no]
     @_base = @spec.base or null
 
     @id = gg.wf.Node.id()
-    @type = findGood [@spec.type, "node"]
-    @name = findGood [@spec.name, "node-#{@id}"]
+    @type = _.findGood [@spec.type, "node"]
+    @name = _.findGood [@spec.name, "node-#{@id}"]
 
   @id: -> gg.wf.Node::_id += 1
   _id: 0
@@ -195,7 +196,8 @@ class gg.wf.Node extends events.EventEmitter
     throw Error("input index #{idx} >= #{@inputs.length}") if idx >= @inputs.length
 
     (node, data) =>
-      if _.isSubclass data, gg.Table
+      #XXX what else could the data be?
+      if _.isSubclass data, gg.data.Table
         data = new gg.wf.Data data
 
       if @inputs[idx]?
@@ -267,7 +269,7 @@ class gg.wf.Source extends gg.wf.Node
 
     @compute = @spec.f or @compute
     @type = "source"
-    @name = findGood [@spec.name, "#{@type}-#{@id}"]
+    @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
 
   compute: -> throw Error("#{@name}: Source not setup to generate tables")
   ready: -> yes
@@ -287,7 +289,7 @@ class gg.wf.Exec extends gg.wf.Node
 
     @compute = @spec.f or @compute
     @type = "exec"
-    @name = findGood [@spec.name, "exec-#{@id}"]
+    @name = _.findGood [@spec.name, "exec-#{@id}"]
 
   compute: (table, env, node) -> table
 
@@ -313,7 +315,7 @@ class gg.wf.Barrier extends gg.wf.Node
 
     @compute = @spec.f or @compute
     @type = "barrier"
-    @name = findGood [@spec.name, "barrier-#{@id}"]
+    @name = _.findGood [@spec.name, "barrier-#{@id}"]
 
     # pointer to the next workflow child to clone when
     # cloneSubplan is called.
@@ -378,9 +380,9 @@ class gg.wf.Split extends gg.wf.Node
     # TODO: support groupby functions that return an
     # array of keys.
     @type = "split"
-    @name = findGood [@spec.name, "split-#{@id}"]
-    @gbkeyName = findGood [@spec.key, @name]
-    @splitFunc = findGood [@spec.f, @splitFunc]
+    @name = _.findGood [@spec.name, "split-#{@id}"]
+    @gbkeyName = _.findGood [@spec.key, @name]
+    @splitFunc = _.findGood [@spec.f, @splitFunc]
 
   # @return array of {key: String, table: gg.Table} dictionaries
   splitFunc: (table, env, node) -> []
@@ -445,7 +447,7 @@ class gg.wf.Partition extends gg.wf.Split
   constructor: ->
     super
 
-    @name = findGood [@spec.name, "partition-#{@id}"]
+    @name = _.findGood [@spec.name, "partition-#{@id}"]
     @gbfunc = @spec.f or @gbfunc
     @splitFunc = (table) -> table.split @gbfunc
 
@@ -460,7 +462,7 @@ class gg.wf.Join extends gg.wf.Node
     super @spec
 
     @type = "join"
-    @name = findGood [@spec.name, "join-#{@id}"]
+    @name = _.findGood [@spec.name, "join-#{@id}"]
 
   cloneSubplan: (stop) ->
     if @ is stop
@@ -489,7 +491,7 @@ class gg.wf.Join extends gg.wf.Node
       table
 
     env = @inputs[0].env.clone()
-    output = gg.Table.merge _.values(tables)
+    output = gg.data.Table.merge _.values(tables)
     @output 0, new gg.wf.Data output, env
 
     output
@@ -505,7 +507,7 @@ class gg.wf.Multicast extends gg.wf.Node
     super @spec
 
     @type = "multicast"
-    @name = findGood [@spec.name, "multicast-#{@id}"]
+    @name = _.findGood [@spec.name, "multicast-#{@id}"]
 
 
   cloneSubplan: (stop) ->
@@ -542,7 +544,7 @@ class gg.wf.Composite extends gg.wf.Node
 
         @nodes = @spec.nodes
         @type = "composite"
-        @name = findGood [@spec.name, "comp-#{@id}"]
+        @name = _.findGood [@spec.name, "comp-#{@id}"]
 
     clone: (stop) ->
         nodes = []

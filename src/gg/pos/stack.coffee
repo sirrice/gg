@@ -1,0 +1,113 @@
+#<< gg/pos/position
+#
+
+class gg.pos.Stack extends gg.pos.Position
+  @aliases = ["stack", "stacked"]
+
+  # pts requires the schema
+  #   x: x value
+  #   y: height of the layer
+  #   y0: (optional) baseline for the layer. only y0 of firstlayer is kept
+  inputSchema: -> ['group', 'pts']
+
+  # x: x position, may have been interpolated
+  # y: height of the layer
+  # y0: position of layer's base
+  # y1: position of layer's ceiling
+  # group: layer's group key
+  outputSchema: -> ['group', 'x', 'y', 'y0', 'y1']
+
+  parseSpec: ->
+    super
+
+  #
+  # @param xs sorted list of x values
+  # @param pts array of gg.rows sorted on 'x', has 'y' values
+  # @return array of {x:, y:, y0:} where
+  #         y values are linearly interpolated
+  @interpolate: (xs, pts) ->
+    if pts.length == 0
+      return pts
+
+    minx = _.first(pts).x
+    maxx = _.last(pts).x
+    ptsidx = 0
+    ret = []
+    for x, idx in xs
+      if x < minx or x > maxx
+        ret.push {x:x, y:0}
+        continue
+      while ptsidx+1 <= pts.length and pts[ptsidx].x < x
+        ptsidx += 1
+      if x is pts[ptsidx].x
+        ret.push {x:x, y: pts[ptsidx].y}
+      else
+        prev = pts[ptsidx-1]
+        cur = pts[ptsidx]
+        perc = (x-prev.x) / (cur.x - prev.x)
+        y = perc * (cur.y - prev.y) + prev.y
+        ret.push {x:x, y:y}
+    ret
+
+
+  # steps
+  # 1) compute all X values
+  # 2) compute y0 baseline for the layers,
+  compute: (table, env) ->
+
+    # collect sorted list of x coords
+    xs = []
+    npts = []
+    baselines = {}  # y0 values
+    table.each (row) ->
+      pts = row.get 'pts'
+      npts.push pts.length
+      _.each pts, (pt) ->
+        x = pt.x
+        xs.push x unless x of baselines
+        baselines[x] = pt.y0 if x not of baselines and pt.y0?
+    xs.sort((a,b)->a-b)
+    baselines = _.map xs, (x) -> baselines[x] or 0
+
+
+    layers = []
+    table.each (row) ->
+      pts = row.get 'pts'
+      newpts = pts.sort((r1, r2) -> r1.x - r2.x)
+      newpts = gg.pos.Stack.interpolate xs, newpts
+      layers.push newpts
+
+    console.log "gg.pos.Stack: npts per row: #{npts}"
+    console.log "gg.pos.Stack: num xs:       #{xs.length}"
+    console.log "gg.Stackposition: baselines: #{JSON.stringify baselines}"
+    console.log "gg.pos.Stack: num layers:   #{layers.length}"
+
+    stack = d3.layout.stack()
+    # stack.offset("zero") # set stacking offset algorithm
+    stackedLayers = stack(layers)
+
+
+    # update the table
+    _.each stackedLayers, (layer, rowidx) ->
+      layer = layer.filter (pt) -> pt.y?
+      _.each layer, (pt, idx) ->
+        pt.y0 = pt.y0 + baselines[idx]
+        pt.y1 = pt.y + pt.y0
+      table.get(rowidx).set('pts', layer)
+
+
+
+    console.log "gg.pos.Stack: nrows       : #{table.nrows()}"
+    console.log "gg.pos.Stack: final schema: #{table.colNames()}"
+
+    ptsCol = if table.contains 'pts' then table.getColumn('pts')
+    ptsCol = [] unless ptsCol?
+
+    console.log "computed area(0): #{JSON.stringify ptsCol[0][0..10]}" if ptsCol.length > 0
+    console.log "computed area(1): #{JSON.stringify ptsCol[1][0..10]}" if ptsCol.length > 1
+    console.log "computed area(2): #{JSON.stringify ptsCol[2][0..10]}" if ptsCol.length > 2
+    console.log "flattened: #{JSON.stringify table.get(0).flatten().raw()[0..10]}" if table.nrows() > 0
+    console.log "flattened: #{JSON.stringify table.get(1).flatten().raw()[0..10]}" if table.nrows() > 1
+
+    table
+
