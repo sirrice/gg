@@ -61,27 +61,26 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @statSpec = @extractSpec "stat"
     @posSpec  = @extractSpec "pos"
     mapSpec  = _.findGoodAttr spec, ['aes', 'aesthetic', 'mapping'], {}
-    @mapSpec = {aes: mapSpec, name: "map-shorthand"}
+    @mapSpec = {aes: mapSpec, name: "map-shorthand-#{@layerIdx}"}
     @coordSpec = @extractSpec "coord"
     @coordSpec.name = "coord-#{@layerIdx}"
     @labelSpec = {key: "layer", val: @layerIdx}
+    @groupSpec = "group" if "group" of @mapSpec.aes
 
 
     @geom = gg.geom.Geom.fromSpec @, @geomSpec
     @stat = gg.stat.Stat.fromSpec @, @statSpec
     @pos = gg.pos.Position.fromSpec @, @posSpec
     @map = gg.xform.Mapper.fromSpec @g, @mapSpec
-    @labelNode = new gg.wf.Label @labelSpec
+    @labelNode = new gg.wf.EnvPush @labelSpec
     @coord = gg.coord.Coordinate.fromSpec @, @coordSpec
+    if "group" of @mapSpec.aes
+      @groupby = gg.xform.Split.createNode "group", "group"
+      @groupbylabel = new gg.wf.Join#EnvGet
+        name: "groupbylabel-#{@layerIdx}"
+        key: "group"
 
-    console.log "### layer parsed xforms ###"
-    console.log @stat.constructor.name
-    console.log @geom.constructor.name
-    console.log @pos.constructor.name
-    console.log @map.constructor.name if @map?
-
-
-    @pos = null if _.isSubclass @pos, gg.pos.Identity
+    #@pos = null if _.isSubclass @pos, gg.pos.Identity
 
     super
 
@@ -112,7 +111,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
     subSpec = _.findGoodAttr spec, aliases, defaultType
 
-    console.log "layer.extractSpec got subspec for #{xform}:  #{JSON.stringify subSpec}"
+    @log "extractSpec: xform: #{xform}\tspec: #{JSON.stringify subSpec}"
 
     if _.isString subSpec
       subSpec =
@@ -123,59 +122,58 @@ class gg.layer.Shorthand extends gg.layer.Layer
       subSpec.aes = {} unless subSpec.aes?
       subSpec.param = {} unless subSpec.param?
 
-    subSpec.name = "#{xform}-shorthand" unless subSpec.name?
+    subSpec.name = "#{xform}-shorthand-#{@layerIdx}" unless subSpec.name?
     subSpec
 
   compile: ->
-    console.log "layer.compile called"
-    debugaess = ['x', 'r', 'y', 'y0', 'y1', "stroke", "stroke-width"]
+    @log "compile()"
     debugaess = ['x', 'y', 'q1', 'q3', 'median']
+    debugaess = ['x', 'x0', 'x1', 'y', 'group']
+    makeStdOut = (name, n=5, aess=debugaess) => new gg.wf.Stdout
+      name: "#{name}-#{@layerIdx}"
+      n: 5
+      aess: aess
+    makeScalesOut = (name, scales=@g.scales) => new gg.wf.Scales
+      name: "#{name}-#{@layerIdx}"
+      scales: scales
+
+
+
+
+
     nodes = []
+
 
     # pre-stats transforms
     nodes.push new gg.wf.Stdout {name: "initial data", n: 1}
     nodes.push @labelNode
     nodes.push @map
+    nodes.push @groupby
 
 
     # Statistics transforms
     nodes.push @g.scales.prestats
-    nodes.push new gg.wf.Scales
-      name: "pre-stat-#{@layerIdx}"
-      scales: @g.scales
+    nodes.push makeScalesOut "pre-stat-#{@layerIdx}"
     nodes.push @stat
-    nodes.push new gg.wf.Stdout
-      name: "post-stat-#{@layerIdx}"
-      n: 5
-      aess: debugaess
-
+    nodes.push makeStdOut "post-stat-#{@layerIdx}"
 
     # facet join -- add facetX/Y columns to table
     nodes.push @g.facets.labelerNodes()
+    nodes.push @groupbylabel
 
-    #####
-    # Geometry Part of Workflow
-    #####
+    # Geometry Part of Workflow #
 
     # geom: map attributes to aesthetic names
     # scales: train scales after the final aesthetic mapping (inputs are data values)
     #nodes.push new gg.wf.Stdout {name: "pre-geom-map", n: 1}
     nodes.push @geom.map
-    nodes.push new gg.wf.Stdout
-      name: "pre-geomtrain-#{@layerIdx}"
-      n: 5
-      aess: debugaess
+    nodes.push makeStdOut "pre-geomtrain-#{@layerIdx}"
 
 
     #nodes.push new gg.wf.Stdout {name: "post-geom-map", n: 1}
     nodes.push @g.scales.postgeommap
-    nodes.push new gg.wf.Stdout
-      name: "post-geommaptrain-#{@layerIdx}"
-      n: 5
-      aess: debugaess
-    nodes.push new gg.wf.Scales
-      name: "post-geommaptrain-#{@layerIdx}"
-      scales: @g.scales
+    nodes.push makeStdOut "post-geommaptrain"
+    nodes.push makeScalesOut "post-geommaptrain"
 
     # Rendering
     # layout the overall graphic, allocate space for facets
@@ -186,59 +184,33 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # geom: facets have set the ranges so transform data values to pixel values
     # geom: map minimum attributes (x,y) to base attributes (x0, y0, x1, y1)
     # geom: position transformation
-    nodes.push new gg.wf.Stdout
-      name: "pre-scaleapply-#{@layerIdx}"
-      n: 5
-      aess: debugaess
+    nodes.push makeStdOut "pre-scaleapply"
     nodes.push new gg.xform.ScalesApply @,
       posMapping: @geom.posMapping()
-    nodes.push new gg.wf.Stdout
-      name: "post-scaleapply-#{@layerIdx}"
-      n: 5
-      aess: debugaess
+    nodes.push makeStdOut "post-scaleapply"
 
-
-    #nodes.push new gg.wf.Stdout {name: "pre-reparam", n: 5}
     nodes.push @geom.reparam
-    nodes.push new gg.wf.Stdout
-      name: "post-reparam-#{@layerIdx}"
-      n: 5
-      aess: debugaess
+    nodes.push makeStdOut "post-reparam"
 
-    #nodes.push new gg.wf.Stdout {name: "post-reparam", n: 5}
-    nodes.push @pos
-    nodes.push new gg.wf.Stdout
-      name: "post-position-#{@layerIdx}"
-      n: 5
-      aess: debugaess
 
-    # scales: retrain scales after positioning (jitter)
-    #         (inputs are pixel values)
     if @pos?
-      nodes.push new gg.wf.Scales
-        name: "prepixeltrain scale"
-        scales: @g.scales
+      #nodes.push @g.scales.facets
+      nodes.push @pos
+      nodes.push makeStdOut "post-position"
 
-      nodes.push @g.scales.trainpixel
+      # scales: retrain scales after positioning (jitter)
+      #         (inputs are pixel values)
 
-      nodes.push new gg.wf.Stdout
-        name: "post-pixeltrain"
-        n: 5
-        aess: debugaess
-
-
+      nodes.push makeScalesOut "pre-pixeltrain"
+      nodes.push @g.scales.invertpixel
+      nodes.push makeStdOut "mid-pixeltrain"
+      nodes.push @g.scales.reapplypixel
+      nodes.push makeStdOut "post-pixeltrain"
 
     # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
-    nodes.push new gg.wf.Scales
-      name: "pre-coord"
-      scales: @g.scales
+    nodes.push makeScalesOut "pre-coord"
     nodes.push @coord
-
-    nodes.push new gg.wf.Stdout
-      name: "post-coord-#{@layerIdx}"
-      n: 5
-      aess: debugaess
-
+    nodes.push makeStdOut "post-coord"
 
 
     # render: render axes
@@ -247,8 +219,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # render: render geometries
     nodes.push @geom.render
 
+
     nodes = @compileNodes nodes
-    console.log "returing nodes"
     nodes
 
   compileNodes: (nodes) ->

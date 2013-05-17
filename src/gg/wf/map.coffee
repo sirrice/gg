@@ -1,6 +1,6 @@
 
 #
-# Mappings can be defined as
+# 1 to 1 mapping function
 #
 # 1. key lookups
 # 2. function transformations
@@ -15,19 +15,9 @@
 #
 class gg.wf.Map extends gg.wf.Exec
 
-    constructor: (@spec) ->
-        @mapping = _.findGood [@spec.aes, @spec.map, @spec.mapping]
+  constructor: (@spec) ->
+    @mapping = _.findGood [@spec.aes, @spec.map, @spec.mapping]
 
 
-    # normalize mapping into functions and key lookups
-    normalize: ->
-
-        newmapping = {}
-        _.each @mapping, (val, outkey) =>
-
-            if typeof val of 'function'
-                newmapping[outkey] = val
-
-
-
-
+  compute: (table, env, node) ->
+    table.transform @mapping

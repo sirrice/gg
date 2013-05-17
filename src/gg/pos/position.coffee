@@ -1,10 +1,13 @@
 #<< gg/core/xform
 
 class gg.pos.Position extends gg.core.XForm
+  @log = gg.util.Log.logger "Position", gg.util.Log.ERROR
+
   constructor: (@layer, @spec={}) ->
     g = @layer.g if @layer?
     super g, @spec
     @parseSpec()
+
 
 
   @klasses: ->
@@ -13,6 +16,7 @@ class gg.pos.Position extends gg.core.XForm
       gg.pos.Shift
       gg.pos.Jitter
       gg.pos.Stack
+      gg.pos.Dodge
     ]
     ret = {}
     _.each klasses, (klass) ->
@@ -32,7 +36,7 @@ class gg.pos.Position extends gg.core.XForm
 
     klass = klasses[type] or gg.pos.Identity
 
-    console.log "Position.fromSpec: klass #{klass.name} from spec #{JSON.stringify spec}"
+    @log "fromSpec: #{klass.name}\tspec: #{JSON.stringify spec}"
 
     ret = new klass layer, spec
     ret

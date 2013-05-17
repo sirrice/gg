@@ -7,6 +7,16 @@ _ = require 'underscore'
 
 class gg.util.Util
 
+  # @param f returns an array [key, val]
+  #        that sets the map's key, value pair
+  @list2map: (list, f=((v, idx)->[v,v])) ->
+    ret = {}
+    _.each list, (v, idx) ->
+      pair = f v, idx
+      ret[pair[0]] = pair[1]
+    ret
+
+
   @sum: (arr) -> _.reduce arr, ((a,b) -> a+b), 0
 
   @findGood: (list) ->
@@ -52,6 +62,7 @@ findGood = gg.util.Util.findGood
 findGoodAttr = gg.util.Util.findGoodAttr
 
 _.mixin
+  list2map: gg.util.Util.list2map
   sum: gg.util.Util.sum
   findGood: gg.util.Util.findGood
   findGoodAttr: gg.util.Util.findGoodAttr

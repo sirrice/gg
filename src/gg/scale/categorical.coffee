@@ -23,8 +23,8 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
   defaultDomain: (col) -> gg.scale.BaseCategorical.defaultDomain col
 
   mergeDomain: (domain) ->
-    newDomain = _.uniq(_.union domain, @domain())
-    #console.log "#{@constructor.name}-#{@type} merging #{newDomain}"
+    newDomain = _.uniq domain.concat(@domain())
+    newDomain = newDomain.sort()
     @domain newDomain
 
   domain: (interval) ->

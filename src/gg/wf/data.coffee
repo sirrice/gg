@@ -48,6 +48,13 @@ class gg.wf.Env
         return pair.val
     return defaultVal
 
+  # alias for @group
+  get: (key, defaultVal) -> @group key, defaultVal
+
+  contains: (key) ->
+    _.any @groupPairs, (pair) ->
+      pair.key is key
+
   clone: -> new gg.wf.Env _.clone(@groupPairs)
 
   toString: -> JSON.stringify @groupPairs

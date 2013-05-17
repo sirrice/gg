@@ -13,7 +13,6 @@ class gg.geom.svg.Area extends gg.geom.Render
   render: (table, env, node) ->
     svg = @svg table, env
     data = table.asArray()
-    console.log "table has #{table.nrows()} rows"
 
     area = d3.svg.area()
         .x((d) -> d.x)

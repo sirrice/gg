@@ -8,6 +8,7 @@ class gg.wf.Stdout extends gg.wf.Exec
     @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
     @n = _.findGood [@spec.n, null]
     @aess = @spec.aess or null
+    @dlog = gg.util.Log.logger "StdOut: #{@name}-#{@id}"
 
   compute: (table, env, node) ->
     n = if @n? then @n else table.nrows()
@@ -16,15 +17,15 @@ class gg.wf.Stdout extends gg.wf.Exec
     schema = table.schema
     arr = _.map schema.attrs(), (attr) ->
       "\t#{attr}(#{schema.type(attr)})"
-    @log "Number of rows: #{table.nrows()}"
-    @log "Schema: #{arr.join "\n"}"
+    @dlog "Number of rows: #{table.nrows()}"
+    @dlog "Schema: #{arr.join "\t"}"
     while idx < table.nrows()
       row = table.get(idx)
       row = row.project @aess if @aess?
       raw = _.clone row.raw()
       _.each raw, (v, k) ->
         raw[k] = v[0..4] if _.isArray v
-      @log JSON.stringify raw
+      @dlog JSON.stringify raw
       idx += blockSize
     table
 
@@ -37,15 +38,16 @@ class gg.wf.Scales extends gg.wf.Exec
     @type = "scaleout"
     @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
     @scales = @spec.scales
+    @dlog = gg.util.Log.logger "ScaleOut: #{@name}", gg.util.Log.DEBUG
 
   compute: (table, env, node) ->
     _.each @scales.scalesList[0..2], (scales, idx) =>
-      @log "Out: scales #{scales.id}, #{scales.scales}"
+      @dlog "Out: scales #{scales.id}, #{scales.scales}"
       _.each scales.scalesList(), (scale) =>
         aes = scale.aes
         str = scale.toString()
         type = scale.type
-        @log "Out: layer#{idx},scaleId#{scale.id} #{type}\t#{str}"
+        @dlog "Out: layer#{idx},scaleId#{scale.id} #{type}\t#{str}"
     table
 
 

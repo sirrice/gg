@@ -31,13 +31,14 @@ class gg.stat.LoessStat extends gg.stat.Stat
     loessfunc = science.stats.loess()
 
     smoothys = loessfunc(xs, ys)
-    console.log xs
-    console.log ys
-    console.log smoothys
     rows = []
     _.times xs.length, (idx) ->
       rows.push
         x: xs[idx]
         y: smoothys[idx]
+
+    @log "compute: xs: #{JSON.stringify xs.slice(0,6)}"
+    @log "compute: ys: #{JSON.stringify ys.slice(0,6)}"
+    @log "compute: smoothys: #{JSON.stringify smoothys.slice(0,6)}"
 
     new gg.data.RowTable @outputSchema(), rows

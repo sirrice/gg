@@ -1,21 +1,43 @@
 #<< gg/pos/position
 #
 
+class gg.pos.Interpolate extends gg.pos.Position
+  @aliases = ["interpolate"]
+
+
+#
+# Stacks points that have the same x values.
+#
+# If stacking lines, may want to run gg.pos.XXX beforehand, so that
+# the lines all have the same number of points and the x values are aligned.
+#
 class gg.pos.Stack extends gg.pos.Position
   @aliases = ["stack", "stacked"]
+
+  constructor: ->
+    super
+    @log.level = gg.util.Log.DEBUG
+
+
+  addDefaults: ->
+    group: "1"
+    y0: 0
+    x0: 'x'
+    x1: 'x'
 
   # pts requires the schema
   #   x: x value
   #   y: height of the layer
   #   y0: (optional) baseline for the layer. only y0 of firstlayer is kept
-  inputSchema: -> ['group', 'pts']
+  inputSchema: -> ['x', 'y']
 
   # x: x position, may have been interpolated
   # y: height of the layer
   # y0: position of layer's base
   # y1: position of layer's ceiling
   # group: layer's group key
-  outputSchema: -> ['group', 'x', 'y', 'y0', 'y1']
+  outputSchema: ->
+    ['group', 'x', 'y', 'y0', 'y1']
 
   parseSpec: ->
     super
@@ -54,60 +76,61 @@ class gg.pos.Stack extends gg.pos.Position
   # 1) compute all X values
   # 2) compute y0 baseline for the layers,
   compute: (table, env) ->
+    @log.warn "nrows: #{table.nrows()}\tschema: #{table.colNames()}"
 
     # collect sorted list of x coords
-    xs = []
-    npts = []
     baselines = {}  # y0 values
-    table.each (row) ->
-      pts = row.get 'pts'
-      npts.push pts.length
-      _.each pts, (pt) ->
-        x = pt.x
-        xs.push x unless x of baselines
-        baselines[x] = pt.y0 if x not of baselines and pt.y0?
+    xs = table.getColumn('x')
+    if table.contains "y0"
+      y0s = table.getColumn "y0"
+      _.times xs.length, (idx) -> baselines[xs[idx]] = y0s[idx]
+    xs = _.uniq _.compact xs
     xs.sort((a,b)->a-b)
-    baselines = _.map xs, (x) -> baselines[x] or 0
+    @log "nxs: #{xs.length}"
 
 
+    groups = table.split "group"
     layers = []
-    table.each (row) ->
-      pts = row.get 'pts'
-      newpts = pts.sort((r1, r2) -> r1.x - r2.x)
-      newpts = gg.pos.Stack.interpolate xs, newpts
-      layers.push newpts
+    # create copies for each group
+    _.map groups, (group) =>
+      x2row = _.list2map group.table.rows, ((row) -> [row.get('x'), row.raw()])
+      rows = _.map xs, (x) =>
+        if x of x2row
+          x2row[x]
+        else
+          x: x
+          y: 0
+          y0: 0
+          y1: 0
 
-    console.log "gg.pos.Stack: npts per row: #{npts}"
-    console.log "gg.pos.Stack: num xs:       #{xs.length}"
-    console.log "gg.Stackposition: baselines: #{JSON.stringify baselines}"
-    console.log "gg.pos.Stack: num layers:   #{layers.length}"
+      layers.push rows
 
     stack = d3.layout.stack()
     # stack.offset("zero") # set stacking offset algorithm
     stackedLayers = stack(layers)
+    @log "stacked the layers"
+
+    rettable = new gg.data.RowTable table.schema
+    _.times groups.length, (idx) =>
+      group = groups[idx]
+      layer = stackedLayers[idx]
+      @log layer
+      x2row = _.list2map group.table.rows, (row) -> [row.x, row]
+
+      rettable.addRows layer.map (row) ->
+        row = new gg.data.Row row, table.schema
+        x = row.get 'x'
+        row = x2row[x].clone().merge row if x of x2row
+        row.set 'y0', row.get('y0')+(baselines[x] or 0)
+        row.set 'y1', row.get('y0')+row.get('y')
+        row
 
 
-    # update the table
-    _.each stackedLayers, (layer, rowidx) ->
-      layer = layer.filter (pt) -> pt.y?
-      _.each layer, (pt, idx) ->
-        pt.y0 = pt.y0 + baselines[idx]
-        pt.y1 = pt.y + pt.y0
-      table.get(rowidx).set('pts', layer)
+    @log "npts/row:  #{table.nrows()}"
+    @log "nxs:       #{xs.length}"
+    @log "baselines: #{JSON.stringify baselines}"
+    @log "nlayers:   #{layers.length}"
 
+    return rettable
 
-
-    console.log "gg.pos.Stack: nrows       : #{table.nrows()}"
-    console.log "gg.pos.Stack: final schema: #{table.colNames()}"
-
-    ptsCol = if table.contains 'pts' then table.getColumn('pts')
-    ptsCol = [] unless ptsCol?
-
-    console.log "computed area(0): #{JSON.stringify ptsCol[0][0..10]}" if ptsCol.length > 0
-    console.log "computed area(1): #{JSON.stringify ptsCol[1][0..10]}" if ptsCol.length > 1
-    console.log "computed area(2): #{JSON.stringify ptsCol[2][0..10]}" if ptsCol.length > 2
-    console.log "flattened: #{JSON.stringify table.get(0).flatten().raw()[0..10]}" if table.nrows() > 0
-    console.log "flattened: #{JSON.stringify table.get(1).flatten().raw()[0..10]}" if table.nrows() > 1
-
-    table
 

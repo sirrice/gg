@@ -2,6 +2,7 @@ _ = require "underscore"
 
 
 class gg.util.Textsize
+  @log = gg.util.Log.logger "Textsize"
   @_exSizeCache = {}
   @_defaultWidth = 19.23076923076923
   @_defaultHeights = (->
@@ -52,7 +53,7 @@ class gg.util.Textsize
       }
       ret
     catch error
-      console.log "textSize returning defaults because of: #{error}"
+      @log.warn "return defaults.  error: #{error}"
       defaults = gg.util.Textsize.exDefault opts["font-size"]
       defaults.width = defaults.w = defaults.width * text.length
       defaults

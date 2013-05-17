@@ -15,6 +15,8 @@ class gg.scale.Set
     @spec = {}
     @id = gg.scale.Set::_id
     gg.scale.Set::_id += 1
+
+    @log = gg.util.Log.logger "ScaleSet-#{@id}", gg.util.Log.DEBUG
   _id: 0
 
   clone: () ->
@@ -79,7 +81,7 @@ class gg.scale.Set
       if vals.length > 0
         vals[0]
       else
-        console.log "creating scaleset.get #{aes} #{type}"
+        @log "creating scaleset.get #{aes} #{type}"
         # in the future, return default scale?
         @set @factory.scale aes
         #throw Error("gg.ScaleSet.get(#{aes}) doesn't have any scales")
@@ -95,7 +97,9 @@ class gg.scale.Set
 
 
   resetDomain: ->
-    _.each @scalesList(), (scale) -> scale.resetDomain()
+    _.each @scalesList(), (scale) =>
+      @log "resetDomain #{scale.toString()}"
+      scale.resetDomain()
 
 
 
@@ -126,15 +130,16 @@ class gg.scale.Set
           @scale(aes, type).mergeDomain scale.domain()
           ###
           else if @contains aes
-            console.log "gg.scale.Set.merge: unmatched type #{aes} #{type}\t#{scale.toString()}"
+            @log "gg.scale.Set.merge: unmatched type #{aes} #{type}\t#{scale.toString()}"
             mys = @scale aes#, gg.Schema.unknown
             @scale(aes).mergeDomain scale.domain()
           ###
         else if insert
-          console.log "inserting clone: #{scale.clone().toString()}"
-          @scale scale.clone(), type
+          copy = scale.clone()
+          @log "merge: insertclone: #{copy.toString()}"
+          @scale copy, type
         else
-          console.log "gg.scale.Set.merge #{insert}: dropping scale! #{scale}"
+          @log "merge notfound + dropping scale: #{scale.toString()}"
 
     @
 
@@ -144,24 +149,23 @@ class gg.scale.Set
         {aes: attr, type: table.schema.type(attr) })
 
     if aessTypes.length > 0 and not _.isObject(aessTypes[0])
-      aessTypes = _.map aessTypes, (aes) ->
+      aessTypes = _.map aessTypes, (aes) =>
         # XXX: it's not clear why this is the correct logic
         #      either:
         #      1) pick posMapped aes type from table
         if aes of posMapping and table.contains posMapping[aes]
           typeAes = posMapping[aes]
-          console.log "useScales aes: #{aes} ; #{table.schema.type typeAes}"
+          @log "useScales: aes: #{aes}\ttype: #{table.schema.type typeAes}"
           {aes: aes, type: table.schema.type typeAes}
         else
         #      2) pick aes type from table
           {aes: aes, type: table.schema.type aes}
 
-    #console.log "gg.ScaleSet.useScales: \n\t#{JSON.stringify aessTypes}\n\t#{table.colNames()}"
     _.each aessTypes, (at) =>
       aes = at.aes
       type = at.type
       return unless table.contains aes, type
-      console.log "gg.ScaleSet.useScales fetch #{aes}\t#{type}\t#{posMapping[aes]}"
+      # @log "useScales: fetch #{aes}\t#{type}\t#{posMapping[aes]}"
       scale = @scale(aes, type, posMapping)
       f table, scale, aes
 
@@ -177,13 +181,18 @@ class gg.scale.Set
   train: (table, aessTypes=null, posMapping={}) ->
     f = (table, scale, aes) =>
       return unless table.contains aes
-      # XXX: perform type checking.  Just assume all
-      #      continuous for now
       col = table.getColumn(aes)
       col = col.filter (v) -> not (_.isNaN(v) or _.isNull(v) or _.isUndefined(v))
-      scale.mergeDomain scale.defaultDomain col if col?
-      console.log col if aes == 'stroke'
-      console.log "scalesSet.train: #{aes}\t#{scale}"
+
+      if col?
+        newDomain = scale.defaultDomain col
+
+        if scale.type is gg.data.Schema.numeric
+          @log "train: #{aes}\t#{scale.domain()} merged to #{newDomain}"
+        else
+          @log "train: #{aes}\t#{scale}"
+
+        scale.mergeDomain newDomain
 
     @useScales table, aessTypes, posMapping, f
     @
@@ -196,13 +205,11 @@ class gg.scale.Set
       str = scale.toString()
       g = (v) -> scale.scale v
       table.map g, aes if table.contains aes
-      console.log "gg.ScaleSet.apply #{aes}:  scale #{str}\t#{table.nrows()} rows"
-      #console.log "gg.ScaleSet.apply #{table.getColumn(aes)[0..10]}"
+      @log "apply: #{aes}:\t#{str}\t#{table.nrows()} rows"
 
     table = table.clone()
-    console.log "gg.ScaleSet.apply table has #{table.nrows()} rows"
+    @log "apply: table has #{table.nrows()} rows"
     @useScales table, aessTypes, posMapping, f
-    #console.log "reloading schema"
     #table.reloadSchema()
     table
 
@@ -213,10 +220,9 @@ class gg.scale.Set
   invert: (table, aessTypes=null, posMapping={}) ->
     f = (table, scale, aes) =>
       str = scale.toString()
-      console.log "gg.ScaleSet.invert #{aes}:  scale #{str}"
+      @log "invert: #{aes}\t#{str}"
       g = (v) -> if v? then  scale.invert(v) else null
       table.map g, aes if table.contains aes
-      #console.log "gg.ScaleSet.invert #{table.getColumn(aes)[0..10]}"
 
     table = table.clone()
     @useScales table, aessTypes, posMapping, f
@@ -224,9 +230,9 @@ class gg.scale.Set
 
   labelFor: -> null
 
-  toString: ->
+  toString: (prefix="") ->
     arr = _.flatten _.map @scales, (map, aes) =>
-      _.map map, (scale, type) => scale.toString()
+      _.map map, (scale, type) => "#{prefix}#{scale.toString()}"
     arr.join('\n')
 
 

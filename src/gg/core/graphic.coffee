@@ -9,12 +9,12 @@
 class gg.core.Graphic
     constructor: (@spec) ->
       @layerspec = _.findGood [@spec.layers, []]
-      @facetspec = _.findGood [@spec.facets, {}]
+      @facetspec = @spec.facets || @spec.facet || {}
       @scalespec = _.findGood [@spec.scales, {}]
       @options = _.findGood [@spec.opts, @spec.options, {}]
 
       @layers = new gg.layer.Layers @, @layerspec
-      @facets = new gg.facet.Facets @, @facetspec
+      @facets = gg.facet.Facets.fromSpec @, @facetspec
       @scales = new gg.scale.Scales @, @scalespec
 
 
@@ -36,16 +36,29 @@ class gg.core.Graphic
       # pre-filter transformations??
       #
 
-      _.each @facets.splitter, (node) ->
+      prev = null
+      for node in @facets.splitter
         wf.node node
+        wf.connectBridge prev, node if prev?
+        prev = node
+
 
       multicast = new gg.wf.Multicast
       wf.node multicast
+      wf.connectBridge prev, multicast if prev?
+
       _.each @layers.compile(), (nodes) ->
         prev = multicast
-        _.each nodes, (node) ->
-            wf.connect prev, node
+        for node in nodes
+          wf.connect prev, node
+          prev = node
+
+        prev = multicast
+        for node in nodes
+          unless _.isSubclass node, gg.wf.Barrier
+            wf.connectBridge prev, node
             prev = node
+
 
       wf
 

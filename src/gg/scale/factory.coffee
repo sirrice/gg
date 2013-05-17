@@ -3,7 +3,6 @@
 
 class gg.scale.Factory
   constructor: (@defaults) ->
-    console.log "gg.ScaleFactory new:\n#{@toString()}"
 
   @fromSpec: (spec) ->
     sf = new gg.scale.Factory spec

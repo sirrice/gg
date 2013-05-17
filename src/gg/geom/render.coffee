@@ -9,6 +9,7 @@ class gg.geom.Render extends gg.core.XForm
     @spec.name = _.findGoodAttr @spec, ['name'], @constructor.name
     super @layer.g, @spec
     @parseSpec()
+    @log = gg.util.Log.logger @spec.name
 
 
   parseSpec: ->
@@ -16,7 +17,8 @@ class gg.geom.Render extends gg.core.XForm
 
   svg: (table, env, node) ->
     info = @paneInfo table, env
-    @g.facets.svgPane info.facetX, info.facetY
+    svg = @g.facets.svgPane info.facetX, info.facetY
+    svg.append("g").attr("class", @name)
 
 
 
@@ -38,7 +40,9 @@ class gg.geom.Render extends gg.core.XForm
     _.each attrs, (val, attr) -> domEl.attr attr, val
     domEl
 
-  compute: (table, env, node) -> @render table, env, node
+  compute: (table, env, node) ->
+    @log "rendering #{table.nrows()} rows"
+    @render table, env, node
 
   # @override this
   render: (table) -> throw Error("#{@name}.render() not implemented")
@@ -66,9 +70,9 @@ class gg.geom.Render extends gg.core.XForm
       spec = {type: type}
     else
       type = _.findGoodAttr spec, ['geom', 'type', 'shape'], 'point'
-    console.log klasses
+
     klass = klasses[type] or gg.geom.svg.Point
-    console.log "geom-render klass #{type} -> #{klass.name}"
+    gg.util.Log.log "Render klass #{type} -> #{klass.name}"
     new klass layer, spec
 
 
@@ -82,6 +86,5 @@ class gg.geom.Render extends gg.core.XForm
 
 class gg.geom.GeomRenderPath extends gg.geom.Render
 class gg.geom.GeomRenderPolygon extends gg.geom.Render
-
 class gg.geom.GeomRenderGlyph extends gg.geom.Render
 

@@ -52,13 +52,15 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
     mapping = {
         y0: 'min'
         y1: 'max'
-        width: width
+        x0: (row) -> row.get('x') - width/2.0
+        x1: (row) -> row.get('x') + width/2.0
+        #width: width
     }
 
 
     mapping = _.mappingToFunctions table, mapping
     table.transform mapping, yes
-    console.log table.schema.toString()
+    @log table.schema.toString()
     table
 
 

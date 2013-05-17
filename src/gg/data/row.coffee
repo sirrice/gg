@@ -1,9 +1,12 @@
+#<< gg/util/log
 #<< gg/data/schema
 
 class gg.data.Row
+  @log = gg.util.Log.logger "Row"
   @isNested = (o) -> _.isObject(o) and not _.isArray(o)
 
   constructor: (@data, @schema) ->
+    @log = gg.data.Row.log
 
 
   rawKeys: ->
@@ -44,10 +47,10 @@ class gg.data.Row
           try
             return _.keys(o) if o?
           catch error
-            console.log error
-            console.log k
-            console.log o
-            console.log @
+            @log.warn error
+            @log.warn k
+            @log.warn o
+            @log.warn @
             throw error
 
       []
@@ -114,7 +117,7 @@ class gg.data.Row
             if idx < arr.length
               arr[idx][attr] = val[idx]
             else
-              console.log "warning, creating new objects during set(#{attr})"
+              @log.warn "creating new objs in set(#{attr})"
               arr[idx] = {attr: val}
         else
           @data[attr] = val
@@ -145,15 +148,22 @@ class gg.data.Row
     new gg.data.Row copy
 
 
-  merge: (row) -> _.extend @data, row.data
+  merge: (row) ->
+    _.extend @data, row.data
+    @
 
   flatten: ->
     arrays = _.map @arrKeys(), (k) => @data[k]
     nonArrayKeys = _.union @rawKeys(), @nestedKeys()
     maxLen = _.max _.map(arrays, (arr)->arr.length)
 
+    unless arrays.length > 0
+      return new gg.data.RowTable @schema, [@]
+
     unless maxLen? and maxLen > 0
-      return new gg.data.RowTable @schema.flatten()
+      throw Error("whoops")
+      return new gg.data.RowTable @schema.flatten(), [@]
+
 
     rowDatas = _.map _.range(maxLen), (idx) =>
       rowData = _.pick @data, nonArrayKeys

@@ -21,6 +21,7 @@ class gg.data.Table
   @reEvalJS = /^{.*}$/
   @reVariable = /^[a-zA-Z]\w*$/
   @reNestedAttr = /^[a-zA-Z]+\.[a-zA-Z]+$/
+  @log = gg.util.Log.logger "Table", gg.util.Log.ERROR
 
   type: (colname) ->
       val = @get(0, colname)
@@ -55,6 +56,7 @@ class gg.data.Table
   filter: (f) -> throw Error("not implemented")
   addConstColumn: (name, val, type=null) -> throw "not implemented"
   addColumn: (name, vals, type=null) -> throw "not implemented"
+  addRows: (rows) -> _.each rows, (row) => @addRow row
   addRow: (row) -> throw "not implemented"
   get: (row, col=null)-> throw "not implemented"
   # because we may have column stores
@@ -64,12 +66,10 @@ class gg.data.Table
     schema = new gg.data.Schema
     row = if rows.length > 0 then rows[0] else {}
     row = row.raw() if _.isSubclass row, gg.data.Row
-    #console.log row
     _.each row, (v,k) =>
       type = gg.data.Schema.type v
       vtype = type.type
       vschema =  type.schema
-      #console.log "gg.Table.inferSchema #{k}: #{vtype}"
 
       type = @findOrdinals rows, k, type
       schema.addColumn k, type.type, type.schema
@@ -83,14 +83,11 @@ class gg.data.Table
             row.get key
           else
             row[key]
-        #console.log "isOrdinal (val): #{key}\t#{vals[0...20]}"
-        #if gg.data.Table.isOrdinal vals
-        #  type.type = gg.data.Schema.ordinal
 
       when gg.data.Schema.array, gg.data.Schema.nested
         schema = new gg.data.Schema
         schema.addColumn key, type.type, type.schema
-        #console.log "isOrdinal schema: #{schema.toString()}\t#{schema.attrs()}"
+        #@log "isOrdinal schema: #{schema.toString()}\t#{schema.attrs()}"
 
         _.each schema.attrs(), (attr) ->
           if schema.isNumeric attr
@@ -98,8 +95,8 @@ class gg.data.Table
               row = row.raw() if _.isSubclass row, gg.data.Row
               schema.extract row, attr
             vals = _.flatten vals
-            #console.log "isOrdinal (arr): #{key}.#{attr}\t#{JSON.stringify vals[0...20]}"
-            #console.log rows[0]
+            #@log "isOrdinal (arr): #{key}.#{attr}\t#{JSON.stringify vals[0...20]}"
+            #@log rows[0]
 
             if gg.data.Table.isOrdinal vals
               type.schema.setType attr, gg.data.Schema.ordinal

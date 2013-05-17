@@ -8,6 +8,8 @@ class gg.layer.Layer
     @type = "layer"
     @name = _.findGood [@spec.name, "node-#{@id}"]
 
+    @log = gg.util.Log.logger "Layer-#{@layerIdx}"
+
     @parseSpec()
   @id: -> gg.wf.Node::_id += 1
   _id: 0

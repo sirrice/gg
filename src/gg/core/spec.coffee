@@ -1,3 +1,30 @@
+
+class gg.core.Spec
+
+
+  parseAes: (schema, spec) ->
+    position = _.pick spec, positionAess
+    if 'group' of spec
+      group = spec.group
+    else
+      group = {}
+      aess = _.keys spec
+      aess = aess.filter (aes) -> not isPosition aes
+
+      _.each aess, (aes) ->
+        # provenance query
+        cols = schema.getColnames aes
+        return unless cols? and cols.length > 0
+
+        if scales.scale(aes).type is gg.data.Schema.ordinal
+          group[aes] = spec[aes]
+
+      group
+
+
+    position['group'] = group
+
+
 #
 #
 # This file describes the graphics specification syntax

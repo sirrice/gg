@@ -12,10 +12,9 @@ class gg.coord.Identity extends gg.coord.Coordinate
     _.each gg.scale.Scale.ys, (y) ->
       posMapping[y] = 'y' if table.contains y
 
-    console.log "gg.IdentityCoordinate\t#{_.keys(posMapping)}"
+    @log "posMapping:\t#{_.keys(posMapping)}"
     inverted = scales.invert table, _.keys(posMapping), posMapping
-    console.log "gg.IdentityCoordinate y0inverted: #{inverted.getColumn("y0")[0...10]}" if inverted.schema.contains 'y0'
-    console.log inverted.raw()
+    @log inverted.raw()[0..5]
 
 
     # get and flip the y range
@@ -29,14 +28,13 @@ class gg.coord.Identity extends gg.coord.Coordinate
     yRange = yScale.range()
     yRange = [yRange[1], yRange[0]]
     yScale.range(yRange)
-    console.log "gg.IdentityCoordinate yrange: #{yRange}"
+    @log "yrange: #{yRange}"
 
 
     table = scales.apply inverted, gg.scale.Scale.ys, posMapping
     table.schema = schema
 
-    console.log "gg.IdentityCoordinate y0applied: #{table.getColumn("y0")[0...10]}" if table.contains "y0"
-    console.log table.raw()
+    @log JSON.stringify(table.raw()[0..5])
     table
 
 

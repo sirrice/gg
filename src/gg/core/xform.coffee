@@ -56,17 +56,19 @@ class gg.core.XForm
     @state = {}
 
     @params = {}
+    @log = gg.util.Log.logger "XForm", gg.util.Log.WARN unless @log?
+
 
   parseSpec: ->
-
     spec = _.clone @spec
-    console.log "XForm spec: #{JSON.stringify spec}"
+    @log "XForm spec: #{JSON.stringify spec}"
 
     @inputSchema = @extractAttr "inputSchema"
     @defaults = @extractAttr "defaults"
 
     @compute = spec.f or @compute
     @spec = spec
+    @log = gg.util.Log.logger "#{@spec.name} #{@constructor.name}", gg.util.Log.WARN
 
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?
@@ -142,33 +144,33 @@ class gg.core.XForm
     scales = @scales table, env
     info = @paneInfo table, env
     scales = @g.scales.facetScales info.facetX, info.facetY
-    console.log scales
+
     nfiltered = 0
-    table = table.filter (row) ->
-      valid = _.every iSchema, (attr) ->
+    table = table.filter (row) =>
+      valid = _.every iSchema, (attr) =>
         val = row.get(attr)
         isDefined = not(
           _.isNaN(val) or _.isNull(val) or _.isUndefined(val))
         #scale = scales.scale(attr, table.schema.type attr)
-        console.log "fuck: #{attr}:\t#{val}" unless isDefined
+        @log.warn "filterInput: undefined val: #{attr}:\t#{val}" unless isDefined
         isDefined #and scale.valid(val)
       unless valid
-        console.log row.raw()
+        @log row.raw()
         nfiltered += 1
       valid
 
-    console.log "xform.filterInput filtered #{nfiltered} rows"
+    @log "filterInput: filtered #{nfiltered} rows"
 
     table
 
 
   addDefaults: (table, env) ->
     defaults = @param table, env, "defaults"
-    console.log "adding defaults of #{JSON.stringify defaults}"
-    console.log "                   #{JSON.stringify table.colNames()}"
-    _.each defaults, (val, col) ->
+    @log "addDefaults: #{JSON.stringify defaults}"
+    @log "             #{JSON.stringify table.colNames()}"
+    _.each defaults, (val, col) =>
       unless col in table.colNames()
-        console.log "adding default    #{col} -> #{val}"
+        @log "addDefaults: adding: #{col} -> #{val}"
         table.addConstColumn col, val
 
   compute: (table, env, node) -> table
@@ -190,7 +192,7 @@ class gg.core.XForm
       @compute table, env, node
     spec.f = _compute
     node = new gg.wf.Exec spec
-    node.on "done", () =>
+    node.on "output", () =>
       @state = {}
     [node]
 
@@ -200,5 +202,4 @@ class gg.core.XForm
       }[xformName] or gg.core.XForm
 
 
-  log: (text) ->
-    console.log "#{@spec.name} #{@constructor.name}:\t#{text}"
+

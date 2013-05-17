@@ -13,7 +13,6 @@ class gg.coord.XFlip extends gg.coord.Coordinate
   @aliases = ["xflip"]
 
   map: (table, env) ->
-    console.log "gg.XFlipCoordinate"
     scales = @scales table, env
     aessTypes = {}
     _.each gg.scale.Scale.xys, (xy) -> aessTypes[xy] = gg.data.Schema.numeric

@@ -342,6 +342,7 @@ Other Libraries
 1. [Rickshaw](http://code.shutterstock.com/rickshaw/)
 1. [Cubism](http://square.github.com/cubism/)
 2. [ggplotjs](http://code.google.com/p/ggplot-js/)  paltry version
+1. [flotr]https://code.google.com/p/flotr/
 
 ### Other Languages
 

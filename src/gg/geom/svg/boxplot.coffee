@@ -14,8 +14,6 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
   render: (table, env, node) ->
     svg = @svg table, env
     data = table.asArray()
-    console.log table.raw()
-
 
     # attributes should be imported in bulk using
     # .attr( {} ) where {} is @attrs
@@ -31,9 +29,11 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
     y = (t) -> Math.min(t.get('y0'), t.get('y1'))
     height = (t) -> Math.abs(t.get('y1') - t.get('y0'))
     width = (t) -> t.get('x1') - t.get('x0')
-    width = (t) -> t.get('width')
-    x0 = (t) -> t.get('x') - t.get('width') / 2.0
-    x1 = (t) -> t.get('x') + t.get('width') / 2.0
+    #width = (t) -> t.get('width')
+    x0 = (t) -> t.get 'x0'
+    x1 = (t) -> t.get 'x1'
+    #x0 = (t) -> t.get('x') - t.get('width') / 2.0
+    #x1 = (t) -> t.get('x') + t.get('width') / 2.0
 
 
 
@@ -64,8 +64,8 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
     # upper tick
     uppert = @applyAttrs enter.append("line"),
       class: "boxplot whisker"
-      x1: (t) -> t.get('x')-t.get('width')*0.2
-      x2: (t) -> t.get('x')+t.get('width')*0.2
+      x1: (t) -> t.get('x')-width(t)*0.2
+      x2: (t) -> t.get('x')+width(t)*0.2
       y1: (t) -> t.get 'upper'
       y2: (t) -> t.get 'upper'
 
@@ -82,8 +82,8 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
     # lower tick
     lowert = @applyAttrs enter.append("line"),
       class: "boxplot whisker"
-      x1: (t) -> t.get('x')-t.get('width')*0.2
-      x2: (t) -> t.get('x')+t.get('width')*0.2
+      x1: (t) -> t.get('x')-width(t)*0.2
+      x2: (t) -> t.get('x')+width(t)*0.2
       y1: (t) -> t.get 'lower'
       y2: (t) -> t.get 'lower'
 

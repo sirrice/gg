@@ -1,11 +1,13 @@
 #<< gg/data/table
 
 class gg.util.Aesmap
+  @log = gg.util.Log.logger "Aesmap"
 
   @mappingToFunctions: (table, mapping) ->
     ret = {}
     _.each mapping, (val, key) ->
-      ret[key] = _.mapToFunction table, key, val
+      _.each gg.core.Aes.resolve(key), (newkey) ->
+        ret[newkey] = _.mapToFunction table, newkey, val
     ret
 
   @mapToFunction: (table, key, val) ->
@@ -30,12 +32,12 @@ class gg.util.Aesmap
       cmds.push "return #{userCode};"
       cmd = cmds.join ''
       fcmd = "var __func__ = function(row) {#{cmd}}"
-      console.log fcmd
+      gg.util.Aesmap.log fcmd
       eval fcmd
       __func__
     else
       # for constants (e.g., date, number)
-      console.log "mapToFunction: constant funct for : #{key}:#{val}"
+      gg.util.Aesmap.log "mapToFunction: const:  f(#{key})->#{val}"
       (row) -> val
 
 

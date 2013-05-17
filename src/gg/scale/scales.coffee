@@ -53,11 +53,18 @@ class gg.scale.Scales extends gg.core.XForm
       name: "scales-prestats"
     @postgeommap = @trainDataNode
       name: "scales-postgeommap"
-    @trainpixel = @trainPixelNode
-      name: "scales-pixel"
+    @facets = @trainFacets
+      name: "scales-facets"
+    @invertpixel = new gg.wf.Barrier
+      name: "scales-pixel-invert"
+      f: (args...) => @trainOnPixelsInvert args...,spec
+    @reapplypixel = new gg.wf.Barrier
+      name: "scales-pixel-reapply"
+      f: (args...) => @trainOnPixelsReapply args..., spec
 
 
     @parseSpec()
+    @log.level = gg.util.Log.DEBUG
 
 
   # XXX: assumes layers have been created already
@@ -82,10 +89,26 @@ class gg.scale.Scales extends gg.core.XForm
     @_trainDataNode
 
   trainPixelNode: (spec={}) ->
-    @_trainPixelNode = new gg.wf.Barrier
-      name: spec.name
-      f: (args...) => @trainOnPixels args...,spec
-    @_trainPixelNode
+    @_invertPixelNode = new gg.wf.Barrier
+      name: "#{spec.name}-invert"
+      f: (args...) => @trainOnPixelsInvert args...,spec
+    @_reapplyPixelNode = new gg.wf.Barrier
+      name: "#{spec.name}-reapply"
+      f: (args...) => @trainOnPixelsReapply args..., spec
+    [
+      @_invertPixelNode
+      #new gg.wf.Stdout
+      #  name: "mid-trainPixel"
+      #  n: 5
+      #  aess: ["x", "x0", "x1", "y", "y1"]
+      @_reapplyPixelNode
+    ]
+
+  trainFacets: (spec={}) ->
+    @_trainFacet = new gg.wf.Barrier
+      name: "#{spec.name}-facet"
+      f: (args...) => @trainForFacets args..., spec
+    @_trainFacet
 
 
   # these training methods assume that the tables's attribute names
@@ -101,11 +124,8 @@ class gg.scale.Scales extends gg.core.XForm
       # t.colNames is for everything else
       scales = @scales info.facetX, info.facetY, info.layer
 
-      console.log "Scales.trainOnData table:      #{t.colNames()}"
-      console.log "Scales.trainOnData scaleSet.id #{scales.id}"
-      # if scales factory does'nt define scale type, then
-      # use datatype!
-
+      @log "trainOnData: cols:    #{t.colNames()}"
+      @log "trainOnData: set.id:  #{scales.id}"
 
       scales.train t, null, spec.posMapping
 
@@ -137,17 +157,16 @@ class gg.scale.Scales extends gg.core.XForm
   # before training
   #
   #
-  trainOnPixels: (tables, envs, node, spec={}) ->
+  trainOnPixelsInvert: (tables, envs, node, spec={}) ->
     infos = _.map _.zip(tables, envs), ([t,e]) => @paneInfo t, e
-
     originalSchemas = _.map tables, (t) -> t.schema
 
     allAessTypes = []
     inverteds = _.map _.zip(tables, infos), ([t,info]) =>
       scales = @scales info.facetX, info.facetY, info.layer
       posMapping = @posMapping info.layer
-      console.log scales.toString()
-      console.log t.schema.toString()
+      @log "trainOnPixels: #{scales.toString("\t")}"
+      @log "trainOnPixels: #{t.colNames()}"
 
       aessTypes = {}
       # only table columns that have a corresponding
@@ -161,40 +180,47 @@ class gg.scale.Scales extends gg.core.XForm
       allAessTypes.push aessTypes
 
 
-      console.log "Scales.trainOnPixels posMapping: #{JSON.stringify posMapping}"
-      console.log "Scales.trainOnPixels table:      #{t.colNames()}"
-      console.log "Scales.trainOnPixels scaleSet.id (#{scales.id})"
-      console.log "Scales.trainOnPixels inverted aes #{JSON.stringify aessTypes}"
+      @log "trainOnPixels: posMapping: #{JSON.stringify posMapping}"
+      @log "trainOnPixels: cols:       #{t.colNames()}"
+      @log "trainOnPixels: setid:      #{scales.id}"
+      @log "trainOnPixels: aesTypes:   #{JSON.stringify aessTypes}"
 
 
       inverted = scales.invert t, aessTypes, posMapping
       scales.resetDomain()
       scales.train inverted, aessTypes, posMapping
-      console.log scales.toString()
+
       inverted
 
-    #console.log JSON.stringify inverteds[0].raw()
+    spec.infos = infos
+    spec.allAessTypes = allAessTypes
+    spec.originalSchemas = originalSchemas
+    inverteds
 
+  trainOnPixelsReapply: (tables, envs, node, spec={}) ->
+    infos = spec.infos or []
+    allAessTypes = spec.allAessTypes or []
+    originalSchemas = spec.originalSchemas or []
 
     apply = ([t,info, aessTypes,origSchema]) =>
       scales = @scales info.facetX, info.facetY, info.layer
       posMapping = @posMapping info.layer
-      console.log "Scales.trainOnPixels reapplying scales: #{JSON.stringify aessTypes}"
+      @log "trainOnPixels: #{scales.toString("\t")}"
 
-      console.log "Scales.trainOnpixels pre-Schema: #{t.schema.toString()}"
+      @log "trainOnpixels: pre-Schema: #{t.colNames()}"
       t = scales.apply t, aessTypes, posMapping
       t.schema = origSchema
-      console.log "Scales.trainOnpixels postSchema: #{t.schema.toString()}"
+      @log "trainOnpixels postSchema: #{t.colNames()}"
       t
 
-    args = _.zip(inverteds, infos, allAessTypes, originalSchemas)
+    args = _.zip(tables, infos, allAessTypes, originalSchemas)
     newTables = _.map args, apply
-
     @g.facets.trainScales()
     newTables
 
   trainForFacets: (tables, envs, node) ->
     @g.facets.trainScales()
+    tables
 
 
   layer: (layerIdx) -> @g.layers.getLayer layerIdx

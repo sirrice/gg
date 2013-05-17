@@ -4,7 +4,6 @@ class gg.stat.Stat extends gg.core.XForm
 
     @map = null
 
-
     @parseSpec()
 
   parseSpec: ->
@@ -32,7 +31,6 @@ class gg.stat.Stat extends gg.core.XForm
 
   @fromSpec: (layer, spec) ->
     klasses = gg.stat.Stat.klasses()
-    console.log klasses
     if _.isString spec
       type = spec
       spec = {}

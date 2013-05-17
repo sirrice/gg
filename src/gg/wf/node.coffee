@@ -116,13 +116,16 @@ catch error
 #
 class gg.wf.Node extends events.EventEmitter
   constructor: (@spec={}) ->
-    # at least one output is expected per child
-    @children = [null]
-
     @parents = []
+    @parent2in = {} # mapping from parent node id to its input port
 
-    # a slot, filled with null, should be allocated for every expected input
-    @inputs = [null]
+    # child nodes
+    @children = []
+    # input slot, one allocated for each input table expected
+    @inputs = []
+
+    # input port to output port mapping
+    @in2out = {}
 
     # workflow node belongs to
     # the workflow keeps track of execution state.
@@ -135,6 +138,9 @@ class gg.wf.Node extends events.EventEmitter
     @id = gg.wf.Node.id()
     @type = _.findGood [@spec.type, "node"]
     @name = _.findGood [@spec.name, "node-#{@id}"]
+
+
+    @log = gg.util.Log.logger "#{@name}-#{@id}\t#{@constructor.name}", gg.util.Log.DEBUG
 
   @id: -> gg.wf.Node::_id += 1
   _id: 0
@@ -150,7 +156,6 @@ class gg.wf.Node extends events.EventEmitter
         super @spec
 
     klass
-
 
 
   base: -> if @_base? then @_base else @
@@ -171,21 +176,25 @@ class gg.wf.Node extends events.EventEmitter
   # - f() is the input handler associated with the node
   #
   clone: (stop, klass=null) ->
-    @log "clone"
     klass = @constructor unless klass?
     clone = new klass @toSpec()
-    [clone, clone.getAddInputCB 0]
+    clone
 
-
+  # Execution time call to create a copy of the workflow instance rooted at
+  # current node.
+  #
   # @return {[gg.wf.Node, Function]}
-  cloneSubplan: (stop=null) ->
-    [copy, addInputCB] = @clone(stop)
+  cloneSubplan: (parent, stop=null) ->
+    clone = @clone stop
+    cb = clone.addInputPort()
 
-    if @children[0]?
-      [child, childInputCB] = @children[0].cloneSubplan stop
-      copy.addChild child, childInputCB
+    if @nChildren() > 0
+      [child, childCb] = @children[0].cloneSubplan @, stop
+      outputPort = clone.addChild child, childCb
+      clone.connectPorts cb.port, outputPort
+      child.addParent clone, childCb.port
 
-    [copy, addInputCB]
+    [clone, cb]
 
 
   #
@@ -195,7 +204,7 @@ class gg.wf.Node extends events.EventEmitter
   getAddInputCB: (idx) ->
     throw Error("input index #{idx} >= #{@inputs.length}") if idx >= @inputs.length
 
-    (node, data) =>
+    cb = (node, data) =>
       #XXX what else could the data be?
       if _.isSubclass data, gg.data.Table
         data = new gg.wf.Data data
@@ -204,12 +213,11 @@ class gg.wf.Node extends events.EventEmitter
         throw Error("trying to add input to filled slot #{idx}")
       else
         @inputs[idx] = data
+    cb.port = idx
+    cb
 
   addInput: (idx, node, data) ->
     @getAddInputCB(idx)(node, data)
-
-  log: (text) ->
-    console.log "#{@name}-#{@id}\t#{@constructor.name}\t#{text}"
 
   ready: -> _.all @inputs, (val) -> val?
 
@@ -223,16 +231,38 @@ class gg.wf.Node extends events.EventEmitter
     @emit outidx, @, data
     @emit "output", @, data
 
-  addParent: (node) ->
-    @log "addParent #{node.name}-#{node.id} #{node.constructor.name}"
-    @parents.push node
 
-  addChild: (node, inputCb=null) ->
-    if @children[0]?
+
+  addInputPort: ->
+    throw Error("#{@name} only supports <= 1 input port") if @inputs.length != 0
+    @inputs.push null
+    @getAddInputCB @inputs.length-1
+
+  connectPorts: (input, output) ->
+    @in2out[input] = [] unless input of @in2out
+    @in2out[input].push output
+
+  addParent: (node, inputPort=null) ->
+    throw Error("addParent inputPort not number #{inputPort}") unless _.isNumber inputPort
+    @parents.push node
+    @parent2in[node.id] = inputPort
+
+  # allocates an output port for child
+  #
+  # @return ID for output port attached to child
+  addChild: (child, childCb=null) ->
+    if @children.length > 0
       throw Error("#{@name}: Single Output node already has a child")
-    @children[0] = node
-    @addOutputHandler 0, inputCb if inputCb?
-    node.addParent @
+
+    childport = if childCb? then childCb.port else -1
+    myStr = "#{@name}-#{@id} port(#{@nChildren()})"
+    childStr = "#{child.name}-#{child.id} port(#{childport})"
+    @log.warn "addChild: -> #{myStr} -> #{childStr}"
+
+    @children.push child
+    @addOutputHandler 0, childCb if childCb?
+    0 # the output port Id
+
 
 
 
@@ -246,6 +276,7 @@ class gg.wf.Node extends events.EventEmitter
   run: -> throw Error("gg.wf.Node.run not implemented")
 
 
+  # DFS of the workflow starting from this node
   walk: (f, seen=null) ->
     seen = {} unless seen?
     seen[@id] = yes
@@ -259,294 +290,3 @@ class gg.wf.Node extends events.EventEmitter
 
 
 
-
-
-
-
-class gg.wf.Source extends gg.wf.Node
-  constructor: (@spec={}) ->
-    super @spec
-
-    @compute = @spec.f or @compute
-    @type = "source"
-    @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
-
-  compute: -> throw Error("#{@name}: Source not setup to generate tables")
-  ready: -> yes
-
-  run: ->
-    # always ready!
-    table = @compute()
-    @output 0, new gg.wf.Data(table, new gg.wf.Env)
-    table
-
-
-
-#
-class gg.wf.Exec extends gg.wf.Node
-  constructor: (@spec={}) ->
-    super @spec
-
-    @compute = @spec.f or @compute
-    @type = "exec"
-    @name = _.findGood [@spec.name, "exec-#{@id}"]
-
-  compute: (table, env, node) -> table
-
-
-  # @return emits to "output-child.id"
-  run: ->
-    throw Error("node not ready") unless @ready()
-
-    data = @inputs[0]
-    output = @compute data.table, data.env, @
-    @output 0, new gg.wf.Data(output, data.env.clone())
-    output
-
-
-#
-# @compute(tables) -> tables
-# The compute function takes a list of N tables and outputs N tables
-# such that the positions of the input and output tables match up
-#
-class gg.wf.Barrier extends gg.wf.Node
-  constructor: (@spec={}) ->
-    super @spec
-
-    @compute = @spec.f or @compute
-    @type = "barrier"
-    @name = _.findGood [@spec.name, "barrier-#{@id}"]
-
-    # pointer to the next workflow child to clone when
-    # cloneSubplan is called.
-    #
-    # each call to cloneSubplan increments clonePtr
-    #
-    # if clonePtr < number of children in the @wf
-    #   return existing input callback
-    # otherwise
-    #   clone child clonePtr%nChildren
-    #   return new child's input cb
-    #
-    @clonePtr = 0
-
-  compute: (tables, env, node) -> tables
-
-
-  cloneSubplan: (stop) ->
-    #@inputs.push null
-
-    # clone @children[0..n] where n is the number of
-    # children in the workflow
-    nChildren = @wf.children(@base()).length
-
-    idx = @clonePtr % nChildren
-    [child, childInputCB] = @children[idx].cloneSubplan stop
-    @addChild child, childInputCB
-    @clonePtr = (@clonePtr+1) % nChildren
-
-    [this, @getAddInputCB @nChildren()-1]
-
-  addChild: (child, inputCb=null) ->
-    if @children[0]?
-      @children.push child
-      @inputs.push null
-    else
-      @children[0] = child
-
-    @addOutputHandler @nChildren()-1, inputCb if inputCb?
-    child.addParent @
-
-    @log "addChild #{child.name}-#{child.id} to port #{@nChildren()-1}\t #{@inputs.length} in #{@nChildren()} out"
-
-
-  run: ->
-    throw Error("Node not ready") unless @ready()
-    tables = _.pluck @inputs, 'table'
-    envs = _.pluck @inputs, 'env'
-    outputs = @compute tables, envs, @
-    console.log "#{@name} barrier got #{tables.length}"
-    for output, idx in outputs
-      @output idx, new gg.wf.Data(output, envs[idx].clone())
-    outputs
-
-
-#
-# @spec.f {Function} splitting function with signature: (table) -> [ {key:, table:}, ...]
-class gg.wf.Split extends gg.wf.Node
-  constructor: (@spec={}) ->
-    super @spec
-
-    # TODO: support groupby functions that return an
-    # array of keys.
-    @type = "split"
-    @name = _.findGood [@spec.name, "split-#{@id}"]
-    @gbkeyName = _.findGood [@spec.key, @name]
-    @splitFunc = _.findGood [@spec.f, @splitFunc]
-
-  # @return array of {key: String, table: gg.Table} dictionaries
-  splitFunc: (table, env, node) -> []
-
-  findMatchingJoin: ->
-    ptr = @children[0]
-    n = 1
-    while ptr?
-      n += 1 if ptr.type is 'split'
-      n -= 1 if ptr.type is 'join'
-      break if n == 0
-      ptr = if ptr.hasChildren() then ptr.children[0] else null
-    ptr
-
-  allocateChildren: (n) ->
-    if @hasChildren()
-      stop = @findMatchingJoin()
-      #console.log "\tsplit\t#{@children[0].name}"
-      while @children.length < n
-        idx = @children.length
-        [child, childInputCB] = @children[0].cloneSubplan stop
-        @addChild child, childInputCB
-
-  addChild: (child, inputCb=null) ->
-    if @children[0]?
-      @children.push child
-      @addOutputHandler @children.length-1, inputCb if inputCb?
-    else
-      @children[0] = child
-      @addOutputHandler 0, inputCb if inputCb?
-    child.addParent @
-
-  run: ->
-    throw Error("Split not ready, expects #{@inputs.length} inputs") unless @ready()
-    data = @inputs[0]
-    table = data.table
-    env = data.env
-
-    groups = @splitFunc table, env, @
-    unless groups? and _.isArray groups
-      throw Error("#{@name}: Non-array result from calling split function")
-
-
-    # TODO: parameterize MAXGROUPS threshold
-    numDuplicates = groups.length
-    if numDuplicates > 1000
-      throw Error("I don't want to support more than 1000 groups!")
-    @allocateChildren numDuplicates
-
-
-    idx = 0
-    _.each groups, (group) =>
-      subtable = group.table
-      key = group.key
-      newData = new gg.wf.Data subtable, data.env.clone()
-      newData.env.pushGroupPair @gbkeyName, key
-      @output idx, newData
-      idx += 1
-    groups
-
-class gg.wf.Partition extends gg.wf.Split
-  constructor: ->
-    super
-
-    @name = _.findGood [@spec.name, "partition-#{@id}"]
-    @gbfunc = @spec.f or @gbfunc
-    @splitFunc = (table) -> table.split @gbfunc
-
-  gbfunc: -> 1
-
-
-
-#
-# Does not compute anything
-class gg.wf.Join extends gg.wf.Node
-  constructor: (@spec={}) ->
-    super @spec
-
-    @type = "join"
-    @name = _.findGood [@spec.name, "join-#{@id}"]
-
-  cloneSubplan: (stop) ->
-    if @ is stop
-      @inputs.push null
-      addInputCB = @getAddInputCB @inputs.length-1
-      [@, addInputCB]
-    else
-      super stop
-
-  ready: ->
-    #console.log "#{@name} ready?: #{super()}\t#{@inputs}"
-    super
-
-  # pop from each env's keys list
-  run: ->
-    unless @ready()
-      throw Error("#{@name} not ready: #{@inputs.length} of #{@children().length} inputs")
-
-    tables = _.map @inputs, (data) =>
-      table = data.table
-      groupPair = data.env.popGroupPair()
-      colName = groupPair.key
-      colVal = groupPair.val
-      newCol = _.times table.nrows(), ()->colVal
-      table.addColumn colName, newCol
-      table
-
-    env = @inputs[0].env.clone()
-    output = gg.data.Table.merge _.values(tables)
-    @output 0, new gg.wf.Data output, env
-
-    output
-
-
-#
-# Has an ordered list of children.  Replicates input to children.
-#
-# ONET: ONLY workflow node with multiple children at compile time!
-#
-class gg.wf.Multicast extends gg.wf.Node
-  constructor: (@spec={}) ->
-    super @spec
-
-    @type = "multicast"
-    @name = _.findGood [@spec.name, "multicast-#{@id}"]
-
-
-  cloneSubplan: (stop) ->
-    [clone, addInputCB] = @clone(stop)
-
-    for child, idx in _.compact @children
-      [childCopy, childInputCB]  = child.cloneSubplan stop
-      clone.addChild childCopy, childInputCB
-
-    [clone, addInputCB]
-
-  addChild: (node, inputCb=null) ->
-    unless @children[0]?
-      @children[0] = node
-    else
-      @children.push node
-    node.addParent @
-    @addOutputHandler @children.length-1, inputCb if inputCb?
-
-  run: ->
-    throw Error("Node not ready") unless @ready()
-
-    data = @inputs[0]
-    for child, idx in @children
-      newData = data.clone()
-      @output idx, newData
-    data.table
-
-###
-class gg.wf.Composite extends gg.wf.Node
-
-    constructor: (@spec={}) ->
-        super @spec
-
-        @nodes = @spec.nodes
-        @type = "composite"
-        @name = _.findGood [@spec.name, "comp-#{@id}"]
-
-    clone: (stop) ->
-        nodes = []
-
-###

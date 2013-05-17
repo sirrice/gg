@@ -69,7 +69,7 @@ class gg.scale.ColorScaleFuck extends gg.scale.Scale
 
 
   mergeDomain: (interval) ->
-    console.log "scale.mergeDomain #{@isNumeric interval}  #{interval.length}"
+    @log "scale.mergeDomain #{@isNumeric interval}  #{interval.length}"
     uniqs = _.uniq _.compact interval
     @isDiscrete = not (@isNumeric(uniqs) and uniqs.length > 20)
 

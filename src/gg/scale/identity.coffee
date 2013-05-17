@@ -7,27 +7,28 @@ class gg.scale.Identity extends gg.scale.Scale
     @d3Scale = null
     @type = gg.data.Schema.numeric
     super
+    @log.level = gg.util.Log.ERROR
 
   clone: -> @
 
   valid: -> true
   defaultDomain: ->
-    console.log "warning, gg.IdentityScale has no domain"
+    @log.warn "IdentityScale has no domain"
   mergeDomain: ->
-    console.log "warning, gg.IdentityScale has no domain"
+    @log.warn "IdentityScale has no domain"
   domain: ->
-    console.log "warning, gg.IdentityScale has no domain"
+    @log.warn "IdentityScale has no domain"
   minDomain: ->
-    console.log "warning, gg.IdentityScale has no domain"
+    @log.warn "IdentityScale has no domain"
   maxDomain: ->
-    console.log "warning, gg.IdentityScale has no domain"
+    @log.warn "IdentityScale has no domain"
   resetDomain: ->
   range: ->
-    console.log "warning, gg.IdentityScale has no range"
+    @log.warn "IdentityScale has no range"
   minRange: ->
-    console.log "warning, gg.IdentityScale has no range"
+    @log.warn "IdentityScale has no range"
   maxRange: ->
-    console.log "warning, gg.IdentityScale has no range"
+    @log.warn "IdentityScale has no range"
 
   scale: (v) -> v
   invert: (v) -> v

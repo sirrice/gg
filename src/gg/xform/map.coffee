@@ -43,14 +43,16 @@ class gg.xform.Mapper extends gg.core.XForm
     @mapping = @spec.aes
     @aes = @aesthetics = _.keys @mapping
     @inverse = @spec.inverse or {}
-    console.log "mapper spec: #{JSON.stringify @mapping}"
+    @log "spec: #{JSON.stringify @mapping}"
 
     super
 
   compute: (table, env, node) ->
-    console.log "transform: #{JSON.stringify @mapping}"
-    console.log "table:     #{JSON.stringify table.colNames()}"
+    @log "transform: #{JSON.stringify @mapping}"
+    @log "table:     #{JSON.stringify table.colNames()}"
     table = table.clone()
+
+    # resolve aesthetic aliases in mapping
     functions = _.mappingToFunctions table, @mapping
     table = table.transform functions, yes
     table

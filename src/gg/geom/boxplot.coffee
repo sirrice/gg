@@ -14,7 +14,7 @@ class gg.geom.Boxplot extends gg.geom.Geom
   posMapping: ->
     ys = ['q1', 'median', 'q3', 'lower', 'upper',
       'min', 'max', 'lower', 'upper', 'outlier']
-    xs = ['x']
+    xs = ['x', 'x0', 'x1']
     map = {}
     _.each ys, (y) -> map[y] = 'y'
     _.each xs, (x) -> map[x] = 'x'

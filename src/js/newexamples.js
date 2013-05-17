@@ -1,3 +1,38 @@
+/*
+ {"layers":[{
+  "geom": "boxplot",
+  "aes": {
+    "y": "e",
+   "x": "{Math.floor(d/25)*25}",
+"group": "{{fill: Math.floor(d/25)*25}}"
+  }, "stat": "boxplot", "scales": {"fill":"color"}
+},
+{ "geom": "point", "aes": {"x":"d", "y": "e", "fill": "f"}},
+{ "geom": "line", "aes": {"x":"d", "y": "e"}, "stat": "loess"},
+{ "geom": "line", "aes": {"x":"d", "y":"e"}}
+]
+}
+*/
+
+var geom_boxplot2 =
+[{
+  "geom": "boxplot",
+  "aes": {
+    "x": "g",
+    "y": "e",
+    "group": {"fill": "g"}
+  }, "stats": "boxplot"
+},
+
+{
+ "geom": "point",
+ "aes": {
+   x: 'g',
+   y: 'e',
+   group: {fill: 'g'}
+ }
+ }
+];
 
 var geom_area = {
   geom: {
@@ -118,6 +153,7 @@ var geoms = {
   //area: geom_area,
   //boxplot: geom_boxplot,
   //interval: geom_interval,
+  boxplot: geom_boxplot2,
   point: geom_point_1
   ,sum: geom_point_sum
   ,interval: geom_point_interval
@@ -128,7 +164,8 @@ var geoms = {
 };
 
 var selected_geoms = {
-  point: true
+  point: false,
+  boxplot: true
 };
 
 
@@ -163,9 +200,12 @@ var selected_geoms = {
 
   var render_query = function() {
     var text = $("#query").val();
-    var specs = JSON.parse(text);
-    specs = _.flatten([specs]);
-    specs = {layers: specs};
+    eval("var specs = " + text);
+    //var specs = JSON.parse(text);
+    if(!("layers" in specs)) {
+      specs = _.flatten([specs]);
+      specs = {layers: specs};
+    }
     render(specs);
   }
 
@@ -229,8 +269,13 @@ var selected_geoms = {
       $("#examples").empty();
       return d3.select('#examples').append('span');
     };
-    var plot = gg(specs)
-    plot.render(w, h, ex(), bigdata)
+    var plot = gg(specs);
+    var wf = plot.compile();
+    var json = wf.toJSON();
+    //console.log(json);
+    console.log(wf.toTree());
+    //plot.render(w, h, ex(), bigdata)
+    d3cluster(wf.toTree());
   }
 
 
@@ -239,15 +284,20 @@ var selected_geoms = {
 
   $(document).ready(function() {
     Math.seedrandom("zero");
+    var gauss = science.stats.distribution.gaussian();
+
 
     //
     // Generate random data with float attributes: d, r, g, f, t
     //
-    bigdata = _.map(_.range(0, 100), function(d) {
-      g = Math.floor(Math.random() * 3);
-      f = Math.floor(Math.random() * 3);
+    var npts = 50;
+    bigdata = _.map(_.range(0, npts), function(d) {
+      g = Math.floor(Math.random() * 3) + 1;
+      f = Math.floor(Math.random() * 2);
       t = Math.floor(Math.random() * 3);
-      return {d:d, e: d + d*Math.random(), g: g, f:f, t:t};
+      gauss.variance(d * 30.0 / npts);
+
+      return {d: Math.floor(d/3), e: ((d + gauss())*Math.sin(d/20)) * (g),  g: g, f:f, t:t};
     });
 
     setup_sample_data(bigdata);
@@ -258,8 +308,9 @@ var selected_geoms = {
     // create and render
 
     reset_query();
-    render_query();
+    //render_query();
 
 
   });
 })(geoms, selected_geoms);
+

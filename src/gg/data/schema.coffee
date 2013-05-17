@@ -1,4 +1,8 @@
+#<< gg/util/log
+
 class gg.data.Schema
+  @log = gg.util.Log.logger "Schema", gg.util.Log.ERROR
+
   @ordinal = 0
   @numeric = 2
   @date = 3
@@ -9,6 +13,7 @@ class gg.data.Schema
   constructor: ->
     @schema = {}
     @attrToKeys = {}
+    @log = gg.data.Schema.log
 
   @fromSpec: (spec) ->
     schema = new gg.data.Schema
@@ -75,17 +80,16 @@ class gg.data.Schema
         subSchema = schema.schema[key].schema
         switch type
           when gg.data.Schema.array, gg.data.Schema.nested
-            #console.log "type: #{attr}\t#{JSON.stringify subSchema}"
             if subSchema? and attr of subSchema.schema
               subSchema.schema[attr].type
             else
-              console.log "gg.data.Schema.type 1 no type for #{attr}"
+              @log "type: no type for #{attr} (code 1)"
               null
           else
-            console.log "gg.data.Schema.type 2 no type for #{attr}"
+            @log "type: no type for #{attr} (code 2)"
             null
     else
-      console.log "gg.data.Schema.type 3 no type for #{attr}"
+      @log "type: no type for #{attr} (code 3)"
       null
 
   isKey: (attr) -> attr of @schema
@@ -108,9 +112,9 @@ class gg.data.Schema
         switch type
           when gg.data.Schema.array, gg.data.Schema.nested
             if subSchema?
-              console.log schema
-              console.log subSchema
-              console.log attr
+              @log schema
+              @log subSchema
+              @log attr
               subSchema[attr].type = newType
 
 

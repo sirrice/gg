@@ -33,15 +33,15 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
     stats = _.map _.range(nBins), (binidx) ->
       {bin: binidx, count: 0, total: 0}
 
-    table.each (row) ->
+    table.each (row) =>
       x = row.get('x')
       y = row.get('y') || 0
       binidx = Math.floor((x - domain[0]) / binSize)
       try
         stats[binidx].count += 1
       catch error
-        console.log "Bin1D.compute: #{error}"
-        console.log "fetch bin: val(#{x}):  #{binidx} of #{stats.length}"
+        @log.warn "Bin1D.compute: #{error}"
+        @log.warn "fetch bin: val(#{x}):  #{binidx} of #{stats.length}"
         return
       if _.isNumber y
         stats[binidx].total += y

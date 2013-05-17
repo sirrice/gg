@@ -104,6 +104,8 @@ class gg.scale.Scale
 
     @center = _.findGood [@spec.center, null]
 
+    @log = gg.util.Log.logger "Scale #{@aes}.#{@id} (#{@type},#{@constructor.name})", gg.util.Log.WARN
+
     # copy over other spec key-val pairs?
     # for key, val of spec
     #   @[key] = val
@@ -173,7 +175,7 @@ class gg.scale.Scale
         if type is gg.data.Schema.ordinal
           klass = gg.scale.Ordinal
 
-    console.log "gg.scale.Scale defaultFor(#{aes}, #{type}) -> #{klass.name}"
+    # gg.util.Log.log "Scale: defaultFor(#{aes}, #{type}) -> #{klass.name}"
 
     s = new klass {aes: aes, type: type}
     s
@@ -235,8 +237,8 @@ class gg.scale.Scale
   minDomain: -> @domain()[0]
   maxDomain: -> @domain()[1]
   resetDomain: ->
-    @domainUpdated = false
     @domain([0,1])
+    @domainUpdated = false
   minRange: -> @range()[0]
   maxRange: -> @range()[1]
   scale: (v) -> @d3Scale v

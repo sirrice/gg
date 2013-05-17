@@ -5,6 +5,7 @@ class gg.data.RowTable extends gg.data.Table
     throw Error("schema not present") unless @schema?
     @rows = []
     _.each rows, (row) => @addRow row
+    @log = gg.data.Table.log
 
 
   @fromArray: (rows) ->
@@ -35,11 +36,11 @@ class gg.data.RowTable extends gg.data.Table
 
   cloneShallow: ->
     rows = @rows.map (row) -> row
-    new gg.data.RowTable @schema, rows
+    new gg.data.RowTable @schema.clone(), rows
 
   cloneDeep: ->
     rows = @rows.map (row) => row.clone()
-    new gg.data.RowTable @schema, rows
+    new gg.data.RowTable @schema.clone(), rows
 
 
   merge: (table) ->
@@ -62,6 +63,7 @@ class gg.data.RowTable extends gg.data.Table
 
   # gbfunc's output will be JSON encoded to differentiate groups
   # however the actual key will be the original gbfunc's output
+  #
   # @param {Function} gbfunc (row) -> key
   # @return {Array} of objects: {key: group key, table: partition}
   split: (gbfunc) ->
@@ -109,7 +111,6 @@ class gg.data.RowTable extends gg.data.Table
         mapping = {}
         mapping[colname] = funcOrUpdate
 
-
     if update
       @each (row) =>
         newrow = @transformRow row, mapping
@@ -128,7 +129,7 @@ class gg.data.RowTable extends gg.data.Table
       newvalue = try
         f row
       catch error
-        console.log error
+        @log.warn error
         throw error
 
       if _.isArray newvalue
@@ -186,14 +187,19 @@ class gg.data.RowTable extends gg.data.Table
     if vals.length != @nrows()
       throw Error("column has #{vals.length} values,
         table has #{@rows.length} rows")
-    if @schema.contains name
-      throw Error("column #{name} already exists in table")
 
     unless type?
       type = if vals.length is 0
         {type: gg.data.Schema.unknown, schema: null}
       else
         gg.data.Schema.type vals[0]
+
+    if @schema.contains name
+      if type.type != @schema.type name
+        throw Error("column #{name} already exists in table and
+           #{type} != #{@schema.type name}")
+      else
+        @log.warn "column #{name} already exists in table"
 
     @schema.addColumn name, type.type, type.schema
     @rows.forEach (row, idx) => row.addColumn(name, vals[idx])
@@ -218,7 +224,7 @@ class gg.data.RowTable extends gg.data.Table
   getColumn: (col) ->
     # XXX: hack.  make it do the right thing if no rows
     if @nrows() > 0 and @schema.contains col
-      if @get(0).inArray(col)
+      if @get(0).inArray col
         _.flatten _.times @nrows(), (idx) => @get(idx, col)
       else
         _.times @nrows(), (idx) => @get(idx, col)

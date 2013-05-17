@@ -15,7 +15,6 @@ class gg.geom.svg.Rect extends gg.geom.Render
     ['x0', 'x1', 'y0', 'y1']
 
   render: (table, env, node) ->
-    console.log 'rendering rectangles!'
 
     data = table.asArray()
     rects = @agroup(@svg(table, env), "intervals geoms", data)
@@ -40,8 +39,8 @@ class gg.geom.svg.Rect extends gg.geom.Render
       fill: (t) -> t.get('fill')
 
     cssOver =
-      x: (t) -> t.get('x0') - width(t) * 0.05
-      width: (t) -> width(t) * 1.1
+      #x: (t) -> t.get('x0') - width(t) * 0.05
+      #width: (t) -> width(t) * 1.1
       fill: (t) -> d3.rgb(t.get("fill")).darker(2)
       "fill-opacity": 1
 

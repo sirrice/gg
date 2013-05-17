@@ -35,6 +35,7 @@
 # type:   specifies what high level geometry to render
 #
 class gg.geom.Geom # not an XForm!!
+  @log = gg.util.Log.logger "Geom", gg.util.Log.ERROR
 
   constructor: (@layer, @spec) ->
     @g = @layer.g
@@ -49,7 +50,6 @@ class gg.geom.Geom # not an XForm!!
   # { type:, aes:, param:}
   parseSpec: ->
     @render = gg.geom.Render.fromSpec @layer, @spec.type
-    console.log "#####: #{JSON.stringify @spec}"
     @map = gg.xform.Mapper.fromSpec @g, @spec
 
   name: -> @constructor.name.toLowerCase()
@@ -86,8 +86,8 @@ class gg.geom.Geom # not an XForm!!
     spec.name = klass.name unless spec.name?
     geom = new klass(layer, spec)
 
-    console.log "geom.fromSpec\t#{JSON.stringify spec}"
-    console.log "geom klass: #{spec.type} -> #{klass.name}"
+    @log "fromSpec\t#{JSON.stringify spec}"
+    @log "fromSpec: klass: #{spec.type} -> #{klass.name}"
 
     geom
 

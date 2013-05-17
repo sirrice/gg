@@ -16,7 +16,6 @@ class gg.geom.svg.Line extends gg.geom.Render
   render: (table, env) ->
     svg = @svg table, env
     data = table.asArray()
-    console.log "table has #{table.nrows()} rows"
 
     # attributes should be imported in bulk using
     # .attr( {} ) where {} is @attrs

@@ -6,6 +6,7 @@
 class gg.layer.Layers
     constructor: (@g, @spec) ->
       @layers = []
+      @log = gg.util.Log.logger "Layers", gg.util.Log.WARN
       @parseSpec()
 
     parseSpec: ->
@@ -13,11 +14,11 @@ class gg.layer.Layers
 
     # @return [ [node,...], ...] a list of nodes for each layer
     compile: ->
-      _.map @layers, (l) ->
+      _.map @layers, (l) =>
         nodes = l.compile()
-        console.log "gg.Layers.compile layer #{l.layerIdx}"
-        _.each nodes, (node) ->
-          console.log "gg.Layers.compile node: #{node.name}"
+        @log "compile layer #{l.layerIdx}"
+        _.each nodes, (node) =>
+          @log "compile node: #{node.name}"
         nodes
 
     getLayer: (layerIdx) ->

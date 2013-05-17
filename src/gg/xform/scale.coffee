@@ -1,3 +1,4 @@
+#<< gg/util/log
 #<< gg/core/xform
 
 
@@ -13,7 +14,7 @@ class gg.xform.ScalesApply extends gg.core.XForm
     @posMapping = @spec.posMapping or {}
 
   compute: (table, env) ->
-    console.log "please tell me it has #{table.nrows()} rows"
+    @log "table has #{table.nrows()} rows"
     scales = @scales table, env
     table = scales.apply table, null, @posMapping
     table

@@ -24,16 +24,16 @@
 #
 
 class gg.scale.Config
+  @log = gg.util.Log.logger "scaleConfig", gg.util.Log.ERROR
 
   # @param defaults:        aes -> scale
   # @param layerDefaults:   layer -> {aes -> scale}
   constructor: (@defaults, @layerDefaults)  ->
-    console.log "gg.ScaleConfig new\n\t#{JSON.stringify @defaults}\n\t#{JSON.stringify @layerDefaults}"
 
   @fromSpec: (spec, layerSpecs={}) ->
 
-    console.log "gg.ScaleConfig.spec: #{JSON.stringify spec}"
-    console.log "gg.ScaleConfig.lSpec: #{JSON.stringify layerSpecs}"
+    @log "spec:      #{JSON.stringify spec}"
+    @log "layerSpec: #{JSON.stringify layerSpecs}"
 
     # load graphic defaults
     defaults = gg.scale.Config.loadSpec spec
@@ -64,7 +64,7 @@ class gg.scale.Config
     scalesSpec = layerSpec.scales
     layerConfig = gg.scale.Config.loadSpec scalesSpec
     @layerDefaults[layerIdx] = layerConfig
-    console.log "gg.ScaleConfig.addLayer #{layerConfig}"
+    gg.scale.Config.log "addLayer: #{layerConfig}"
 
 
 
