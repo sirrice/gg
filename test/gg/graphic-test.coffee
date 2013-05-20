@@ -101,9 +101,16 @@ spec =
   layers: [
     {
       geom: "boxplot"
+      aes:
+        x: 'd'
+        y: 'r'
+      stat: "boxplot"
     },
     {
       geom: "point"
+      aes:
+        x: 'd'
+        y: 'r'
     }
   ]
 
