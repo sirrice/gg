@@ -270,12 +270,22 @@ var selected_geoms = {
       return d3.select('#examples').append('span');
     };
     var plot = gg(specs);
+    plot.render(w, h, ex(), bigdata);
+
+
     var wf = plot.compile();
-    var json = wf.toJSON();
-    //console.log(json);
-    console.log(wf.toTree());
-    //plot.render(w, h, ex(), bigdata)
-    d3cluster(wf.toTree());
+    var text = [];
+    text.push("digraph G {");
+    text.push("graph [rankdir=LR]");
+    _.each(wf.graph.edges(), function(edge) {
+      var n1 = edge[0];
+      var n2 = edge[1];
+      var md = edge[2].type;
+      var color = md=="normal"?"black":"green";
+      text.push("\""+n1.name + "\" -> \"" + n2.name + "\" [color=\""+color+"\"];");
+    })
+    text.push("}");
+    //console.log(text.join("\n"));
   }
 
 

@@ -28,71 +28,43 @@ events = require 'events'
 #
 class gg.wf.Flow extends events.EventEmitter
   constructor: (@spec={}) ->
-    @nodes = []
-    @id2node = []
-    @inId2outId = {}  # parent -> child edges
-    @outId2inId = {}  # child -> parent edges
-    @edgeWeights = {} # [parentid, childid] -> count
-    @bridges = {}     # nonbarrier -> nonbarrier (skips the barrier nodes)
+    @graph = new gg.util.Graph (node)->node.id
     @g = @spec.g  # graphic object that compiled into this workflow
-
     @log = gg.util.Log.logger "flow", gg.util.Log.DEBUG
+    _.extend @constructor.prototype, events.EventEmitter.prototype
 
   add: (node) ->
-    unless node.id of @id2node
-      @log.warn "Caution: node already has a workflow" if node.wf?
-      node.wf = @
-      @nodes.push node
-      @id2node[node.id] = node
-      @inId2outId[node.id] = []
-      @outId2inId[node.id] = []
-      @bridges[node.id] = []
-    @
+    node.wf = @
+    @graph.add node
 
-  connect: (from, to) ->
-    @add(from) unless from.id of @id2node
-    @add(to) unless to.id of @id2node
-
-    @inId2outId[from.id].push to.id
-    @outId2inId[to.id].push from.id
-    edge = JSON.stringify [from.id, to.id]
-    @edgeWeights[edge] = 0 unless edge of @edgeWeights
-    @edgeWeights[edge] += 1
+  connect: (from, to, type="normal") ->
     @log "connect #{from.name}\t#{to.name}"
+    if @graph.edgeExists from, to
+      md = @graph.metadata from, to
+      md.weight += 1
+      @graph.connect from, to, md
+    else
+      @graph.connect from, to, {type: type, weight: 1}
 
     @
 
   connectBridge: (from, to) ->
     throw Error() if _.isSubclass from, gg.wf.Barrier
     throw Error() if _.isSubclass to, gg.wf.Barrier
-
-    @bridges[from.id].push to.id
+    @connect from, to, "bridge"
     @log "bridge #{from.name}\t#{to.name}"
-
     @
 
 
   edgeWeight: (from, to) ->
-    edge = JSON.stringify [from.id, to.id]
-    @edgeWeights[edge] or 0
+    md = @graph.metadata(from, to)
+    if md? md.weight else 0
 
-  sources: () ->
-    _.filter @nodes, (node) =>
-        node.id not of @outId2inId or _.size(@outId2inId[node.id]) == 0
+  children: (node) -> @graph.children node, (md) -> md.type is "normal"
+  bridgedChildren: (node) -> @graph.children node, (md) -> md.type is "bridge"
 
-  sinks: ->
-    _.filter @nodes, (node) =>
-        node.id not of @inId2outId or _.size(@inId2outId[node.id]) == 0
-
-  children: (node) ->
-    _.compact(_.flatten [@id2node[id] for id in (@inId2outId[node.id] or [])])
-
-  bridgedChildren: (node) ->
-    _.compact(_.flatten [@id2node[id] for id in (@bridges[node.id] or [])])
-
-  parents: (node) ->
-    _.compact(_.flatten [@id2node[id] for id in (@outId2inId[node.id] or [])])
-
+  sources: -> @graph.sources()
+  sinks: -> @graph.sinks()
 
   #
   # Create a mutable instance of the workflow that can be sent to a gg.wf.Runner
@@ -128,7 +100,7 @@ class gg.wf.Flow extends events.EventEmitter
       else
         clone = node.clone()
         cb = clone.addInputPort()
-        endNodes = @bridgedChildren(node)
+        endNodes = @children(node)
         @log "endNodes #{node.name}: [#{endNodes.map((v)->v.name).join("  ")}]"
 
         for child in @children node
@@ -212,48 +184,13 @@ class gg.wf.Flow extends events.EventEmitter
     paths
 
 
-
-
-  #
-  # Visit nodes breadth first
-  #
-  visitBFS: (f) ->
-    queue = @sources()
-    seen = {}
-    while _.size queue
-      node = queue.shift()
-      continue if node.id of seen
-
-      seen[node.id] = yes
-      f node
-
-      _.each @children(node), (child) ->
-        queue.push child if child? and child.id not of seen
-
-  #
-  # Visit nodes depth first
-  #
-  visitDFS: (f, node=null, seen=null) ->
-    seen = {} unless seen?
-
-    if node?
-        return if node.id of seen
-        seen[node.id] = yes
-        f node
-
-        _.each @children(node), (child) =>
-            @visitDFS f, child, seen
-    else
-        _.each @sources(), (child) =>
-            @visitDFS f, child, seen
-
   toString: ->
     arr = []
     f = (node) =>
         childnames = _.map @children(node), (c) -> c.name
         cns = childnames.join(', ') or "SINK"
         arr.push "#{node.name}\t->\t#{cns}"
-    @visitBFS f
+    @graph.bfs f
     arr.join("\n")
 
   toJSON: (type="graph") ->
@@ -308,7 +245,7 @@ class gg.wf.Flow extends events.EventEmitter
     id2node = {
       "-1": root
     }
-    @visitBFS (node) =>
+    @graph.bfs (node) =>
       id = node.id
       id2node[id] = {
         name: node.name
@@ -371,5 +308,5 @@ class gg.wf.Flow extends events.EventEmitter
     runner.run()
 
 
-
+#_.extend gg.wf.Flow.prototype, events.EventEmitter
 

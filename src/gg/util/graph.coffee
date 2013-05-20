@@ -33,6 +33,7 @@ class gg.util.Graph
 
 
   # add an edge
+  # subsequent calls will OVERWRITE existing metadata
   connect: (from, to, metadata=null) ->
     if _.isArray from
       _.each from, (args) => @connect args...
@@ -48,12 +49,20 @@ class gg.util.Graph
     @
 
 
+  edgeExists: (from, to) ->
+    fid = @idFunc from
+    tid = @idFunc to
+    fid of @pid2cid and tid of @pid2cid[fid]
+
   # retrieve metadata for edge
   metadata: (from, to) ->
     fid = @idFunc from
     tid = @idFunc to
     return null unless fid of @id2node
     @pid2cid[fid][tid]
+
+  nodes: (filter=(node)->true) ->
+    _.filter _.values(@id2node), filter
 
   # return a list of all edges in the graph
   edges: (filter=(metadata)->true) ->
