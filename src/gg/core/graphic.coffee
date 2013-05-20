@@ -40,12 +40,14 @@ class gg.core.Graphic
       for node in @facets.splitter
         wf.node node
         wf.connectBridge prev, node if prev?
+        wf.connect prev, node if prev?
         prev = node
 
 
       multicast = new gg.wf.Multicast
       wf.node multicast
       wf.connectBridge prev, multicast if prev?
+      wf.connect prev, multicast if prev?
 
       _.each @layers.compile(), (nodes) ->
         prev = multicast

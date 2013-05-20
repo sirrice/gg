@@ -30,41 +30,9 @@ class gg.wf.Flow extends events.EventEmitter
   constructor: (@spec={}) ->
     @graph = new gg.util.Graph (node)->node.id
     @g = @spec.g  # graphic object that compiled into this workflow
-    @log = gg.util.Log.logger "flow", gg.util.Log.DEBUG
+    @log = gg.util.Log.logger "flow ", gg.util.Log.DEBUG
     _.extend @constructor.prototype, events.EventEmitter.prototype
 
-  add: (node) ->
-    node.wf = @
-    @graph.add node
-
-  connect: (from, to, type="normal") ->
-    @log "connect #{from.name}\t#{to.name}"
-    if @graph.edgeExists from, to
-      md = @graph.metadata from, to
-      md.weight += 1
-      @graph.connect from, to, md
-    else
-      @graph.connect from, to, {type: type, weight: 1}
-
-    @
-
-  connectBridge: (from, to) ->
-    throw Error() if _.isSubclass from, gg.wf.Barrier
-    throw Error() if _.isSubclass to, gg.wf.Barrier
-    @connect from, to, "bridge"
-    @log "bridge #{from.name}\t#{to.name}"
-    @
-
-
-  edgeWeight: (from, to) ->
-    md = @graph.metadata(from, to)
-    if md? md.weight else 0
-
-  children: (node) -> @graph.children node, (md) -> md.type is "normal"
-  bridgedChildren: (node) -> @graph.children node, (md) -> md.type is "bridge"
-
-  sources: -> @graph.sources()
-  sinks: -> @graph.sinks()
 
   #
   # Create a mutable instance of the workflow that can be sent to a gg.wf.Runner
@@ -86,7 +54,7 @@ class gg.wf.Flow extends events.EventEmitter
   #
   instantiate: (node=null, barriercache={}) ->
     if node?
-      @log "instantitate #{node.name}-#{node.id}"
+      @log "instantitate #{node.name}-#{node.id}\t#{_.isSubclass node, gg.wf.Barrier}"
 
       if _.isSubclass node, gg.wf.Barrier
         unless node.id of barriercache
@@ -100,7 +68,7 @@ class gg.wf.Flow extends events.EventEmitter
       else
         clone = node.clone()
         cb = clone.addInputPort()
-        endNodes = @children(node)
+        endNodes = @bridgedChildren node
         @log "endNodes #{node.name}: [#{endNodes.map((v)->v.name).join("  ")}]"
 
         for child in @children node
@@ -165,7 +133,12 @@ class gg.wf.Flow extends events.EventEmitter
     seen = {} unless seen?
     paths = [] unless paths?
 
-    if _.isSubclass node, gg.wf.Barrier
+    if node in endNodes
+      newPath = _.clone curPath
+      newPath.push node
+      paths.push newPath if newPath.length > 0
+      @log "nonBarrierPaths add: [#{newPath.map((v) -> v.name).join("  ")}]"
+    else if _.isSubclass node, gg.wf.Barrier
       curPath.push node
       children = _.uniq @children node
       @log "nonBarrierPaths children: #{children.map((v)->"#{v.name}-#{v.id}").join "  "}"
@@ -173,15 +146,13 @@ class gg.wf.Flow extends events.EventEmitter
         #@log "nonBarrierPaths barrier #{child.name} has weight: #{@edgeWeight(node, child)}"
         @nonBarrierPaths child, endNodes, curPath, seen, paths
       curPath.pop()
-    else if node in endNodes
-      newPath = _.clone curPath
-      newPath.push node
-      paths.push newPath if newPath.length > 0
-      @log "nonBarrierPaths add: [#{newPath.map((v) -> v.name).join("  ")}]"
     else
       @log "nonBarrierPaths skip: #{node.name}"
 
     paths
+
+
+
 
 
   toString: ->
@@ -267,6 +238,49 @@ class gg.wf.Flow extends events.EventEmitter
 
 
 
+
+  add: (node) ->
+    node.wf = @
+    @graph.add node
+
+  connect: (from, to, type="normal") ->
+    if @graph.edgeExists from, to, type
+      weight = 1 + @graph.metadata from, to, type
+    else
+      weight = 1
+    @log "connect #{from.name}\t#{to.name}\t#{type}\t#{weight}"
+    @graph.connect from, to, type, weight
+    @
+
+  connectBridge: (from, to) ->
+    throw Error() if _.isSubclass from, gg.wf.Barrier
+    throw Error() if _.isSubclass to, gg.wf.Barrier
+    @connect from, to, "bridge"
+    @
+
+
+  edgeWeight: (from, to, type="normal") ->
+    @graph.metadata(from, to, type) or 0
+
+  children: (node) -> @graph.children node, "normal"
+  bridgedChildren: (node) -> @graph.children node, "bridge"
+
+  sources: -> @graph.sources()
+  sinks: -> @graph.sinks()
+
+
+  # Convenience functions for linearly adding nodes to the workflow
+  # If you want to use multicast to construct a tree, you will need to do that manually.
+  isNode: (specOrNode) -> not (specOrNode.constructor.name is 'Object')
+  node: (node) -> @setChild null, node
+  exec: (specOrNode) -> @setChild gg.wf.Exec, specOrNode
+  split: (specOrNode) -> @setChild gg.wf.Split, specOrNode
+  partition: (specOrNode) -> @setChild gg.wf.Partition, specOrNode
+  join: (specOrNode) -> @setChild gg.wf.Join, specOrNode
+  barrier: (specOrNode) -> @setChild gg.wf.Barrier, specOrNode
+  multicast: (specOrNode) -> @setChild gg.wf.Multicast, specOrNode
+  extend: (nodes) -> _.each nodes, (node) => @setChild null, node
+
   # @param specOrNode specification of a node or a Node object
   # WARNING: sets @children to specOrNode (clobbers existing children array)!
   setChild: (klass, specOrNode) ->
@@ -282,18 +296,6 @@ class gg.wf.Flow extends events.EventEmitter
     @connect prevNode, node if prevNode?
     @add node
     this
-
-  # Convenience functions for linearly adding nodes to the workflow
-  # If you want to use multicast to construct a tree, you will need to do that manually.
-  isNode: (specOrNode) -> not (specOrNode.constructor.name is 'Object')
-  node: (node) -> @setChild null, node
-  exec: (specOrNode) -> @setChild gg.wf.Exec, specOrNode
-  split: (specOrNode) -> @setChild gg.wf.Split, specOrNode
-  partition: (specOrNode) -> @setChild gg.wf.Partition, specOrNode
-  join: (specOrNode) -> @setChild gg.wf.Join, specOrNode
-  barrier: (specOrNode) -> @setChild gg.wf.Barrier, specOrNode
-  multicast: (specOrNode) -> @setChild gg.wf.Multicast, specOrNode
-  extend: (nodes) -> _.each nodes, (node) => @setChild null, node
 
 
   run: (table) ->

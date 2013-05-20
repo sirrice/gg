@@ -129,13 +129,18 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @log "compile()"
     debugaess = ['x', 'y', 'q1', 'q3', 'median']
     debugaess = ['x', 'x0', 'x1', 'y', 'group']
-    makeStdOut = (name, n=5, aess=debugaess) => new gg.wf.Stdout
-      name: "#{name}-#{@layerIdx}"
-      n: 5
-      aess: aess
-    makeScalesOut = (name, scales=@g.scales) => new gg.wf.Scales
-      name: "#{name}-#{@layerIdx}"
-      scales: scales
+    makeStdOut = (name, n=5, aess=debugaess) =>
+      new gg.wf.Stdout
+        name: "#{name}-#{@layerIdx}"
+        n: 5
+        aess: aess
+      null
+
+    makeScalesOut = (name, scales=@g.scales) =>
+      new gg.wf.Scales
+        name: "#{name}-#{@layerIdx}"
+        scales: scales
+      null
 
 
 

@@ -8,7 +8,7 @@ class gg.util.Graph
     @id2node = {}
     @pid2cid = {}     # parent id -> child ids
     @cid2pid = {}     # child id -> parent ids
-    @log = gg.util.Log.logger "graph", gg.util.Log.DEBUG
+    @log = gg.util.Log.logger "graph", gg.util.Log.WARN
 
   id: (@idFunc) ->
 
@@ -53,7 +53,7 @@ class gg.util.Graph
     @cid2pid[tid][fid] = {} unless @cid2pid[tid][fid]?
     @pid2cid[fid][tid][type] = metadata
     @cid2pid[tid][fid][type] = metadata
-    @log "connect: #{from.toString()} -> #{to.toString()}\t#{type}\t#{JSON.stringify metadata}"
+    @log "connect: #{from.name}! -> #{to.name}\t#{type}\t#{JSON.stringify metadata}"
     @
 
 

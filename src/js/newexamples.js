@@ -164,8 +164,8 @@ var geoms = {
 };
 
 var selected_geoms = {
-  point: false,
-  boxplot: true
+  point: true,
+  boxplot: false
 };
 
 
@@ -272,6 +272,7 @@ var selected_geoms = {
     var plot = gg(specs);
     plot.render(w, h, ex(), bigdata);
 
+    return;
 
     var wf = plot.compile();
     var text = [];
