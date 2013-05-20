@@ -1,3 +1,5 @@
+#<< gg/util/log
+
 _ = require 'underscore'
 
 class gg.util.Graph
@@ -6,6 +8,7 @@ class gg.util.Graph
     @id2node = {}
     @pid2cid = {}     # parent id -> child ids
     @cid2pid = {}     # child id -> parent ids
+    @log = gg.util.Log.logger "graph", gg.util.Log.DEBUG
 
   id: (@idFunc) ->
 
@@ -15,6 +18,7 @@ class gg.util.Graph
     @id2node[id] = node
     @pid2cid[id] = {}  # store it as an associative map
     @cid2pid[id] = {}
+    @log "add\t#{node}"
     @
 
   rm: (node) ->
@@ -22,19 +26,20 @@ class gg.util.Graph
     return @ unless id of @id2node
 
     # delete all pointers
-    _.each @cid2pid[id], (md, pid) => delete @pid2cid[pid][id]
-    _.each @pid2cid[id], (md, cid) => delete @cid2pid[cid][id]
+    _.each @cid2pid[id], (edges, pid) => delete @pid2cid[pid][id]
+    _.each @pid2cid[id], (edges, cid) => delete @cid2pid[cid][id]
 
     # delete node and edge entries
     delete @pid2cid[id]
     delete @cid2pid[id]
     delete @id2node[id]
+    @log "rm\t#{node}"
     @
 
 
   # add an edge
   # subsequent calls will OVERWRITE existing metadata
-  connect: (from, to, metadata=null) ->
+  connect: (from, to, type, metadata=null) ->
     if _.isArray from
       _.each from, (args) => @connect args...
       return @
@@ -44,46 +49,71 @@ class gg.util.Graph
     fid = @idFunc from
     tid = @idFunc to
 
-    @pid2cid[fid][tid] = metadata
-    @cid2pid[tid][fid] = metadata
+    @pid2cid[fid][tid] = {} unless @pid2cid[fid][tid]?
+    @cid2pid[tid][fid] = {} unless @cid2pid[tid][fid]?
+    @pid2cid[fid][tid][type] = metadata
+    @cid2pid[tid][fid][type] = metadata
+    @log "connect: #{from.toString()} -> #{to.toString()}\t#{type}\t#{JSON.stringify metadata}"
     @
 
 
-  edgeExists: (from, to) ->
+  # @param type null to match all edges, or set to a value to check if edge type exists
+  edgeExists: (from, to, type) ->
     fid = @idFunc from
     tid = @idFunc to
-    fid of @pid2cid and tid of @pid2cid[fid]
+    return false unless fid of @pid2cid and tid of @pid2cid[fid]
+    edges = @pid2cid[fid][tid]
+    if type? then  type of edges else true
 
   # retrieve metadata for edge
-  metadata: (from, to) ->
+  # @param type null to fetch all metadatas, or set to value to retrive specific metadata
+  metadata: (from, to, type) ->
     fid = @idFunc from
     tid = @idFunc to
     return null unless fid of @id2node
-    @pid2cid[fid][tid]
+    edges = @pid2cid[fid][tid]
+    return null unless edges?
+    if type?
+      edges[type]
+    else
+      _.map edges, (md, t) -> md
 
   nodes: (filter=(node)->true) ->
     _.filter _.values(@id2node), filter
 
   # return a list of all edges in the graph
-  edges: (filter=(metadata)->true) ->
-    edges = []
+  # that are of type @param type AND pass the filter
+  #
+  # @param type null to return all filtered edges, otherwise filter for specified edges
+  # @param filter boolean function
+  edges: (type, filter=(metadata)->true) ->
+    ret = []
     _.each @pid2cid, (cmap, pid) =>
-      subEdges = _.map cmap, (metadata, cid) =>
-        [@id2node[pid], @id2node[cid], metadata] if filter metadata
-      edges.push.apply edges, subEdges
-    edges
+      _.map cmap, (edges, cid) =>
+        _.map edges, (metadata, t) =>
+          if (not type? or t == type) and filter metadata
+            ret.push [@id2node[pid], @id2node[cid], t, metadata]
+    ret
 
   # extract children whose edges pass the filter parameter
+  # @param type null to check all edges, otherwise filter for specified edges
   # @param filter takes edge metadata as input
-  children: (node, filter=((metadata)->true)) ->
+  #
+  children: (node, type, filter=((metadata)->true)) ->
     id = @idFunc node
-    _.compact _.map @pid2cid[id], (metadata, id) =>
-      @id2node[id] if filter metadata
+    children = []
+    _.each @pid2cid[id], (edges, id) =>
+      if _.any(edges, (metadata, t)-> (not type? or type == t) and filter(metadata))
+        children.push @id2node[id]
+    children
 
-  parents: (node, filter=(metadata)->true) ->
+  parents: (node, type, filter=(metadata)->true) ->
     id = @idFunc node
-    _.compact _.map @cid2pid[id], (metadata, id) =>
-      @id2node[id] if filter metadata
+    parents = []
+    _.each @cid2pid[id], (edges, id) =>
+      if _.any(edges, (metadata, t)-> (not type? or type == t) and filter(metadata))
+        parents.push @id2node[id]
+    parents
 
   sources: ->
     ids = _.filter _.keys(@id2node), (id) =>
