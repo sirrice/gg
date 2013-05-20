@@ -104,9 +104,12 @@ class gg.core.Graphic
         @renderGuides()
 
         tables
-      new gg.wf.Barrier
-        name: "layoutNode"
-        f: f
+
+      unless @_layoutNode?
+        @_layoutNode = new gg.wf.Barrier
+          name: "layoutNode"
+          f: f
+      @_layoutNode
 
 
     inputToTable: (input, cb) ->

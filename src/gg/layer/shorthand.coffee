@@ -150,10 +150,11 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
 
     # pre-stats transforms
-    nodes.push new gg.wf.Stdout {name: "initial data", n: 1}
+    nodes.push makeStdOut "init-data"
     nodes.push @labelNode
     nodes.push @map
     nodes.push @groupby
+
 
 
     # Statistics transforms
@@ -161,6 +162,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeScalesOut "pre-stat-#{@layerIdx}"
     nodes.push @stat
     nodes.push makeStdOut "post-stat-#{@layerIdx}"
+
 
     # facet join -- add facetX/Y columns to table
     nodes.push @g.facets.labelerNodes()
@@ -180,11 +182,13 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeStdOut "post-geommaptrain"
     nodes.push makeScalesOut "post-geommaptrain"
 
+
     # Rendering
     # layout the overall graphic, allocate space for facets
     # facets: allocate containers and compute ranges for the scales
     nodes.push @g.layoutNode()
     nodes.push @g.facets.allocatePanesNode()
+
 
     # geom: facets have set the ranges so transform data values to pixel values
     # geom: map minimum attributes (x,y) to base attributes (x0, y0, x1, y1)
@@ -193,6 +197,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push new gg.xform.ScalesApply @,
       posMapping: @geom.posMapping()
     nodes.push makeStdOut "post-scaleapply"
+
 
     nodes.push @geom.reparam
     nodes.push makeStdOut "post-reparam"

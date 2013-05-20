@@ -164,8 +164,8 @@ var geoms = {
 };
 
 var selected_geoms = {
-  point: true,
-  boxplot: false
+  point: false,
+  boxplot:true
 };
 
 

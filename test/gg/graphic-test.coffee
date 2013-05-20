@@ -14,7 +14,7 @@ makeTable = (nrows=100) ->
       f:f
       t:t
     }
-  gg.RowTable.fromArray rows
+  gg.data.RowTable.fromArray rows
 
 
 outputsProperlyGen = (check) ->
@@ -97,18 +97,31 @@ spec =
       type: "linear"
       range: [2, 5]
 
+spec =
+  layers: [
+    {
+      geom: "boxplot"
+    },
+    {
+      geom: "point"
+    }
+  ]
+
+
 
 
 suite.addBatch
   "basic graphic":
     topic: ()->
-      graphic = new gg.Graphic spec
+      graphic = new gg.core.Graphic spec
+      console.log graphic.compile().toDot()
       graphic
 
 
     "can run": (graphic) ->
       svg = d3.select("body").append("svg")
-      graphic.render 500, 500, svg, makeTable(500)
+      graphic.render 500, 500, svg, makeTable(100)
+      console.log graphic.compile().toDot()
 
 
 suite.export module

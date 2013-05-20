@@ -53,7 +53,8 @@ class gg.util.Textsize
       }
       ret
     catch error
-      @log.warn "return defaults.  error: #{error}"
+      log = gg.util.Textsize.log
+      log.warn "return defaults.  error: #{error}"
       defaults = gg.util.Textsize.exDefault opts["font-size"]
       defaults.width = defaults.w = defaults.width * text.length
       defaults

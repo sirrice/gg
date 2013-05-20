@@ -251,13 +251,13 @@ class gg.wf.Node extends events.EventEmitter
   #
   # @return ID for output port attached to child
   addChild: (child, childCb=null) ->
+    childport = if childCb? then childCb.port else -1
+    myStr = "#{@base().name} port(#{@nChildren()})"
+    childStr = "#{child.base().name} port(#{childport})"
+    @log.warn "addChild: -> #{myStr} -> #{childStr}"
+
     if @children.length > 0
       throw Error("#{@name}: Single Output node already has a child")
-
-    childport = if childCb? then childCb.port else -1
-    myStr = "#{@name}-#{@id} port(#{@nChildren()})"
-    childStr = "#{child.name}-#{child.id} port(#{childport})"
-    @log.warn "addChild: -> #{myStr} -> #{childStr}"
 
     @children.push child
     @addOutputHandler 0, childCb if childCb?

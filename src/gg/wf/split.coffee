@@ -49,8 +49,8 @@ class gg.wf.Split extends gg.wf.Node
   #
   addChild: (child, inputCb=null) ->
     childport = if inputCb? then inputCb.port else -1
-    myStr = "#{@name}-#{@id} port(#{@nChildren()})"
-    childStr = "#{child.name}-#{child.id} port(#{childport})"
+    myStr = "#{@base().name} port(#{@nChildren()})"
+    childStr = "#{child.base().name} port(#{childport})"
     @log.warn "addChild: #{myStr} -> #{childStr}"
 
     outputPort = @children.length

@@ -70,9 +70,9 @@ class gg.wf.Flow extends events.EventEmitter
         cb = clone.addInputPort()
         endNodes = @bridgedChildren node
         @log "endNodes #{node.name}: [#{endNodes.map((v)->v.name).join("  ")}]"
+        @log "children #{node.name}: [#{@children(node).map((v)->v.name).join("  ")}]"
 
         for child in @children node
-          @log "nonBarrierPaths called on #{child.name}"
           paths = @nonBarrierPaths child, endNodes
           @log "nonBarrierPaths #{node.name}->#{child.name} has #{paths.length} paths"
           for path in paths
@@ -137,17 +137,17 @@ class gg.wf.Flow extends events.EventEmitter
       newPath = _.clone curPath
       newPath.push node
       paths.push newPath if newPath.length > 0
-      @log "nonBarrierPaths add: [#{newPath.map((v) -> v.name).join("  ")}]"
+      #@log "nonBarrierPaths add: [#{newPath.map((v) -> v.name).join("  ")}]"
     else if _.isSubclass node, gg.wf.Barrier
       curPath.push node
       children = _.uniq @children node
-      @log "nonBarrierPaths children: #{children.map((v)->"#{v.name}-#{v.id}").join "  "}"
+      #@log "nonBarrierPaths children: #{children.map((v)->"#{v.name}-#{v.id}").join "  "}"
       for child in children
         #@log "nonBarrierPaths barrier #{child.name} has weight: #{@edgeWeight(node, child)}"
         @nonBarrierPaths child, endNodes, curPath, seen, paths
       curPath.pop()
     else
-      @log "nonBarrierPaths skip: #{node.name}"
+      #@log "nonBarrierPaths skip: #{node.name}"
 
     paths
 
@@ -233,6 +233,17 @@ class gg.wf.Flow extends events.EventEmitter
 
 
 
+  toDot: ->
+    text = []
+    text.push "digraph G {"
+    text.push "graph [rankdir=LR]"
+    _.each @graph.edges(), (edge) =>
+      [n1, n2, type, weight] = edge
+      color = if type is "normal" then "black" else "green"
+      text.push "\"#{n1.name}:#{n1.id}\" -> \"#{n2.name}:#{n2.id}\" [color=\"#{color}\", label=\"#{type}:#{weight}\"];"
+    text.push "}"
+
+    text.join("\n")
 
 
 
@@ -292,7 +303,9 @@ class gg.wf.Flow extends events.EventEmitter
     else
       node = new klass specOrNode
 
-    prevNode = _.last(@nodes) or null
+    sinks = @sinks()
+    throw Error("setChild only works for non-forking flows") if sinks.length > 1
+    prevNode = if sinks.length > 0 then sinks[0] else null
     @connect prevNode, node if prevNode?
     @add node
     this
