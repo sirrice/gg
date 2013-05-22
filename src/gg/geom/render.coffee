@@ -72,7 +72,7 @@ class gg.geom.Render extends gg.core.XForm
       type = _.findGoodAttr spec, ['geom', 'type', 'shape'], 'point'
 
     klass = klasses[type] or gg.geom.svg.Point
-    gg.util.Log.log "Render klass #{type} -> #{klass.name}"
+    gg.util.Log.logger("geom.Render") "Render klass #{type} -> #{klass.name}"
     new klass layer, spec
 
 

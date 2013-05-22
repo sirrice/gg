@@ -140,7 +140,7 @@ class gg.wf.Node extends events.EventEmitter
     @name = _.findGood [@spec.name, "node-#{@id}"]
 
 
-    @log = gg.util.Log.logger "#{@name}-#{@id}\t#{@constructor.name}", gg.util.Log.DEBUG
+    @log = gg.util.Log.logger "#{@name}-#{@id}\t#{@constructor.name}", gg.util.Log.WARN
 
   @id: -> gg.wf.Node::_id += 1
   _id: 0

@@ -27,6 +27,7 @@ class gg.xform.Mapper extends gg.core.XForm
     spec = _.clone spec
     attrs = ["mapping", "map", "aes", "aesthetic", "aesthetics"]
     mapping = _.findGoodAttr spec, attrs, null
+    gg.util.Log.logger("Mapper") "fromSpec: #{JSON.stringify mapping}"
     return null unless mapping? and _.size(mapping) > 0
 
     aesthetics = _.keys mapping

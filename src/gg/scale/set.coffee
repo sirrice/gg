@@ -155,7 +155,7 @@ class gg.scale.Set
         #      1) pick posMapped aes type from table
         if aes of posMapping and table.contains posMapping[aes]
           typeAes = posMapping[aes]
-          @log "useScales: aes: #{aes}\ttype: #{table.schema.type typeAes}"
+          @log "useScales: aes: #{aes}(#{scale.id})\ttype: #{table.schema.type typeAes}"
           {aes: aes, type: table.schema.type typeAes}
         else
         #      2) pick aes type from table
@@ -188,9 +188,9 @@ class gg.scale.Set
         newDomain = scale.defaultDomain col
 
         if scale.type is gg.data.Schema.numeric
-          @log "train: #{aes}\t#{scale.domain()} merged to #{newDomain}"
+          @log "train: #{aes}(#{scale.id})\t#{scale.domain()} merged to #{newDomain}"
         else
-          @log "train: #{aes}\t#{scale}"
+          @log "train: #{aes}(#{scale.id})\t#{scale}"
 
         scale.mergeDomain newDomain
 
@@ -205,7 +205,7 @@ class gg.scale.Set
       str = scale.toString()
       g = (v) -> scale.scale v
       table.map g, aes if table.contains aes
-      @log "apply: #{aes}:\t#{str}\t#{table.nrows()} rows"
+      @log "apply: #{aes}(#{scale.id}):\t#{str}\t#{table.nrows()} rows"
 
     table = table.clone()
     @log "apply: table has #{table.nrows()} rows"
@@ -220,9 +220,15 @@ class gg.scale.Set
   invert: (table, aessTypes=null, posMapping={}) ->
     f = (table, scale, aes) =>
       str = scale.toString()
-      @log "invert: #{aes}\t#{str}"
+      #@log "invert: #{aes}\t#{str}"
       g = (v) -> if v? then  scale.invert(v) else null
-      table.map g, aes if table.contains aes
+      origDomain = scale.defaultDomain table.getColumn(aes)
+      newDomain = null
+      if table.contains aes
+        table.map g, aes
+        newDomain = scale.defaultDomain table.getColumn(aes)
+      if scale.domain()?
+        @log "invert: #{aes}(#{scale.id};#{scale.domain()}):\t#{origDomain} --> #{newDomain}"
 
     table = table.clone()
     @useScales table, aessTypes, posMapping, f

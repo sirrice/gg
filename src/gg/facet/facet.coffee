@@ -23,11 +23,12 @@
 #
 class gg.facet.Facets
   constructor: (@g, @spec={}) ->
-    @log = gg.util.Log.logger "Facets", gg.util.Log.ERROR
+    @log = gg.util.Log.logger "Facets", gg.util.Log.DEBUG
 
     @parseSpec()
 
     @splitter = @splitterNodes()
+    @trainer = @trainerNode()
 
     @panes = []
     # paneSvgMapper[x val][y val] -> svg for the pane
@@ -201,6 +202,15 @@ class gg.facet.Facets
   # Scales related Methods
   #
   ###########################
+
+  trainerNode: ->
+    new gg.wf.Barrier
+      name: "facet-train"
+      f: (tables, envs, node) =>
+        @trainScales()
+        tables
+
+
 
   expandDomains: (scalesSet) ->
     _.each scalesSet.scalesList(), (scale) =>

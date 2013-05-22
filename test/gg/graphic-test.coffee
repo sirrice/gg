@@ -121,14 +121,13 @@ suite.addBatch
   "basic graphic":
     topic: ()->
       graphic = new gg.core.Graphic spec
-      console.log graphic.compile().toDot()
       graphic
 
+    "dot": (graphic) ->
+      console.log graphic.compile().toDot()
 
     "can run": (graphic) ->
       svg = d3.select("body").append("svg")
       graphic.render 500, 500, svg, makeTable(100)
-      console.log graphic.compile().toDot()
-
 
 suite.export module

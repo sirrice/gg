@@ -30,7 +30,7 @@ class gg.wf.Flow extends events.EventEmitter
   constructor: (@spec={}) ->
     @graph = new gg.util.Graph (node)->node.id
     @g = @spec.g  # graphic object that compiled into this workflow
-    @log = gg.util.Log.logger "flow ", gg.util.Log.DEBUG
+    @log = gg.util.Log.logger "flow ", gg.util.Log.WARN
     _.extend @constructor.prototype, events.EventEmitter.prototype
 
 

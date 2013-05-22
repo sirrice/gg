@@ -54,17 +54,20 @@ class gg.scale.Scales extends gg.core.XForm
     @postgeommap = @trainDataNode
       name: "scales-postgeommap"
     @facets = @trainFacets
-      name: "scales-facets"
+      name: "scales"
     @invertpixel = new gg.wf.Barrier
       name: "scales-pixel-invert"
       f: (args...) => @trainOnPixelsInvert args...,spec
+    @trainpixel = new gg.wf.Barrier
+      name: "scales-pixel-train"
+      f: (args...) => @trainOnPixelsTrain args..., spec
     @reapplypixel = new gg.wf.Barrier
       name: "scales-pixel-reapply"
       f: (args...) => @trainOnPixelsReapply args..., spec
 
 
     @parseSpec()
-    @log.level = gg.util.Log.DEBUG
+    @log.level = gg.util.Log.WARN
 
 
   # XXX: assumes layers have been created already
@@ -160,6 +163,7 @@ class gg.scale.Scales extends gg.core.XForm
   trainOnPixelsInvert: (tables, envs, node, spec={}) ->
     infos = _.map _.zip(tables, envs), ([t,e]) => @paneInfo t, e
     originalSchemas = _.map tables, (t) -> t.schema
+    @g.facets.trainScales()
 
     allAessTypes = []
     inverteds = _.map _.zip(tables, infos), ([t,info]) =>
@@ -187,15 +191,35 @@ class gg.scale.Scales extends gg.core.XForm
 
 
       inverted = scales.invert t, aessTypes, posMapping
-      scales.resetDomain()
-      scales.train inverted, aessTypes, posMapping
-
       inverted
+
 
     spec.infos = infos
     spec.allAessTypes = allAessTypes
     spec.originalSchemas = originalSchemas
     inverteds
+
+  trainOnPixelsTrain: (tables, envs, node, spec={}) ->
+    infos = spec.infos or []
+    allAessTypes = spec.allAessTypes or []
+    originalSchemas = spec.originalSchemas or []
+
+    reset = (info) =>
+      scales = @scales info.facetX, info.facetY, info.layer
+      scales.resetDomain()
+
+    train = ([t,info, aessTypes, origSchema]) =>
+      scales = @scales info.facetX, info.facetY, info.layer
+      posMapping = @posMapping info.layer
+      @log posMapping
+      scales.train t, aessTypes, posMapping
+
+    args = _.zip(tables, infos, allAessTypes, originalSchemas)
+    _.each infos, reset
+    _.each args, train
+    @g.facets.trainScales()
+    tables
+
 
   trainOnPixelsReapply: (tables, envs, node, spec={}) ->
     infos = spec.infos or []

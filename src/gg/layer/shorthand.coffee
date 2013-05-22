@@ -134,7 +134,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
         name: "#{name}-#{@layerIdx}"
         n: 5
         aess: aess
-      null
+      #null
 
     makeScalesOut = (name, scales=@g.scales) =>
       new gg.wf.Scales
@@ -195,6 +195,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # geom: position transformation
     nodes.push makeStdOut "pre-scaleapply"
     nodes.push new gg.xform.ScalesApply @,
+      name: "scalesapply-#{@layerIdx}"
       posMapping: @geom.posMapping()
     nodes.push makeStdOut "post-scaleapply"
 
@@ -211,9 +212,11 @@ class gg.layer.Shorthand extends gg.layer.Layer
       # scales: retrain scales after positioning (jitter)
       #         (inputs are pixel values)
 
-      nodes.push makeScalesOut "pre-pixeltrain"
+      #nodes.push makeScalesOut "pre-pixeltrain"
       nodes.push @g.scales.invertpixel
-      nodes.push makeStdOut "mid-pixeltrain"
+      nodes.push makeStdOut "mid1-pixeltrain"
+      nodes.push @g.scales.trainpixel
+      nodes.push makeStdOut "mid2-pixeltrain"
       nodes.push @g.scales.reapplypixel
       nodes.push makeStdOut "post-pixeltrain"
 

@@ -18,18 +18,18 @@ var geom_boxplot2 =
 [{
   "geom": "boxplot",
   "aes": {
-    "x": "g",
+    "x": "f",
     "y": "e",
-    "group": {"fill": "g"}
+    "group": { color: "f"}
   }, "stats": "boxplot"
 },
 
 {
  "geom": "point",
  "aes": {
-   x: 'g',
+   x: 'f',
    y: 'e',
-   group: {fill: 'g'}
+   group: {color: 'f'}
  }
  }
 ];
@@ -301,14 +301,14 @@ var selected_geoms = {
     //
     // Generate random data with float attributes: d, r, g, f, t
     //
-    var npts = 50;
+    var npts = 500;
     bigdata = _.map(_.range(0, npts), function(d) {
       g = Math.floor(Math.random() * 3) + 1;
-      f = Math.floor(Math.random() * 2);
+      f = Math.floor(Math.random() * 3);
       t = Math.floor(Math.random() * 3);
       gauss.variance(d * 30.0 / npts);
 
-      return {d: Math.floor(d/3), e: ((d + gauss())*Math.sin(d/20)) * (g),  g: g, f:f, t:t};
+      return {d: Math.floor(d/3), e: ((d + gauss())*(2+Math.sin(d/20))) * (g),  g: g, f:f, t:t};
     });
 
     setup_sample_data(bigdata);
