@@ -186,13 +186,14 @@ class gg.scale.Set
 
       if col?
         newDomain = scale.defaultDomain col
-
-        if scale.type is gg.data.Schema.numeric
-          @log "train: #{aes}(#{scale.id})\t#{scale.domain()} merged to #{newDomain}"
-        else
-          @log "train: #{aes}(#{scale.id})\t#{scale}"
+        oldDomain = scale.domain()
 
         scale.mergeDomain newDomain
+
+        if scale.type is gg.data.Schema.numeric
+          @log "train: #{aes}(#{scale.id})\t#{oldDomain} merged with #{newDomain} to #{scale.domain()}"
+        else
+          @log "train: #{aes}(#{scale.id})\t#{scale}"
 
     @useScales table, aessTypes, posMapping, f
     @

@@ -140,7 +140,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
       new gg.wf.Scales
         name: "#{name}-#{@layerIdx}"
         scales: scales
-      null
 
 
 
@@ -212,22 +211,17 @@ class gg.layer.Shorthand extends gg.layer.Layer
       # scales: retrain scales after positioning (jitter)
       #         (inputs are pixel values)
 
-      #nodes.push makeScalesOut "pre-pixeltrain"
-      nodes.push @g.scales.invertpixel
-      nodes.push makeStdOut "mid1-pixeltrain"
-      nodes.push @g.scales.trainpixel
-      nodes.push makeStdOut "mid2-pixeltrain"
-      nodes.push @g.scales.reapplypixel
-      nodes.push makeStdOut "post-pixeltrain"
+      nodes.push @g.scales.pixel
 
     # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
     nodes.push makeScalesOut "pre-coord"
-    nodes.push @coord
+    #nodes.push @coord
     nodes.push makeStdOut "post-coord"
 
 
     # render: render axes
     nodes.push @g.facets.renderAxesNode()
+    nodes.push makeStdOut "pre-render"
 
     # render: render geometries
     nodes.push @geom.render

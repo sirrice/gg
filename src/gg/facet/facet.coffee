@@ -227,6 +227,8 @@ class gg.facet.Facets
 
 
   # train fixed scales (every pane has the same x,y domains)
+  # XXX: This should be idempotent!  It is not because of
+  #      expandDomains()
   trainScales: ->
     @trainMasterScales()
 

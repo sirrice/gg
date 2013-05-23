@@ -11,23 +11,33 @@ class gg.wf.Stdout extends gg.wf.Exec
     @dlog = gg.util.Log.logger "StdOut: #{@name}-#{@id}"
 
   compute: (table, env, node) ->
-    n = if @n? then @n else table.nrows()
+    gg.wf.Stdout.print table, @aess, @n, @dlog
+    table
+
+  @print: (table, aess, n, log=null) ->
+    log = gg.util.Log.logger("stdout") unless log?
+    n = if n? then n else table.nrows()
     blockSize = Math.max(Math.floor(table.nrows() / n), 1)
     idx = 0
     schema = table.schema
     arr = _.map schema.attrs(), (attr) ->
       "\t#{attr}(#{schema.type(attr)})"
-    @dlog "Number of rows: #{table.nrows()}"
-    @dlog "Schema: #{arr.join "\t"}"
+    log "Number of rows: #{table.nrows()}"
+    log "Schema: #{arr.join "\t"}"
     while idx < table.nrows()
       row = table.get(idx)
-      row = row.project @aess if @aess?
+      row = row.project aess if aess?
       raw = _.clone row.raw()
       _.each raw, (v, k) ->
         raw[k] = v[0..4] if _.isArray v
-      @dlog JSON.stringify raw
+      log JSON.stringify raw
       idx += blockSize
-    table
+
+  @printTables: (tables, aess, n, log=null) ->
+    _.each tables, (table) ->
+      gg.wf.Stdout.print table, aess, n, log
+
+
 
 
 
@@ -41,14 +51,18 @@ class gg.wf.Scales extends gg.wf.Exec
     @dlog = gg.util.Log.logger "ScaleOut: #{@name}", gg.util.Log.DEBUG
 
   compute: (table, env, node) ->
-    _.each @scales.scalesList[0..2], (scales, idx) =>
-      @dlog "Out: scales #{scales.id}, #{scales.scales}"
+    gg.wf.Scales.print @scales, @log
+    table
+
+  @print: (scales, log=null) ->
+    log = gg.util.Log.logger("scaleout") unless log?
+    _.each scales.scalesList[0..2], (scales, idx) =>
+      log "Out: scales #{scales.id}, #{scales.scales}"
       _.each scales.scalesList(), (scale) =>
         aes = scale.aes
         str = scale.toString()
         type = scale.type
-        @dlog "Out: layer#{idx},scaleId#{scale.id} #{type}\t#{str}"
-    table
+        log "Out: layer#{idx},scaleId#{scale.id} #{type}\t#{str}"
 
 
 

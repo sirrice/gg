@@ -237,14 +237,17 @@ class gg.facet.Grid extends gg.facet.Facets
        .attr('transform', "translate(#{left},#{top})")
        .call(yAxis)
 
+    @log "rendered y-axis: #{scale.toString()}"
+
   renderXAxis: (svg, x, y, xRange, yRange) ->
     left = 0
     top = 0
     yBand = yRange.rangeBand()
     scales = @g.scales.facetScales x, y
+    scale = scales.scale 'x', gg.data.Schema.unknown
 
     xAxis = d3.svg.axis()
-        .scale(scales.scale('x',gg.data.Schema.unknown).d3())
+        .scale(scale.d3())
         .ticks(5)
         .tickSize(- yBand)
         .orient('bottom')
@@ -256,6 +259,10 @@ class gg.facet.Grid extends gg.facet.Facets
         .attr('fill', 'none')
         .attr('transform', "translate(0, #{yBand})")
         .call(xAxis)
+
+    @log "rendered x-axis: #{scale.toString()}"
+    _.each [0, 1, 2], (v) =>
+      @log "scaling #{v} -> #{scale.scale v}"
 
 
   renderTopLabels: (svg, xRange) ->
