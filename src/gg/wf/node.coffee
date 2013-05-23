@@ -137,10 +137,10 @@ class gg.wf.Node extends events.EventEmitter
 
     @id = gg.wf.Node.id()
     @type = _.findGood [@spec.type, "node"]
-    @name = _.findGood [@spec.name, "node-#{@id}"]
+    @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
 
 
-    @log = gg.util.Log.logger "#{@name}-#{@id}\t#{@constructor.name}", gg.util.Log.WARN
+    @log = gg.util.Log.logger "#{@name}-#{@id}\t#{@constructor.name}", gg.util.Log.DEBUG
 
   @id: -> gg.wf.Node::_id += 1
   _id: 0
@@ -184,15 +184,16 @@ class gg.wf.Node extends events.EventEmitter
   # current node.
   #
   # @return {[gg.wf.Node, Function]}
-  cloneSubplan: (parent, stop=null) ->
+  cloneSubplan: (parent, parentPort, stop=null) ->
     clone = @clone stop
     cb = clone.addInputPort()
 
     if @nChildren() > 0
-      [child, childCb] = @children[0].cloneSubplan @, stop
+      @log.warn "cloneSubplan: #{@children[0].name}"
+      [child, childCb] = @children[0].cloneSubplan @, 0, stop
       outputPort = clone.addChild child, childCb
       clone.connectPorts cb.port, outputPort
-      child.addParent clone, childCb.port
+      child.addParent clone, outputPort, childCb.port
 
     [clone, cb]
 
@@ -213,6 +214,8 @@ class gg.wf.Node extends events.EventEmitter
         throw Error("trying to add input to filled slot #{idx}")
       else
         @inputs[idx] = data
+
+    cb.name = "#{@name}:#{@id}"
     cb.port = idx
     cb
 
@@ -227,7 +230,10 @@ class gg.wf.Node extends events.EventEmitter
     @on outidx, cb if outidx >= 0 and outidx < @children.length
 
   output: (outidx, data) ->
-    @log "outputing to port #{outidx} env: #{data.env.toString()}"
+    listeners = @listeners outidx
+    n = listeners.length
+    listeners = _.map(listeners, (l)->l.name)
+    @log "output: port(#{outidx}) of #{n} #{listeners}\tenv: #{data.env.toString()}"
     @emit outidx, @, data
     @emit "output", @, data
 
@@ -238,14 +244,16 @@ class gg.wf.Node extends events.EventEmitter
     @inputs.push null
     @getAddInputCB @inputs.length-1
 
+  # Connects the input and output ports for a single node
   connectPorts: (input, output) ->
     @in2out[input] = [] unless input of @in2out
     @in2out[input].push output
 
-  addParent: (node, inputPort=null) ->
+  # Connects the parent's output port to this node's input port
+  addParent: (parent, parentOPort, inputPort=null) ->
     throw Error("addParent inputPort not number #{inputPort}") unless _.isNumber inputPort
-    @parents.push node
-    @parent2in[node.id] = inputPort
+    @parents.push parent
+    @parent2in[[parent.id, parentOPort]] = inputPort
 
   # allocates an output port for child
   #

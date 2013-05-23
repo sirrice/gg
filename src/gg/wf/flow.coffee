@@ -77,9 +77,9 @@ class gg.wf.Flow extends events.EventEmitter
           @log "nonBarrierPaths #{node.name}->#{child.name} has #{paths.length} paths"
           for path in paths
             [child, childCb] = @instantiatePath path, barriercache
-            outputPortId = clone.addChild child, childCb
-            clone.connectPorts cb.port, outputPortId
-            child.addParent clone, childCb.port
+            outputPort = clone.addChild child, childCb
+            clone.connectPorts cb.port, outputPort
+            child.addParent clone, outputPort, childCb.port
 
         [clone, cb]
 
@@ -95,7 +95,8 @@ class gg.wf.Flow extends events.EventEmitter
           root = new gg.wf.Multicast
           _.each sources, (source) =>
             [srcclone, srccb] = @instantiate source
-            root.addChild srcclone, srccb
+            outputPort = root.addChild srcclone, srccb
+            srcclone.addParent root, outputPort, srccb.port
           [root, root.getAddInputCB 0]
 
 
@@ -118,9 +119,9 @@ class gg.wf.Flow extends events.EventEmitter
       [clone, cloneCb] = @instantiate node, barriercache
 
       if prev?
-        outputPortId = prev.addChild clone, cloneCb
-        prev.connectPorts prevCb.port, outputPortId
-        clone.addParent prev, cloneCb.port
+        outputPort = prev.addChild clone, cloneCb
+        prev.connectPorts prevCb.port, outputPort
+        clone.addParent prev, outputPort, cloneCb.port
 
       [prev, prevCb] = [clone, cloneCb]
       [first, firstCb] = [clone, cloneCb] unless first?
@@ -315,7 +316,8 @@ class gg.wf.Flow extends events.EventEmitter
     [root, rootcb] = @instantiate()
     if table?
       source = new gg.wf.TableSource {wf: @, table: table}
-      source.addChild root, rootcb
+      outputPort = source.addChild root, rootcb
+      root.addParent source, outputPort, rootcb.port
       root = source
 
     runner = new gg.wf.Runner root

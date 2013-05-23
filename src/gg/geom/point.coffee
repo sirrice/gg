@@ -7,7 +7,7 @@ class gg.geom.Point extends gg.geom.Geom
   parseSpec: ->
     super
     reparamSpec =
-      name: "point-reparam"
+      name: "point-reparam:#{@layer.layerIdx}"
       defaults: { r: 5 }
       inputSchema: ['x', 'y']
       map:

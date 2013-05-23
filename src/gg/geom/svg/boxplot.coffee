@@ -1,6 +1,9 @@
 #<< gg/geom/render
 
 class gg.geom.svg.Boxplot extends gg.geom.Render
+  @aliases: ["schema", "boxplot"]
+
+
   defaults: (table, env) ->
     "stroke-width": 1
     stroke: "steelblue"
@@ -12,6 +15,8 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
       'outliers', 'min', 'max']
 
   render: (table, env, node) ->
+    gg.wf.Stdout.print table, ['x', 'x0', 'x1'], 5, @log
+
     svg = @svg table, env
     data = table.asArray()
 

@@ -27,9 +27,9 @@ var geom_boxplot2 =
 {
  "geom": "point",
  "aes": {
-   x: 'f',
+   x: 'g',
    y: 'e',
-   group: {color: 'f'}
+   group: {color: 'g'}
  }
  }
 ];
@@ -303,8 +303,8 @@ var selected_geoms = {
     //
     var npts = 500;
     bigdata = _.map(_.range(0, npts), function(d) {
-      g = Math.floor(Math.random() * 3) + 1;
-      f = Math.floor(Math.random() * 3);
+      g = Math.floor(Math.random() * 6) + 1;
+      f = Math.floor(Math.random() * 6);
       t = Math.floor(Math.random() * 3);
       gauss.variance(d * 30.0 / npts);
 

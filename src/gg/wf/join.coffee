@@ -21,11 +21,11 @@ class gg.wf.Join extends gg.wf.Node
     @inputs.push null
     @getAddInputCB @inputs.length-1
 
-  cloneSubplan: (parent, stop) ->
+  cloneSubplan: (parent, parentPort, stop) ->
     if @ is stop
       [@, @addInputPort()]
     else
-      super parent, stop
+      super parent, parentPort, stop
 
   ready: -> super
 

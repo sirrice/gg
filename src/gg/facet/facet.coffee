@@ -220,8 +220,8 @@ class gg.facet.Facets
       extra = if mind == maxd then 1 else Math.abs(maxd-mind) * 0.05
       mind = mind - extra
       maxd = maxd + extra
+      @log "expandDomain: #{scale.aes}: #{scale.domain()} to [#{mind}, #{maxd}"
       scale.domain [mind, maxd]
-      @log "expandDomain: #{scale.aes} -> #{mind} to #{maxd}"
 
     # XXX: this should be done in the scales/scalesSet object!!!
 
@@ -240,8 +240,6 @@ class gg.facet.Facets
 
   trainMasterScales: ->
     @log "trainScales: # scales: #{@g.scales.scalesList.length}"
-    if @g.scales.scalesList.length > 0
-      @log "trainScales: 1st scales: #{@g.scales.scalesList[0].clone().toString()}"
 
     @masterScales = gg.scale.Set.merge @g.scales.scalesList
     @expandDomains @masterScales

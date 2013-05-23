@@ -35,7 +35,7 @@
 # type:   specifies what high level geometry to render
 #
 class gg.geom.Geom # not an XForm!!
-  @log = gg.util.Log.logger "Geom", gg.util.Log.ERROR
+  @log = gg.util.Log.logger "Geom", gg.util.Log.DEBUG
 
   constructor: (@layer, @spec) ->
     @g = @layer.g
@@ -83,11 +83,11 @@ class gg.geom.Geom # not an XForm!!
     klasses = gg.geom.Geom.klasses()
 
     klass = klasses[spec.type] or gg.geom.Point
-    spec.name = klass.name unless spec.name?
-    geom = new klass(layer, spec)
-
     @log "fromSpec\t#{JSON.stringify spec}"
     @log "fromSpec: klass: #{spec.type} -> #{klass.name}"
+
+    spec.name = klass.name unless spec.name?
+    geom = new klass(layer, spec)
 
     geom
 

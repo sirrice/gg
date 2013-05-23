@@ -58,6 +58,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     spec = @spec
 
     @geomSpec = @extractSpec "geom"
+    @geomSpec.name = "#{@geomSpec.name}-#{@layerIdx}"
     @statSpec = @extractSpec "stat"
     @posSpec  = @extractSpec "pos"
     mapSpec  = _.findGoodAttr spec, ['aes', 'aesthetic', 'mapping'], {}
@@ -192,6 +193,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # geom: facets have set the ranges so transform data values to pixel values
     # geom: map minimum attributes (x,y) to base attributes (x0, y0, x1, y1)
     # geom: position transformation
+    nodes.push @g.facets.trainerNode()
     nodes.push makeStdOut "pre-scaleapply"
     nodes.push new gg.xform.ScalesApply @,
       name: "scalesapply-#{@layerIdx}"
@@ -221,7 +223,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
     # render: render axes
     nodes.push @g.facets.renderAxesNode()
-    nodes.push makeStdOut "pre-render"
 
     # render: render geometries
     nodes.push @geom.render

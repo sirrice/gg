@@ -39,10 +39,10 @@ class gg.wf.Split extends gg.wf.Node
 
       while @children.length < n
         idx = @children.length
-        [child, childCb] = @children[0].cloneSubplan @, stop
+        [child, childCb] = @children[0].cloneSubplan @, 0, stop
         outputPort = @addChild child, childCb
         @connectPorts 0, outputPort
-        child.addParent @, childCb.port
+        child.addParent @, outputPort, childCb.port
 
   #
   # add a new child instance

@@ -16,7 +16,7 @@ class gg.scale.Set
     @id = gg.scale.Set::_id
     gg.scale.Set::_id += 1
 
-    @log = gg.util.Log.logger "ScaleSet-#{@id}", gg.util.Log.DEBUG
+    @log = gg.util.Log.logger "ScaleSet-#{@id}", gg.util.Log.WARN
   _id: 0
 
   clone: () ->
@@ -127,17 +127,15 @@ class gg.scale.Set
 
         if @contains aes, type
           mys = @scale aes, type
-          @scale(aes, type).mergeDomain scale.domain()
-          ###
-          else if @contains aes
-            @log "gg.scale.Set.merge: unmatched type #{aes} #{type}\t#{scale.toString()}"
-            mys = @scale aes#, gg.Schema.unknown
-            @scale(aes).mergeDomain scale.domain()
-          ###
+          oldd = mys.domain()
+          mys.mergeDomain scale.domain()
+          @log "merge: #{mys.domainUpdated} #{aes}.#{mys.id}:#{type}: #{oldd} + #{scale.domain()} -> #{mys.domain()}"
+
         else if insert
           copy = scale.clone()
-          @log "merge: insertclone: #{copy.toString()}"
+          @log "merge: #{aes}.#{copy.id}:#{type}: clone: #{copy.domainUpdated}/#{scale.domainUpdated}: #{copy.toString()}"
           @scale copy, type
+
         else
           @log "merge notfound + dropping scale: #{scale.toString()}"
 

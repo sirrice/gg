@@ -4,12 +4,12 @@ assert = require "assert"
 
 makeTable = (nrows=100) ->
   rows = _.map _.range(0, nrows), (d) ->
-    g = Math.floor(Math.random() * 2)
-    f = Math.floor(Math.random() * 2) * 10
+    g = Math.floor(Math.random() * 1)
+    f = Math.floor(Math.random() * 1) * 10
     t = Math.floor(Math.random() * 3)
     {
       d:d
-      r:d# 1 + t * 0.5 + Math.abs(Math.random()) + g
+      e:d# 1 + t * 0.5 + Math.abs(Math.random()) + g
       g: g
       f:f
       t:t
@@ -102,17 +102,23 @@ spec =
     {
       geom: "boxplot"
       aes:
-        x: 'd'
-        y: 'r'
-      stat: "boxplot"
-    },
+        x: 'f'
+        y: "e"
+        group:
+          color: "f"
+      stats: "boxplot"
+    }
     {
       geom: "point"
       aes:
-        x: 'd'
-        y: 'r'
+        x: "g"
+        y: "e"
+        group:
+          color: "g"
     }
   ]
+  facets:
+    x: "t"
 
 
 

@@ -1,6 +1,9 @@
 #<< gg/geom/render
 
 class gg.geom.svg.Area extends gg.geom.Render
+  @aliases = ["area"]
+
+
   defaults: (table, env) ->
     "stroke-width": 1
     stroke: "steelblue"

@@ -136,6 +136,7 @@ class gg.core.XForm
     iSchema = @param table, env, "inputSchema"
     missing = _.reject iSchema, (attr) -> attr in tableCols
     if missing.length > 0
+      gg.wf.Stdout.print table, null, 5, gg.util.Log.logger("err")
       throw Error("#{@name}: input schema did not contain #{missing.join(",")}")
 
   # remove rows where a required attribute is null/nan/undefined

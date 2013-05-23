@@ -103,6 +103,7 @@ class gg.scale.Scale
       @domainSet = yes
 
     @center = _.findGood [@spec.center, null]
+    @domainUpdated = _.findGood [@spec.domainUpdated, false]
 
     @log = gg.util.Log.logger "Scale #{@aes}.#{@id} (#{@type},#{@constructor.name})", gg.util.Log.WARN
 
@@ -185,6 +186,11 @@ class gg.scale.Scale
     spec = _.clone @spec
     spec.aes = @aes
     spec.type = @type
+    spec.domainUpdated = @domainUpdated
+    spec.domainSet = @domainSet
+    spec.rangeSet = @rangeSet
+    spec.center = @center
+
     ret = new klass spec
     ret.d3Scale = @d3Scale.copy() if @d3Scale?
     ret
@@ -207,8 +213,11 @@ class gg.scale.Scale
    mergeDomain: (domain) ->
      md = @domain()
      unless @domainSet
-       if @domainUpdated and md? and md.length is 2
-         @domain [_.min([md[0], domain[0]]), _.max([md[1], domain[1]])]
+       if @domainUpdated and md? and md.length == 2
+         @domain [
+           Math.min md[0], domain[0]
+           Math.max md[1], domain[1]
+         ]
        else
          @domain domain
 

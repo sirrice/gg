@@ -13,15 +13,16 @@ class gg.wf.Multicast extends gg.wf.Node
     @name = _.findGood [@spec.name, "multicast-#{@id}"]
 
 
-  cloneSubplan: (parent, stop) ->
+  cloneSubplan: (parent, parentPort, stop) ->
     clone = @clone stop
     cb = clone.addInputPort()
 
     for child, idx in _.compact @children
-      [child, childCb]  = child.cloneSubplan @, stop
+      @log.warn "cloneSubplan: #{child.name}"
+      [child, childCb]  = child.cloneSubplan @, idx, stop
       outputPort = clone.addChild child, childCb
       clone.connectPorts cb.port, outputPort
-      child.addParent clone, childCb.port
+      child.addParent clone, outputPort, childCb.port
 
     [clone, cb]
 
