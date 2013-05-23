@@ -214,6 +214,8 @@ class gg.scale.Scale
      md = @domain()
      unless @domainSet
        if @domainUpdated and md? and md.length == 2
+         if _.isNaN(domain[0]) or _.isNaN(domain[1])
+           throw Error("domain is invalid: #{domain}")
          @domain [
            Math.min md[0], domain[0]
            Math.max md[1], domain[1]
