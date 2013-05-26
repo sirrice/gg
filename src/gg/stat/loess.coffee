@@ -41,6 +41,7 @@ class gg.stat.LoessStat extends gg.stat.Stat
     smoothys = loessfunc(xs, ys)
     rows = []
     _.times xs.length, (idx) ->
+      # sometimes it interpolates to NaN values
       if isValid smoothys[idx]
         rows.push
           x: xs[idx]

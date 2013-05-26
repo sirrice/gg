@@ -8,7 +8,7 @@ class gg.xform.Split
     if _.isString gbspec
       gg.xform.Split.byColValues name, gbspec
     else if _.isFunction gbspec
-      gg.xform.Split.byColValues name, gbspec
+      gg.xform.Split.byFunction name, gbspec
     else if _.isArray(gbspec) and gbspec.length > 0
       if _.isString gbspec[0]
         gg.xform.Split.byColNames name, gbspec

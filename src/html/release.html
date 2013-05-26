@@ -9,34 +9,6 @@
 <script src="../js/prettify.js"></script>
 </head>
 <body style="width:100%">
-  <!--<h1>The Grammar of Graphics</h1>-->
-
-
-  <style>
-    body {
-      font-size: 13pt;
-    }
-    table {
-      border-collapse: collapse;
-    }
-    td {
-      border: 1px solid gray;
-      padding: 5px;
-    }
-    .node {
-        stroke: black;
-        stroke-width: 1.5px;
-    }
-
-    .link {
-        stroke-opacity: .6;
-    }
-
-  </style>
-
-
-<div id='examples' style="float:left; width: 50%; min-width: 800;"></div>
-
 
 <script>
   var floor500 = function(row) {
@@ -45,7 +17,7 @@
 
   var spec = {
     opts: { title: "Multi-layer faceted example" },
-    facets: {y: "t", x: "f"},
+    facets: {x: "f"},
     layers: [
     // Histogram with 10 bins, rendering sum / 100
     {
@@ -110,10 +82,10 @@
   $(document).ready(function() {
     Math.seedrandom("zero");
     var w = 900;
-    var h = 800;
+    var h = 500;
     var ex   = function () {
-      $("#examples").empty();
-      return d3.select('#examples').append('span');
+      $("body").empty();
+      return d3.select('body').append('span');
     };
     var gauss = science.stats.distribution.gaussian();
 

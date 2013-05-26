@@ -145,6 +145,8 @@ class gg.facet.Grid extends gg.facet.Facets
     @log @ys
     @xRange = d3.scale.ordinal().domain(@xs).rangeBands [0, paneWidth], 0.05, 0
     @yRange = d3.scale.ordinal().domain(@ys).rangeBands [0, paneHeight], 0.05, 0
+
+
     xRange = @xRange
     yRange = @yRange
     xBand = xRange.rangeBand()
@@ -266,12 +268,14 @@ class gg.facet.Grid extends gg.facet.Facets
 
 
   renderTopLabels: (svg, xRange) ->
+    return if @xs.length == 1 and @xs[0] is null
+
     labels = svg.selectAll("g").data(@xs)
     enter = labels.enter().insert("g").attr("class", "facet-label x")
     enter.append("rect")
     enter.append("text")
 
-    labels.select("text").text(String)
+    labels.select("text").text((val) -> if val? then  String(val) else "")
     enter.select("text")
       .attr("x", (d) -> xRange(d) + xRange.rangeBand()/2)
       .attr("y", @facetPadding)
@@ -284,13 +288,18 @@ class gg.facet.Grid extends gg.facet.Facets
       .attr("width", xRange.rangeBand())
       .attr("height", svg.attr("height"))
 
+  # Render y-axis Facet labels
   renderRightLabels: (svg, yRange) ->
+    return if @ys.length == 1 and @ys[0] is null
+
     labels = svg.selectAll("g").data(@ys)
     enter = labels.enter().insert("g").attr("class", "facet-label y")
     enter.append("rect")
     enter.append("text")
 
-    labels.select("text").text(String)
+    # XXX: allow customization function for the text
+    labels.select("text").text (val) -> if val? then  String(val) else ""
+
     enter.select("text")
       .attr("dx", ".5em")
       .attr("y", (d) -> yRange(d) + yRange.rangeBand()/2)

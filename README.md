@@ -27,9 +27,9 @@ Compile
 Current Implementation
 ---------------
 
-Screenshot! It now supports area charts, stacked positioning, and coordinate flips!
+Screenshot!
 
-<img src="https://raw.github.com/sirrice/gg/new-model/docs/imgs/screenshot.png"/>
+[<img src="https://raw.github.com/sirrice/gg/new-model/docs/imgs/screenshot.png"/> ](http://bl.ocks.org/sirrice/5653573)
 
 
 

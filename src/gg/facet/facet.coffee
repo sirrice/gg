@@ -40,8 +40,8 @@ class gg.facet.Facets
 
 
   parseSpec: ->
-    @x = _.findGood [@spec.x, () -> 1]
-    @y = _.findGood [@spec.y, () -> 1]
+    @x = _.findGood [@spec.x, () -> null]
+    @y = _.findGood [@spec.y, () -> null]
     @scales = _.findGood [@spec.scales, "fixed"]
     @type = _.findGood [@spec.type, "grid"]
     @sizing = _.findGood [@spec.sizing, @spec.size, "fixed"]
@@ -87,8 +87,8 @@ class gg.facet.Facets
   #
   # @param facet is the facet-X or facet-Y specification
   # @param the name of the facet's grouping column
-  createSplitterNode: (facet, name) ->
-    gg.xform.Split.createNode name, facet
+  createSplitterNode: (name, facetSpec) ->
+    gg.xform.Split.createNode name, facetSpec
 
   # Return workflow nodes that split the dataset along the x and y facets
   splitterNodes: ->
@@ -96,9 +96,9 @@ class gg.facet.Facets
     # will not result in groups for x/y facetpairs that don't have
     # any tuples.  this should only be apparent when using "wrap"
     # (we expect the cross product!)
-    @log "splitternode: #{@facetXKey},  #{@facetYKey}"
-    facetXNode = @createSplitterNode @x, @facetXKey
-    facetYNode = @createSplitterNode @y, @facetYKey
+    @log "splitternode: #{@facetXKey}: #{@x},  #{@facetYKey}: #{@y}"
+    facetXNode = @createSplitterNode @facetXKey, @x
+    facetYNode = @createSplitterNode @facetYKey, @y
     [facetXNode, facetYNode]
 
   labelerNodes: ->
@@ -138,15 +138,17 @@ class gg.facet.Facets
 
   collectXYs: (tables, envs, node) ->
     # compute x and y group values
-    @xs = {}
-    @ys = {}
+    @xs = []
+    @ys = []
     _.each tables, (table) =>
       if table.nrows() > 0
-        @xs[table.get(0, @facetXKey)] = yes
-        @ys[table.get(0, @facetYKey)] = yes
+        x = table.get 0, @facetXKey
+        y = table.get 0, @facetYKey
+        @xs.push x
+        @ys.push y
 
-    @xs = _.uniq _.keys(@xs)
-    @ys = _.uniq _.keys(@ys)
+    @xs = _.uniq @xs
+    @ys = _.uniq @ys
 
     # sort x and y.
     # TODO: support custom ordering
