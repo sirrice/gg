@@ -47,7 +47,12 @@ class gg.scale.Set
 
   types: (aes, posMapping={}) ->
     aes = posMapping[aes] or aes
-    if aes of @scales then _.keys @scales[aes] else []
+    if aes of @scales
+      types = _.map @scales[aes], (v, k) -> parseInt k
+      types.filter (t) -> _.isNumber t and not _.isNaN t
+      types
+    else
+      []
 
   # @param type.  the only time type should be null is when
   #        retrieving the "master" scale to render for guides
@@ -81,9 +86,9 @@ class gg.scale.Set
       if vals.length > 0
         vals[0]
       else
-        @log "creating scaleset.get #{aes} #{type}"
+        @log "get: creating new scale #{aes} #{type}"
         # in the future, return default scale?
-        @set @factory.scale aes
+        @set @factory.scale aes, type
         #throw Error("gg.ScaleSet.get(#{aes}) doesn't have any scales")
 
     else
@@ -141,29 +146,40 @@ class gg.scale.Set
 
     @
 
+
+
+
+
+
+
+
   useScales: (table, aessTypes=null, posMapping={}, f) ->
     unless aessTypes?
-      aessTypes = _.compact _.map(table.schema.attrs(), (attr) ->
-        {aes: attr, type: table.schema.type(attr) })
+      aessTypes = _.compact table.schema.attrs()
 
-    if aessTypes.length > 0 and not _.isObject(aessTypes[0])
-      aessTypes = _.map aessTypes, (aes) =>
+    aessTypes = _.map aessTypes, (aes) =>
+      if _.isObject aes
+        @log "useScales: aes: #{aes.aes}\ttype: #{aes.type}"
+        aes
+      else
         # XXX: it's not clear why this is the correct logic
-        #      either:
         #      1) pick posMapped aes type from table
+        #      2) pick aes type from table
         if aes of posMapping and table.contains posMapping[aes]
           typeAes = posMapping[aes]
-          @log "useScales: aes: #{aes}(#{scale.id})\ttype: #{table.schema.type typeAes}"
-          {aes: aes, type: table.schema.type typeAes}
         else
-        #      2) pick aes type from table
-          {aes: aes, type: table.schema.type aes}
+          typeAes = aes
+        type = table.schema.type typeAes
+        @log "useScales: aes: #{aes}\ttype: #{type}"
+        {aes: aes, type: type}
+
 
     _.each aessTypes, (at) =>
       aes = at.aes
       type = at.type
+      @log "useScales: check #{aes}:#{type}\ttable has? #{table.contains aes, type}"
       return unless table.contains aes, type
-      # @log "useScales: fetch #{aes}\t#{type}\t#{posMapping[aes]}"
+      @log "useScales: fetch #{aes}\t#{type}\t#{posMapping[aes]}"
       scale = @scale(aes, type, posMapping)
       f table, scale, aes
 
@@ -179,12 +195,20 @@ class gg.scale.Set
   train: (table, aessTypes=null, posMapping={}) ->
     f = (table, scale, aes) =>
       return unless table.contains aes
+      return if _.isSubclass scale, gg.scale.Identity
+
       col = table.getColumn(aes)
       col = col.filter (v) -> not (_.isNaN(v) or _.isNull(v) or _.isUndefined(v))
 
-      if col?
+      @log "col #{aes} has #{col.length} elements"
+      if col? and col.length > 0
         newDomain = scale.defaultDomain col
         oldDomain = scale.domain()
+        @log "domains: #{scale.type} #{scale.constructor.name} #{oldDomain} + #{newDomain} underscore: #{_.mmin col}, #{_.mmax col}"
+        unless newDomain?
+          throw Error()
+        if _.isNaN newDomain[0]
+          throw Error()
 
         scale.mergeDomain newDomain
 
@@ -206,6 +230,7 @@ class gg.scale.Set
       table.map g, aes if table.contains aes
       @log "apply: #{aes}(#{scale.id}):\t#{str}\t#{table.nrows()} rows"
 
+
     table = table.clone()
     @log "apply: table has #{table.nrows()} rows"
     @useScales table, aessTypes, posMapping, f
@@ -226,10 +251,12 @@ class gg.scale.Set
       if table.contains aes
         table.map g, aes
         newDomain = scale.defaultDomain table.getColumn(aes)
+
       if scale.domain()?
         @log "invert: #{aes}(#{scale.id};#{scale.domain()}):\t#{origDomain} --> #{newDomain}"
 
     table = table.clone()
+    @log aessTypes
     @useScales table, aessTypes, posMapping, f
     table
 

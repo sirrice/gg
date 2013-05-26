@@ -19,13 +19,19 @@ class gg.wf.Join extends gg.wf.Node
 
   addInputPort: ->
     @inputs.push null
-    @getAddInputCB @inputs.length-1
+    cb = @getAddInputCB @inputs.length-1
+    @log.warn "#{@name}-#{@id} addInputPort: #{cb.port}"
+    cb
 
   cloneSubplan: (parent, parentPort, stop) ->
+
     if @ is stop
-      [@, @addInputPort()]
+      [clone, clonecb] = [@, @addInputPort()]
+      @log.warn "cloneSubplan: #{parent.name}-#{parent.id}(#{parentPort}) -> me(#{clonecb.port} -> stop)"
+      [clone, clonecb]
     else
       super parent, parentPort, stop
+
 
   ready: -> super
 

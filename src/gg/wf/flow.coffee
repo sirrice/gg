@@ -78,7 +78,7 @@ class gg.wf.Flow extends events.EventEmitter
           for path in paths
             [child, childCb] = @instantiatePath path, barriercache
             outputPort = clone.addChild child, childCb
-            clone.connectPorts cb.port, outputPort
+            clone.connectPorts cb.port, outputPort, childCb.port
             child.addParent clone, outputPort, childCb.port
 
         [clone, cb]
@@ -120,7 +120,7 @@ class gg.wf.Flow extends events.EventEmitter
 
       if prev?
         outputPort = prev.addChild clone, cloneCb
-        prev.connectPorts prevCb.port, outputPort
+        prev.connectPorts prevCb.port, outputPort, cloneCb.port
         clone.addParent prev, outputPort, cloneCb.port
 
       [prev, prevCb] = [clone, cloneCb]

@@ -126,6 +126,8 @@ class gg.wf.Node extends events.EventEmitter
 
     # input port to output port mapping
     @in2out = {}
+    # output port to child's input port
+    @out2child = {}
 
     # workflow node belongs to
     # the workflow keeps track of execution state.
@@ -140,7 +142,7 @@ class gg.wf.Node extends events.EventEmitter
     @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
 
 
-    @log = gg.util.Log.logger "#{@name}-#{@id}\t#{@constructor.name}", gg.util.Log.DEBUG
+    @log = gg.util.Log.logger "#{@name}-#{@id}\t#{@constructor.name}", gg.util.Log.WARN
 
   @id: -> gg.wf.Node::_id += 1
   _id: 0
@@ -159,6 +161,7 @@ class gg.wf.Node extends events.EventEmitter
 
 
   base: -> if @_base? then @_base else @
+  childFromPort: (inPort) -> @children[0]
   uniqChildren: -> _.compact @children
   nChildren: -> @uniqChildren().length
   hasChildren: -> @nChildren() > 0
@@ -180,8 +183,8 @@ class gg.wf.Node extends events.EventEmitter
     clone = new klass @toSpec()
     clone
 
-  # Execution time call to create a copy of the workflow instance rooted at
-  # current node.
+  # Execution time call to create a copy of the workflow
+  # instance rooted at current node.
   #
   # @return {[gg.wf.Node, Function]}
   cloneSubplan: (parent, parentPort, stop=null) ->
@@ -189,11 +192,11 @@ class gg.wf.Node extends events.EventEmitter
     cb = clone.addInputPort()
 
     if @nChildren() > 0
-      @log.warn "cloneSubplan: #{@children[0].name}"
       [child, childCb] = @children[0].cloneSubplan @, 0, stop
       outputPort = clone.addChild child, childCb
-      clone.connectPorts cb.port, outputPort
+      clone.connectPorts cb.port, outputPort, childCb.port
       child.addParent clone, outputPort, childCb.port
+      @log "cloneSubplan: #{parent.name}-#{parent.id}(#{parentPort}) -> #{clone.name}-#{clone.id}(#{cb.port} -> #{outputPort}) -> #{child.name}#{child.id}(#{childCb.port})"
 
     [clone, cb]
 
@@ -245,9 +248,11 @@ class gg.wf.Node extends events.EventEmitter
     @getAddInputCB @inputs.length-1
 
   # Connects the input and output ports for a single node
-  connectPorts: (input, output) ->
+  connectPorts: (input, output, childInPort) ->
+    @log "connectPorts: (#{input} -> #{output}) -> #{childInPort}"
     @in2out[input] = [] unless input of @in2out
     @in2out[input].push output
+    @out2child[output] = childInPort
 
   # Connects the parent's output port to this node's input port
   addParent: (parent, parentOPort, inputPort=null) ->
@@ -262,7 +267,7 @@ class gg.wf.Node extends events.EventEmitter
     childport = if childCb? then childCb.port else -1
     myStr = "#{@base().name} port(#{@nChildren()})"
     childStr = "#{child.base().name} port(#{childport})"
-    @log.warn "addChild: -> #{myStr} -> #{childStr}"
+    #@log "addChild: -> #{myStr} -> #{childStr}"
 
     if @children.length > 0
       throw Error("#{@name}: Single Output node already has a child")

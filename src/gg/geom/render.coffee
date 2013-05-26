@@ -42,6 +42,7 @@ class gg.geom.Render extends gg.core.XForm
 
   compute: (table, env, node) ->
     @log "rendering #{table.nrows()} rows"
+    gg.wf.Stdout.print table, null, 2, @log
     @render table, env, node
 
   # @override this

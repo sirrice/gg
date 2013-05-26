@@ -43,7 +43,7 @@ task 'clean', ->
 
 release = (callback) ->
   commands = []
-  commands.push "phantomjs vendor/js/rasterize.js build/html/index.html docs/imgs/screenshot.png"
+  commands.push "phantomjs vendor/js/rasterize.js build/html/release.html docs/imgs/screenshot.png"
 
   async.forEachSeries commands, run, ->
     callback() if callback

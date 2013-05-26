@@ -33,6 +33,7 @@ class gg.data.RowTable extends gg.data.Table
   nrows: -> @rows.length
   ncols: -> @schema.nkeys()
   colNames: -> @schema.attrs()
+  contains: (attr, type) -> @schema.contains attr, type
 
   cloneShallow: ->
     rows = @rows.map (row) -> row
@@ -159,6 +160,7 @@ class gg.data.RowTable extends gg.data.Table
   # transforms the values of column(s) on a per-column basis
   # Destructively updates!
   # Each mapping function takes the current field as input
+  # XXX: doesn't perform nested map operations correctly
   map: (fOrMap, colName=null) ->
     if _.isFunction fOrMap
       throw Error("RowTable.map without colname!") unless colName?
@@ -166,9 +168,10 @@ class gg.data.RowTable extends gg.data.Table
       fOrMap = {}
       fOrMap[colName] = f
 
+    schema = @schema
     @each (row, idx) ->
       _.each fOrMap, (f, col) ->
-        if row.inArray col
+        if schema.inArray col
           arr = _.map row.get(col), f
           row.set col, arr
         else
@@ -224,7 +227,7 @@ class gg.data.RowTable extends gg.data.Table
   getColumn: (col) ->
     # XXX: hack.  make it do the right thing if no rows
     if @nrows() > 0 and @schema.contains col
-      if @get(0).inArray col
+      if @schema.inArray col
         _.flatten _.times @nrows(), (idx) => @get(idx, col)
       else
         _.times @nrows(), (idx) => @get(idx, col)

@@ -129,7 +129,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
   compile: ->
     @log "compile()"
     debugaess = ['x', 'y', 'q1', 'q3', 'median']
-    debugaess = ['x', 'x0', 'x1', 'y', 'group']
+    debugaess = ['x', 'group', 'stroke']
+    debugaess = null
     makeStdOut = (name, n=5, aess=debugaess) =>
       new gg.wf.Stdout
         name: "#{name}-#{@layerIdx}"
@@ -141,13 +142,11 @@ class gg.layer.Shorthand extends gg.layer.Layer
       new gg.wf.Scales
         name: "#{name}-#{@layerIdx}"
         scales: scales
-
-
+      null
 
 
 
     nodes = []
-
 
     # pre-stats transforms
     nodes.push makeStdOut "init-data"
@@ -166,7 +165,9 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
     # facet join -- add facetX/Y columns to table
     nodes.push @g.facets.labelerNodes()
+    nodes.push makeStdOut "post-facetLabel-#{@layerIdx}"
     nodes.push @groupbylabel
+    nodes.push makeStdOut "post-groupby-#{@layerIdx}"
 
     # Geometry Part of Workflow #
 
@@ -181,6 +182,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push @g.scales.postgeommap
     nodes.push makeStdOut "post-geommaptrain"
     nodes.push makeScalesOut "post-geommaptrain"
+
 
 
     # Rendering
@@ -217,7 +219,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
     # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
     nodes.push makeScalesOut "pre-coord"
-    #nodes.push @coord
+    nodes.push @coord
     nodes.push makeStdOut "post-coord"
 
 

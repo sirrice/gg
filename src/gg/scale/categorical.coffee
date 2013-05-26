@@ -4,7 +4,7 @@
 class gg.scale.BaseCategorical extends gg.scale.Scale
 
   # subclasses are responsible for instantiating @d3Scale and @invertScale
-  constructor: (@padding=.05) ->
+  constructor: (@spec) ->
     @type = gg.data.Schema.ordinal
     @d3Scale = d3.scale.ordinal()
     @invertScale = d3.scale.ordinal()
@@ -34,13 +34,17 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
 
   d3Range: ->
     range = @d3Scale.range()
-    rangeBand = @d3Scale.rangeBand()
-    range = _.map range, (v) -> v + rangeBand/2.0
+    if @type == gg.data.Schema.numeric
+      rangeBand = @d3Scale.rangeBand()
+      range = _.map range, (v) -> v + rangeBand/2.0
     range
 
   range: (interval) ->
     if interval? and not @rangeSet
-      @d3Scale.rangeBands interval#, @padding
+      if @type == gg.data.Schema.numeric
+        @d3Scale.rangeBands interval#, @padding
+      else
+        @d3Scale.range interval
       @invertScale.domain @d3Range()
     @d3Range()
 

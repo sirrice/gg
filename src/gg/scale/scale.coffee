@@ -93,11 +93,15 @@ class gg.scale.Scale
     unless @aes?
       throw Error("Scale.fromSpec needs an aesthetic: #{JSON.stringify @spec}")
 
-    if @spec.range? and @aes not in gg.scale.Scale.xys
-      @range @spec.range
+    range = _.findGoodAttr @spec, ["range"], null
+    if range? and @aes not in gg.scale.Scale.xys
+      @range range
       @rangeSet = yes
 
-    domain = _.findGoodAttr @spec, ['domain','limit','limits','lims','lim'], null
+
+
+    attrs = ['domain','limit','limits','lims','lim']
+    domain = _.findGoodAttr @spec, attrs, null
     if domain?
       @domain domain
       @domainSet = yes
@@ -197,8 +201,8 @@ class gg.scale.Scale
 
 
   defaultDomain: (col) ->
-    @min = _.min col
-    @max = _.max col
+    @min = _.mmin col
+    @max = _.mmax col
 
     if @center?
         extreme = Math.max @max-@center, Math.abs(@min-@center)
@@ -254,7 +258,7 @@ class gg.scale.Scale
   maxRange: -> @range()[1]
   scale: (v) -> @d3Scale v
   invert: (v) -> @d3Scale.invert(v)
-  toString: () -> "#{@aes}.#{@id} (#{@type},#{@constructor.name}): \t#{@domain()}\t#{@range()}"
+  toString: () -> "#{@aes}.#{@id} (#{@type},#{@constructor.name}): \t#{@domain()} -> #{@range()}"
 
 
 

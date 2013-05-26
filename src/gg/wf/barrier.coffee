@@ -19,6 +19,10 @@ class gg.wf.Barrier extends gg.wf.Node
     @inputs.push null
     @getAddInputCB @inputs.length - 1
 
+  childFromPort: (inPort) ->
+    outPort = @in2out[inPort]
+    @children[outPort]
+
   # Looks up the correct child node for @parent before cloning
   # @param parent parent node
   # @param parentPort parent's output port connected to this node
@@ -34,13 +38,14 @@ class gg.wf.Barrier extends gg.wf.Node
       throw Error("Barrier input port maps to #{@in2out[inPort].length} output ports")
 
     child = @children[@in2out[inPort][0]]
-    @log.warn "cloneSubplan: #{parent.name}(#{inPort})\t#{child.name}(#{@in2out[inPort]})"
 
     [child, childCb] = child.cloneSubplan @, @in2out[inPort], stop
     outputPort = @addChild child, childCb
     cb = @addInputPort()
-    @connectPorts cb.port, outputPort
+    @connectPorts cb.port, outputPort, childCb.port
     child.addParent @, outputPort, childCb.port
+
+    @log "cloneSubplan: #{parent.name}-#{parent.id}(#{parentPort}) -> me(#{cb.port} -> #{outputPort}) -> #{child.name}-#{child.id}(#{@in2out[inPort]})"
 
     [@, cb]
 
@@ -48,7 +53,7 @@ class gg.wf.Barrier extends gg.wf.Node
     childport = if inputCb? then inputCb.port else -1
     myStr = "#{@base().name} port(#{@nChildren()})"
     childStr = "#{child.base().name} port(#{childport})"
-    @log.warn "addChild #{myStr} -> #{childStr}"
+    #@log "addChild #{myStr} -> #{childStr}"
 
     outputPort = @nChildren()
     @children.push child

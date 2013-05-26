@@ -30,6 +30,7 @@ class gg.geom.svg.Line extends gg.geom.Render
         .y((d) -> d.y1)
         #.interpolate('basis')
 
+    @log "stroke is #{table.get 0, "stroke"}"
 
     cssNormal =
       "stroke": (t) -> t.get("stroke")

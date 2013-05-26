@@ -105,7 +105,7 @@ class gg.facet.Grid extends gg.facet.Facets
       #  s.scale('y').maxDomain()
       #else
       #  0
-    maxVal = _.max(_.map @g.scales.scalesList, maxValF)
+    maxVal = _.mmax(_.map @g.scales.scalesList, maxValF)
     dims = _.textSize(formatter(maxVal), {"font-size":"10pt", "font-family":"arial"})
     yAxisWidth = dims.w + 2*@facetPadding
 

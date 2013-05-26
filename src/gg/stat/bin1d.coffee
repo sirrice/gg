@@ -6,7 +6,7 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
 
 
   parseSpec: ->
-    @nbins = _.findGood [@spec.nbins, @spec.bins, 30]
+    @nbins = _.findGoodAttr @spec, ["n", "bins", "bins"], 30
     super
 
   inputSchema: (table, env, node) -> ['x']

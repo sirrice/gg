@@ -148,20 +148,22 @@ class gg.scale.Scales extends gg.core.XForm
   #
   #
   trainOnPixels: (tables, envs, node, spec={}) ->
+
     getAessType = ([t, info]) =>
       scales = @scales info.facetX, info.facetY, info.layer
       posMapping = @posMapping info.layer
+      @log "Schema: #{t.schema.toSimpleString()}"
 
-      aessTypes = {}
+
       # only table columns that have a corresponding
       # ordinal scale are allowed
-      aessTypes = _.map t.colNames(), (aes) ->
-        _.map scales.types(aes, posMapping), (type) ->
+      f = (aes) =>
+        _.map scales.types(aes, posMapping), (type) =>
           unless type is gg.data.Schema.ordinal
             if t.contains aes, type
               {aes: aes, type: type}
-      aessTypes = _.compact _.flatten aessTypes
-      aessTypes
+
+      _.compact _.flatten _.map t.colNames(), f
 
 
     invert = ([t, info, aessTypes]) =>
@@ -174,7 +176,9 @@ class gg.scale.Scales extends gg.core.XForm
       @log "trainOnPixels: setid:      #{scales.id}"
       @log "trainOnPixels: aesTypes:   #{JSON.stringify aessTypes}"
 
+      gg.wf.Stdout.print t, null, 5, gg.util.Log.logger("pre-invert")
       inverted = scales.invert t, aessTypes, posMapping
+      gg.wf.Stdout.print inverted, null, 5, gg.util.Log.logger("post-invert")
       inverted
 
     reset = (info) =>
@@ -182,9 +186,10 @@ class gg.scale.Scales extends gg.core.XForm
       scales.resetDomain()
 
     train = ([t,info, aessTypes, origSchema]) =>
-      @log info
       scales = @scales info.facetX, info.facetY, info.layer
       posMapping = @posMapping info.layer
+      @log t.colNames()
+      @log JSON.stringify(aessTypes)
       @log posMapping
       scales.train t, aessTypes, posMapping
 
@@ -194,11 +199,11 @@ class gg.scale.Scales extends gg.core.XForm
       @log "trainOnPixels: #{scales.toString("\t")}"
 
       @log "trainOnpixels: pre-Schema: #{t.colNames()}"
-      gg.wf.Stdout.print t, ['x'], 5, gg.util.Log.logger("pre-apply")
+      gg.wf.Stdout.print t, ['x'], 5, @log
       t = scales.apply t, aessTypes, posMapping
       t.schema = origSchema
       @log "trainOnpixels postSchema: #{t.colNames()}"
-      gg.wf.Stdout.print t, ['x'], 5, gg.util.Log.logger("pst-apply")
+      gg.wf.Stdout.print t, ['x'], 5, @log
       t
 
     # 0) setup some variables we'll need
@@ -218,13 +223,6 @@ class gg.scale.Scales extends gg.core.XForm
 
     # 3) re-apply scales to inverted tables
     newTables = _.map args, apply
-
-    _.each infos, (info) =>
-      scales = @scales info.facetX, info.facetY, info.layer
-      @log.warn "Trained scales. #{JSON.stringify info}"
-      _.each [0,1,2], (v) =>
-        newv = scales.scale('x', gg.data.Schema.unknown).scale v
-        @log.warn "\t#{v} -> #{newv}"
 
 
     newTables

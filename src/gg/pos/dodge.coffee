@@ -12,7 +12,7 @@ class gg.pos.Dodge extends gg.pos.Position
 
   compute: (table, env) ->
     groups = table.split (row) -> JSON.stringify [row.get('x0'), row.get('x1')]
-    maxGroup = _.max groups, (group) -> group.table.nrows()
+    maxGroup = _.mmax groups, (group) -> group.table.nrows()
     keys = _.uniq _.flatten _.map(groups, (group) -> _.uniq(group.table.getColumn "group"))
     keys = _.uniq _.map(keys, (key) -> JSON.stringify key)
     key2Idx = {}

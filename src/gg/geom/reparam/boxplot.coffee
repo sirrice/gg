@@ -9,6 +9,7 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
 
   defaults: ->
     x: 1
+    group: "1"
 
   # outliers is an array with schema {outlier:}
   inputSchema: ->
@@ -18,9 +19,11 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
   # outliers is an array with schema {outlier:}
   outputSchema: (table, env) ->
     gg.data.Schema.fromSpec
-      #group: gg.data.Schema.ordinal
+      group: table.schema.typeObj 'group'
       #x: gg.data.Schema.ordinal
       x: table.schema.type 'x'
+      x0: table.schema.type 'x'
+      x1: table.schema.type 'x'
       width: gg.data.Schema.numeric
       y0: gg.data.Schema.numeric
       y1: gg.data.Schema.numeric
@@ -47,7 +50,7 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
     @log "xs: #{xs}"
     diffs = _.map _.range(xs.length-1), (idx) ->
       xs[idx+1]-xs[idx]
-    mindiff = _.min diffs or 1
+    mindiff = _.mmin diffs or 1
     width = mindiff * 0.8
     width = Math.min width, 40
 
@@ -62,7 +65,7 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
 
     mapping = _.mappingToFunctions table, mapping
     table.transform mapping, yes
-    @log table.schema.toString()
+    table.schema = @outputSchema table, env
     table
 
 

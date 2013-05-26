@@ -10,16 +10,19 @@ class gg.data.Row
 
 
   rawKeys: ->
-    _.compact _.map @data, (v,k) -> k unless _.isObject v
+    _.compact _.map @data, (v,k) ->
+      k unless _.isObject v
 
   nestedKeys: ->
-    _.compact _.map @data, (v,k) -> k if gg.data.Row.isNested(v)
+    _.compact _.map @data, (v,k) =>
+      k if @schema.isNested v
 
   # attribute within nested tuple to @data key
   nestedToKey: ->
     ret = {}
     _.each @nestedKeys(), (k) =>
-      _.each _.keys(@data[k]), (attr) => ret[attr] = k
+      _.each _.keys(@data[k]), (attr) =>
+        ret[attr] = k
     ret
 
   nestedAttrs: ->
@@ -27,33 +30,40 @@ class gg.data.Row
 
 
   arrKeys: ->
-    _.compact _.map @data, (v,k) -> k if _.isArray v
+    @schema.attrs().filter (attr) =>
+      @schema.inArray(attr) or @schema.isArray(attr)
+
+    #_.compact _.map @data, (v,k) -> k if _.isArray v
 
   # attribute of tuple within array to @data key
   arrToKey: ->
-    ret = {}
-    _.each @arrKeys(), (k) =>
-      if @data[k]?
-        for o in @data[k]
-          if o?
-            _.each _.keys(o), (attr) => ret[attr] = k
-            return
-    ret
+    _.list2map @arrAttrs(), (attr) =>
+      [attr, @schema.attrToKeys[attr]]
+    #ret = {}
+    #_.each @arrKeys(), (k) =>
+    #  if @data[k]?
+    #    for o in @data[k]
+    #      if o?
+    #        _.each _.keys(o), (attr) => ret[attr] = k
+    #        return
+    #ret
 
   arrAttrs: ->
-    _.compact _.flatten _.map @arrKeys(), (k) =>
-      if @data[k]?
-        for o in @data[k]
-          try
-            return _.keys(o) if o?
-          catch error
-            @log.warn error
-            @log.warn k
-            @log.warn o
-            @log.warn @
-            throw error
+    @schema.attrs().filter (attr) =>
+      @schema.inArray attr
+    #_.compact _.flatten _.map @arrKeys(), (k) =>
+    #  if @data[k]?
+    #    for o in @data[k]
+    #      try
+    #        return _.keys(o) if o?
+    #      catch error
+    #        @log.warn error
+    #        @log.warn k
+    #        @log.warn o
+    #        @log.warn @
+    #        throw error
 
-      []
+    #  []
 
   attrs: ->
     attrs = [
@@ -78,10 +88,12 @@ class gg.data.Row
     valOrArr = @_get attr
     if valOrArr?
       if _.isArray valOrArr
+        # XXX: use schema to check for function type
         if valOrArr.length > 0 and _.isFunction valOrArr[0]
           _.map valOrArr, (f) -> f()
         else
           valOrArr
+      # XXX: use schema to check for function type
       else if _.isFunction valOrArr
         valOrArr()
       else
@@ -92,35 +104,47 @@ class gg.data.Row
   _get: (attr) ->
     if attr of @data
       @data[attr]
-    else if attr in @nestedAttrs()
-      key = @nestedToKey()[attr]
-      @data[key][attr]
-    else if attr in @arrAttrs()
-      key = @arrToKey()[attr]
-      arr = @data[key]
-      if arr.length > 0 and attr of arr[0]
-        _.map arr, (o) -> o[attr]
+    else if @schema.inNested attr
+      #else if attr in @nestedAttrs()
+      key = @schema.attrToKeys[attr]
+      if key of @data and attr of @data[key]
+        @data[key][attr]
+      else
+        null
+    else if @schema.inArray attr# in @arrAttrs()
+      key = @schema.attrToKeys[attr]
+      #key = @arrToKey()[attr]
+      arr = @data[key] or []
+      if arr.length > 0
+        arr = _.map arr, (o) ->
+          if attr of o then o[attr] else null
+      arr
     else
       null
 
   set: (attr, val) ->
-    if attr in @rawKeys()
+    if @schema.isRaw attr
       @data[attr] = val
-    else if attr in @nestedAttrs()
-      @data[@nestedToKey()[attr]][attr] = val
-    else if attr in @arrAttrs()
-      if _.isArray val
-        arr = @data[@arrToKey()[attr]]
-        if arr?
-          n = Math.max val.length, arr.length
-          _.each _.range(val.length), (idx) =>
-            if idx < arr.length
-              arr[idx][attr] = val[idx]
-            else
-              @log.warn "creating new objs in set(#{attr})"
-              arr[idx] = {attr: val}
-        else
-          @data[attr] = val
+    else if @schema.inNested attr# in @nestedAttrs()
+      key = @schema.attrToKeys[attr]
+      @data[key][attr] = val
+    else if @schema.inArray attr# in @arrAttrs()
+      unless _.isArray val
+        val = [val]
+
+      key = @schema.attrToKeys[attr]
+      @data[key] = [] unless key of @data
+      arr = @data[key]
+      #arr = @data[@arrToKey()[attr]]
+      if arr?
+        n = Math.max val.length, arr.length
+        _.each _.range(val.length), (idx) =>
+          if idx < arr.length
+            arr[idx][attr] = val[idx]
+          else
+            arr[idx] = {attr: val}
+          if idx == arr.length
+            @log.warn "creating new #{val.length-arr.length} objs in set(#{attr})"
       else
         str = "gg.Row.set attr exists as array, but set val is not"
         throw Error(str)
@@ -153,9 +177,9 @@ class gg.data.Row
     @
 
   flatten: ->
-    arrays = _.map @arrKeys(), (k) => @data[k]
+    arrays = _.compact _.map @arrKeys(), (k) => @data[k]
     nonArrayKeys = _.union @rawKeys(), @nestedKeys()
-    maxLen = _.max _.map(arrays, (arr)->arr.length)
+    maxLen = _.mmax _.map(arrays, (arr)->arr.length)
 
     unless arrays.length > 0
       return new gg.data.RowTable @schema, [@]

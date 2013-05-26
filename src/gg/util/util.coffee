@@ -52,7 +52,15 @@ class gg.util.Util
 
   @repeat: (n, val) -> _.times(n, (->val))
 
+  @min: (arr, f, ctx) ->
+    arr = _.reject arr, (v) ->
+      _.isNaN(v) or _.isNull(v) or _.isUndefined(v)
+    _.min arr, f, ctx
 
+  @max: (arr, f, ctx) ->
+    arr = _.reject arr, (v) ->
+      _.isNaN(v) or _.isNull(v) or _.isUndefined(v)
+    _.max arr, f, ctx
 
 
 
@@ -64,6 +72,8 @@ findGoodAttr = gg.util.Util.findGoodAttr
 _.mixin
   list2map: gg.util.Util.list2map
   sum: gg.util.Util.sum
+  mmin: gg.util.Util.min
+  mmax: gg.util.Util.max
   findGood: gg.util.Util.findGood
   findGoodAttr: gg.util.Util.findGoodAttr
   isSubclass: gg.util.Util.isSubclass

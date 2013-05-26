@@ -6,6 +6,8 @@ class gg.stat.LoessStat extends gg.stat.Stat
 
 
   parseSpec: ->
+    @bandwidth = _.findGoodAttr @spec, ["bandwidth", "band", "bw"], .3
+    @acc = _.findGoodAttr @spec, ["accuracy", "acc", "ac"], 1e-12
     super
 
   inputSchema: (table, env, node) -> ['x', 'y']
@@ -23,19 +25,26 @@ class gg.stat.LoessStat extends gg.stat.Stat
     )
     xs = table.getColumn('x')
     ys = table.getColumn('y')
+    # remove invald entries
     xys = _.zip(xs, ys)
     xys = xys.filter (xy) -> isValid(xy[0]) and isValid(xy[1])
     xys.sort (xy1, xy2) -> xy1[0] - xy2[0]
     xs = xys.map (xy) -> xy[0]
     ys = xys.map (xy) -> xy[1]
+
     loessfunc = science.stats.loess()
+    bandwidth = Math.max @bandwidth, 3.0/xs.length
+    loessfunc.bandwidth bandwidth
+    loessfunc.accuracy @acc
+    @log.warn "bw: #{bandwidth}\tacc: #{@acc}"
 
     smoothys = loessfunc(xs, ys)
     rows = []
     _.times xs.length, (idx) ->
-      rows.push
-        x: xs[idx]
-        y: smoothys[idx]
+      if isValid smoothys[idx]
+        rows.push
+          x: xs[idx]
+          y: smoothys[idx]
 
     @log "compute: xs: #{JSON.stringify xs.slice(0,6)}"
     @log "compute: ys: #{JSON.stringify ys.slice(0,6)}"

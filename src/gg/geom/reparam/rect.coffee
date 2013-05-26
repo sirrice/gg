@@ -17,9 +17,10 @@ class gg.geom.reparam.Rect extends gg.core.XForm
     xs = _.uniq(table.getColumn("x")).sort (a,b)->a-b
     diffs = _.map _.range(xs.length-1), (idx) ->
       xs[idx+1]-xs[idx]
-    mindiff = _.min diffs or 1
+    mindiff = _.mmin diffs or 1
     width = Math.max(1,mindiff * 0.8)
     minY = yscale.minDomain()
+    minY = 0
     getHeight = (row) -> yscale.scale(Math.abs(yscale.invert(row.get('y')) - minY))
 
 

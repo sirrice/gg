@@ -9,6 +9,8 @@ class gg.wf.Split extends gg.wf.Node
   constructor: (@spec={}) ->
     super @spec
 
+    @outPort2childInPort = {}
+
     # TODO: support groupby functions that return an
     # array of keys.
     @type = "split"
@@ -19,14 +21,41 @@ class gg.wf.Split extends gg.wf.Node
   # @return array of {key: String, table: gg.Table} dictionaries
   splitFunc: (table, env, node) -> []
 
+  cloneSubplan: (parent, parentPort, stop) ->
+    super
+
+
   findMatchingJoin: ->
-    ptr = @children[0]
+    @log "\tfindMatch children: #{_.map(@children, (c)->c.name+"-"+c.id).join("  ")}"
+    port = 0
+    outPort = @in2out[port]
+    childPort = @out2child[outPort]
+
+    port = childPort
+    ptr = @children[outPort]
     n = 1
     while ptr?
+      @log "\tfindMatch: #{ptr.name}-#{ptr.id}(#{port})"
       n += 1 if ptr.type is 'split'
       n -= 1 if ptr.type is 'join'
       break if n == 0
-      ptr = if ptr.hasChildren() then ptr.children[0] else null
+
+      if ptr.hasChildren()
+        outPort = ptr.in2out[port]
+        childPort = ptr.out2child[outPort]
+        child = ptr.children[outPort]
+        childStr = null
+        childStr ="#{child.name}-#{child.id}(#{childPort})" if child?
+        @log "\tfindMatch: (#{port}->#{outPort}) -> #{childStr}"
+
+
+        ptr = child
+        port = childPort
+      else
+        ptr = null
+
+    name = if ptr? then "#{ptr.name}-#{ptr.id}" else null
+    @log "split #{@name}-#{@id}: matching join #{name}"
     ptr
 
   #
@@ -41,7 +70,7 @@ class gg.wf.Split extends gg.wf.Node
         idx = @children.length
         [child, childCb] = @children[0].cloneSubplan @, 0, stop
         outputPort = @addChild child, childCb
-        @connectPorts 0, outputPort
+        @connectPorts 0, outputPort, childCb.port
         child.addParent @, outputPort, childCb.port
 
   #
@@ -51,7 +80,7 @@ class gg.wf.Split extends gg.wf.Node
     childport = if inputCb? then inputCb.port else -1
     myStr = "#{@base().name} port(#{@nChildren()})"
     childStr = "#{child.base().name} port(#{childport})"
-    @log.warn "addChild: #{myStr} -> #{childStr}"
+    @log "addChild: #{myStr} -> #{childStr}"
 
     outputPort = @children.length
     @children.push child

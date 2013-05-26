@@ -18,11 +18,11 @@ class gg.wf.Multicast extends gg.wf.Node
     cb = clone.addInputPort()
 
     for child, idx in _.compact @children
-      @log.warn "cloneSubplan: #{child.name}"
       [child, childCb]  = child.cloneSubplan @, idx, stop
       outputPort = clone.addChild child, childCb
-      clone.connectPorts cb.port, outputPort
+      clone.connectPorts cb.port, outputPort, childCb.port
       child.addParent clone, outputPort, childCb.port
+      @log "cloneSubplan: #{parent.name}-#{parent.id}(#{parentPort}) -> me(#{cb.port} -> #{outputPort}) -> #{child.name}-#{child.id}(#{childCb.port})"
 
     [clone, cb]
 

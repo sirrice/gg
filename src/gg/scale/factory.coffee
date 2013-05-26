@@ -10,9 +10,9 @@ class gg.scale.Factory
 
   scale: (aes, type) ->
     unless aes?
-      throw Error()
+      throw Error("Factory.scale(): aes was null")
     unless type?
-      throw Error()
+      throw Error("Factery.scale(#{aes}): type was null")
 
     scale =
       if aes of @defaults

@@ -14,25 +14,88 @@
 }
 */
 
-var geom_boxplot2 =
-[{
-  "geom": "boxplot",
-  "aes": {
-    "x": "f",
-    "y": "e",
-    "group": { color: "f"}
-  }, "stats": "boxplot"
-},
 
+// Crazy Spec
+//
+var crazy = {
+  "opts": { "title": "baller plot!" }
+  ,
+    facets: {y: "t", x: "f"},
+    layers: [
+    { geom:{
+                type: "rect", aes: {y: "{total/100}"}},
+      aes: {
+            x: "d",
+                y: "e"
+                    },
+        stat: "bin"
+    },
+    { geom: "boxplot",
+        aes: {
+                   x: function(row) {return Math.floor(row.get('d') / 500) * 500;},
+                       y: "e"
+                           }, stat: "boxplot"
+    },
+    {
+        "geom": "line",
+          "aes": {
+                "x": "d",
+                    "y": "e",
+                       group: {color: "g", "stroke-width": 2}
+                  },
+             stat: {type:"loess", bw: 0.3, acc: 1e-12},
+               scales: {
+                    stroke: {type: "color", range: ["black", "red", "green"]}
+                              }
+    },
+
+
+    {
+        "geom": "line",
+          "aes": {
+                "x": "d",
+                    "y": "e",
+                       group: {color: "g", "stroke-opacity": 0.2}
+                   }
+    }
+
+
+  ]
+}
+
+var geom_boxplot2 =
 {
- "geom": "point",
- "aes": {
-   x: 'g',
-   y: 'e',
-   group: {color: 'g'}
- }
- }
-];
+  layers:[
+  {
+    "geom": "boxplot",
+    "aes": {
+      "x": "f",
+      "y": "e",
+      "group": { color: "f"}
+    }, "stats": "boxplot"
+  },
+
+  {
+   "geom": "point",
+   "aes": {
+     x: 'g',
+     y: 'e',
+     group: {color: 'g'}
+   }
+  },
+
+   {
+     geom: "line",
+     aes: {
+       x: "d",
+       y: "e"
+     }
+   }
+  ],
+  facets: {x: "t"}
+};
+//geom_boxplot2.layers = [geom_boxplot2.layers[0]];
+delete geom_boxplot2.facets;
 
 var geom_area = {
   geom: {
@@ -107,7 +170,7 @@ var geom_point_3 = {
 
 var geom_point_4 = {
   geom: "point"
- ,aes: {x: 'd', y: 'e', r: 'g', fill: 'f'}
+ ,aes: {x: 'd', y: 'e', r: 'g', color: "f"}
   ,pos: { type: 'jitter'}
   ,scales: {
     fill: "color",
@@ -120,13 +183,9 @@ var colored_lines = {
   geom: "line",
   aes: {
     x: 'd',  y: "e",
-    group : "{{ 'stroke':g, 'fill': g}}"
+    group : {color: "g"}
   },
-/*  scales: {
-   "stroke-width": {
-     range: [1, 5]
-   }
- }*/
+  pos: "stack"
 };
 
 
@@ -165,7 +224,9 @@ var geoms = {
 
 var selected_geoms = {
   point: false,
-  boxplot:true
+  boxplot:false,
+  line: true
+
 };
 
 
@@ -301,14 +362,14 @@ var selected_geoms = {
     //
     // Generate random data with float attributes: d, r, g, f, t
     //
-    var npts = 500;
+    var npts = 5000;
     bigdata = _.map(_.range(0, npts), function(d) {
-      g = Math.floor(Math.random() * 6) + 1;
-      f = Math.floor(Math.random() * 6);
-      t = Math.floor(Math.random() * 3);
+      g = Math.floor(Math.random() * 3) + 1;
+      f = Math.floor(Math.random() * 3);
+      t = Math.floor(Math.random() * 2);
       gauss.variance(d * 30.0 / npts);
 
-      return {d: Math.floor(d/3), e: ((d + gauss())*(2+Math.sin(d/20))) * (g),  g: g, f:f, t:t};
+      return {d: Math.floor(d/3), e: ((d + gauss())*(2+Math.sin(d/50))) * (g) - (d),  g: g, f:f, t:t};
     });
 
     setup_sample_data(bigdata);

@@ -155,6 +155,7 @@ class gg.core.XForm
         #scale = scales.scale(attr, table.schema.type attr)
         @log.warn "filterInput: undefined val: #{attr}:\t#{val}" unless isDefined
         isDefined #and scale.valid(val)
+
       unless valid
         @log row.raw()
         nfiltered += 1
@@ -168,9 +169,9 @@ class gg.core.XForm
   addDefaults: (table, env) ->
     defaults = @param table, env, "defaults"
     @log "addDefaults: #{JSON.stringify defaults}"
-    @log "             #{JSON.stringify table.colNames()}"
+    @log "             #{JSON.stringify table.schema.attrs()}"
     _.each defaults, (val, col) =>
-      unless col in table.colNames()
+      unless table.contains col
         @log "addDefaults: adding: #{col} -> #{val}"
         table.addConstColumn col, val
 

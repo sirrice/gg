@@ -31,8 +31,8 @@ class gg.scale.Log extends gg.scale.Scale
     if col.length is 0
       return [1, 10]
 
-    @min = _.min col
-    @max = _.max col
+    @min = _.mmin col
+    @max = _.mmax col
 
     if @center?
         extreme = Math.max @max-@center, Math.abs(@min-@center)

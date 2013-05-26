@@ -11,6 +11,7 @@ class gg.wf.Stdout extends gg.wf.Exec
     @dlog = gg.util.Log.logger "StdOut: #{@name}-#{@id}"
 
   compute: (table, env, node) ->
+    @dlog "facetX: #{env.get("facetX")}\tfacetY: #{env.get("facetY")}"
     gg.wf.Stdout.print table, @aess, @n, @dlog
     table
 
@@ -20,16 +21,15 @@ class gg.wf.Stdout extends gg.wf.Exec
     blockSize = Math.max(Math.floor(table.nrows() / n), 1)
     idx = 0
     schema = table.schema
-    arr = _.map schema.attrs(), (attr) ->
-      "\t#{attr}(#{schema.type(attr)})"
-    log "Number of rows: #{table.nrows()}"
-    log "Schema: #{arr.join "\t"}"
+    log "# rows: #{table.nrows()}"
+    log "Schema: #{schema.toSimpleString()}"
     while idx < table.nrows()
       row = table.get(idx)
       row = row.project aess if aess?
-      raw = _.clone row.raw()
+      raw = row.clone().raw()
       _.each raw, (v, k) ->
         raw[k] = v[0..4] if _.isArray v
+
       log JSON.stringify raw
       idx += blockSize
 
