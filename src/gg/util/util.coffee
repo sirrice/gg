@@ -7,6 +7,9 @@ _ = require 'underscore'
 
 class gg.util.Util
 
+  @isValid: (v) ->
+    not(_.isNull v or _.isNaN v or _.isUndefined v)
+
   # @param f returns an array [key, val]
   #        that sets the map's key, value pair
   @list2map: (list, f=((v, idx)->[v,v])) ->
@@ -70,6 +73,7 @@ findGood = gg.util.Util.findGood
 findGoodAttr = gg.util.Util.findGoodAttr
 
 _.mixin
+  isValid: gg.util.Util.isValid
   list2map: gg.util.Util.list2map
   sum: gg.util.Util.sum
   mmin: gg.util.Util.min

@@ -198,7 +198,7 @@ class gg.scale.Set
       return if _.isSubclass scale, gg.scale.Identity
 
       col = table.getColumn(aes)
-      col = col.filter (v) -> not (_.isNaN(v) or _.isNull(v) or _.isUndefined(v))
+      col = col.filter _.isValid
 
       @log "col #{aes} has #{col.length} elements"
       if col? and col.length > 0

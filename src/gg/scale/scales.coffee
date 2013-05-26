@@ -60,7 +60,7 @@ class gg.scale.Scales extends gg.core.XForm
       f: (args...) => @trainOnPixels args..., spec
 
     @parseSpec()
-    @log.level = gg.util.Log.WARN
+    @log.level = gg.util.Log.DEBUG
 
 
   # XXX: assumes layers have been created already
@@ -148,16 +148,18 @@ class gg.scale.Scales extends gg.core.XForm
   #
   #
   trainOnPixels: (tables, envs, node, spec={}) ->
+    # 0) copy existing scales
+    # 1) iterate through each column, compute bounds
+    # 2) invert bounds
+    # 3) merge bounds with existing scales
+    # 4) map tables once to invert using old scales + apply new scales
 
-    getAessType = ([t, info]) =>
+    fAessType = ([t, info]) =>
       scales = @scales info.facetX, info.facetY, info.layer
       posMapping = @posMapping info.layer
-      @log "Schema: #{t.schema.toSimpleString()}"
-
-
       # only table columns that have a corresponding
       # ordinal scale are allowed
-      f = (aes) =>
+      f = (aes) ->
         _.map scales.types(aes, posMapping), (type) =>
           unless type is gg.data.Schema.ordinal
             if t.contains aes, type
@@ -165,67 +167,60 @@ class gg.scale.Scales extends gg.core.XForm
 
       _.compact _.flatten _.map t.colNames(), f
 
+    fOldScaleSet = (info) =>
+      scales = @scales info.facetX, info.facetY, info.layer
+      scales.clone()
 
-    invert = ([t, info, aessTypes]) =>
+    fMergeDomain = ([t, info, aessTypes]) =>
       scales = @scales info.facetX, info.facetY, info.layer
       posMapping = @posMapping info.layer
-      @log "trainOnPixels: #{scales.toString("\t")}"
-      @log "trainOnPixels: #{t.colNames()}"
-      @log "trainOnPixels: posMapping: #{JSON.stringify posMapping}"
-      @log "trainOnPixels: cols:       #{t.colNames()}"
-      @log "trainOnPixels: setid:      #{scales.id}"
-      @log "trainOnPixels: aesTypes:   #{JSON.stringify aessTypes}"
+      f = (table, scale, aes) =>
+        col = table.getColumn(aes)
+        col = col.filter _.isValid
+        return unless col? and col.length > 0
 
-      gg.wf.Stdout.print t, null, 5, gg.util.Log.logger("pre-invert")
-      inverted = scales.invert t, aessTypes, posMapping
-      gg.wf.Stdout.print inverted, null, 5, gg.util.Log.logger("post-invert")
-      inverted
+        # col has pixel (range) units
+        range = scale.defaultDomain col
+        domain = _.map range, (v) ->
+          if v? then scale.invert v else null
+        @log "#{aes}\trange: #{range}"
+        @log "#{aes}\tdomain: #{domain}"
+        @log scale.toString()
+        scale.mergeDomain domain
 
-    reset = (info) =>
-      scales = @scales info.facetX, info.facetY, info.layer
-      scales.resetDomain()
+      scales.useScales t, aessTypes, posMapping, f
 
-    train = ([t,info, aessTypes, origSchema]) =>
-      scales = @scales info.facetX, info.facetY, info.layer
-      posMapping = @posMapping info.layer
-      @log t.colNames()
-      @log JSON.stringify(aessTypes)
-      @log posMapping
-      scales.train t, aessTypes, posMapping
-
-    apply = ([t,info, aessTypes, origSchema]) =>
+    fRescale = ([t, info, aessTypes, oldScales]) =>
       scales = @scales info.facetX, info.facetY, info.layer
       posMapping = @posMapping info.layer
-      @log "trainOnPixels: #{scales.toString("\t")}"
+      mappingFuncs = {}
+      rescale = (table, scale, aes) ->
+        oldScale = oldScales.scale aes, scale.type
+        g = (v) -> scale.scale oldScale.invert(v)
+        mappingFuncs[aes] = g
 
-      @log "trainOnpixels: pre-Schema: #{t.colNames()}"
-      gg.wf.Stdout.print t, ['x'], 5, @log
-      t = scales.apply t, aessTypes, posMapping
-      t.schema = origSchema
-      @log "trainOnpixels postSchema: #{t.colNames()}"
-      gg.wf.Stdout.print t, ['x'], 5, @log
-      t
+      scales.useScales t, aessTypes, posMapping, rescale
+      clone = t.clone()
+      clone.map mappingFuncs
+      clone.schema = t.schema
+      clone
 
     # 0) setup some variables we'll need
     infos = _.map _.zip(tables, envs), ([t,e]) => @paneInfo t, e
-    originalSchemas = _.map tables, (t) -> t.schema
-    allAessTypes = _.map _.zip(tables, infos), getAessType
+    allAessTypes = _.map _.zip(tables, infos), fAessType
+    oldScaleSets = _.map infos, fOldScaleSet
+    args = _.zip(tables, infos, allAessTypes, oldScaleSets)
 
-    # 1) invert the table columns
-    inverteds = _.map _.zip(tables, infos, allAessTypes), invert
+    _.each args, fMergeDomain
+    newTables = _.map args, fRescale
 
-    args = _.zip(inverteds, infos, allAessTypes, originalSchemas)
-    # 2) retrain the scales' domains
-    _.each infos, reset
-    _.each args, train
     # XXX: this is dangerous call, because it's not idempotent
     @g.facets.trainScales()
 
-    # 3) re-apply scales to inverted tables
-    newTables = _.map args, apply
-
-
     newTables
+
+
+
 
 
   trainForFacets: (tables, envs, node) ->
