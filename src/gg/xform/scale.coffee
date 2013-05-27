@@ -40,4 +40,21 @@ class gg.xform.ScalesInvert extends gg.core.XForm
 
 
 
+#
+class gg.xform.ScalesFilter extends gg.core.XForm
+  constructor: (@layer, @spec) ->
+    super @layer.g, @spec
+    @parseSpec()
+
+  parseSpec: ->
+    super
+    @aess = _.findGoodAttr @spec, ['aess'], []
+    @posMapping = @spec.posMapping or {}
+
+  compute: (table, env) ->
+    @log "table has #{table.nrows()} rows"
+    scales = @scales table, env
+    table = scales.filter table, null, @posMapping
+    table
+
 

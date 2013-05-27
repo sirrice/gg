@@ -80,6 +80,7 @@ class gg.scale.Scale
     # Whether the domain/range has been updated or if
     # still default values
     @domainUpdated = false
+    @rangeUpdated = false
     @id = gg.scale.Scale::_id += 1
 
     # center scale on this value -- only useful for continuous scales
@@ -108,6 +109,7 @@ class gg.scale.Scale
 
     @center = _.findGood [@spec.center, null]
     @domainUpdated = _.findGood [@spec.domainUpdated, false]
+    @rangeUpdated = _.findGood [@spec.rangeUpdated, false]
 
     @log = gg.util.Log.logger "Scale #{@aes}.#{@id} (#{@type},#{@constructor.name})", gg.util.Log.WARN
 
@@ -192,6 +194,7 @@ class gg.scale.Scale
     spec.type = @type
     spec.domainUpdated = @domainUpdated
     spec.domainSet = @domainSet
+    spec.rangeUpdated = @rangeUpdated
     spec.rangeSet = @rangeSet
     spec.center = @center
 
@@ -211,21 +214,21 @@ class gg.scale.Scale
         interval = [@min, @max]
     interval
 
-   # @param domain is output of gg.scale.domain()
-   # Assume domain is [min, max] interval
-   # Alternative subclasses can override
-   mergeDomain: (domain) ->
-     md = @domain()
-     unless @domainSet
-       if @domainUpdated and md? and md.length == 2
-         if _.isNaN(domain[0]) or _.isNaN(domain[1])
-           throw Error("domain is invalid: #{domain}")
-         @domain [
-           Math.min md[0], domain[0]
-           Math.max md[1], domain[1]
-         ]
-       else
-         @domain domain
+  # @param domain is output of gg.scale.domain()
+  # Assume domain is [min, max] interval
+  # Alternative subclasses can override
+  mergeDomain: (domain) ->
+    md = @domain()
+    unless @domainSet
+     if @domainUpdated and md? and md.length == 2
+       if _.isNaN(domain[0]) or _.isNaN(domain[1])
+         throw Error("domain is invalid: #{domain}")
+       @domain [
+         Math.min md[0], domain[0]
+         Math.max md[1], domain[1]
+       ]
+     else
+       @domain domain
 
 
   domain: (interval) ->
@@ -236,6 +239,7 @@ class gg.scale.Scale
 
   range: (interval) ->
     if interval? and not @rangeSet
+      @rangeUpdated = true
       @d3Scale.range interval
     @d3Scale.range()
 
@@ -245,7 +249,7 @@ class gg.scale.Scale
 
   d3: -> @d3Scale
   valid: (v) ->
-    if @domainUpdated
+    if @domainUpdated or @domainSet
       @minDomain() <= v and v <= @maxDomain()
     else
       v?
@@ -259,13 +263,3 @@ class gg.scale.Scale
   scale: (v) -> @d3Scale v
   invert: (v) -> @d3Scale.invert(v)
   toString: () -> "#{@aes}.#{@id} (#{@type},#{@constructor.name}): \t#{@domain()} -> #{@range()}"
-
-
-
-
-
-
-
-
-
-

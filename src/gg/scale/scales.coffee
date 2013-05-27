@@ -61,6 +61,7 @@ class gg.scale.Scales extends gg.core.XForm
 
     @parseSpec()
     @log.level = gg.util.Log.DEBUG
+    @log.logname = "Scales"
 
 
   # XXX: assumes layers have been created already
@@ -169,7 +170,9 @@ class gg.scale.Scales extends gg.core.XForm
 
     fOldScaleSet = (info) =>
       scales = @scales info.facetX, info.facetY, info.layer
-      scales.clone()
+      scales = scales.clone()
+      scales
+
 
     fMergeDomain = ([t, info, aessTypes]) =>
       scales = @scales info.facetX, info.facetY, info.layer
@@ -183,10 +186,10 @@ class gg.scale.Scales extends gg.core.XForm
         range = scale.defaultDomain col
         domain = _.map range, (v) ->
           if v? then scale.invert v else null
-        @log "#{aes}\trange: #{range}"
-        @log "#{aes}\tdomain: #{domain}"
-        @log scale.toString()
         scale.mergeDomain domain
+        @log "merge: #{aes}\trange: #{range}"
+        @log "merge: #{aes}\tdomain: #{domain}"
+        @log "merge: #{scale.toString()}"
 
       scales.useScales t, aessTypes, posMapping, f
 
@@ -194,10 +197,13 @@ class gg.scale.Scales extends gg.core.XForm
       scales = @scales info.facetX, info.facetY, info.layer
       posMapping = @posMapping info.layer
       mappingFuncs = {}
-      rescale = (table, scale, aes) ->
+      rescale = (table, scale, aes) =>
         oldScale = oldScales.scale aes, scale.type
         g = (v) -> scale.scale oldScale.invert(v)
         mappingFuncs[aes] = g
+        @log "rescale: old: #{oldScale.toString()}"
+        @log "rescale: new: #{scale.toString()}"
+
 
       scales.useScales t, aessTypes, posMapping, rescale
       clone = t.clone()
@@ -211,11 +217,15 @@ class gg.scale.Scales extends gg.core.XForm
     oldScaleSets = _.map infos, fOldScaleSet
     args = _.zip(tables, infos, allAessTypes, oldScaleSets)
 
+    # 1) compute new scales
     _.each args, fMergeDomain
-    newTables = _.map args, fRescale
 
-    # XXX: this is dangerous call, because it's not idempotent
+    # 2) retrain scales across facets/layers and expand domains
+    #    must be done before rescaling!
     @g.facets.trainScales()
+
+    # 3} invert data using old scales, then apply new scales
+    newTables = _.map args, fRescale
 
     newTables
 

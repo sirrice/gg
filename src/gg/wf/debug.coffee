@@ -51,7 +51,7 @@ class gg.wf.Scales extends gg.wf.Exec
     @dlog = gg.util.Log.logger "ScaleOut: #{@name}", gg.util.Log.DEBUG
 
   compute: (table, env, node) ->
-    gg.wf.Scales.print @scales, @log
+    gg.wf.Scales.print @scales, @dlog
     table
 
   @print: (scales, log=null) ->

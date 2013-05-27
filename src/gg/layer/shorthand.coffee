@@ -155,9 +155,11 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push @groupby
 
 
-
     # Statistics transforms
     nodes.push @g.scales.prestats
+    nodes.push new gg.xform.ScalesFilter @,
+      name: "scalesfilter-#{@layerIdx}"
+      posMapping: @geom.posMapping()
     nodes.push makeScalesOut "pre-stat-#{@layerIdx}"
     nodes.push @stat
     nodes.push makeStdOut "post-stat-#{@layerIdx}"
@@ -207,14 +209,14 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeStdOut "post-reparam"
 
 
-    if @pos?
+    if true or @pos?
       #nodes.push @g.scales.facets
       nodes.push @pos
       nodes.push makeStdOut "post-position"
 
       # scales: retrain scales after positioning (jitter)
       #         (inputs are pixel values)
-
+      nodes.push makeScalesOut "pre-pixel"
       nodes.push @g.scales.pixel
 
     # coord: pixel -> domain -> transformed -> pixel XXX: not implemented

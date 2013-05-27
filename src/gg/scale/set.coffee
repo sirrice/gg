@@ -16,7 +16,7 @@ class gg.scale.Set
     @id = gg.scale.Set::_id
     gg.scale.Set::_id += 1
 
-    @log = gg.util.Log.logger "ScaleSet-#{@id}", gg.util.Log.WARN
+    @log = gg.util.Log.logger "ScaleSet-#{@id}", gg.util.Log.DEBUG
   _id: 0
 
   clone: () ->
@@ -108,13 +108,13 @@ class gg.scale.Set
 
 
 
-  # @param scalesArr array of gg.scale.Set objects
+  # @param scaleSets array of gg.scale.Set objects
   # @return a single gg.scale.Set object that merges the inputs
-  @merge: (scalesArr) ->
-    return null if scalesArr.length is 0
+  @merge: (scaleSets) ->
+    return null if scaleSets.length is 0
 
-    ret = scalesArr[0].clone()
-    _.each _.rest(scalesArr), (scales) -> ret.merge scales, true
+    ret = scaleSets[0].clone()
+    _.each _.rest(scaleSets), (scales) -> ret.merge scales, true
     ret
 
   # @param scales a gg.scale.Set object
@@ -128,7 +128,8 @@ class gg.scale.Set
           return
 
       _.each scales.scales[aes], (scale, type) =>
-        return unless scale.domainUpdated
+        # XXX: when should this ever be skipped?
+        #return unless scale.domainUpdated and scale.rangeUpdated
 
         if @contains aes, type
           mys = @scale aes, type
@@ -204,7 +205,7 @@ class gg.scale.Set
       if col? and col.length > 0
         newDomain = scale.defaultDomain col
         oldDomain = scale.domain()
-        @log "domains: #{scale.type} #{scale.constructor.name} #{oldDomain} + #{newDomain} underscore: #{_.mmin col}, #{_.mmax col}"
+        @log "domains: #{scale.type} #{scale.constructor.name} #{oldDomain} + #{newDomain} = [#{_.mmin [oldDomain[0],newDomain[0]]}, #{_.mmax [oldDomain[1], newDomain[1]]}]"
         unless newDomain?
           throw Error()
         if _.isNaN newDomain[0]
@@ -237,14 +238,36 @@ class gg.scale.Set
     #table.reloadSchema()
     table
 
+  # @param posMapping maps aesthetic names to the scale that
+  #        should be used
+  #        e.g., median, q1, q3 should use 'y' position scale
+  filter: (table, aessTypes=null, posMapping={}) ->
+    filterFuncs = []
+    f = (table, scale, aes) =>
+      g = (row) ->
+        console.log "#{aes}: #{row.get(aes)}\t#{scale.domain()}"
+        scale.valid row.get(aes)
+      filterFuncs.push g if table.contains aes
+
+    @useScales table, aessTypes, posMapping, f
+
+    g = (row) ->
+      res = _.all filterFuncs, (func) -> func(row)
+      console.log "call! #{res}"
+      console.log row.raw() unless res
+      res
+
+    table.filter g
+
+
+
+
   # @param posMapping maps aesthetic names to the scale
   #        that should be used
   #        e.g., median, q1, q3 should use 'y' position scale
   # @param {gg.Table} table
   invert: (table, aessTypes=null, posMapping={}) ->
     f = (table, scale, aes) =>
-      str = scale.toString()
-      #@log "invert: #{aes}\t#{str}"
       g = (v) -> if v? then  scale.invert(v) else null
       origDomain = scale.defaultDomain table.getColumn(aes)
       newDomain = null

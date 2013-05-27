@@ -215,6 +215,8 @@ class gg.facet.Facets
 
 
   expandDomains: (scalesSet) ->
+    return scalesSet
+
     _.each scalesSet.scalesList(), (scale) =>
       return unless scale.type is gg.data.Schema.numeric
 
