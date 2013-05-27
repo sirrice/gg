@@ -7,4 +7,6 @@ class gg.core.Options
     @w = @width
     @h = @height
     @title = _.findGood [@spec.title, null]
+    @xaxis = _.findGood [@spec.xaxis, @spec.x, "xaxis"]
+    @yaxis = _.findGood [@spec.yaxis, @spec.y, "yaxis"]
 

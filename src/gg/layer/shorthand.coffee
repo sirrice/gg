@@ -210,15 +210,15 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeStdOut "post-reparam"
 
 
-    if true or @pos?
-      #nodes.push @g.scales.facets
+    if @pos?
       nodes.push @pos
       nodes.push makeStdOut "post-position"
 
-      # scales: retrain scales after positioning (jitter)
-      #         (inputs are pixel values)
-      nodes.push makeScalesOut "pre-pixel"
+      # reconfigure the layout after positioning
+      nodes.push @g.facets.reallocatePanesNode()
+
       nodes.push @g.scales.pixel
+
 
     # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
     nodes.push makeScalesOut "pre-coord"

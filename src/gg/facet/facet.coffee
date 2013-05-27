@@ -155,6 +155,15 @@ class gg.facet.Facets
     @xs.sort()
     @ys.sort()
 
+  reallocatePanesNode: ->
+    unless @_reallocatePanesNode?
+      @_reallocatePanesNode = new gg.wf.Barrier {
+        f: (tables, envs, node) =>
+          @allocatePanes(tables, envs, node)
+          tables
+      }
+    @_reallocatePanesNode
+
   allocatePanesNode: ->
     unless @_allocatePanesNode?
       @_allocatePanesNode = new gg.wf.Barrier {

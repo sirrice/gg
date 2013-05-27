@@ -48,12 +48,12 @@ class gg.facet.Grid extends gg.facet.Facets
 
     # XXX: have better API to retrieve axis labels!
     svgFacet.append("text")
-      .text("xaxis")
+      .text(@g.options.xaxis)
       .attr("transform", "translate(#{hTitle}, #{h-hTitle-@facetPadding})")
       .attr("dx", (w-2*hTitle)/2)
       .attr("text-anchor", "middle")
     svgFacet.append("text")
-      .text("yaxis")
+      .text(@g.options.yaxis)
       .attr("transform", "rotate(-90)translate(#{-(hTitle+(h-2*hTitle)/2)},#{hTitle})")
       .attr("text-anchor", "middle")
 
@@ -81,14 +81,6 @@ class gg.facet.Grid extends gg.facet.Facets
 
 
   allocatePanes: (tables, envs, node) ->
-    #margin = @margin / 2
-    #matrix = "#{1.0-2*margin/@w},0,0,
-    #          #{1.0-2*margin/@h},
-    #          #{margin}, #{margin}"
-    #svg = @svg.append('g')
-    #    .attr('class', 'graphic-with-margin')
-    #    .attr('transform', "matrix(#{matrix})")
-
     svg = @svg
 
 
@@ -100,11 +92,11 @@ class gg.facet.Grid extends gg.facet.Facets
     # used to compute y-axis label spacing
     formatter = d3.format(",.0f")
     maxValF = (s) ->
-      100
-      #if _.isNumber s.scale('y').maxDomain()
-      #  s.scale('y').maxDomain()
-      #else
-      #  0
+      yscale = s.scale 'y', gg.data.Schema.unknown
+      if _.isNumber yscale.maxDomain()
+        yscale.maxDomain()
+      else
+        100
     maxVal = _.mmax(_.map @g.scales.scalesList, maxValF)
     dims = _.textSize(formatter(maxVal), {"font-size":"10pt", "font-family":"arial"})
     yAxisWidth = dims.w + 2*@facetPadding
