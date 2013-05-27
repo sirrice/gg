@@ -160,7 +160,7 @@ class gg.scale.Set
 
     aessTypes = _.map aessTypes, (aes) =>
       if _.isObject aes
-        @log "useScales: aes: #{aes.aes}\ttype: #{aes.type}"
+        #@log "useScales: aes: #{aes.aes}\ttype: #{aes.type}"
         aes
       else
         # XXX: it's not clear why this is the correct logic
@@ -171,16 +171,16 @@ class gg.scale.Set
         else
           typeAes = aes
         type = table.schema.type typeAes
-        @log "useScales: aes: #{aes}\ttype: #{type}"
+        #@log "useScales: aes: #{aes}\ttype: #{type}"
         {aes: aes, type: type}
 
 
     _.each aessTypes, (at) =>
       aes = at.aes
       type = at.type
-      @log "useScales: check #{aes}:#{type}\ttable has? #{table.contains aes, type}"
+      #@log "useScales: check #{aes}:#{type}\ttable has? #{table.contains aes, type}"
       return unless table.contains aes, type
-      @log "useScales: fetch #{aes}\t#{type}\t#{posMapping[aes]}"
+      #@log "useScales: fetch #{aes}\t#{type}\t#{posMapping[aes]}"
       scale = @scale(aes, type, posMapping)
       f table, scale, aes
 
@@ -243,21 +243,23 @@ class gg.scale.Set
   #        e.g., median, q1, q3 should use 'y' position scale
   filter: (table, aessTypes=null, posMapping={}) ->
     filterFuncs = []
+    console.log
     f = (table, scale, aes) =>
-      g = (row) ->
-        console.log "#{aes}: #{row.get(aes)}\t#{scale.domain()}"
-        scale.valid row.get(aes)
+      g = (row) -> scale.valid row.get(aes)
+      @log "filter: #{scale.toString()}"
       filterFuncs.push g if table.contains aes
 
     @useScales table, aessTypes, posMapping, f
 
+    nRejected = 0
     g = (row) ->
-      res = _.all filterFuncs, (func) -> func(row)
-      console.log "call! #{res}"
-      console.log row.raw() unless res
-      res
+      valid = _.all filterFuncs, (func) -> func(row)
+      nRejected += 1 unless valid
+      valid
 
-    table.filter g
+    table = table.filter g
+    @log "filter: removed #{nRejected}.  #{table.nrows()} rows left"
+    table
 
 
 

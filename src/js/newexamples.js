@@ -323,15 +323,13 @@ var selected_geoms = {
     });
   }
 
-  var render = function(specs, w, h) {
-    var w    = w || 800;
-    var h    = h || 600;
+  var render = function(specs) {
     var ex   = function () {
       $("#examples").empty();
       return d3.select('#examples').append('span');
     };
     var plot = gg(specs);
-    plot.render(w, h, ex(), bigdata);
+    plot.render(ex(), bigdata);
 
     return;
 

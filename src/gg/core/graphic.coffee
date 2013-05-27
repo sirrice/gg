@@ -1,3 +1,4 @@
+#<< gg/core/options
 #<< gg/wf/*
 #<< gg/data/*
 #<< gg/facet/facet
@@ -11,11 +12,12 @@ class gg.core.Graphic
       @layerspec = _.findGood [@spec.layers, []]
       @facetspec = @spec.facets || @spec.facet || {}
       @scalespec = _.findGood [@spec.scales, {}]
-      @options = _.findGood [@spec.opts, @spec.options, {}]
+      @optspec = _.findGood [@spec.opts, @spec.options, {}]
 
       @layers = new gg.layer.Layers @, @layerspec
       @facets = gg.facet.Facets.fromSpec @, @facetspec
       @scales = new gg.scale.Scales @, @scalespec
+      @options = new gg.core.Options @, @optspec
 
 
     svgPane: (facetX, facetY, layer) ->
@@ -71,8 +73,8 @@ class gg.core.Graphic
       f = (tables, envs, node) =>
         $(@svg[0]).empty()
         @svg = @svg.append("svg")
-          .attr("width", @w)
-          .attr("height", @h)
+          .attr("width", @options.w)
+          .attr("height", @options.h)
         @svg.append("rect")
           .attr("class", "graphic-background")
           .attr("width", "100%")
@@ -90,13 +92,13 @@ class gg.core.Graphic
               .attr("text-anchor", "middle")
               .attr("class", "graphic-title")
               .attr("style", "font-size: 30pt")
-              .attr("dx", @w/2)
+              .attr("dx", @options.w/2)
               .attr("dy", "1em")
 
 
         # Create container for facets
-        @wFacet = @w
-        @hFacet = @h - hTitle
+        @wFacet = @options.w
+        @hFacet = @options.h - hTitle
         @svgFacet = @svg.append("g")
           .attr("transform", "translate(0, #{hTitle})")
           .attr("width", @wFacet)
@@ -122,7 +124,7 @@ class gg.core.Graphic
       cb table
 
 
-    render: (@w, @h, @svg, input) ->
+    render: (@svg, input) ->
       @inputToTable input, (table) =>
         @compile()
         @workflow.run table

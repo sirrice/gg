@@ -102,9 +102,14 @@
 
 
 
+    if (!spec.options) {
+      spec.options = {} ;
+    }
+    spec.options.width = w;
+    spec.options.height = h;
     console.log(spec);
     var plot = gg(spec);
-    plot.render(w, h, ex(), bigdata);
+    plot.render(ex(), bigdata);
 
   });
 

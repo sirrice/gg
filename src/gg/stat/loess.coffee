@@ -20,14 +20,14 @@ class gg.stat.LoessStat extends gg.stat.Stat
   # 1) every value is a finite number
   # 2) xs is monotonically increasing
   compute: (table, env, node) ->
-    isValid = (v) -> not(
-      _.isNaN(v) or _.isUndefined(v) or _.isNull(v)
-    )
+    @log "nrows: #{table.nrows()}"
+    @log "contains x,y: #{table.contains 'x'}, #{table.contains 'y'}"
     xs = table.getColumn('x')
     ys = table.getColumn('y')
+    @log "nxs: #{xs.length}\tnys: #{ys.length}"
     # remove invald entries
     xys = _.zip(xs, ys)
-    xys = xys.filter (xy) -> isValid(xy[0]) and isValid(xy[1])
+    xys = xys.filter (xy) -> _.isValid(xy[0]) and _.isValid(xy[1])
     xys.sort (xy1, xy2) -> xy1[0] - xy2[0]
     xs = xys.map (xy) -> xy[0]
     ys = xys.map (xy) -> xy[1]
@@ -42,7 +42,7 @@ class gg.stat.LoessStat extends gg.stat.Stat
     rows = []
     _.times xs.length, (idx) ->
       # sometimes it interpolates to NaN values
-      if isValid smoothys[idx]
+      if _.isValid smoothys[idx]
         rows.push
           x: xs[idx]
           y: smoothys[idx]

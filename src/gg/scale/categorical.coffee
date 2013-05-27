@@ -55,4 +55,6 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
 
   invert: (v) -> @invertScale v
 
+  valid: (v) -> v in @domain()
+
 

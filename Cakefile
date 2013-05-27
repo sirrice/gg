@@ -44,6 +44,7 @@ task 'clean', ->
 release = (callback) ->
   commands = []
   commands.push "phantomjs vendor/js/rasterize.js build/html/release.html docs/imgs/screenshot.png"
+  commands.push "scp -r lib eugenewu@athena.dialup.mit.edu:~/Public/gg"
 
   async.forEachSeries commands, run, ->
     callback() if callback

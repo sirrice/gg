@@ -157,6 +157,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
     # Statistics transforms
     nodes.push @g.scales.prestats
+    nodes.push makeStdOut "post-train"
     nodes.push new gg.xform.ScalesFilter @,
       name: "scalesfilter-#{@layerIdx}"
       posMapping: @geom.posMapping()
