@@ -43,6 +43,14 @@ class gg.data.RowTable extends gg.data.Table
     rows = @rows.map (row) => row.clone()
     new gg.data.RowTable @schema.clone(), rows
 
+  # In-place sort function
+  sort: (cmp, update=yes) ->
+    if update
+      @rows.sort cmp
+      @
+    else
+      clone = @clone()
+      clone.sort cmp, yes
 
   merge: (table) ->
     # ensure schemas

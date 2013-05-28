@@ -1,3 +1,4 @@
+
 class gg.stat.Stat extends gg.core.XForm
   constructor: (@layer, @spec={}) ->
     super @layer.g, @spec
@@ -12,14 +13,21 @@ class gg.stat.Stat extends gg.core.XForm
       mapSpec.name = "stat-map" unless mapSpec.name?
       @map = gg.xform.Mapper.fromSpec @g, mapSpec
 
+  @klasses = []
 
-  @klasses: ->
-    klasses = [
+  @addKlass: (klass) ->
+    # TODO: check for overlapping aliases and warn/throw error
+    @klasses.push klass
+
+  @getKlasses: ->
+    klasses = @klasses.concat [
       gg.stat.IdentityStat
       gg.stat.Bin1DStat
       gg.stat.BoxplotStat
       gg.stat.LoessStat
+      gg.stat.SortStat
     ]
+
     ret = {}
     _.each klasses, (klass) ->
       if _.isArray klass.aliases
@@ -28,9 +36,8 @@ class gg.stat.Stat extends gg.core.XForm
         ret[klass.aliases] = klass
     ret
 
-
   @fromSpec: (layer, spec) ->
-    klasses = gg.stat.Stat.klasses()
+    klasses = @getKlasses()
     if _.isString spec
       type = spec
       spec = {}
@@ -39,6 +46,8 @@ class gg.stat.Stat extends gg.core.XForm
 
     klass = klasses[type] or gg.stat.IdentityStat
     ret = new klass layer, spec
+    console.log klasses
+    console.log "klass #{klass.name} from type: #{type}"
     ret
 
 

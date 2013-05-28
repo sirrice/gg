@@ -200,6 +200,8 @@ class gg.scale.Set
 
       col = table.getColumn(aes)
       col = col.filter _.isValid
+      if col.length < table.nrows()
+        @log "filtered out #{table.nrows()-col.length} col values"
 
       @log "col #{aes} has #{col.length} elements"
       if col? and col.length > 0

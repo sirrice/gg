@@ -217,14 +217,22 @@ class gg.facet.Grid extends gg.facet.Facets
     xBand = xRange.rangeBand()
     scales = @g.scales.facetScales x, y
     scale = scales.scale 'y', gg.data.Schema.unknown
+    tickSize = xBand
 
+
+    # this only works if type is numeric
     yAxis = d3.svg.axis()
       .scale(scales.scale('y',gg.data.Schema.unknown).d3())
-      .ticks(5, d3.format(",.0f"), 5)
-      .tickSize(-xBand)
       .orient('left')
 
-    yAxis.tickFormat('') unless x == @xs[0]
+    if scale.type == gg.data.Schema.numeric
+      tickSize = 0 unless @showYTicks
+      yAxis
+        .ticks(5, d3.format(",.0f"), 5)
+        .tickSize(-tickSize)
+
+      # only show labels on the left-most facet pane
+      yAxis.tickFormat('') unless x == @xs[0]
 
     svg.append('g')
        .attr('class', 'y axis')
@@ -239,14 +247,21 @@ class gg.facet.Grid extends gg.facet.Facets
     yBand = yRange.rangeBand()
     scales = @g.scales.facetScales x, y
     scale = scales.scale 'x', gg.data.Schema.unknown
+    tickSize = yBand
+
 
     xAxis = d3.svg.axis()
         .scale(scale.d3())
-        .ticks(5)
-        .tickSize(- yBand)
         .orient('bottom')
 
-    xAxis.tickFormat('') unless y == _.last(@ys)
+    if scale.type == gg.data.Schema.numeric
+      tickSize = 0 unless @showXTicks
+      xAxis
+        .ticks(5)
+        .tickSize(- tickSize)
+
+      # only render labels for bottom facet panes
+      xAxis.tickFormat('') unless y == _.last(@ys)
 
     svg.append('g')
         .attr('class', 'x axis')
@@ -255,9 +270,6 @@ class gg.facet.Grid extends gg.facet.Facets
         .call(xAxis)
 
     @log "rendered x-axis: #{scale.toString()}"
-    _.each [0, 1, 2], (v) =>
-      @log "scaling #{v} -> #{scale.scale v}"
-
 
   renderTopLabels: (svg, xRange) ->
     return if @xs.length == 1 and @xs[0] is null

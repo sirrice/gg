@@ -111,14 +111,9 @@ class gg.scale.Scales extends gg.core.XForm
   # these training methods assume that the tables's attribute names
   # have been mapped to the aesthetic attributes that the scales
   # expect
-  #
-  # also removes invalid tuples
   trainOnData: (tables, envs, node, spec={}) ->
-    _.each _.zip(tables, envs), ([t,e]) =>
+    fTrain = ([t,e]) =>
       info = @paneInfo t, e
-      # XXX: ack, this is just really ugly.
-      # @aesthetics() is for user-specified aesthetics
-      # t.colNames is for everything else
       scales = @scales info.facetX, info.facetY, info.layer
 
       @log "trainOnData: cols:    #{t.colNames()}"
@@ -126,6 +121,9 @@ class gg.scale.Scales extends gg.core.XForm
 
       scales.train t, null, spec.posMapping
 
+    @mappings = {}
+    @scalesList = []
+    _.each _.zip(tables, envs),fTrain
     @g.facets.trainScales()
     tables
 

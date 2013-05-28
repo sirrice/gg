@@ -60,6 +60,9 @@ class gg.facet.Facets
       "font-size": @facetFontSize
       "font-family": @facetFontFamily
 
+    @showXTicks = _.findGood [@spec.showXTicks, true]
+    @showYTicks = _.findGood [@spec.showYTicks, true]
+
     @log "spec: #{JSON.stringify @spec}"
 
   @fromSpec: (g, spec) ->

@@ -12,7 +12,8 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
 
   @defaultDomain: (col) ->
       vals = _.uniq _.flatten(col)
-      vals.sort (a,b)->a-b
+      # XXX: this is not useful and prevents data sorting
+      #vals.sort (a,b)->a-b
       vals
 
   clone: ->
@@ -24,7 +25,7 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
 
   mergeDomain: (domain) ->
     newDomain = _.uniq domain.concat(@domain())
-    newDomain = newDomain.sort()
+    #newDomain = newDomain.sort()
     @domain newDomain
 
   domain: (interval) ->
@@ -44,7 +45,8 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
       if @type == gg.data.Schema.numeric
         @d3Scale.rangeBands interval#, @padding
       else
-        @d3Scale.range interval
+        #@d3Scale.range interval
+        @d3Scale.rangeBands interval
       @invertScale.domain @d3Range()
     @d3Range()
 
