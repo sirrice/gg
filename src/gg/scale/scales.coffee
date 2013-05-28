@@ -116,7 +116,7 @@ class gg.scale.Scales extends gg.core.XForm
       info = @paneInfo t, e
       scales = @scales info.facetX, info.facetY, info.layer
 
-      @log "trainOnData: cols:    #{t.colNames()}"
+      @log "trainOnData: cols:    #{t.schema.toSimpleString()}"
       @log "trainOnData: set.id:  #{scales.id}"
 
       scales.train t, null, spec.posMapping

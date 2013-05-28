@@ -169,20 +169,22 @@ class gg.scale.Scale
           fill: gg.scale.Color
           stroke: gg.scale.Color
           "fill-opacity": gg.scale.Linear
+          "opacity": gg.scale.Linear
+          "stroke-opacity": gg.scale.Linear
           size: gg.scale.Linear
           text: gg.scale.Text
           shape: gg.scale.Shape
       }[aes] or gg.scale.Identity
 
     if type?
-      if klass.name is "ColorScale"
+      if klass.name == gg.scale.Color
         unless type is gg.data.Schema.ordinal
           klass = gg.scale.ColorCont
-      else if klass.name is "LinearScale"
+      else if klass == gg.scale.Linear
         if type is gg.data.Schema.ordinal
           klass = gg.scale.Ordinal
 
-    # gg.util.Log.log "Scale: defaultFor(#{aes}, #{type}) -> #{klass.name}"
+    gg.util.Log.log "Scale: defaultFor(#{aes}, #{type}) -> #{klass.name}"
 
     s = new klass {aes: aes, type: type}
     s
