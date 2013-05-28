@@ -55,32 +55,37 @@ class gg.geom.Geom # not an XForm!!
   name: -> @constructor.name.toLowerCase()
   posMapping: -> {}
 
+  @klasses = []
 
-  @klasses: ->
-      klasses = [
-          gg.geom.Point,
-          gg.geom.Line,
-          gg.geom.Path,
-          gg.geom.Area,
-          gg.geom.Rect,
-          gg.geom.Polygon,
-          gg.geom.Hex,
-          gg.geom.Boxplot,
-          gg.geom.Glyph,
-          gg.geom.Edge
-      ]
-      ret = {}
-      _.each klasses, (klass) ->
-        if _.isArray klass.aliases
-          _.each klass.aliases, (alias) -> ret[alias] = klass
-        else
-          ret[klass.aliases] = klass
-      ret
+  @addKlass: (klass) ->
+    @klasses.push klass
+
+  @getKlasses: ->
+    klasses = @klasses.concat [
+        gg.geom.Point
+        gg.geom.Line
+        gg.geom.Path
+        gg.geom.Area
+        gg.geom.Rect
+        gg.geom.Polygon
+        gg.geom.Hex
+        gg.geom.Boxplot
+        gg.geom.Glyph
+        gg.geom.Edge
+        gg.geom.Text
+    ]
+    ret = {}
+    _.each klasses, (klass) ->
+      if _.isArray klass.aliases
+        _.each klass.aliases, (alias) -> ret[alias] = klass
+      else
+        ret[klass.aliases] = klass
+    ret
 
   @fromSpec: (layer, spec) ->
     spec = _.clone spec
 
-    klasses = gg.geom.Geom.klasses()
+    klasses = @getKlasses()
 
     klass = klasses[spec.type] or gg.geom.Point
     @log "fromSpec\t#{JSON.stringify spec}"

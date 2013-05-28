@@ -55,6 +55,7 @@ class gg.geom.Render extends gg.core.XForm
       gg.geom.svg.Rect
       gg.geom.svg.Area
       gg.geom.svg.Boxplot
+      gg.geom.svg.Text
     ]
     ret = {}
     _.each klasses, (klass) ->

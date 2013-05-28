@@ -20,6 +20,9 @@ class gg.util.Textsize
       h: gg.util.Textsize._defaultHeights[fontSize] or 18
     }
 
+  # @param text the string to compute size of
+  # @param opts css attributes
+  # @return {width: [pixels], height: [pixels]}
   @textSize: (text, opts) ->
     try
       body = document.getElementsByTagName("body")[0]
@@ -32,8 +35,7 @@ class gg.util.Textsize
         padding: 0
         margin: 0
       _.extend css, opts
-
-      _.each css,  (v,k) -> div.style[k] = v
+      _.extend div.style, css
 
       body.appendChild div
       width = $(div).width()
@@ -59,6 +61,8 @@ class gg.util.Textsize
       defaults.width = defaults.w = defaults.width * text.length
       defaults
 
+  # @param opts css attributes
+  # @return {width: [pixels], height: [pixels]}
   @exSize: (opts) ->
     optsJson = JSON.stringify opts
     if optsJson of gg.util.Textsize._exSizeCache
@@ -71,18 +75,24 @@ class gg.util.Textsize
       gg.util.Textsize._exSizeCache[optsJson] = ret
       ret
 
-  # search for the optimal size for text to be contained within
-  # a bounding box.  Useful for text/label layout
   @larger: (div, size) ->
     div.style["font-size"] = "#{size}pt"
     [sw, sh] = [div[0].scrollWidth, div[0].scrollHeight]
     sw > div.clientWidth or sh > div.clientHeight
 
 
-  @fontSize: (text, width, height, font="arial") ->
+  # Search for the largest font size (pt) for text to be contained
+  # within a bounding box.  Useful for text/label layout
+  #
+  # @param text the string
+  # @param width pixel width of the bounding box
+  # @param height pixel height of bounding box
+  # @param opts css attributes applied to text
+  # @return number
+  @fontSize: (text, width, height, opts) ->
     body = document.getElementsByTagName("body")[0]
     div = document.createElement("div")
-    _.extend div.style, {
+    css = {
        width: width
        height: height
        position: "absolute"
@@ -90,8 +100,11 @@ class gg.util.Textsize
        opacity: 0
        top: 0
        left: 0
-       "font-family": font
+       "font-family": "arial"
     }
+    _.extend css, opts
+    _.extend div.style, css
+
     div.textContent = text
     body.appendChild(div)
 
