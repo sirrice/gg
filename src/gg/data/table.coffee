@@ -37,7 +37,7 @@ class gg.data.Table
 
   each: (f, n=null) ->
     n = @nrows() unless n?
-    _.each _.range(n), (i) => f @get(i), i
+    _.map _.range(n), (i) => f @get(i), i
 
   # XXX: destructive!
   # updates column values in place

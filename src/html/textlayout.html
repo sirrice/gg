@@ -1,0 +1,113 @@
+<html>
+<head>
+<meta charset="utf-8">
+<title>The Grammar of Graphics</title>
+<link rel="stylesheet" type="text/css" href="../css/gg.css"/>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="../vendor/js/underscore.min.js"></script>
+<script src="../js/gg.js"></script>
+<script src="../js/prettify.js"></script>
+</head>
+<body style="width:100%">
+<div style="width: 900px;">
+  <div id="ex"></div>
+  <button style="width: 900px; font-size: 30pt;" id="btn">
+    Randomize layout
+  </button>
+</div>
+
+
+<script>
+  var spec = {
+    "layers": [
+      {
+        "geom": "rect",
+        "aes": {
+          "text": "",
+          "fill-opacity": 0.9
+        },
+        "pos": "text"
+      },
+      {
+        "geom": "point",
+        "aes": {
+          "fill-opacity": 1,
+          "r": 5
+        }
+      },
+      {
+        "geom": "rect",
+        "aes": {
+          "fill-opacity": 0.15,
+        }
+      },
+      {
+        "geom": "text",
+        "aes": {
+          text: "id",
+          color: "black"
+        }
+      }
+    ],
+    aes: {
+      x: "x0",
+      y: "y0",
+      color: "id"
+    },
+    "scales": {
+      "fill-opacity": "identity"
+    },
+    "options": {
+      "w": 900,
+      "h": 800
+    }
+  };
+
+  var genboxes = function(n) {
+    var pw = 300,
+        ph = 300,
+        lw = 30,
+        lh = 15,
+        genpt = function() {
+          return [
+            Math.floor(Math.random()*(pw-lw)),
+            Math.floor(Math.random()*(ph-lh))
+          ]
+        };
+    return _.times(n, function(i) {
+      var pt = genpt();
+      return {
+        id: i,
+        x0: pt[0],
+        x1: pt[0]+lw,
+        y0: pt[1],
+        y1: pt[1]+lh
+      };
+    });
+  };
+
+  var render = function() {
+    var ex   = function () {
+      $("#ex").empty();
+      return d3.select('#ex').append('span');
+    };
+
+    var data = genboxes(30);
+    var plot = gg(spec);
+    plot.render(ex(), data);
+  }
+
+
+  $(document).ready(function() {
+    $("#btn").click(render);
+    render();
+
+  });
+
+
+
+</script>
+
+
+</body>
+</html>

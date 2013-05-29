@@ -17,6 +17,7 @@ class gg.pos.Position extends gg.core.XForm
       gg.pos.Jitter
       gg.pos.Stack
       gg.pos.Dodge
+      gg.pos.Text
     ]
     ret = {}
     _.each klasses, (klass) ->

@@ -62,6 +62,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @statSpec = @extractSpec "stat"
     @posSpec  = @extractSpec "pos"
     mapSpec  = _.findGoodAttr spec, ['aes', 'aesthetic', 'mapping'], {}
+    mapSpec = _.extend(_.clone(@g.aesspec), mapSpec)
     @mapSpec = {aes: mapSpec, name: "map-shorthand-#{@layerIdx}"}
     @coordSpec = @extractSpec "coord"
     @coordSpec.name = "coord-#{@layerIdx}"
@@ -113,14 +114,15 @@ class gg.layer.Shorthand extends gg.layer.Layer
     subSpec = _.findGoodAttr spec, aliases, defaultType
 
     @log "extractSpec: xform: #{xform}\tspec: #{JSON.stringify subSpec}"
+    defaultAes = _.clone @g.aesspec
 
     if _.isString subSpec
       subSpec =
         type: subSpec
-        aes: {}
+        aes: defaultAes
         param: {}
     else
-      subSpec.aes = {} unless subSpec.aes?
+      subSpec.aes = _.extend defaultAes, subSpec.aes
       subSpec.param = {} unless subSpec.param?
 
     subSpec.name = "#{xform}-shorthand-#{@layerIdx}" unless subSpec.name?

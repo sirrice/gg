@@ -9,6 +9,7 @@
 
 class gg.core.Graphic
     constructor: (@spec) ->
+      @aesspec = _.findGoodAttr @spec, ["aes", "aesthetic", "mapping"], {}
       @layerspec = _.findGood [@spec.layers, []]
       @facetspec = @spec.facets || @spec.facet || {}
       @scalespec = _.findGood [@spec.scales, {}]

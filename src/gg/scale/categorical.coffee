@@ -24,6 +24,7 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
   defaultDomain: (col) -> gg.scale.BaseCategorical.defaultDomain col
 
   mergeDomain: (domain) ->
+    domain = [] unless domain?
     newDomain = _.uniq domain.concat(@domain())
     #newDomain = newDomain.sort()
     @domain newDomain

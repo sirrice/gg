@@ -28,10 +28,10 @@ class gg.geom.reparam.Rect extends gg.core.XForm
       x: 'x'
       y: 'y'
       r: 'r'
-      x0: (row) -> row.get('x') - width/2.0
-      x1: (row) -> row.get('x') + width/2.0
-      y0: (row) -> Math.min(yscale.scale(minY), row.get('y'))
-      y1: (row) -> Math.max(yscale.scale(minY), row.get('y'))
+      x0: (row) -> row.get('x0') or row.get('x') - width/2.0
+      x1: (row) -> row.get('x1') or row.get('x') + width/2.0
+      y0: (row) -> row.get('y0') or Math.min(yscale.scale(minY), row.get('y'))
+      y1: (row) -> row.get('y1') or Math.max(yscale.scale(minY), row.get('y'))
       #width: width
 
     mapping = _.mappingToFunctions table, mapping
