@@ -27,7 +27,6 @@ class gg.pos.Text extends gg.pos.Position
     console.log "got #{boxes.length} boxes from annealing"
 
     _.each boxes, (box, idx) ->
-      console.log box
       row = table.get(idx)
       row.set 'x0', box[0][0]
       row.set 'x1', box[0][1]
@@ -63,12 +62,16 @@ class gg.pos.Text extends gg.pos.Position
             nOverlap += 1
       - nOverlap
 
+    # XXX: remove after debugging
+    level = @log.level
+    @log.level = gg.util.Log.DEBUG
+
     curScore = utility boxes
     T = 2.466303 # 1-e^(-1/T) = 2/3
     minImprovement = 0
     optimalScore = 0
-    for nAnneal in [0...5]
-      maxi = n * 20
+    for nAnneal in [0...10]
+      maxi = n * 15
       nAccepted = 0
       nImproved = 0
       startScore = curScore
@@ -86,7 +89,7 @@ class gg.pos.Text extends gg.pos.Position
         newScore = utility boxes
         delta = newScore - curScore
         if newScore > curScore
-          console.log "new score: anneal(#{nAnneal}) iter(#{i}) #{newScore} vs #{curScore} #{box.box} -> #{boxes[boxIdx].box}"
+          @log "new score: anneal(#{nAnneal}) iter(#{i}) #{newScore} vs #{curScore} "
           nImproved += 1
 
         if (newScore < curScore and
@@ -96,15 +99,25 @@ class gg.pos.Text extends gg.pos.Position
           nAccepted += 1
           curScore = newScore
 
-        break if nAccepted >= n*5
+        if nImproved >= n*5
+          @log "nImproved #{nImproved} >= n*5 #{n*5}"
+          break
 
-      break if nImproved == 0
-      break unless curScore > startScore + minImprovement
-      break if curScore >= optimalScore
+      if nImproved == 0
+        @log "0 improvements after #{i} iter at temperature #{T}, breaking"
+        break
+      unless curScore > startScore + minImprovement
+        @log "score didn't improve after #{i} iter at temperature #{T}, #{curScore} < #{startScore}"
+        break
+      if curScore >= optimalScore
+        @log "optimal score, breaking"
+        break
 
       T *= 0.9
 
-    console.log "done.  #{boxes.length} boxes"
+    @log "done.  #{boxes.length} boxes after #{nAnneal} iters with #{curScore} score"
+
+    @log.level = level
     _.map boxes, (box) -> box.box
 
 
