@@ -42,12 +42,13 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
     range
 
   range: (interval) ->
-    if interval? and not @rangeSet
-      if @type == gg.data.Schema.numeric
+    if interval? and interval.length > 0 and not @rangeSet
+      #if @type == gg.data.Schema.numeric
+      if gg.data.Schema.type(interval[0]) == gg.data.Schema.numeric
         @d3Scale.rangeBands interval#, @padding
       else
-        #@d3Scale.range interval
-        @d3Scale.rangeBands interval
+        @d3Scale.range interval
+        #@d3Scale.rangeBands interval
       @invertScale.domain @d3Range()
     @d3Range()
 

@@ -18,7 +18,11 @@ class gg.geom.Render extends gg.core.XForm
   svg: (table, env, node) ->
     info = @paneInfo table, env
     svg = @g.facets.svgPane info.facetX, info.facetY
-    svg.append("g").attr("class", @name)
+    ret = svg.append("g")
+    ret.classed(@name, true) if @name?
+    ret.classed("layer-#{@layer.layerIdx}", true)
+    ret
+
 
 
 
@@ -27,11 +31,11 @@ class gg.geom.Render extends gg.core.XForm
       .data(data)
       .enter()
       .append('g')
-      .attr('class', "#{klass}")
+      .classed(klass, true)
 
   agroup: (g, klass, data) ->
     g.append("g")
-      .attr("class", "#{klass}")
+      .classed(klass, true)
       .data(data)
 
 

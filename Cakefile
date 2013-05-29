@@ -43,8 +43,11 @@ task 'clean', ->
 
 release = (callback) ->
   commands = []
+  commands.push "cp lib/gg.js public/js/"
+  commands.push "cp build/js/prettify.js public/js/"
+  commands.push "cp lib/gg.css public/css/"
+  commands.push "cp -r build/vendor public/"
   commands.push "phantomjs vendor/js/rasterize.js build/html/release.html docs/imgs/screenshot.png"
-  commands.push "scp -r lib eugenewu@athena.dialup.mit.edu:~/Public/gg"
 
   async.forEachSeries commands, run, ->
     callback() if callback
@@ -61,11 +64,10 @@ build = (callback) ->
 
     #  commands.push 'cp src/manifest.json build/'
     commands.push 'cp -r src/html build/'
-    commands.push 'cp -r src/font build/'
     commands.push 'cp -r src/js build/'
-    commands.push 'cp -r src/data build/'
+    #commands.push 'cp -r src/data build/'
     # TODO: consider optipng
-    commands.push 'cp -r src/images build/'
+    #commands.push 'cp -r src/images build/'
 
     compile_less commands
     copy_vendor commands
