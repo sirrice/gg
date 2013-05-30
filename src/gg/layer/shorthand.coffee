@@ -6,32 +6,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
     super
 
 
-  # TODO: merge pre and post stats aesthetic mappings so we can train properly
-  #       currently only supports pre-stats mapping
-  aestheticsFromSpec: (spec) ->
-    aess = _.keys spec
-    nestedAess = _.map spec, (v, k) ->
-      if _.isObject(v) and not _.isArray(v)
-        _.keys v
-      else
-        null
-    aess = _.compact _.flatten _.union(aess, nestedAess)
-    aess
-
-  aesthetics: ->
-    subSpecs = [@mapSpec, @geomSpec, @statSpec, @posSpec]
-    aess = _.uniq _.compact _.union(_.map subSpecs, (s) => @aestheticsFromSpec s.aes)
-    aess = _.map aess, (aes) ->
-      if aes in gg.scale.Scale.xs
-        gg.scale.Scale.xs
-      else if aes in gg.scale.Scale.ys
-        gg.scale.Scale.ys
-      else
-        aes
-    aess = _.uniq _.flatten aess
-    aess
-
-
   #
   # spec:
   #
@@ -76,7 +50,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @map = gg.xform.Mapper.fromSpec @g, @mapSpec
     @labelNode = new gg.wf.EnvPush @labelSpec
     @coord = gg.coord.Coordinate.fromSpec @, @coordSpec
-    if "group" of @mapSpec.aes
+    if @groupSpec?
       @groupby = gg.xform.Split.createNode "group", "group"
       @groupbylabel = new gg.wf.Join#EnvGet
         name: "groupbylabel-#{@layerIdx}"
@@ -111,10 +85,9 @@ class gg.layer.Shorthand extends gg.layer.Layer
         [[], "identity"]
 
 
+    defaultAes = {}
     subSpec = _.findGoodAttr spec, aliases, defaultType
-
-    @log "extractSpec: xform: #{xform}\tspec: #{JSON.stringify subSpec}"
-    defaultAes = _.clone @g.aesspec
+    @log "extractSpec xform: #{xform}\tspec: #{JSON.stringify subSpec}"
 
     if _.isString subSpec
       subSpec =

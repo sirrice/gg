@@ -171,7 +171,8 @@ class gg.data.RowTable extends gg.data.Table
   # XXX: doesn't perform nested map operations correctly
   map: (fOrMap, colName=null) ->
     if _.isFunction fOrMap
-      throw Error("RowTable.map without colname!") unless colName?
+      unless colName?
+        throw Error("RowTable.map without colname!")
       f = fOrMap
       fOrMap = {}
       fOrMap[colName] = f
@@ -183,7 +184,8 @@ class gg.data.RowTable extends gg.data.Table
           arr = _.map row.get(col), f
           row.set col, arr
         else
-          row.set(col, f(row.get(col)))
+          newv = f(row.get(col))
+          row.set col, newv
 
     unless _.all(fOrMap, (f,col) => @contains col)
       @reloadSchema()

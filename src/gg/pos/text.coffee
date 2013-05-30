@@ -3,6 +3,12 @@
 class gg.pos.Text extends gg.pos.Position
   @aliases = ["text"]
 
+  parseSpec: ->
+    super
+
+    @bFast = _.findGood [@spec.fast, false]
+    @innerLoop = _.findGood [@spec.innerLoop, 15]
+
   defaults: ->
 
   inputSchema: ->
@@ -23,8 +29,10 @@ class gg.pos.Text extends gg.pos.Position
         [row.get('x0'), row.get('y0')]
       ]
 
-    boxes = gg.pos.Text.anneal boxes
+    start = Date.now()
+    boxes = gg.pos.Text.anneal boxes, @bFast, @innerLoop
     console.log "got #{boxes.length} boxes from annealing"
+    console.log "took #{Date.now()-start} ms"
 
     _.each boxes, (box, idx) ->
       row = table.get(idx)
@@ -40,29 +48,55 @@ class gg.pos.Text extends gg.pos.Position
 
   # @param boxes list of [ [x0, x1], [y0, y1] ] arrays
   # @return same list of boxes but with optimized x0, x1, y0, y1 vals
-  @anneal: (boxes) ->
+  @anneal: (boxes, bFast, innerLoop=10) ->
+    #
+    # setup the boxes
+    #
     for box in boxes
       if _.any(_.union(box[0], box[1]), _.isNaN)
         console.log "box is invalid: #{box}"
         throw Error()
+      if box.length == 2
+        # add pivot point.  Defaults to lower left
+        box.push [box[0][0], box[1][0]]
 
     n = boxes.length
-    boxes = _.map boxes, (box) ->
-      box: box
-      pos: 0
+    keyf = (box) -> box.box
+    valf = (box) -> box.idx
+    boxes = _.map boxes, (box, idx) ->
+      w = box[0][1]-box[0][0]
+      h = box[1][1]-box[1][0]
+      {
+        box: box
+        idx: idx
+        pos: 0
+        bound: [
+          [box[0][0]-w,box[0][1]]
+          [box[1][0]-h,box[1][1]]
+        ]
+      }
 
+    gridBounds = @bounds(_.map boxes, (box)->box.bound)
     [pos2box, positions] = @genPositions()
 
+    index = new gg.util.SpatialIndex(keyf, valf)
+      .gridBounds(gridBounds)
+      .load(boxes)
 
     utility = (boxes) ->
-      nOverlap = 0
-      for i in _.range(n)
-        for j in _.range(i+1,n)
-          if gg.pos.Text.bOverlap(boxes[i].box, boxes[j].box)
-            nOverlap += 1
-      - nOverlap
+      if bFast
+        - _.sum(_.map boxes, (box) ->index.get(box.box).length)
+      else
+        nOverlap = 0
+        for b1 in boxes
+          for b2 in boxes
+            if gg.pos.Text.bOverlap b1.box, b2.box
+              nOverlap += 1
+        - nOverlap
 
-    # XXX: remove after debugging
+    #
+    # Perform Annealing
+    #
     level = @log.level
     @log.level = gg.util.Log.DEBUG
 
@@ -71,43 +105,61 @@ class gg.pos.Text extends gg.pos.Position
     minImprovement = 0
     optimalScore = 0
     for nAnneal in [0...10]
-      maxi = n * 15
-      nAccepted = 0
       nImproved = 0
       startScore = curScore
-      console.log "\n\n"
 
-      for i in [0...maxi]
-        posIdx = Math.floor(Math.random()*positions.length)
+      for i in [0...(n*innerLoop)]
+        # pick a random new configuration for a random box
+        _posIdx = Math.floor(Math.random()*positions.length)
         boxIdx = Math.floor(Math.random()*n)
-        pos = positions[posIdx]
-        cost = pos[1]
+        [posIdx, cost] = positions[_posIdx]
         box = boxes[boxIdx]
-        boxp = pos2box box, posIdx
-        boxes[boxIdx] = boxp
+        box2 = pos2box box, posIdx
 
-        newScore = utility boxes
-        delta = newScore - curScore
-        if newScore > curScore
-          @log "new score: anneal(#{nAnneal}) iter(#{i}) #{newScore} vs #{curScore} "
-          nImproved += 1
-
-        if (newScore < curScore and
-            Math.random() > 1.0-Math.exp(-delta/T))
-          boxes[boxIdx] = box
+        # evaluate benefit of this guy
+        if bFast
+          curOverlap = index.get(box.box).length
+          index.rm box
+          index.add box2
+          newOverlap = index.get(box2.box).length
+          delta = curOverlap - newOverlap
         else
-          nAccepted += 1
-          curScore = newScore
+          boxes[boxIdx] = box2
+          newScore = utility boxes
+          delta = newScore - curScore
+
+        if delta > 0
+          nImproved += 1
+          @log "new score: anneal(#{nAnneal}) iter(#{i}) #{delta}"
+
+        # Anneal
+        bAccept = (delta > 0 or Math.random() <= 1-Math.exp(-delta/T))
+
+        if bFast
+          if bAccept
+            boxes[boxIdx] = box2
+          else
+            index.rm box2
+            index.add box
+        else
+          if bAccept
+            curScore = newScore
+          else
+            boxes[boxIdx] = box
+
 
         if nImproved >= n*5
           @log "nImproved #{nImproved} >= n*5 #{n*5}"
           break
 
+      if bFast
+        curScore = utility boxes
+
       if nImproved == 0
         @log "0 improvements after #{i} iter at temperature #{T}, breaking"
         break
       unless curScore > startScore + minImprovement
-        @log "score didn't improve after #{i} iter at temperature #{T}, #{curScore} < #{startScore}"
+        @log "no improvments: iter #{i} temp: #{T}, #{curScore} < #{startScore}"
         break
       if curScore >= optimalScore
         @log "optimal score, breaking"
@@ -146,8 +198,8 @@ class gg.pos.Text extends gg.pos.Position
   # positions: list of [position id, cost] pairs
   # function:  (box, position id) -> new box
   @genPositions: ->
-    positions =
-      0: 0
+    posCosts =
+      0: 1
       1: 1
       2: 1
       3: 1
@@ -155,7 +207,12 @@ class gg.pos.Text extends gg.pos.Position
       5: 2
       6: 2
       7: 2
-    positions = _.map positions, (v,k)->[k,v]
+    maxCost = 1 + _.mmax _.values(posCosts)
+
+    positions = []
+    _.each _.values(posCosts), (cost, pos) ->
+      _.times (maxCost-cost), ->
+        positions.push [pos, cost]
 
     pos2box = (box, position) ->
       x = box.box[2][0]
@@ -174,9 +231,20 @@ class gg.pos.Text extends gg.pos.Position
         else throw Error("position #{position} is invalid")
       {
         box: [[pt[0], pt[0]+w], [pt[1], pt[1]+h], box.box[2]]
+        idx: box.idx
         pos: position
+        bound: box.bound
       }
 
     [pos2box, positions]
+
+  @bounds: (boxes) ->
+    f = (memo, box) ->
+      memo[0][0] = Math.min memo[0][0], box[0][0]
+      memo[0][1] = Math.max memo[0][1], box[0][1]
+      memo[1][0] = Math.min memo[1][0], box[1][0]
+      memo[1][1] = Math.max memo[1][1], box[1][1]
+      memo
+    _.reduce boxes, f, [[Infinity,-Infinity],[Infinity,-Infinity]]
 
 

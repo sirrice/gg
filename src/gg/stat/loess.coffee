@@ -42,7 +42,7 @@ class gg.stat.LoessStat extends gg.stat.Stat
     rows = []
     _.times xs.length, (idx) ->
       # sometimes it interpolates to NaN values
-      if _.isValid smoothys[idx]
+      if _.isValid(smoothys[idx]) and _.isValid(xs[idx])
         rows.push
           x: xs[idx]
           y: smoothys[idx]

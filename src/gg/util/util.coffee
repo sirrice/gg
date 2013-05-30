@@ -7,8 +7,7 @@ _ = require 'underscore'
 
 class gg.util.Util
 
-  @isValid: (v) ->
-    not(_.isNull v or _.isNaN v or _.isUndefined v)
+  @isValid: (v) -> not(_.isNull(v) or _.isNaN(v) or _.isUndefined(v))
 
   # @param f returns an array [key, val]
   #        that sets the map's key, value pair
@@ -18,7 +17,6 @@ class gg.util.Util
       pair = f v, idx
       ret[pair[0]] = pair[1]
     ret
-
 
   @sum: (arr) -> _.reduce arr, ((a,b) -> a+b), 0
 

@@ -24,6 +24,7 @@ class gg.xform.Mapper extends gg.core.XForm
     @name = _.findGood [@spec.name, "mapper-#{@id}"]
 
   @fromSpec: (g, spec) ->
+    console.log spec
     spec = _.clone spec
     attrs = ["mapping", "map", "aes", "aesthetic", "aesthetics"]
     mapping = _.findGoodAttr spec, attrs, null

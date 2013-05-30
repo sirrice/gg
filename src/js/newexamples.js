@@ -63,6 +63,7 @@ var crazy = {
   ]
 }
 
+var f500 = function(row) {return Math.floor(row.get("g")/500)*500;};
 var geom_boxplot2 =
 {
   layers:[
@@ -71,26 +72,9 @@ var geom_boxplot2 =
     "aes": {
       "x": "f",
       "y": "e",
-      "group": { color: "f"}
+      "group": { color: "f" }
     }, "stats": "boxplot"
-  },
-
-  {
-   "geom": "point",
-   "aes": {
-     x: 'g',
-     y: 'e',
-     group: {color: 'g'}
-   }
-  },
-
-   {
-     geom: "line",
-     aes: {
-       x: "d",
-       y: "e"
-     }
-   }
+  }
   ],
   facets: {x: "t"}
 };
@@ -160,7 +144,7 @@ var geom_point_2 = {
 
 var geom_point_3 = {
   geom: "point"
- ,aes: {x: 'd', y: 'e', r: 'g', fill: 'f'}
+ ,aes: {x: 'd', y: 'e', r: 'g', fill: 'g'}
   ,scales: {
     fill: "color",
     r: { range: [2, 10] }
@@ -170,7 +154,7 @@ var geom_point_3 = {
 
 var geom_point_4 = {
   geom: "point"
- ,aes: {x: 'd', y: 'e', r: 'g', color: "f"}
+ ,aes: {x: 'd', y: 'e', r: 'g', color: "g"}
   ,pos: { type: 'jitter'}
   ,scales: {
     fill: "color",
@@ -184,8 +168,22 @@ var colored_lines = {
   aes: {
     x: 'd',  y: "e",
     group : {color: "g"}
-  },
+  }
+};
+
+var colored_lines_multi = {
+  layers: [
+  {
+  geom: "line",
   pos: "stack"
+  },
+  {geom: "line"
+  }
+  ],
+  aes: {
+    x: 'd',  y: "e",
+    group : {color: "g"}
+  }
 };
 
 
@@ -212,7 +210,6 @@ var geoms = {
   //area: geom_area,
   //boxplot: geom_boxplot,
   //interval: geom_interval,
-  boxplot: geom_boxplot2,
   point: geom_point_1
   ,sum: geom_point_sum
   ,interval: geom_point_interval
@@ -220,12 +217,14 @@ var geoms = {
   ,color: geom_point_3
   ,jitter: geom_point_4
   ,line: colored_lines
+  ,multiline: colored_lines_multi
+  ,boxplot: geom_boxplot2
 };
 
 var selected_geoms = {
-  point: false,
+  point: true,
   boxplot:false,
-  line: true
+  line: false
 
 };
 
@@ -360,7 +359,7 @@ var selected_geoms = {
     //
     // Generate random data with float attributes: d, r, g, f, t
     //
-    var npts = 5000;
+    var npts = 1000;
     bigdata = _.map(_.range(0, npts), function(d) {
       g = Math.floor(Math.random() * 3) + 1;
       f = Math.floor(Math.random() * 3);

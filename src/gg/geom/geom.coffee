@@ -35,7 +35,7 @@
 # type:   specifies what high level geometry to render
 #
 class gg.geom.Geom # not an XForm!!
-  @log = gg.util.Log.logger "Geom", gg.util.Log.WARN
+  @log = gg.util.Log.logger "Geom", gg.util.Log.DEBUG
 
   constructor: (@layer, @spec) ->
     @g = @layer.g

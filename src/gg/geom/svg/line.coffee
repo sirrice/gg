@@ -28,7 +28,6 @@ class gg.geom.svg.Line extends gg.geom.Render
     liner = d3.svg.line()
         .x((d) -> d.x)
         .y((d) -> d.y1)
-        #.interpolate('basis')
 
     @log "stroke is #{table.get 0, "stroke"}"
 
