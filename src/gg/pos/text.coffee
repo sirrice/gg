@@ -6,7 +6,6 @@ class gg.pos.Text extends gg.pos.Position
   parseSpec: ->
     super
 
-    @bFast = _.findGood [@spec.fast, false]
     @innerLoop = _.findGood [@spec.innerLoop, 15]
 
   defaults: ->
@@ -30,7 +29,7 @@ class gg.pos.Text extends gg.pos.Position
       ]
 
     start = Date.now()
-    boxes = gg.pos.Text.anneal boxes, @bFast, @innerLoop
+    boxes = gg.pos.Text.anneal boxes, @innerLoop
     console.log "got #{boxes.length} boxes from annealing"
     console.log "took #{Date.now()-start} ms"
 
@@ -48,7 +47,7 @@ class gg.pos.Text extends gg.pos.Position
 
   # @param boxes list of [ [x0, x1], [y0, y1] ] arrays
   # @return same list of boxes but with optimized x0, x1, y0, y1 vals
-  @anneal: (boxes, bFast, innerLoop=10) ->
+  @anneal: (boxes, innerLoop=10) ->
     #
     # setup the boxes
     #
@@ -83,16 +82,7 @@ class gg.pos.Text extends gg.pos.Position
       .gridBounds(gridBounds)
       .load(boxes)
 
-    utility = (boxes) ->
-      if bFast
-        - _.sum(_.map boxes, (box) ->index.get(box.box).length)
-      else
-        nOverlap = 0
-        for b1 in boxes
-          for b2 in boxes
-            if gg.pos.Text.bOverlap b1.box, b2.box
-              nOverlap += 1
-        - nOverlap
+    utility = (boxes) -> -_.sum(_.map boxes, (box) ->index.get(box.box).length)
 
     #
     # Perform Annealing
@@ -117,16 +107,11 @@ class gg.pos.Text extends gg.pos.Position
         box2 = pos2box box, posIdx
 
         # evaluate benefit of this guy
-        if bFast
-          curOverlap = index.get(box.box).length
-          index.rm box
-          index.add box2
-          newOverlap = index.get(box2.box).length
-          delta = curOverlap - newOverlap
-        else
-          boxes[boxIdx] = box2
-          newScore = utility boxes
-          delta = newScore - curScore
+        curOverlap = index.get(box.box).length
+        index.rm box
+        index.add box2
+        newOverlap = index.get(box2.box).length
+        delta = curOverlap - newOverlap
 
         if delta > 0
           nImproved += 1
@@ -135,25 +120,17 @@ class gg.pos.Text extends gg.pos.Position
         # Anneal
         bAccept = (delta > 0 or Math.random() <= 1-Math.exp(-delta/T))
 
-        if bFast
-          if bAccept
-            boxes[boxIdx] = box2
-          else
-            index.rm box2
-            index.add box
+        if bAccept
+          boxes[boxIdx] = box2
         else
-          if bAccept
-            curScore = newScore
-          else
-            boxes[boxIdx] = box
-
+          index.rm box2
+          index.add box
 
         if nImproved >= n*5
           @log "nImproved #{nImproved} >= n*5 #{n*5}"
           break
 
-      if bFast
-        curScore = utility boxes
+      curScore = utility boxes
 
       if nImproved == 0
         @log "0 improvements after #{i} iter at temperature #{T}, breaking"
