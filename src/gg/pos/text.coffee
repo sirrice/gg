@@ -2,11 +2,15 @@
 
 class gg.pos.Text extends gg.pos.Position
   @aliases = ["text"]
+  @log = gg.util.Log.logger("text")
 
   parseSpec: ->
     super
 
+    @bFast = - _.findGood [@spec.fast, false]
     @innerLoop = _.findGood [@spec.innerLoop, 15]
+    attrs = ['T', 't', 'temp', 'temperature']
+    @temperature = _.findGoodAttr @spec, attrs, 2.466303 # 1-e^(-1/T) = 2/3
 
   defaults: ->
 
@@ -29,7 +33,7 @@ class gg.pos.Text extends gg.pos.Position
       ]
 
     start = Date.now()
-    boxes = gg.pos.Text.anneal boxes, @innerLoop
+    boxes = gg.pos.Text.anneal boxes, @bFast, @innerLoop, @temperature
     console.log "got #{boxes.length} boxes from annealing"
     console.log "took #{Date.now()-start} ms"
 
@@ -47,7 +51,7 @@ class gg.pos.Text extends gg.pos.Position
 
   # @param boxes list of [ [x0, x1], [y0, y1] ] arrays
   # @return same list of boxes but with optimized x0, x1, y0, y1 vals
-  @anneal: (boxes, innerLoop=10) ->
+  @anneal: (boxes, bFast, innerLoop=10, T=2.4) ->
     #
     # setup the boxes
     #
@@ -75,76 +79,92 @@ class gg.pos.Text extends gg.pos.Position
         ]
       }
 
+    # create spatial index
     gridBounds = @bounds(_.map boxes, (box)->box.bound)
-    [pos2box, positions] = @genPositions()
-
     index = new gg.util.SpatialIndex(keyf, valf)
       .gridBounds(gridBounds)
       .load(boxes)
 
-    utility = (boxes) -> -_.sum(_.map boxes, (box) ->index.get(box.box).length)
+
+    [pos2box, positions] = @genPositions()
 
     #
     # Perform Annealing
     #
     level = @log.level
     @log.level = gg.util.Log.DEBUG
+    findTicket = (overlaps, ticket) ->
+      for o, idx in overlaps
+        ticket -= o
+        return idx if ticket <= 0
+      throw Error()
 
-    curScore = utility boxes
-    T = 2.466303 # 1-e^(-1/T) = 2/3
     minImprovement = 0
     optimalScore = 0
     for nAnneal in [0...10]
       nImproved = 0
-      startScore = curScore
+      overlapArr = _.map boxes, (box) -> index.get(box.box).length
+      startScore = - _.sum(overlapArr) + boxes.length
 
-      for i in [0...(n*innerLoop)]
+      for i in [0...(boxes.length*innerLoop)]
+        # pick a configuration from an area with lots of overlap
         # pick a random new configuration for a random box
         _posIdx = Math.floor(Math.random()*positions.length)
-        boxIdx = Math.floor(Math.random()*n)
         [posIdx, cost] = positions[_posIdx]
+
+        # Lottery-based sampling.
+        # Each box has number of tickets equal to its
+        # number of overlaps
+        if bFast
+          ticket = Math.floor(Math.random() * _.sum(overlapArr))
+          boxIdx = findTicket overlapArr, ticket
+        else
+          boxIdx = Math.floor(Math.random()*n)
         box = boxes[boxIdx]
         box2 = pos2box box, posIdx
 
         # evaluate benefit of this guy
-        curOverlap = index.get(box.box).length
-        index.rm box
-        index.add box2
-        newOverlap = index.get(box2.box).length
+        curOvBoxes = index.get box.box
+        curOverlap = curOvBoxes.length
+        newOvBoxes = index.get box2.box
+        newOverlap = newOvBoxes.length
+        newOverlap += 1 unless box2 in newOvBoxes
         delta = curOverlap - newOverlap
-
-        if delta > 0
-          nImproved += 1
-          @log "new score: anneal(#{nAnneal}) iter(#{i}) #{delta}"
+        nImproved += 1 if delta > 0
 
         # Anneal
         bAccept = (delta > 0 or Math.random() <= 1-Math.exp(-delta/T))
-
         if bAccept
           boxes[boxIdx] = box2
-        else
-          index.rm box2
-          index.add box
+          # update overlaps if accepted
+          _.each curOvBoxes, (b) -> overlapArr[b.idx] -= 1
+          _.each curOverlap, (b) -> overlapArr[b.idx] += 1
+          overlapArr[box2.idx] = newOverlap
+          index.rm box
+          index.add box2
 
         if nImproved >= n*5
           @log "nImproved #{nImproved} >= n*5 #{n*5}"
           break
 
-      curScore = utility boxes
+      curScore = -_.sum _.map boxes, (box) ->
+        index.get(box.box).length-1
 
       if nImproved == 0
-        @log "0 improvements after #{i} iter at temperature #{T}, breaking"
+        @log "n:#{nAnneal}: nImproved: 0"
         break
       unless curScore > startScore + minImprovement
-        @log "no improvments: iter #{i} temp: #{T}, #{curScore} < #{startScore}"
+        @log "n:#{nAnneal}: #{curScore} < #{startScore}"
         break
       if curScore >= optimalScore
-        @log "optimal score, breaking"
+        @log "n:#{nAnneal}: optimal score"
         break
+
+      @log "n#{nAnneal}: nImproved: #{nImproved} score: #{startScore} to #{curScore}"
 
       T *= 0.9
 
-    @log "done.  #{boxes.length} boxes after #{nAnneal} iters with #{curScore} score"
+    @log "n:#{nAnneal} score: #{curScore}"
 
     @log.level = level
     _.map boxes, (box) -> box.box
@@ -184,6 +204,14 @@ class gg.pos.Text extends gg.pos.Position
       5: 2
       6: 2
       7: 2
+      8: 3
+      9: 3
+      10: 3
+      11: 3
+      12: 3
+      13: 3
+      14: 3
+      15: 3
     maxCost = 1 + _.mmax _.values(posCosts)
 
     positions = []
@@ -197,14 +225,22 @@ class gg.pos.Text extends gg.pos.Position
       w = box.box[0][1] - box.box[0][0]
       h = box.box[1][1] - box.box[1][0]
       pt = switch position
-        when 0 then [x,y]
-        when 1 then [x,y-h]
-        when 2 then [x-w,y-h]
-        when 3 then [x-w,y]
-        when 4 then [x-w/2,y]
-        when 5 then [x-w/2,y-h]
-        when 6 then [x,y-h/2]
-        when 7 then [x-w,y-h/2]
+        when 0  then [x,y]
+        when 1  then [x,y-h]
+        when 2  then [x-w,y-h]
+        when 3  then [x-w,y]
+        when 4  then [x-w/2,y]
+        when 5  then [x-w/2,y-h]
+        when 6  then [x,y-h/2]
+        when 7  then [x-w,y-h/2]
+        when 8  then [x-w/4,y]
+        when 9  then [x-w/4,y-h]
+        when 10 then [x,y-h/4]
+        when 11 then [x-w,y-h/4]
+        when 12  then [x-w*3/4,y]
+        when 13  then [x-w*3/4,y-h]
+        when 14 then [x,y-h*3/4]
+        when 15 then [x-w,y-h*3/4]
         else throw Error("position #{position} is invalid")
       {
         box: [[pt[0], pt[0]+w], [pt[1], pt[1]+h], box.box[2]]
