@@ -146,7 +146,7 @@ class gg.pos.Stack extends gg.pos.Position
       if inArray
         x2row = {}
         _.each group.table.rows, (row) ->
-          row.flatten().each (subrow) ->
+          row.flatten(null, true).each (subrow) ->
             raw = subrow.clone().raw()
             x2row[raw.x] = raw
       else

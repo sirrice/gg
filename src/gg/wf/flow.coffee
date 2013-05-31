@@ -69,8 +69,8 @@ class gg.wf.Flow extends events.EventEmitter
         clone = node.clone()
         cb = clone.addInputPort()
         endNodes = @bridgedChildren node
-        @log "endNodes #{node.name}: [#{endNodes.map((v)->v.name).join("  ")}]"
-        @log "children #{node.name}: [#{@children(node).map((v)->v.name).join("  ")}]"
+        @log "endNodes #{node.name}: [#{@nodes2str endNodes}]"
+        @log "children #{node.name}: [#{@nodes2str @children(node)}]"
 
         for child in @children node
           paths = @nonBarrierPaths child, endNodes
@@ -154,6 +154,10 @@ class gg.wf.Flow extends events.EventEmitter
 
 
 
+
+
+  nodes2str: (nodes, sep="  ") ->
+    nodes.map((n)->n.name).join(sep)
 
 
   toString: ->

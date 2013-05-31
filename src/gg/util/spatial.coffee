@@ -56,8 +56,6 @@ class gg.util.SpatialIndex
   computeMetadata: ->
     # 1) find the x and y grid sizes
     #    max(min(bounding boxes) or total grid size / 30)
-    # 2) allocate grid cells and indexing function into cells
-    # 3) assign box indexes into the cells
 
     minx = Infinity
     maxx = -Infinity
@@ -102,6 +100,8 @@ class gg.util.SpatialIndex
 
 
   createIndex: ->
+    # 2) allocate grid cells and indexing function into cells
+    # 3) assign box indexes into the cells
     [nx, ny] = @ncells
     ncells = (nx+1)*(ny+1)
     @cells = _.times ncells, () -> new gg.util.MArray()
@@ -110,6 +110,10 @@ class gg.util.SpatialIndex
     if @debug
       console.log "created #{ncells} cells in index"
 
+
+  # @param box an indexed item
+  # @param boxidx add box to index if null, otherwise assume that
+  #        it is the correct index into @boxes
   add: (box, boxidx=null) ->
     boxidx = @boxes.add box unless boxidx?
     cellbound = @box2cellbound box
@@ -156,12 +160,10 @@ class gg.util.SpatialIndex
     _.compact _.map @boxes, (box) =>
       box if box? and (@intersects bound, @keyf(box))
 
-  cellbound2boxidxs: (cellbound) ->
 
-
-  eachCell: (cellbound, f) ->
-    cellx = cellbound[0]
-    celly = cellbound[1]
+  # @param cellbound box of grid cells
+  # @param f function: (cell, [cellx, celly]) ->
+  eachCell: ([cellx, celly], f) ->
     for x in [cellx[0]..cellx[1]]
       for y in [celly[0]..celly[1]]
         cellidx = @cell2cellidx [x,y]
@@ -169,6 +171,7 @@ class gg.util.SpatialIndex
         f cell, [x,y]
 
 
+  # do the two bounding boxes overlap
   intersects: (b1, b2) ->
     mins = [
       b1[0][0]
@@ -188,10 +191,13 @@ class gg.util.SpatialIndex
 
 
 
-
+  # @param cell [cellx, celly] position
+  # @return index into @cells array
   cell2cellidx: (cell) ->
     cell[0] + @ncells[0] * cell[1]
 
+  # @paramm box an indexed item
+  # @return cell bound
   box2cellbound: (box) ->
     bound = @keyf box
     @bound2cellbound bound

@@ -67,16 +67,17 @@ class gg.data.Table
     row = if rows.length > 0 then rows[0] else {}
     row = row.raw() if _.isSubclass row, gg.data.Row
     _.each row, (v,k) =>
-      type = gg.data.Schema.type v
-      vtype = type.type
-      vschema =  type.schema
+      typeObj = gg.data.Schema.type v
 
-      type = @findOrdinals rows, k, type
-      schema.addColumn k, type.type, type.schema
+      #typeObj = @findOrdinals rows, k, typeObj
+      schema.addColumn k, typeObj.type, typeObj.schema
     schema
 
-  @findOrdinals: (rows, key, type) ->
-    switch type.type
+  # look for numeric keys that have very few values and
+  # turn them into ordinal types
+  # XXX: deprecated
+  @findOrdinals: (rows, key, typeObj) ->
+    switch typeObj.type
       when gg.data.Schema.numeric
         vals = _.map rows, (row) ->
           if _.isSubclass row, gg.data.Row
@@ -86,7 +87,7 @@ class gg.data.Table
 
       when gg.data.Schema.array, gg.data.Schema.nested
         schema = new gg.data.Schema
-        schema.addColumn key, type.type, type.schema
+        schema.addColumn key, typeObj.type, typeObj.schema
         #@log "isOrdinal schema: #{schema.toString()}\t#{schema.attrs()}"
 
         _.each schema.attrs(), (attr) ->
@@ -99,8 +100,8 @@ class gg.data.Table
             #@log rows[0]
 
             if gg.data.Table.isOrdinal vals
-              type.schema.setType attr, gg.data.Schema.ordinal
-    type
+              typeObj.schema.setType attr, gg.data.Schema.ordinal
+    typeObj
 
 
 

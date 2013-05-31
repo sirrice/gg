@@ -15,31 +15,6 @@ class gg.data.Schema
     @attrToKeys = {}
     @log = gg.data.Schema.log
 
-  @fromSpec: (spec) ->
-    schema = new gg.data.Schema
-    _.each spec, (v, k) ->
-      if _.isObject v
-        if v.schema?
-          subSchema = gg.data.Schema.fromSpec v.schema
-          schema.addColumn k, v.type, subSchema
-        else
-          schema.addColumn k, v.type, v.schema
-      else
-        schema.addColumn k, v
-    schema
-
-  toJson: ->
-    json = {}
-    _.each @schema, (v, k) ->
-      switch v.type
-        when gg.data.Schema.nested, gg.data.Schema.array
-          json[k] =
-            type: v.type
-            schema: v.schema.toJson()
-        else
-          json[k] = v
-    json
-
   addColumn: (key, type, schema=null) ->
     @schema[key] =
       type: type
@@ -51,9 +26,43 @@ class gg.data.Schema
         _.each schema.attrs(), (attr) =>
           @attrToKeys[attr] = key
 
-  flatten: ->
+  # promotes all attributes in cols parameter
+  # 1) within nests into raw attributes,
+  # 2) arrays to nests
+  #
+  # e.g., if cols = ['b', 'd']
+  #
+  #  { a:, b: { c: }, d: [ {e:} ] }
+  #
+  # is flattened to:
+  #
+  #  { a:, c:, d: {e:} }
+  #
+  # @param cols list of nested or array attributes to flatten,
+  #        or null to flatten all of them
+  #
+  flatten:(cols=null, recursive=false) ->
+    cols ?= @attrs().filter (attr) => @isArray(attr) or @isNested(attr)
+    cols = [cols] unless _.isArray cols
+
     schema = new gg.data.Schema
     _.each @schema, (type, key) ->
+      if key in cols
+        if not recursive and type.type == gg.data.Schema.array
+          # promote to nested object
+          arrSchema = type.schema
+          schema.addColumn key, gg.data.Schema.nested, arrSchema
+        else
+          if recursive or type.type == gg.data.Schema.nested
+            # promote subkeys to raw keys
+            _.each type.schema.schema, (subtype, subkey) ->
+              schema.addColumn subkey, subtype.type, subtype.schema
+          else
+            schema.addColumn key, type.type, type.schema
+      else
+        schema.addColumn key, type.type, type.schema
+
+    if no
       switch type.type
         when gg.data.Schema.array, gg.data.Schema.nested
           _.each type.schema.schema, (subtype, subkey) ->
@@ -62,7 +71,7 @@ class gg.data.Schema
           schema.addColumn key, type.type, type.schema
     schema
 
-  clone: -> gg.data.Schema.fromSpec @toJson()
+  clone: -> gg.data.Schema.fromSpec @toJSON()
   attrs: -> _.keys @attrToKeys
   contains: (attr, type=null) ->
     if attr in @attrs()
@@ -70,23 +79,10 @@ class gg.data.Schema
     else
       false
   nkeys: -> _.size @schema
-  toString: -> JSON.stringify @toJson()
+  toString: -> JSON.stringify @toJSON()
   toSimpleString: ->
     arr = _.map @attrs(), (attr) => "#{attr}(#{@type(attr)})"
     arr.join " "
-
-  isRaw: (attr) -> attr == @attrToKeys[attr]
-
-  inArray: (attr) ->
-    key = @attrToKeys[attr]
-    return false if key == attr
-    @type(key) == gg.data.Schema.array
-
-  inNested: (attr) ->
-    key = @attrToKeys[attr]
-    return false if key == attr
-    @type(key) == gg.data.Schema.nested
-
 
 
 
@@ -104,7 +100,7 @@ class gg.data.Schema
     if _schema[key]?
       if key is attr
         if _schema[key].schema
-          json = _schema[key].schema.toJson()
+          json = _schema[key].schema.toJSON()
         else
           json = null
         {
@@ -141,6 +137,19 @@ class gg.data.Schema
   isArray: (attr) -> @isType attr, gg.data.Schema.array
   isNested: (attr) -> @isType attr, gg.data.Schema.nested
   isType: (attr, type) -> @type(attr) == type
+  isRaw: (attr) -> attr == @attrToKeys[attr]
+
+  inArray: (attr) ->
+    key = @attrToKeys[attr]
+    return false if key == attr
+    @type(key) == gg.data.Schema.array
+
+  inNested: (attr) ->
+    key = @attrToKeys[attr]
+    return false if key == attr
+    @type(key) == gg.data.Schema.nested
+
+
 
   setType: (attr, newType) ->
     schema = @
@@ -192,16 +201,22 @@ class gg.data.Schema
     if _.isObject v
       ret = { }
       if _.isArray v
-        el = if v.length > 0 and v[0]? then v[0] else {}
+        els = v[0...20]
         ret.type = gg.data.Schema.array
       else
-        el = v
+        els = [v]
         ret.type = gg.data.Schema.nested
 
       ret.schema = new gg.data.Schema
-      _.each el, (o, attr) ->
-        type = gg.data.Schema.type o
-        ret.schema.addColumn attr, type.type, type.schema
+      _.each els, (el) ->
+        _.each el, (o, attr) ->
+          type = gg.data.Schema.type o
+          if ret.schema.contains attr
+            # if types not consistent, downcast to ordinal
+            unless ret.schema.isType attr, type.type
+              ret.schema.setType attr, gg.data.Schema.ordinal
+          else
+            ret.schema.addColumn attr, type.type, type.schema
       ret
     else if _.isNumber v
       { type: gg.data.Schema.numeric }
@@ -209,5 +224,34 @@ class gg.data.Schema
       { type: gg.data.Schema.date }
     else
       { type: gg.data.Schema.ordinal }
+
+
+
+  @fromSpec: (spec) ->
+    schema = new gg.data.Schema
+    _.each spec, (v, k) ->
+      if _.isObject v
+        if v.schema?
+          subSchema = gg.data.Schema.fromSpec v.schema
+          schema.addColumn k, v.type, subSchema
+        else
+          schema.addColumn k, v.type, v.schema
+      else
+        schema.addColumn k, v
+    schema
+
+  @fromJSON: (json) -> @fromSpec json
+
+  toJSON: ->
+    json = {}
+    _.each @schema, (v, k) ->
+      switch v.type
+        when gg.data.Schema.nested, gg.data.Schema.array
+          json[k] =
+            type: v.type
+            schema: v.schema.toJSON()
+        else
+          json[k] = v
+    json
 
 

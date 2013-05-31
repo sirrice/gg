@@ -1,6 +1,13 @@
 var assert = require("assert");
 var _ = require("underscore");
 
+assert.not = function(actual, message) {
+  if (actual) {
+    assert.fail(actual, false, message || "expected {actual} = false")
+  }
+}
+assert.false = assert.not
+
 assert.inDelta = function(actual, expected, delta, message) {
       if (!inDelta(actual, expected, delta)) {
               assert.fail(actual, expected, message || "expected {actual} to be in within *" + delta + "* of {expected}", null, assert.inDelta);

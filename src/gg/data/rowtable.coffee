@@ -96,9 +96,9 @@ class gg.data.RowTable extends gg.data.Table
       ret.push {key: keys[jsonKey], table: partition}
     ret
 
-  flatten: ->
-    table = new gg.data.RowTable @schema.flatten()
-    @each (row) -> table.merge row.flatten()
+  flatten: (cols=null, recursive=false) ->
+    table = new gg.data.RowTable @schema.flatten(cols, recursive)
+    @each (row) -> table.merge row.flatten(cols, recursive)
     table
 
   # 1 to 1 mapping function
@@ -127,8 +127,7 @@ class gg.data.RowTable extends gg.data.Table
       @reloadSchema()
       @
     else
-      newrows = _.map @rows, (row) =>
-        @transformRow row, mapping, funcs, strings
+      newrows = @each (row) => @transformRow row, mapping
       new gg.data.RowTable newrows
 
   # constructs a new object and populates it using mapping specs
@@ -187,10 +186,10 @@ class gg.data.RowTable extends gg.data.Table
           newv = f(row.get(col))
           row.set col, newv
 
+    # reload schema if any new cols were added
     unless _.all(fOrMap, (f,col) => @contains col)
       @reloadSchema()
     @
-
 
   addConstColumn: (name, val, type=null) ->
     type = gg.data.Schema.type(val) unless type?
@@ -223,7 +222,6 @@ class gg.data.RowTable extends gg.data.Table
     @rows.push gg.data.RowTable.toRow(row, @schema)
     @
 
-
   get: (row, col=null) ->
     if row >= 0 and row < @rows.length
       if col?
@@ -250,6 +248,19 @@ class gg.data.RowTable extends gg.data.Table
   asArray: -> _.map @rows, (row) -> row
   raw: -> _.map @rows, (row) -> row.raw()
   rows: @rows
+
+  toJSON: ->
+    schema: @schema.toJSON()
+    data: @each (row) -> JSON.stringify row.raw()
+
+  @fromJSON: (json) ->
+    schemaJson = json.schema
+    dataJson = json.data
+
+    schema = @schema.fromSpec schemaJson
+    rawrows = JSON.parse dataJson
+
+    new gg.data.RowTable rawrows, schema
 
 
 
