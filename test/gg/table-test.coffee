@@ -71,6 +71,14 @@ suite.addBatch
         _.each ['neste', 'arr'], (attr) ->
           assert.not row.contains(attr), "#{attr} should not exist anymore"
 
+    "can be turned to json and parsed back": (table) ->
+      table2 = gg.data.RowTable.fromJSON table.toJSON()
+
+      assert.deepEqual table.schema.toJSON(), table2.schema.toJSON()
+      _.times table.nrows(), (idx) ->
+        assert.equal table.get(idx, 'a'), table2.get(idx, 'a'), "a's should be equal"
+        assert.deepEqual table.get(idx, 'f'), table2.get(idx, 'f'), "arrays should be equal"
+
 
     "when f is set":
       topic: (table) ->

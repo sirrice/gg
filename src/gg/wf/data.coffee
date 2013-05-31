@@ -58,4 +58,6 @@ class gg.wf.Env
   clone: -> new gg.wf.Env _.clone(@groupPairs)
 
   toString: -> JSON.stringify @groupPairs
+  toJSON: -> _.map @groupPairs, _.clone
+  @fromJSON: (json) -> new gg.wf.Env json
 

@@ -251,16 +251,16 @@ class gg.data.RowTable extends gg.data.Table
 
   toJSON: ->
     schema: @schema.toJSON()
-    data: @each (row) -> JSON.stringify row.raw()
+    data: @raw()
 
   @fromJSON: (json) ->
     schemaJson = json.schema
     dataJson = json.data
 
-    schema = @schema.fromSpec schemaJson
-    rawrows = JSON.parse dataJson
+    schema = gg.data.Schema.fromSpec schemaJson
+    rawrows = dataJson
 
-    new gg.data.RowTable rawrows, schema
+    new gg.data.RowTable schema, rawrows
 
 
 

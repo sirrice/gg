@@ -3,6 +3,7 @@
 events = require 'events'
 science = require 'science'
 _ = require 'underscore'
+$ = require 'jQuery'
 
 # Need to do this because underscore is an asshole and sets the exports
 # variable if we don't
