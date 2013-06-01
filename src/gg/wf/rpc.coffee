@@ -1,6 +1,5 @@
 #<< gg/wf/node
 
-io = require "socket.io-client"
 
 class gg.wf.RPC extends gg.wf.Node
   constructor: (@spec={}) ->
@@ -18,10 +17,14 @@ class gg.wf.RPC extends gg.wf.Node
     data = @inputs[0]
     dataJson = data.table.toJSON()
     envJson = data.env.toJSON()
+    context = {}
+    compute = @compute.toString()
 
     payload =
       data: dataJson
       env: envJson
+      compute: compute
+      context: context
 
     proto = "http:"
     hostname = "localhost"
@@ -38,4 +41,5 @@ class gg.wf.RPC extends gg.wf.Node
       newenv = gg.wf.Env.fromJSON respData.env
       @output 0, new gg.wf.Data(table, newenv)
       socket.disconnect()
+
 

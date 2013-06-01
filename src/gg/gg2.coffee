@@ -2,8 +2,9 @@
 
 events = require 'events'
 science = require 'science'
+# this is a problem because of how node deals with _
 _ = require 'underscore'
-$ = require 'jQuery'
+io = require "socket.io-client"
 
 # Need to do this because underscore is an asshole and sets the exports
 # variable if we don't

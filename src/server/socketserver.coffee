@@ -28,4 +28,8 @@ socket.on 'connection', (client) ->
   client.on 'noop', (payload) ->
     client.emit "result", payload
 
+  client.on 'map', (payload) ->
+    data = payload
+    client.emit "result", data
+
   client.on 'disconnect', () ->

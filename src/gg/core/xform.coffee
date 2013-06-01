@@ -21,17 +21,6 @@
 #    the stage of the workflow and which scales training has happened
 #
 #
-# WRONG::: XForms as workflow nodes
-# ------------------------
-# For convenience, XForm is a workflow Exec node
-#
-# NOTE: the XForm should not be used directly.  Instead, workflow nodes should be
-#       accessed via the @nodes() call, which returns [@] by default.  This allows
-#       more complex statistics return a series of workflow nodes
-#       A typical series may be: mapping -> split -> exec -> join
-#
-#
-#
 # Spec:
 # {
 #   f: Compute Function
@@ -45,14 +34,19 @@
 class gg.core.XForm
 
   constructor: (@g, @spec={}) ->
-    #unless _.isSubclass @g, gg.Graphic
-    #  throw Error("Xform passed non-graphic as first argument")
+    unless not @g? or _.isSubclass @g, gg.Graphic
+      throw Error("Xform passed non-graphic as first argument")
 
-    # before executing the operator, we will add the table, environment and node
-    # objects to this state variable, so they can be accessed from the compute
-    # function
+    # Before executing the operator, we will add the
+    # * table,
+    # * environment
+    # * node object
+    #
+    # to this state variable, so they can be accessed from
+    # the compute function
     #
     # The state variable is released after the operator exits
+
     @state = {}
 
     @params = {}
@@ -180,6 +174,9 @@ class gg.core.XForm
 
 
   # Wraps @compute to validate inputs and add defaults
+  #
+  # The complete state necessary to execute compute must be
+  # self contained and easily pickleable
   compile: ->
     spec = _.clone @spec
     _compute = (table, env, node) =>
