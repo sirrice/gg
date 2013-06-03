@@ -158,10 +158,11 @@ class gg.scale.Scales extends gg.core.XForm
       posMapping = @posMapping info.layer
       # only table columns that have a corresponding
       # ordinal scale are allowed
-      f = (aes) ->
+      f = (aes) =>
         _.map scales.types(aes, posMapping), (type) =>
           unless type is gg.data.Schema.ordinal
             if t.contains aes, type
+              @log "aestype: #{aes}-#{type}"
               {aes: aes, type: type}
 
       _.compact _.flatten _.map t.colNames(), f

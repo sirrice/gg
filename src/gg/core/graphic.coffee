@@ -15,10 +15,11 @@ class gg.core.Graphic
       @scalespec = _.findGood [@spec.scales, {}]
       @optspec = _.findGood [@spec.opts, @spec.options, {}]
 
-      @layers = new gg.layer.Layers @, @layerspec
-      @facets = gg.facet.Facets.fromSpec @, @facetspec
-      @scales = new gg.scale.Scales @, @scalespec
+      # The order to instantiate these objects matters
       @options = new gg.core.Options @, @optspec
+      @facets = gg.facet.Facets.fromSpec @, @facetspec
+      @layers = new gg.layer.Layers @, @layerspec
+      @scales = new gg.scale.Scales @, @scalespec
 
 
     svgPane: (facetX, facetY, layer) ->
@@ -81,25 +82,32 @@ class gg.core.Graphic
           .attr("width", "100%")
           .attr("height", "100%")
 
-        # height of title TODO: use _.exSize or _.fontSize instead
-        # Draw Title.  Draw last so it's at the top
-        title = @options.title
-        hTitle = 0
-        if title?
-          hTitle = _.exSize({"font-size": "30pt"}).h
-          svgTitle = @svg.append("g")
-            .append("text")
-              .text(title)
-              .attr("text-anchor", "middle")
-              .attr("class", "graphic-title")
-              .attr("style", "font-size: 30pt")
-              .attr("dx", @options.w/2)
-              .attr("dy", "1em")
-
-
-        # Create container for facets
         @wFacet = @options.w
-        @hFacet = @options.h - hTitle
+        @hFacet = @options.h
+        hTitle = 0
+
+        unless @options.minimal
+          # height of title TODO: use _.exSize or _.fontSize instead
+          # Draw Title.  Draw last so it's at the top
+          title = @options.title
+          hTitle = 0
+          if title?
+            hTitle = _.exSize({"font-size": "30pt"}).h
+            svgTitle = @svg.append("g")
+              .append("text")
+                .text(title)
+                .attr("text-anchor", "middle")
+                .attr("class", "graphic-title")
+                .attr("style", "font-size: 30pt")
+                .attr("dx", @options.w/2)
+                .attr("dy", "1em")
+
+
+          # Create container for facets
+          @wFacet = @options.w
+          @hFacet = @options.h - hTitle
+
+
         @svgFacet = @svg.append("g")
           .attr("transform", "translate(0, #{hTitle})")
           .attr("width", @wFacet)

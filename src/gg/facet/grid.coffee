@@ -20,53 +20,66 @@ class gg.facet.Grid extends gg.facet.Facets
     }, "rect"
 
 
-    facetTitleSize = "13pt"
-    titleDims = _.exSize
-      "font-size": facetTitleSize
-      "font-family": "arial"
-    hTitle = titleDims.h + @facetPadding
-    # XXX: make showing facet titles and axes configurable
+    hTitle = 0
+
+    unless @g.options.minimal
+
+      facetTitleSize = "13pt"
+      titleDims = _.exSize
+        "font-size": facetTitleSize
+        "font-family": "arial"
+      hTitle = titleDims.h + @facetPadding
+      # XXX: make showing facet titles and axes configurable
+
+      # Add containers for Facet main label
+      svgFacet.append("g").append("text")
+        .text(@facetXLabel or @x)
+        .attr("transform", "translate(#{hTitle}, #{@facetPadding/2})")
+        .attr("dy", "1em")
+        .attr("dx", (w-2*hTitle) / 2)
+        .attr("text-anchor", "middle")
+        .attr("class", "facet-title")
+        .style("font-size", facetTitleSize)
+        .style("font-family", "arial")
+
+      svgFacet.append("g").append("text")
+        .text(@facetYLabel or @y)
+        .attr("transform", "rotate(90)translate(#{hTitle+(h-2*hTitle)/2},-#{w-hTitle-@facetPadding})")
+        .attr("text-anchor", "middle")
+        .attr("class", "facet-title")
+        .style("font-size", facetTitleSize)
+        .style("fon-family", "arial")
+
+      # Add containers for X and Y axis labels
+      # XXX: have better API to retrieve axis labels!
+      svgFacet.append("text")
+        .text(@g.options.xaxis)
+        .attr("transform", "translate(#{hTitle}, #{h-hTitle-@facetPadding})")
+        .attr("dx", (w-2*hTitle)/2)
+        .attr("text-anchor", "middle")
+
+      svgFacet.append("text")
+        .text(@g.options.yaxis)
+        .attr("transform", "rotate(-90)translate(#{-(hTitle+(h-2*hTitle)/2)},#{hTitle})")
+        .attr("text-anchor", "middle")
 
 
-    svgFacet.append("g").append("text")
-      .text(@facetXLabel or @x)
-      .attr("transform", "translate(#{hTitle}, #{@facetPadding/2})")
-      .attr("dy", "1em")
-      .attr("dx", (w-2*hTitle) / 2)
-      .attr("text-anchor", "middle")
-      .attr("class", "facet-title")
-      .style("font-size", facetTitleSize)
-      .style("font-family", "arial")
+      pDims =
+        left: hTitle
+        top: hTitle
+        width: w - 2*(hTitle-@facetPadding)
+        height: h - 2*(hTitle-@facetPadding)
+        wRatio: (w-2*(hTitle-@facetPadding)) / w
+        hRatio: (h-2*(hTitle-@facetPadding)) / h
 
-    svgFacet.append("g").append("text")
-      .text(@facetYLabel or @y)
-      .attr("transform", "rotate(90)translate(#{hTitle+(h-2*hTitle)/2},-#{w-hTitle-@facetPadding})")
-      .attr("text-anchor", "middle")
-      .attr("class", "facet-title")
-      .style("font-size", facetTitleSize)
-      .style("fon-family", "arial")
-
-    # XXX: have better API to retrieve axis labels!
-    svgFacet.append("text")
-      .text(@g.options.xaxis)
-      .attr("transform", "translate(#{hTitle}, #{h-hTitle-@facetPadding})")
-      .attr("dx", (w-2*hTitle)/2)
-      .attr("text-anchor", "middle")
-    svgFacet.append("text")
-      .text(@g.options.yaxis)
-      .attr("transform", "rotate(-90)translate(#{-(hTitle+(h-2*hTitle)/2)},#{hTitle})")
-      .attr("text-anchor", "middle")
-
-
-
-
-    pDims =
-      left: hTitle
-      top: hTitle
-      width: w - 2*(hTitle-@facetPadding)
-      height: h - 2*(hTitle-@facetPadding)
-      wRatio: (w-2*(hTitle-@facetPadding)) / w
-      hRatio: (h-2*(hTitle-@facetPadding)) / h
+    else
+      pDims =
+        left: 0
+        top: 0
+        width: w
+        height: h
+        wRatio: 1
+        hRatio: 1
 
     matrix = "#{pDims.wRatio},0,0,#{pDims.hRatio},#{pDims.left},#{pDims.top}"
 
@@ -84,51 +97,55 @@ class gg.facet.Grid extends gg.facet.Facets
     svg = @svg
 
 
-    # compute dimensions for each container
-    # top facet space
-    @log "exSize: #{JSON.stringify @exSize}"
-
     # compute pixel size of largest y-axis value
     # used to compute y-axis label spacing
     formatter = d3.format(",.0f")
     maxValF = (s) ->
       yscale = s.scale 'y', gg.data.Schema.unknown
-      if _.isNumber yscale.maxDomain()
-        yscale.maxDomain()
-      else
-        100
-    maxVal = _.mmax(_.map @g.scales.scalesList, maxValF)
+      y = yscale.maxDomain()
+      y = 100 unless _.isNumber(y)
+    maxVal = _.mmax _.compact _.map( @g.scales.scalesList, maxValF)
     dims = _.textSize(formatter(maxVal), {"font-size":"10pt", "font-family":"arial"})
     yAxisWidth = dims.w + 2*@facetPadding
 
-    facetSize = @exSize.h + 2*@facetPadding
-    paneWidth = @w - yAxisWidth - facetSize
-    paneHeight = @h - 2 * facetSize
+    labelHeight = @exSize.h + 2*@facetPadding
+    drawXFacet = not(@xs.length == 1 and @xs[0] is null)
+    drawYFacet = not(@ys.length == 1 and @ys[0] is null)
+    xFacetSize = if drawXFacet then labelHeight else 0
+    yFacetSize = if drawYFacet then labelHeight else 0
+    paneWidth = @w - yAxisWidth - yFacetSize
+    paneHeight = @h - labelHeight - xFacetSize
+
+    if @g.options.minimal
+      paneWidth = @w
+      paneHeight = @h
+      xAxisWidth = yAxisWidth = yFacetSize = xFacetSize = labelHeight = 0
+
     yAxisOpts =
       left: 0
-      top: facetSize
-      width: yAxisWidth#  facetSize
-      height: @h - facetSize
+      top: labelHeight
+      width: yAxisWidth
+      height: @h - xFacetSize
       class: "y-axis axis"
     xAxisOpts =
-      left: yAxisWidth# facetSize
-      top: @h - facetSize
-      width: paneWidth#@w - facetSize
-      height: facetSize
+      left: yAxisWidth
+      top: @h - yFacetSize - labelHeight
+      width: paneWidth
+      height: labelHeight
       class: "x-axis axis"
     topFacetOpts =
-      left: yAxisWidth# facetSize
+      left: yAxisWidth
       top: 0
       width: paneWidth
-      height: facetSize
+      height: labelHeight
     rightFacetOpts =
-      left: @w - facetSize
-      top: facetSize
-      width: facetSize
+      left: @w - labelHeight
+      top: xFacetSize
+      width: labelHeight
       height: paneHeight
     paneOpts =
-      left: yAxisWidth#facetSize
-      top: facetSize
+      left: yAxisWidth
+      top: xFacetSize
       width: paneWidth
       height: paneHeight
       class: "facet-grid-container"

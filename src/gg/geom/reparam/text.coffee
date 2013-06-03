@@ -56,6 +56,8 @@ class gg.geom.reparam.Text extends gg.core.XForm
       row.set "y0", y
       row.set "y1", y+size.h
 
+    table.schema = @outputSchema table, env
+
     table
 
 

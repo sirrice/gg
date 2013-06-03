@@ -26,6 +26,24 @@ _.extend @, gg
 
 # this sets MODULE.gg as the fromSpec method
 fromSpec = (spec) -> new gg.core.Graphic spec
+
+# render array of numbers
+renderArray = (array, domEl, userSpec={}) ->
+  defaultSpec =
+    layers: [
+      geom: "rect"
+    ]
+  spec = _.clone defaultSpec
+  spec = _.extend spec, userSpec
+
+  rows = _.map array, (v, idx) ->
+    { x: idx, y: v }
+  console.log rows[0..15]
+  plot = new gg.core.Graphic spec
+  plot.render domEl, rows
+
+
 @gg = fromSpec
 _.extend @gg, gg
+@gg.renderArray = renderArray
 

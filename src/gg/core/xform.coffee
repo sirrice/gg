@@ -34,8 +34,6 @@
 class gg.core.XForm
 
   constructor: (@g, @spec={}) ->
-    unless not @g? or _.isSubclass @g, gg.Graphic
-      throw Error("Xform passed non-graphic as first argument")
 
     # Before executing the operator, we will add the
     # * table,
@@ -46,23 +44,28 @@ class gg.core.XForm
     # the compute function
     #
     # The state variable is released after the operator exits
-
+    #
+    # All of the state is encapsulated in @spec, @state, @params
+    #
     @state = {}
-
     @params = {}
-    @log = gg.util.Log.logger "XForm", gg.util.Log.WARN unless @log?
+    @log = gg.util.Log.logger "#{@spec.name} #{@constructor.name}", gg.util.Log.WARN unless @log?
 
 
   parseSpec: ->
     spec = _.clone @spec
     @log "XForm spec: #{JSON.stringify spec}"
 
-    @inputSchema = @extractAttr "inputSchema"
-    @defaults = @extractAttr "defaults"
+    # add all the necessary during execution state here
+    @params.inputSchema = @extractAttr "inputSchema"
+    @params.defaults = @extractAttr "defaults"
+    @params.facets =
+      facetXKey: @g.facets.facetXKey
+      facetYKey: @g.facets.facetYKey
 
     @compute = spec.f or @compute
+
     @spec = spec
-    @log = gg.util.Log.logger "#{@spec.name} #{@constructor.name}", gg.util.Log.WARN
 
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?
@@ -76,7 +79,10 @@ class gg.core.XForm
       @[attr]
 
 
+  #
   # Convenience functions during workflow execution
+  #
+
   # All functions take (table, env) as input
   facetGroups: (table, env) ->
     env = @state.env unless env
@@ -103,39 +109,40 @@ class gg.core.XForm
     @g.scales.scales(info.facetX, info.facetY, info.layer)
 
   # parameter accessor
-  #
-  param: (table, env, attr, defaultVal=null) ->
+  param: (attr, table, env) ->
     table = @state.table unless table?
     env = @state.env unless env
 
     if attr of @params
       ret = @params[attr]
     else
-      if attr of @
-        ret = @[attr]
-      else
-        return defaultVal
+      ret = null
 
     if _.isFunction ret then ret(table, env) else ret
+
+
+  #
+  # Schema verification functions that subclasses can override
+  #
 
   # Defaults for optional attributes
   defaults: (table, env) -> {}
 
   # Required input schema
-  inputSchema: (table, env) -> table.colNames()
+  inputSchema: (table, env) -> []
 
   # throws exception if inputs don't validate with schema
   validateInput: (table, env) ->
-    tableCols = table.colNames()
-    iSchema = @param table, env, "inputSchema"
-    missing = _.reject iSchema, (attr) -> attr in tableCols
+    iSchema = @param "inputSchema", table, env
+    missing = _.reject iSchema, (attr) -> table.contains attr
     if missing.length > 0
       gg.wf.Stdout.print table, null, 5, gg.util.Log.logger("err")
       throw Error("#{@name}: input schema did not contain #{missing.join(",")}")
 
   # remove rows where a required attribute is null/nan/undefined
+  # XXX: deprecated
   filterInput: (table, env) ->
-    iSchema = @param table, env, "inputSchema"
+    iSchema = @param "inputSchema", table, env
     scales = @scales table, env
     info = @paneInfo table, env
     scales = @g.scales.facetScales info.facetX, info.facetY
@@ -159,9 +166,8 @@ class gg.core.XForm
 
     table
 
-
   addDefaults: (table, env) ->
-    defaults = @param table, env, "defaults"
+    defaults = @param "defaults", table, env
     @log "addDefaults: #{JSON.stringify defaults}"
     @log "             #{JSON.stringify table.schema.attrs()}"
     _.each defaults, (val, col) =>
@@ -172,7 +178,6 @@ class gg.core.XForm
   compute: (table, env, node) -> table
 
 
-
   # Wraps @compute to validate inputs and add defaults
   #
   # The complete state necessary to execute compute must be
@@ -180,6 +185,7 @@ class gg.core.XForm
   compile: ->
     spec = _.clone @spec
     _compute = (table, env, node) =>
+      @log "table schema: #{table.schema.toSimpleString()}"
       table = table.cloneDeep()
       @state =
         table: table
@@ -195,10 +201,6 @@ class gg.core.XForm
       @state = {}
     [node]
 
-  @fromSpec: (spec) ->
-      xformName = _.findGood [spec.xform, "identity"]
-      klass = {
-      }[xformName] or gg.core.XForm
 
 
 

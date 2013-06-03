@@ -185,7 +185,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeStdOut "post-reparam"
 
 
-    if @pos?
+    if true or @pos?
       nodes.push @pos
       nodes.push makeStdOut "post-position"
 
@@ -195,7 +195,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
       nodes.push @g.scales.pixel
 
 
-    # coord: pixel -> domain -> transformed -> pixel XXX: not implemented
+    # coord: pixel -> domain -> transformed -> pixel
+    # XXX: not implemented
     nodes.push makeScalesOut "pre-coord"
     nodes.push @coord
     nodes.push makeStdOut "post-coord"

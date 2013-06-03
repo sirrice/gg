@@ -9,4 +9,5 @@ class gg.core.Options
     @title = _.findGood [@spec.title, null]
     @xaxis = _.findGood [@spec.xaxis, @spec.x, "xaxis"]
     @yaxis = _.findGood [@spec.yaxis, @spec.y, "yaxis"]
+    @minimal = _.findGood [@spec.minimal, false]
 
