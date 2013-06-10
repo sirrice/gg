@@ -16,14 +16,14 @@ class gg.geom.Render extends gg.core.XForm
     super
 
   svg: (table, env, node) ->
-    info = @paneInfo table, env
-    svg = @g.facets.svgPane info.facetX, info.facetY
-    ret = svg.append("g")
-    ret.classed(@name, true) if @name?
-    ret.classed("layer-#{@layer.layerIdx}", true)
-    ret
-
-
+    svg = env.get 'paneSvg'
+    svg
+    #info = @paneInfo table, env
+    #svg = @g.facets.svgPane info.facetX, info.facetY
+    #ret = svg.append("g")
+    #ret.classed(@name, true) if @name?
+    #ret.classed("layer-#{@layer.layerIdx}", true)
+    #ret
 
 
   groups: (g, klass, data) ->

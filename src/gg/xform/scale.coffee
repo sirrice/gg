@@ -10,13 +10,14 @@ class gg.xform.ScalesApply extends gg.core.XForm
 
   parseSpec: ->
     super
-    @aess = _.findGoodAttr @spec, ['aess'], []
-    @posMapping = @spec.posMapping or {}
+    @params.putAll
+      aess: @spec.aess or []
+      posMapping: @spec.posMapping or {}
 
-  compute: (table, env) ->
+  compute: (table, env, params) ->
     @log "table has #{table.nrows()} rows"
-    scales = @scales table, env
-    table = scales.apply table, null, @posMapping
+    scales = @scales table, env, params
+    table = scales.apply table, null, params.get('posMapping')
     table
 
 
@@ -28,14 +29,15 @@ class gg.xform.ScalesInvert extends gg.core.XForm
 
   parseSpec: ->
     super
-    @aess = _.findGoodAttr @spec, ['aess'], []
-    @posMapping = @spec.posMapping or {}
+    @params.putAll
+      aess: @spec.aess or []
+      posMapping: @spec.posMapping or {}
 
-  compute: (table, env) ->
-    scales = @scales table, env
-    aess = _.compact(_.union scales.aesthetics(), @aess)
+  compute: (table, env, params) ->
+    scales = @scales table, env, params
+    aess = _.compact(_.union scales.aesthetics(), params.get('aess'))
     @log ":aesthetics: #{aess}"
-    table = scales.invert table, null, @posMapping
+    table = scales.invert table, null, params.get('posMapping')
     table
 
 
@@ -48,13 +50,14 @@ class gg.xform.ScalesFilter extends gg.core.XForm
 
   parseSpec: ->
     super
-    @aess = _.findGoodAttr @spec, ['aess'], []
-    @posMapping = @spec.posMapping or {}
+    @params.putAll
+      aess: @spec.aess or []
+      posMapping: @spec.posMapping or {}
 
-  compute: (table, env) ->
+  compute: (table, env, params) ->
     @log "table has #{table.nrows()} rows"
-    scales = @scales table, env
-    table = scales.filter table, null, @posMapping
+    scales = @scales table, env, params
+    table = scales.filter table, null, params.get('posMapping')
     table
 
 

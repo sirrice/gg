@@ -7,18 +7,18 @@ class gg.pos.Text extends gg.pos.Position
   parseSpec: ->
     super
 
-    @bFast = - _.findGood [@spec.fast, false]
-    @innerLoop = _.findGood [@spec.innerLoop, 15]
-    attrs = ['T', 't', 'temp', 'temperature']
-    @temperature = _.findGoodAttr @spec, attrs, 2.466303 # 1-e^(-1/T) = 2/3
-
-  defaults: ->
+    tempAttrs = ['T', 't', 'temp', 'temperature']
+    @params.putAll(
+      bFast = - _.findGood [@spec.fast, false]
+      innerLoop = _.findGood [@spec.innerLoop, 15]
+      temperature = _.findGoodAttr @spec, tempAttrs, 2.466303 # 1-e^(-1/T) = 2/3
+    )
 
   inputSchema: ->
     ['x', 'y', 'text']
 
 
-  compute: (table, env, node) ->
+  compute: (table, env, params) ->
     attrs = ['x', 'y', 'text']
     inArr = _.map attrs, ((attr)->table.schema.inArray attr)
     unless _.all(inArr) or not (_.any inArr)
@@ -33,7 +33,10 @@ class gg.pos.Text extends gg.pos.Position
       ]
 
     start = Date.now()
-    boxes = gg.pos.Text.anneal boxes, @bFast, @innerLoop, @temperature
+    bFast = params.get 'bFast'
+    innerLoop = params.get 'innerLoop'
+    temperature = params.get 'temperature'
+    boxes = gg.pos.Text.anneal boxes, bFast, innerLoop, temperature
     console.log "got #{boxes.length} boxes from annealing"
     console.log "took #{Date.now()-start} ms"
 

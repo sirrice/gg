@@ -16,8 +16,14 @@
 class gg.wf.Map extends gg.wf.Exec
 
   constructor: (@spec) ->
-    @mapping = _.findGood [@spec.aes, @spec.map, @spec.mapping]
+    super
+    @type = "mapper"
+    @name = _.findGood [@spec.name, "mapper-#{@id}"]
 
+    @params.ensureAll
+      mapping: [ ['aes', 'map', 'mapping'], {} ]
 
-  compute: (table, env, node) ->
-    table.transform @mapping
+  compute: (table, env, params) ->
+    mapping = params.get 'mapping'
+    mapping = gg.util.mappingToFunctions table, mapping
+    table.transform mapping

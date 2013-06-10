@@ -40,7 +40,7 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
       max: gg.data.Schema.numeric
 
 
-  compute: (table, env, node) ->
+  compute: (table, env, params) ->
     scales = @scales table, env
     yscale = scales.scale 'y', gg.data.Schema.numeric
 
@@ -65,7 +65,7 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
 
     mapping = _.mappingToFunctions table, mapping
     table.transform mapping, yes
-    table.schema = @outputSchema table, env
+    table.schema = params.get('outputSchema') table, env, params
     table
 
 

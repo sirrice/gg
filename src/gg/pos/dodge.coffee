@@ -8,7 +8,6 @@ class gg.pos.Dodge extends gg.pos.Position
 
   inputSchema: -> ['x', 'x0', 'x1', 'y', 'y0', 'y1', 'group']
 
-  parseSpec: -> super
 
   compute: (table, env) ->
     groups = table.split (row) -> JSON.stringify [row.get('x0'), row.get('x1')]

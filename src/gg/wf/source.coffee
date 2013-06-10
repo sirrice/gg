@@ -2,19 +2,23 @@
 
 class gg.wf.Source extends gg.wf.Node
   constructor: (@spec={}) ->
-    super @spec
-
-    @compute = @spec.f or @compute
+    super
     @type = "source"
     @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
 
-  compute: -> throw Error("#{@name}: Source not setup to generate tables")
+    @params.ensure 'compute', ['f'], ((args...)=>@compute args...)
+
+  compute: ->
+    throw Error("Source not setup to generate tables")
+
   ready: -> yes
 
   run: ->
     # always ready!
-    table = @compute()
-    @output 0, new gg.wf.Data(table, new gg.wf.Env)
+    compute = @params.get 'compute'
+    env = new gg.wf.Env
+    table = compute null, env, @params
+    @output 0, new gg.wf.Data(table, env)
     table
 
 
@@ -23,10 +27,24 @@ class gg.wf.Source extends gg.wf.Node
 
 class gg.wf.TableSource extends gg.wf.Source
   constructor: (@spec) ->
-    super @spec
+    super
 
-    @table = @spec.table
+    unless @params.contains 'table'
+      throw Error("TableSource needs a table as parameter")
 
-  compute: -> @table
+  compute: (table, env, params) ->
+    params.get 'table'
 
 
+class gg.wf.CsvSource extends gg.wf.Source
+  constructor: (@spec) ->
+    super
+
+    unless @params.contains 'url'
+      throw Error("CsvSource needs a URL")
+
+  compute: ->
+    throw Error("not implemented")
+# CSVSource
+# JDBC/SQLSource
+# MapSource

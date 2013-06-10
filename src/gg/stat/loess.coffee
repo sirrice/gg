@@ -6,12 +6,15 @@ class gg.stat.LoessStat extends gg.stat.Stat
 
 
   parseSpec: ->
-    @bandwidth = _.findGoodAttr @spec, ["bandwidth", "band", "bw"], .3
-    @acc = _.findGoodAttr @spec, ["accuracy", "acc", "ac"], 1e-12
     super
 
-  inputSchema: (table, env, node) -> ['x', 'y']
-  outputSchema: (table, env, node) ->
+    @params.putAll
+      bandwidth: _.findGoodAttr @spec, ["bandwidth", "band", "bw"], .3
+      acc: _.findGoodAttr @spec, ["accuracy", "acc", "ac"], 1e-12
+
+  inputSchema: (table, env) -> ['x', 'y']
+
+  outputSchema: (table, env) ->
     gg.data.Schema.fromSpec
       x: gg.data.Schema.numeric
       y: gg.data.Schema.numeric
@@ -19,7 +22,7 @@ class gg.stat.LoessStat extends gg.stat.Stat
   # The loess function expects an xs and ys array where
   # 1) every value is a finite number
   # 2) xs is monotonically increasing
-  compute: (table, env, node) ->
+  compute: (table, env, params) ->
     @log "nrows: #{table.nrows()}"
     @log "contains x,y: #{table.contains 'x'}, #{table.contains 'y'}"
     xs = table.getColumn('x')
@@ -32,11 +35,14 @@ class gg.stat.LoessStat extends gg.stat.Stat
     xs = xys.map (xy) -> xy[0]
     ys = xys.map (xy) -> xy[1]
 
+
     loessfunc = science.stats.loess()
-    bandwidth = Math.max @bandwidth, 3.0/xs.length
+    acc = params.get 'acc'
+    bandwidth / params.get 'bandwidth'
+    bandwidth = Math.max bandwidth, 3.0/xs.length
     loessfunc.bandwidth bandwidth
-    loessfunc.accuracy @acc
-    @log.warn "bw: #{bandwidth}\tacc: #{@acc}"
+    loessfunc.accuracy acc
+    @log.warn "bw: #{bandwidth}\tacc: #{acc}"
 
     smoothys = loessfunc(xs, ys)
     rows = []
@@ -51,4 +57,5 @@ class gg.stat.LoessStat extends gg.stat.Stat
     @log "compute: ys: #{JSON.stringify ys.slice(0,6)}"
     @log "compute: smoothys: #{JSON.stringify smoothys.slice(0,6)}"
 
-    new gg.data.RowTable @outputSchema(), rows
+    schema = params.get('outputSchema') table, env, params
+    new gg.data.RowTable schema, rows

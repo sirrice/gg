@@ -12,13 +12,13 @@ class gg.coord.YFlip extends gg.coord.Coordinate
 class gg.coord.XFlip extends gg.coord.Coordinate
   @aliases = ["xflip"]
 
-  map: (table, env) ->
-    scales = @scales table, env
-    aessTypes = {}
-    _.each gg.scale.Scale.xys, (xy) -> aessTypes[xy] = gg.data.Schema.numeric
+  map: (table, env, params) ->
+    scales = @scales table, env, params
+
     inverted = scales.invert table, gg.scale.Scale.xys
-    xtype = if table.contains 'x' then table.schema.type 'x' else gg.data.Schema.unknown
-    ytype = if table.contains 'y' then table.schema.type 'y' else gg.data.Schema.unknown
+    xtype = ytype = gg.data.Schema.unknown
+    xtype = table.schema.type('x') if table.contains 'x'
+    ytype = table.schema.type('y') if table.contains 'y'
 
     # flip the x range
     xScale = scales.scale 'x', xtype
@@ -50,14 +50,14 @@ class gg.coord.XFlip extends gg.coord.Coordinate
 class gg.coord.Flip extends gg.coord.Coordinate
   @aliases = ["flip", 'xyflip']
 
-  map: (table, env) ->
-    scales = @scales table, env
+  map: (table, env, params) ->
+    scales = @scales table, env, params
     inverted = scales.invert table, gg.scale.Scale.xs
     type = table.schema.type 'x'
+    xscale = scales.scale 'x', type
 
-    xRange = scales.scale('x', type).range()
-    xRange = [xRange[1], xRange[0]]
-    scales.scale('x', type).range(xRange)
+    xrange = xscale.range()
+    xscale.range [xrange[1], xrange[0]]
 
     @log "map: xrange: #{xRange}"
 

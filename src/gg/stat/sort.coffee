@@ -5,20 +5,24 @@ class gg.stat.SortStat extends gg.stat.Stat
   @aliases = ['sort', 'sorted']
 
   parseSpec: ->
-    attrs = ["col", "cols", "attr", "attrs", "aes", "aess" ]
-    @attrs = _.findGoodAttr @spec, attrs, []
-    @attrs = [@attrs] unless _.isArray @attrs
-    @reverse = _.findGood [@spec.reverse, @spec.invert, false]
     super
+    attrs = ["col", "cols", "attr", "attrs", "aes", "aess" ]
+    attrs = _.findGoodAttr @spec, attrs, []
+    attrs = [attrs] unless _.isArray attrs
+    reverse = _.findGood [@spec.reverse, @spec.invert, false]
+    @params.putAll
+      attrs: attrs
+      reverse: reverse
 
-  inputSchema: (table, env, node) -> @attrs
+  inputSchema: (table, env, params) -> params.get 'attrs'
 
 
-  compute: (table, env, node) ->
+  compute: (table, env, params) ->
     f = (attr) ->
       table.contains(attr) and not table.schema.inArray(attr)
-    attrs = @attrs.filter f
-    reverse = @reverse
+    attrs = params.get 'attrs'
+    attrs = attrs.filter f
+    reverse = params.get 'reverse'
 
     if attrs.length > 0
       cmp = (row1, row2) ->

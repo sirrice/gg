@@ -5,9 +5,9 @@
 class gg.coord.Identity extends gg.coord.Coordinate
   @aliases = ["identity"]
 
-  map: (table, env) ->
+  map: (table, env, params) ->
     schema = table.schema
-    scales = @scales table, env
+    scales = @scales table, env, params
     posMapping = {}
     _.each gg.scale.Scale.ys, (y) ->
       posMapping[y] = 'y' if table.contains y

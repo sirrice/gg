@@ -1,0 +1,151 @@
+#<< gg/util/*
+
+#
+# Processing:
+# 1) Splits dataset to be processed for different facets
+#
+# Rendering
+# 1) Allocates svg elements for each facet pane and
+# 2) Provides API to access them
+#
+# XXX: in the future, this should be an abstract class that computes
+#      offset and sizes of containers, and subclasses should use them
+#      to create appropriate SVG/Canvas elements
+#
+#
+# Spec:
+#
+#   facets: {
+#     (x|y): ???
+#     type: grid|wrap,
+#     scales: free|fixed,
+#     (size|sizing): free|fixed
+#     padding
+#     class
+#   }
+#
+#   opts {
+#     showXAxis
+#     showYAxis
+#
+#   }
+#
+class gg.facet.base.Facets
+  @facetXKey = "facetX"
+  @facetYKey = "facetY"
+
+  constructor: (@g, @spec={}) ->
+    @log = gg.util.Log.logger "Facets", gg.util.Log.DEBUG
+
+    @parseSpec()
+
+    @splitter = @splitterNodes()
+    @collector = new gg.core.BForm @g,
+      name: 'collect-xys'
+      f: (tables, envs, node) ->
+        xs = gg.core.BForm.pick envs, gg.facet.base.Facets.facetXKey
+        ys = gg.core.BForm.pick envs, gg.facet.base.Facets.facetYKey
+
+        _.each envs, (env) ->
+          env.put 'xs', xs
+          env.put 'ys', ys
+        tables
+
+    @trainer = new gg.scale.train.Master @g,
+      name: 'facet_train'
+
+
+    # These should be replaced with _actual_ implementations
+    @layout1 = new gg.facet.base.Layout @g,
+      name: 'facet-layout1'
+      params: @layoutParams
+    @layout2 = new gg.facet.base.Layout @g,
+      name: 'facet-layout2'
+      params: @layoutParams
+    @render = new gg.facet.base.Render @g,
+      name: 'facet-render'
+      params: @renderParams
+
+
+  parseSpec: ->
+    @splitParams = new gg.util.Params {
+      x: _.findGood [@spec.x, () -> null]
+      y: _.findGood [@spec.y, () -> null]
+      scales: _.findGood [@spec.scales, "fixed"]
+      type: _.findGood [@spec.type, "grid"]
+      sizing: _.findGood [@spec.sizing, @spec.size, "fixed"]
+      options: @g.options
+    }
+
+    xattrs = ['showx', 'showX', 'showXAxis']
+    yattrs = ['showy', 'showY', 'showYAxis']
+    @layoutParams = new gg.util.Params {
+      showXAxis: _.findGoodAttr @spec, xattrs, yes
+      showYAxis: _.findGoodAttr @spec, yattrs, yes
+      paddingPane: @spec.padding or @spec.paddingPane or 5
+      margin: @spec.margin or 1
+      options: @g.options
+    }
+
+    fClass = _.findGoodAttr @spec, ['facetclass', 'class'], ''
+    @renderParams = new gg.util.Params {
+      fXLabel: _.findGoodAttr @spec, ['xlabel', 'xLabel'], ""
+      fYLabel: _.findGoodAttr @spec, ['ylabel', 'yLabel'], ""
+      fClass: fClass
+      exSize: _.exSize {class: fClass}
+      showXTicks: _.findGood [@spec.showXTicks, true]
+      showYTicks: _.findGood [@spec.showYTicks, true]
+      options: @g.options
+    }
+
+
+    @log "spec: #{JSON.stringify @spec}"
+
+
+
+  # Return workflow nodes that split the dataset along the
+  # x and y facets
+  splitterNodes: ->
+    # XXX: This implementation is not exactly right, because
+    # it will not result in groups for x/y facetpairs that
+    # don't have any tuples.  this should only be apparent
+    # when using "wrap" (we expect the cross product!)
+    facetXKey = gg.facet.base.Facets.facetXKey
+    facetYKey = gg.facet.base.Facets.facetYKey
+    x = @splitParams.get('x')
+    y = @splitParams.get('y')
+    facetXNode = gg.xform.Split.createNode facetXKey, x
+    facetYNode = gg.xform.Split.createNode facetYKey, y
+    [facetXNode, facetYNode]
+
+  # This executes on a per-facet-layer basis
+  # Not a barrier
+  labelerNodes: ->
+    xjoin = new gg.wf.EnvGet
+      name: 'facetx-envget'
+      params:
+        key: gg.facet.base.Facets.facetXKey
+        default: " "
+
+    yjoin = new gg.wf.EnvGet
+      name: 'facety-envget'
+      params:
+        key: gg.facet.base.Facets.facetYKey
+        default: " "
+
+    [xjoin, yjoin]
+
+
+
+  @fromSpec: (g, spec) ->
+    spec.type = spec.type or "grid"
+
+    klass = if spec.type is "wrap"
+      gg.facet.wrap.Facets
+    else
+      gg.facet.grid.Facets
+
+    new klass g, spec
+
+
+

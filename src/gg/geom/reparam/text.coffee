@@ -2,17 +2,13 @@
 #<< gg/data/schema
 
 class gg.geom.reparam.Text extends gg.core.XForm
-  constructor: (@g, @spec) ->
-    super
-    @parseSpec()
 
   defaults: ->
     group: "1"
 
-  inputSchema: ->
-    ['x', 'y', 'text']
+  inputSchema: -> ['x', 'y', 'text']
 
-  outputSchema: (table, env) ->
+  outputSchema: (table, env, params) ->
     numeric = gg.data.Schema.numeric
     gg.data.Schema.fromSpec
       group: table.schema.typeObj "group"
@@ -24,7 +20,7 @@ class gg.geom.reparam.Text extends gg.core.XForm
       y1: numeric
       text: gg.data.Schema.ordinal
 
-  compute: (table, env, node) ->
+  compute: (table, env, params) ->
     gg.wf.Stdout.print table, null, 5, gg.util.Log.logger("text")
     attrs = ['x', 'y', 'text']
     inArr = _.map attrs, ((attr)->table.schema.inArray attr)
@@ -56,7 +52,7 @@ class gg.geom.reparam.Text extends gg.core.XForm
       row.set "y0", y
       row.set "y1", y+size.h
 
-    table.schema = @outputSchema table, env
+    table.schema = params.get('outputSchema') table, env, params
 
     table
 

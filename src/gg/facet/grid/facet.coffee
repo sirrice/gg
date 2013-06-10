@@ -1,100 +1,32 @@
-#<< gg/facet/facet
+#<< gg/facet/base/facet
 
 
-class gg.facet.Grid extends gg.facet.Facets
+class gg.facet.grid.Facets extends gg.facet.base.Facets
+  constructor: ->
+    super
+
+    @layout1 = new gg.facet.grid.Layout @g,
+      name: 'facet-layout1'
+      params: @layoutParams
+    @layout2 = new gg.facet.grid.Layout @g,
+      name: 'facet-layout2'
+      params: @layoutParams
+
+  renderPanes: ->
+    new gg.facet.pane.Svg
 
 
-  #
-  # layout labels, background and container for the facet panes
-  #
-  layoutFacets: (tables, envs, node) ->
-    w = @g.wFacet
-    h = @g.hFacet
-    svgFacet = @g.svgFacet
-
-    # add a plot background
-    _.subSvg svgFacet, {
-      class: "plot-background"
-      width: w
-      height: h
-    }, "rect"
-
-
-    hTitle = 0
-
-    unless @g.options.minimal
-
-      facetTitleSize = "13pt"
-      titleDims = _.exSize
-        "font-size": facetTitleSize
-        "font-family": "arial"
-      hTitle = titleDims.h + @facetPadding
-      # XXX: make showing facet titles and axes configurable
-
-      # Add containers for Facet main label
-      svgFacet.append("g").append("text")
-        .text(@facetXLabel or @x)
-        .attr("transform", "translate(#{hTitle}, #{@facetPadding/2})")
-        .attr("dy", "1em")
-        .attr("dx", (w-2*hTitle) / 2)
-        .attr("text-anchor", "middle")
-        .attr("class", "facet-title")
-        .style("font-size", facetTitleSize)
-        .style("font-family", "arial")
-
-      svgFacet.append("g").append("text")
-        .text(@facetYLabel or @y)
-        .attr("transform", "rotate(90)translate(#{hTitle+(h-2*hTitle)/2},-#{w-hTitle-@facetPadding})")
-        .attr("text-anchor", "middle")
-        .attr("class", "facet-title")
-        .style("font-size", facetTitleSize)
-        .style("fon-family", "arial")
-
-      # Add containers for X and Y axis labels
-      # XXX: have better API to retrieve axis labels!
-      svgFacet.append("text")
-        .text(@g.options.xaxis)
-        .attr("transform", "translate(#{hTitle}, #{h-hTitle-@facetPadding})")
-        .attr("dx", (w-2*hTitle)/2)
-        .attr("text-anchor", "middle")
-
-      svgFacet.append("text")
-        .text(@g.options.yaxis)
-        .attr("transform", "rotate(-90)translate(#{-(hTitle+(h-2*hTitle)/2)},#{hTitle})")
-        .attr("text-anchor", "middle")
-
-
-      pDims =
-        left: hTitle
-        top: hTitle
-        width: w - 2*(hTitle-@facetPadding)
-        height: h - 2*(hTitle-@facetPadding)
-        wRatio: (w-2*(hTitle-@facetPadding)) / w
-        hRatio: (h-2*(hTitle-@facetPadding)) / h
-
-    else
-      pDims =
-        left: 0
-        top: 0
-        width: w
-        height: h
-        wRatio: 1
-        hRatio: 1
-
-    matrix = "#{pDims.wRatio},0,0,#{pDims.hRatio},#{pDims.left},#{pDims.top}"
-
-    @w = pDims.width
-    @h = pDims.height
-    @svg = svgFacet.append('g')
-      .attr("class", "graphic-with-margin")
-      .attr("transform", "matrix(#{matrix})")
+    # create the appropriate objects
 
 
 
 
 
-  allocatePanes: (tables, envs, node) ->
-    svg = @svg
+
+
+  ###
+  allocatePanes: (tables, envs, params) ->
+    svg = params.get 'svg'
 
 
     # compute pixel size of largest y-axis value
@@ -334,6 +266,6 @@ class gg.facet.Grid extends gg.facet.Facets
       .attr("height", yRange.rangeBand())
 
 
-
+  ###
 
 

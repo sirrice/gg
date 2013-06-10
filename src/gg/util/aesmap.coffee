@@ -31,10 +31,11 @@ class gg.util.Aesmap
       cmds = _.compact _.map(table.schema.attrs(), varFunc)
       cmds.push "return #{userCode};"
       cmd = cmds.join ''
-      fcmd = "var __func__ = function(row) {#{cmd}}"
-      gg.util.Aesmap.log fcmd
-      eval fcmd
-      __func__
+      Function("row", cmd)
+      #fcmd = "var __func__ = function(row) {#{cmd}}"
+      #gg.util.Aesmap.log fcmd
+      #eval fcmd
+      #__func__
     else
       # for constants (e.g., date, number)
       gg.util.Aesmap.log "mapToFunction: const:  f(#{key})->#{val}"

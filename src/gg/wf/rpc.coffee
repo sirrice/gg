@@ -14,11 +14,13 @@ class gg.wf.RPC extends gg.wf.Node
 
     throw Error("node not ready") unless @ready()
 
+    compute = @params.get 'compute'
+
     data = @inputs[0]
     dataJson = data.table.toJSON()
     envJson = data.env.toJSON()
     context = {}
-    compute = @compute.toString()
+    compute = compute.toString()
 
     payload =
       data: dataJson

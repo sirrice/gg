@@ -47,25 +47,25 @@ class gg.core.XForm
     #
     # All of the state is encapsulated in @spec, @state, @params
     #
-    @state = {}
-    @params = {}
+    @params = new gg.util.Params
     @log = gg.util.Log.logger "#{@spec.name} #{@constructor.name}", gg.util.Log.WARN unless @log?
+
+    console.log @spec
+    @parseSpec()
 
 
   parseSpec: ->
-    spec = _.clone @spec
-    @log "XForm spec: #{JSON.stringify spec}"
+    @log "XForm spec: #{JSON.stringify @spec}"
+
+    @params.merge @spec.params
 
     # add all the necessary during execution state here
-    @params.inputSchema = @extractAttr "inputSchema"
-    @params.defaults = @extractAttr "defaults"
-    @params.facets =
-      facetXKey: @g.facets.facetXKey
-      facetYKey: @g.facets.facetYKey
+    @params.putAll
+      inputSchema: @extractAttr "inputSchema"
+      outputSchema: @extractAttr "outputSchema"
+      defaults: @extractAttr "defaults"
 
-    @compute = spec.f or @compute
-
-    @spec = spec
+    @compute = @spec.f or @compute
 
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?
@@ -78,47 +78,29 @@ class gg.core.XForm
     else
       @[attr]
 
-
   #
   # Convenience functions during workflow execution
   #
-
-  # All functions take (table, env) as input
-  facetGroups: (table, env) ->
-    env = @state.env unless env
-    {
-      facetX: env.group(@g.facets.facetXKey, "")
-      facetY: env.group(@g.facets.facetYKey, "")
-    }
-
-  layerIdx: (table, env) ->
-    env = @state.env unless env
-    {layer: env.group("layer", "")}
-
-  paneInfo: (table, env) ->
-    table = @state.table unless table?
-    env = @state.env unless env
-    ret = @facetGroups table, env
-    _.extend ret, @layerIdx(table, env)
+  @paneInfo: (table, env) ->
+    ret =
+      facetX: env.get(gg.facet.base.Facets.facetXKey) or ""
+      facetY: env.get(gg.facet.base.Facets.facetYKey) or ""
+      layer: env.get "layer"
     ret
 
-  scales: (table, env) ->
-    table = @state.table unless table?
-    env = @state.env unless env
+  @scales: (table, env) ->
     info = @paneInfo table, env
-    @g.scales.scales(info.facetX, info.facetY, info.layer)
+    scaleset = env.get 'scales'
+    unless scaleset?
+      config = env.get 'scalesconfig'
+      scaleset = config.scales info.layer
+      env.put 'scales', scaleset
+    scaleset
 
-  # parameter accessor
-  param: (attr, table, env) ->
-    table = @state.table unless table?
-    env = @state.env unless env
-
-    if attr of @params
-      ret = @params[attr]
-    else
-      ret = null
-
-    if _.isFunction ret then ret(table, env) else ret
+  paneInfo: (args...) -> gg.core.XForm.paneInfo args...
+  scales: (args...) -> gg.core.XForm.scales args...
+  posMapping: (layerIdx) ->
+    @g.layers.getLayer(layerIdx).geom.posMapping()
 
 
   #
@@ -126,53 +108,28 @@ class gg.core.XForm
   #
 
   # Defaults for optional attributes
-  defaults: (table, env) -> {}
+  defaults: (table, env, params) -> {}
 
   # Required input schema
-  inputSchema: (table, env) -> []
+  inputSchema: (table, env, params) -> []
+
+  outputSchema: (table, env, params) -> table.schema
 
   # throws exception if inputs don't validate with schema
-  validateInput: (table, env) ->
-    iSchema = @param "inputSchema", table, env
+  @validateInput: (table, env, params) ->
+    iSchema = params.get "inputSchema", table, env
     missing = _.reject iSchema, (attr) -> table.contains attr
     if missing.length > 0
       gg.wf.Stdout.print table, null, 5, gg.util.Log.logger("err")
-      throw Error("#{@name}: input schema did not contain #{missing.join(",")}")
+      throw Error("#{params.get 'name'}: input schema did not contain #{missing.join(",")}")
 
-  # remove rows where a required attribute is null/nan/undefined
-  # XXX: deprecated
-  filterInput: (table, env) ->
-    iSchema = @param "inputSchema", table, env
-    scales = @scales table, env
-    info = @paneInfo table, env
-    scales = @g.scales.facetScales info.facetX, info.facetY
-
-    nfiltered = 0
-    table = table.filter (row) =>
-      valid = _.every iSchema, (attr) =>
-        val = row.get(attr)
-        isDefined = not(
-          _.isNaN(val) or _.isNull(val) or _.isUndefined(val))
-        #scale = scales.scale(attr, table.schema.type attr)
-        @log.warn "filterInput: undefined val: #{attr}:\t#{val}" unless isDefined
-        isDefined #and scale.valid(val)
-
-      unless valid
-        @log row.raw()
-        nfiltered += 1
-      valid
-
-    @log "filterInput: filtered #{nfiltered} rows"
-
-    table
-
-  addDefaults: (table, env) ->
-    defaults = @param "defaults", table, env
-    @log "addDefaults: #{JSON.stringify defaults}"
-    @log "             #{JSON.stringify table.schema.attrs()}"
+  @addDefaults: (table, env, params) ->
+    defaults = params.get "defaults", table, env
+    #@log "addDefaults: #{JSON.stringify defaults}"
+    #@log "             #{JSON.stringify table.schema.attrs()}"
     _.each defaults, (val, col) =>
       unless table.contains col
-        @log "addDefaults: adding: #{col} -> #{val}"
+        #@log "addDefaults: adding: #{col} -> #{val}"
         table.addConstColumn col, val
 
   compute: (table, env, node) -> table
@@ -184,21 +141,22 @@ class gg.core.XForm
   # self contained and easily pickleable
   compile: ->
     spec = _.clone @spec
-    _compute = (table, env, node) =>
-      @log "table schema: #{table.schema.toSimpleString()}"
+    log = @log
+    _compute = (table, env, params) ->
+      log "table schema: #{table.schema.toSimpleString()}"
+
       table = table.cloneDeep()
-      @state =
-        table: table
-        env: env
-        node: node
-      @addDefaults table, env
-      @validateInput table, env
+
+      gg.core.XForm.addDefaults table, env, params
+      gg.core.XForm.validateInput table, env, params
       #table = @filterInput table, env
-      @compute table, env, node
-    spec.f = _compute
+      compute = params.get '__compute__'
+      compute table, env, params
+
+    spec.params = @params.clone()
+    spec.params.put 'compute', _compute
+    spec.params.put '__compute__', (args...) => @compute args...
     node = new gg.wf.Exec spec
-    node.on "output", () =>
-      @state = {}
     [node]
 
 

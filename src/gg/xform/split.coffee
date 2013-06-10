@@ -5,26 +5,29 @@
 class gg.xform.Split
 
   @createNode: (name, gbspec) ->
-    if _.isString gbspec
-      gg.xform.Split.byColValues name, gbspec
+    console.log [name, gbspec]
+    node = if _.isString gbspec
+      @byColValues name, gbspec
     else if _.isFunction gbspec
-      gg.xform.Split.byFunction name, gbspec
+      @byFunction name, gbspec
     else if _.isArray(gbspec) and gbspec.length > 0
       if _.isString gbspec[0]
-        gg.xform.Split.byColNames name, gbspec
+        @byColNames name, gbspec
       else:
         throw Error("Faceting by transformations not implemented yet")
+
+    node
     # TODO: also support varying run-time parameters
 
-
   @byColValues: (name, col) ->
-    gg.xform.Split.byFunction name, (row) -> row.get(col)
+    @byFunction name, (row) -> row.get(col)
 
   # Partition by using a function
   @byFunction: (name, f) ->
     new gg.wf.Partition
-      f: f
       name: name
+      params:
+        f: f
 
   # equivalent to creating a new column called @name
   # a poor man's unfold (or fold?)
@@ -57,7 +60,8 @@ class gg.xform.Split
         {key: col, table: newtable}
 
     new gg.wf.Split
-      f: f
       name: name
+      params:
+        f: f
 
 

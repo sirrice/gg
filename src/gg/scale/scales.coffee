@@ -1,5 +1,6 @@
 #<< gg/core/xform
 #<< gg/scale/scale
+#<< gg/scale/train/*
 
 
 
@@ -40,28 +41,32 @@
 # attributes from pre-stats, the user can explicitly change the attributes to
 # be used for rendering geometries.
 #
-class gg.scale.Scales extends gg.core.XForm
+
+
+class gg.scale.Scales
 
   constructor: (@g, @spec) ->
-    super
     @scalesConfig = null
     @mappings = {}     # facetX -> facetY -> layerIdx -> scalesSet
     @scalesList = []  # list of the scalesSet objects
-
-
-    @prestats = @trainDataNode
-      name: "scales-prestats"
-    @postgeommap = @trainDataNode
-      name: "scales-postgeommap"
-    @facets = @trainFacets
-      name: "scales"
-    @pixel = new gg.wf.Barrier
-      name: "scales-pixel"
-      f: (args...) => @trainOnPixels args..., spec
-
     @parseSpec()
+
+
+    @prestats = new gg.scale.train.Data @g,
+      name: 'scales-prestats'
+      scalesConfig: @scalesConfig
+    @postgeommap = new gg.scale.train.Data @g,
+      name: 'scales-postgeommap'
+      scalesConfig: @scalesConfig
+    @facets = new gg.scale.train.Master @g,
+      name: 'scales-facet'
+    @pixel = new gg.scale.train.Pixel @g,
+      name: 'scales-pixel'
+      scalesConfig: @scalesConfig
+
+
+    @log = gg.util.Log.logger("scales")
     @log.level = gg.util.Log.DEBUG
-    @log.logname = "Scales"
 
 
   # XXX: assumes layers have been created already
@@ -73,184 +78,7 @@ class gg.scale.Scales extends gg.core.XForm
       @scalesConfig.addLayerDefaults layer
 
 
-
-  # @param spec
-  #   nextState
-  #   name
-  #   attrToAes: mapping from table attribute to aesthetic
-  #              e.g., q1 -> y, q3 -> y
-  trainDataNode: (spec={}) ->
-    @_trainDataNode = new gg.wf.Barrier
-      name: spec.name
-      f: (args...) => @trainOnData args...,spec
-    @_trainDataNode
-
-  trainPixelNode: (spec={}) ->
-    @_invertPixelNode = new gg.wf.Barrier
-      name: "#{spec.name}-invert"
-      f: (args...) => @trainOnPixelsInvert args...,spec
-    @_reapplyPixelNode = new gg.wf.Barrier
-      name: "#{spec.name}-reapply"
-      f: (args...) => @trainOnPixelsReapply args..., spec
-    [
-      @_invertPixelNode
-      #new gg.wf.Stdout
-      #  name: "mid-trainPixel"
-      #  n: 5
-      #  aess: ["x", "x0", "x1", "y", "y1"]
-      @_reapplyPixelNode
-    ]
-
-  trainFacets: (spec={}) ->
-    @_trainFacet = new gg.wf.Barrier
-      name: "#{spec.name}-facet"
-      f: (args...) => @trainForFacets args..., spec
-    @_trainFacet
-
-
-  # these training methods assume that the tables's attribute names
-  # have been mapped to the aesthetic attributes that the scales
-  # expect
-  trainOnData: (tables, envs, node, spec={}) ->
-    fTrain = ([t,e]) =>
-      info = @paneInfo t, e
-      scales = @scales info.facetX, info.facetY, info.layer
-
-      @log "trainOnData: cols:    #{t.schema.toSimpleString()}"
-      @log "trainOnData: set.id:  #{scales.id}"
-
-      scales.train t, null, spec.posMapping
-
-    @mappings = {}
-    @scalesList = []
-    _.each _.zip(tables, envs),fTrain
-    @g.facets.trainScales()
-    tables
-
-
-  # Train on a table that has been mapped to aesthetic domain.
-  #
-  # This is tricky because the table has lost the original
-  # data types e.g., numerical values mapped to color strings
-  # - invert the table using scales retrieved with original table's
-  #   data types
-  #   - only invert data columns that have been mapped
-  #     (how to detect this?)
-  #   - only invert columns that were _originally_ numerical
-  #     because they are the only scales that could expand
-  #   - what about derived values? (e.g., width)
-  # - reset the domains of the scales
-  # - train scales now that tables are in original domain
-  #
-  # Need to invert the aesthetic columns to be in the value domain
-  # before training
-  #
-  #
-  trainOnPixels: (tables, envs, node, spec={}) ->
-    # 0) copy existing scales
-    # 1) iterate through each column, compute bounds
-    # 2) invert bounds
-    # 3) merge bounds with existing scales
-    # 4) map tables once to invert using old scales + apply new scales
-
-    fAessType = ([t, info]) =>
-      scales = @scales info.facetX, info.facetY, info.layer
-      posMapping = @posMapping info.layer
-      # only table columns that have a corresponding
-      # ordinal scale are allowed
-      f = (aes) =>
-        _.map scales.types(aes, posMapping), (type) =>
-          unless type is gg.data.Schema.ordinal
-            if t.contains aes, type
-              @log "aestype: #{aes}-#{type}"
-              {aes: aes, type: type}
-
-      _.compact _.flatten _.map t.colNames(), f
-
-    fOldScaleSet = (info) =>
-      scales = @scales info.facetX, info.facetY, info.layer
-      scales = scales.clone()
-      scales
-
-
-    fMergeDomain = ([t, info, aessTypes]) =>
-      scales = @scales info.facetX, info.facetY, info.layer
-      posMapping = @posMapping info.layer
-      f = (table, scale, aes) =>
-        col = table.getColumn(aes)
-        col = col.filter _.isValid
-        return unless col? and col.length > 0
-
-        # col has pixel (range) units
-        range = scale.defaultDomain col
-        domain = _.map range, (v) ->
-          if v? then scale.invert v else null
-        scale.mergeDomain domain
-        @log "merge: #{aes}\trange: #{range}"
-        @log "merge: #{aes}\tdomain: #{domain}"
-        @log "merge: #{scale.toString()}"
-
-      scales.useScales t, aessTypes, posMapping, f
-
-    fRescale = ([t, info, aessTypes, oldScales]) =>
-      scales = @scales info.facetX, info.facetY, info.layer
-      posMapping = @posMapping info.layer
-      mappingFuncs = {}
-      rescale = (table, scale, aes) =>
-        oldScale = oldScales.scale aes, scale.type
-        g = (v) -> scale.scale oldScale.invert(v)
-        mappingFuncs[aes] = g
-        @log "rescale: old: #{oldScale.toString()}"
-        @log "rescale: new: #{scale.toString()}"
-
-
-      scales.useScales t, aessTypes, posMapping, rescale
-      clone = t.clone()
-      clone.map mappingFuncs
-      clone.schema = t.schema
-      clone
-
-    # 0) setup some variables we'll need
-    infos = _.map _.zip(tables, envs), ([t,e]) => @paneInfo t, e
-    allAessTypes = _.map _.zip(tables, infos), fAessType
-    oldScaleSets = _.map infos, fOldScaleSet
-    args = _.zip(tables, infos, allAessTypes, oldScaleSets)
-
-    # 1) compute new scales
-    _.each args, fMergeDomain
-
-    # 2) retrain scales across facets/layers and expand domains
-    #    must be done before rescaling!
-    @g.facets.trainScales()
-
-    # 3} invert data using old scales, then apply new scales
-    newTables = _.map args, fRescale
-
-    newTables
-
-
-
-
-
-  trainForFacets: (tables, envs, node) ->
-    @g.facets.trainScales()
-    tables
-
-
   layer: (layerIdx) -> @g.layers.getLayer layerIdx
-
-
-  posMapping: (layerIdx) -> @layer(layerIdx).geom.posMapping()
-
-  # XXX: layer aesthetics should differentiate between
-  #      pre and post stats aesthetic mappings!
-  aesthetics: (layerIdx) ->
-    throw Error("gg.Scales.aesthetics not implemented")
-    scalesAess = []#@scalesConfig.aesthetics()
-    layerAess =  @layer(layerIdx).aesthetics()
-    # XXX: incorporate coordinate based x/y attributes instead
-    aess = [scalesAess, layerAess, gg.scale.Scale.xys]
-    _.compact _.uniq _.flatten aess
 
   # return the overall scalesSet for a given facet
   facetScales: (facetX, facetY) ->

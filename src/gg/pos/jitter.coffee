@@ -7,17 +7,21 @@ class gg.pos.Jitter extends gg.pos.Position
   inputSchema: -> ['x', 'y']
 
   parseSpec: ->
-    @scale = _.findGood [@spec.scale, 0.2]
-    @xScale = _.findGood [@spec.xScale, @spec.x, null]
-    @yScale = _.findGood [@spec.yScale, @spec.y, null]
-    if @xScale? or @yScale?
-      @xScale = @xScale or 0
-      @yScale = @yScale or 0
-    else
-      @xScale = @yScale = @scale
     super
+    scale = _.findGood [@spec.scale, 0.2]
+    xScale = _.findGood [@spec.xScale, @spec.x, null]
+    yScale = _.findGood [@spec.yScale, @spec.y, null]
+    if xScale? or yScale?
+      xScale = xScale or 0
+      yScale = yScale or 0
+    else
+      xScale = yScale = scale
 
-  compute: (table, env) ->
+    @params.putAll
+      xScale: xScale
+      yScale: yScale
+
+  compute: (table, env, params) ->
     scales = @scales table, env
     schema = table.schema
     map = {}
@@ -25,12 +29,12 @@ class gg.pos.Jitter extends gg.pos.Position
 
     if schema.type('x') is Schema.numeric
       xRange = scales.scale("x", Schema.numeric).range()
-      xScale = (xRange[1] - xRange[0]) * @xScale
+      xScale = (xRange[1] - xRange[0]) * params.get('xScale')
       map['x'] = (v) -> v + (0.5 - Math.random()) * xScale
 
     if schema.type('y') is Schema.numeric
       yRange = scales.scale("y", Schema.numeric).range()
-      yScale = (yRange[1] - yRange[0]) * @yScale
+      yScale = (yRange[1] - yRange[0]) * params.get('yScale')
       map['y'] = (v) -> v + (0.5 - Math.random()) * yScale
 
     table.map map

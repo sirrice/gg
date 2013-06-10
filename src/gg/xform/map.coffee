@@ -18,10 +18,9 @@
 class gg.xform.Mapper extends gg.core.XForm
   constructor: (@g, @spec) ->
     super @g, @spec
+
     @parseSpec()
 
-    @type = "mapper"
-    @name = _.findGood [@spec.name, "mapper-#{@id}"]
 
   @fromSpec: (g, spec) ->
     console.log spec
@@ -42,22 +41,25 @@ class gg.xform.Mapper extends gg.core.XForm
 
 
   parseSpec: ->
-    @mapping = @spec.aes
-    @aes = @aesthetics = _.keys @mapping
-    @inverse = @spec.inverse or {}
-    @log "spec: #{JSON.stringify @mapping}"
-
     super
 
-  compute: (table, env, node) ->
-    @log "transform: #{JSON.stringify @mapping}"
+    mapping = @spec.aes
+    @params.putAll
+      mapping: mapping
+      aes: _.keys mapping
+      aesthetics: _.keys mapping
+      inverse: @spec.inverse or {}
+    @log "spec: #{JSON.stringify @mapping}"
+
+
+  compute: (table, env, params) ->
+    @log "transform: #{JSON.stringify params.get 'mapping'}"
     @log "table:     #{JSON.stringify table.colNames()}"
     table = table.clone()
 
     # resolve aesthetic aliases in mapping
-    functions = _.mappingToFunctions table, @mapping
+    functions = _.mappingToFunctions table, params.get('mapping')
     table = table.transform functions, yes
     table
 
-  invertColName: (outColName) -> @inverse[outColName]
 

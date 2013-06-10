@@ -14,7 +14,7 @@ exports = module.exports = @
 #<< gg/data/table
 #<< gg/wf/flow
 #<< gg/core/graphic
-#<< gg/facet/facet
+#<< gg/facet/base/facet
 #<< gg/layer/layers
 #<< gg/geom/geom
 #<< gg/scale/scales

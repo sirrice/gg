@@ -45,7 +45,6 @@ suite.addBatch
       "scale has discrete domain": (s) ->
         assert.arrayEqual  s.domain(), _.range(100)
 
-  ###
 
   "default scales":
     topic: ->
@@ -234,7 +233,6 @@ suite.addBatch
       console.log newTable.raw()
       origTable = scales.apply newTable
       console.log origTable.raw()
-###
 
 
 

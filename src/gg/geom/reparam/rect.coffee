@@ -2,14 +2,10 @@
 #<< gg/data/schema
 
 class gg.geom.reparam.Rect extends gg.core.XForm
-  constructor: (@g, @spec) ->
-    super
-    @parseSpec()
 
-  inputSchema: ->
-    ['x', 'y']
+  inputSchema: -> ['x', 'y']
 
-  compute: (table, env, node) ->
+  compute: (table, env, params) ->
     scales = @scales table, env
     yscale = scales.scale 'y', gg.data.Schema.numeric
 
@@ -32,7 +28,6 @@ class gg.geom.reparam.Rect extends gg.core.XForm
       x1: (row) -> row.get('x1') or row.get('x') + width/2.0
       y0: (row) -> row.get('y0') or Math.min(yscale.scale(minY), row.get('y'))
       y1: (row) -> row.get('y1') or Math.max(yscale.scale(minY), row.get('y'))
-      #width: width
 
     mapping = _.mappingToFunctions table, mapping
     table.transform mapping, yes

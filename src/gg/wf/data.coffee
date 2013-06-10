@@ -1,7 +1,6 @@
 #
 # class that encapsulates data passed through the xforms
-
-
+#
 class gg.wf.Data
     constructor: (@table, @env=null) ->
       @env = new gg.wf.Env unless @env?
@@ -9,55 +8,33 @@ class gg.wf.Data
     clone: -> new gg.wf.Data @table, @env.clone()
 
 
-    serialize: ->
-        ""
+    toJSON: -> ""
+    @fromJSON: -> throw Error("not implemented")
 
 #
-# env contains cross-node state such as the set of split groups that
-# a given node instance is part of.  a new copy is passed to child nodes so
-# each node has a private version.
+# Data structure to implement a pseuda-monad
 #
-# env.groupPairs {Array}
-#
-#     Every time a split/partition is encountered, the group key name and value
-#     are pushed onto groupPairs.
-#     Every time a join is encountered, the stack is popped
-#
-class gg.wf.Env
-  constructor: (stack) ->
-    @groupPairs = _.findGood [stack, []]
+class gg.wf.Env extends gg.util.Params
+  merge: (data) ->
+    if data?
+      if _.isSubclass data, gg.wf.Env
+        data = data.data
+      _.each data, (v,k) => @data[k] = v
 
-  #groupPairs: -> @env.groupPairs
-  lastGroupPair: ->
-    if @groupPairs.length then _.last(@groupPairs) else null
-  lastGroup: ->
-    if @groupPairs.length then _.last(@groupPairs).val else null
-  lastGroupName: ->
-    if @groupPairs.length then _.last(@groupPairs).key else null
-  popGroupPair: -> @groupPairs.shift()
-  pushGroupPair: (key, val) -> @groupPairs.push {key: key, val: val}
 
-  # Find the most recent group key
-  # example: find facetX value or "1" if not found
-  #
-  #   data.group("facetX", "1")
-  group: (key, defaultVal=null) ->
-    for idx in  _.range(@groupPairs.length-1, -1, -1)
-      pair =  @groupPairs[idx]
-      if pair.key is key
-        return pair.val
-    return defaultVal
+  clone: ->
+    env = new gg.wf.Env
+    _.each @data, (v,k) =>
+      if v? and  _.isFunction v.clone
+        env.put k, v.clone()
+      else if _.isFunction v
+        env.put k, v
+      else if _.isArray(v) and v.selectAll? # is this d3 selection?
+        env.put k, v
+      else
+        env.put k, _.clone(v)
+    env
 
-  # alias for @group
-  get: (key, defaultVal) -> @group key, defaultVal
 
-  contains: (key) ->
-    _.any @groupPairs, (pair) ->
-      pair.key is key
-
-  clone: -> new gg.wf.Env _.clone(@groupPairs)
-
-  toString: -> JSON.stringify @groupPairs
-  toJSON: -> _.map @groupPairs, _.clone
   @fromJSON: (json) -> new gg.wf.Env json
 

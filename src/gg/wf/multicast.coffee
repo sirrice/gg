@@ -3,7 +3,7 @@
 
 # Has an ordered list of children.  Replicates input to children.
 #
-# ONET: ONLY workflow node with multiple children at compile time!
+# NOTE: ONLY workflow node with multiple children at compile time!
 #
 class gg.wf.Multicast extends gg.wf.Node
   constructor: (@spec={}) ->
@@ -34,6 +34,7 @@ class gg.wf.Multicast extends gg.wf.Node
   run: ->
     throw Error("Node not ready") unless @ready()
 
+    @log "#{@children.length} children"
     data = @inputs[0]
     for child, idx in @children
       newData = data.clone()

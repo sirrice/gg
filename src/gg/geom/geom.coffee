@@ -11,7 +11,7 @@
 # Geoms are a holding house for tree types of XForms (not an XForm itself):
 #
 # 1) Schema Mapping -- from stats outputs to geometry-expected schemas
-# 2) apply scales -- actually transforming from data domain to pixel range
+# 2) Reparameterizing -- adding/deriving the expected attributes
 # 3) Positioning
 # 4) Rendering
 #
@@ -34,7 +34,7 @@
 #         (e.g., picking if y should be sum or count)
 # type:   specifies what high level geometry to render
 #
-class gg.geom.Geom # not an XForm!!
+class gg.geom.Geom
   @log = gg.util.Log.logger "Geom", gg.util.Log.DEBUG
 
   constructor: (@layer, @spec) ->
@@ -43,7 +43,6 @@ class gg.geom.Geom # not an XForm!!
     @render = null
     @map = null
     @reparam = null
-    @unparam = null
 
     @parseSpec()
 
@@ -52,7 +51,7 @@ class gg.geom.Geom # not an XForm!!
     @render = gg.geom.Render.fromSpec @layer, @spec.type
     @map = gg.xform.Mapper.fromSpec @g, @spec
 
-  name: -> @constructor.name.toLowerCase()
+  # @return mapping of attribute -> aesthetic
   posMapping: -> {}
 
   @klasses = []

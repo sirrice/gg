@@ -11,12 +11,14 @@ class gg.util.Util
 
   # @param f returns an array [key, val]
   #        that sets the map's key, value pair
-  @list2map: (list, f=((v, idx)->[v,v])) ->
+  @o2map: (o, f=((v, idx)->[v,v])) ->
     ret = {}
-    _.each list, (v, idx) ->
-      pair = f v, idx
+    _.each o, (args...) ->
+      pair = f args...
       ret[pair[0]] = pair[1]
     ret
+
+  @list2map: (args...) -> @o2map args...
 
   @sum: (arr) -> _.reduce arr, ((a,b) -> a+b), 0
 
@@ -73,6 +75,7 @@ findGoodAttr = gg.util.Util.findGoodAttr
 _.mixin
   isValid: gg.util.Util.isValid
   list2map: gg.util.Util.list2map
+  o2map: gg.util.Util.o2map
   sum: gg.util.Util.sum
   mmin: gg.util.Util.min
   mmax: gg.util.Util.max

@@ -40,8 +40,11 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @mapSpec = {aes: mapSpec, name: "map-shorthand-#{@layerIdx}"}
     @coordSpec = @extractSpec "coord"
     @coordSpec.name = "coord-#{@layerIdx}"
-    @labelSpec = {key: "layer", val: @layerIdx}
     @groupSpec = "group" if "group" of @mapSpec.aes
+    @labelSpec =
+      params:
+        key: "layer"
+        val: @layerIdx
 
 
     @geom = gg.geom.Geom.fromSpec @, @geomSpec
@@ -54,7 +57,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
       @groupby = gg.xform.Split.createNode "group", "group"
       @groupbylabel = new gg.wf.Join#EnvGet
         name: "groupbylabel-#{@layerIdx}"
-        key: "group"
+        params:
+          key: "group"
 
     #@pos = null if _.isSubclass @pos, gg.pos.Identity
 
@@ -109,14 +113,15 @@ class gg.layer.Shorthand extends gg.layer.Layer
     makeStdOut = (name, n=5, aess=debugaess) =>
       new gg.wf.Stdout
         name: "#{name}-#{@layerIdx}"
-        n: 5
-        aess: aess
-      #null
+        params:
+          n: 5
+          aess: aess
 
     makeScalesOut = (name, scales=@g.scales) =>
       new gg.wf.Scales
         name: "#{name}-#{@layerIdx}"
-        scales: scales
+        params:
+          scales: scales
       null
 
 
@@ -135,7 +140,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeStdOut "post-train"
     nodes.push new gg.xform.ScalesFilter @,
       name: "scalesfilter-#{@layerIdx}"
-      posMapping: @geom.posMapping()
+      params:
+        posMapping: @geom.posMapping()
     nodes.push makeScalesOut "pre-stat-#{@layerIdx}"
     nodes.push @stat
     nodes.push makeStdOut "post-stat-#{@layerIdx}"
@@ -163,21 +169,23 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
 
 
-    # Rendering
     # layout the overall graphic, allocate space for facets
     # facets: allocate containers and compute ranges for the scales
-    nodes.push @g.layoutNode()
-    nodes.push @g.facets.allocatePanesNode()
+    nodes.push @g.layoutNode
+    nodes.push @g.renderNode
+    nodes.push @g.facets.collector
+    nodes.push @g.facets.layout1
 
 
     # geom: facets have set the ranges so transform data values to pixel values
     # geom: map minimum attributes (x,y) to base attributes (x0, y0, x1, y1)
     # geom: position transformation
-    nodes.push @g.facets.trainerNode()
+    nodes.push @g.facets.trainer
     nodes.push makeStdOut "pre-scaleapply"
     nodes.push new gg.xform.ScalesApply @,
       name: "scalesapply-#{@layerIdx}"
-      posMapping: @geom.posMapping()
+      params:
+        posMapping: @geom.posMapping()
     nodes.push makeStdOut "post-scaleapply"
 
 
@@ -190,7 +198,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
       nodes.push makeStdOut "post-position"
 
       # reconfigure the layout after positioning
-      nodes.push @g.facets.reallocatePanesNode()
+      nodes.push @g.facets.layout2
 
       nodes.push @g.scales.pixel
 
@@ -203,7 +211,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
 
     # render: render axes
-    nodes.push @g.facets.renderAxesNode()
+    nodes.push @g.facets.render
+    nodes.push @g.facets.renderPanes()
 
     # render: render geometries
     nodes.push @geom.render

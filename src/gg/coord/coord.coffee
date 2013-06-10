@@ -2,12 +2,17 @@
 
 class gg.coord.Coordinate extends gg.core.XForm
   @log = gg.util.Log.logger "Coord"
+
   constructor: (@layer, @spec={}) ->
-    g = @layer.g if @layer?
-    super g, @spec
+    super @layer.g, @spec
     @parseSpec()
     @log = gg.util.Log.logger @constructor.name, gg.util.Log.WARN
 
+
+
+  compute: (table, env, params) -> @map table, env, params
+
+  map: (table, env, params) -> throw Error("#{@name}.map() not implemented")
 
   @klasses: ->
     klasses = [
@@ -38,9 +43,4 @@ class gg.coord.Coordinate extends gg.core.XForm
 
     ret = new klass layer, spec
     ret
-
-  compute: (table, env, node) -> @map table, env, node
-
-  map: (table, env) -> throw Error("#{@name}.map() not implemented")
-
 

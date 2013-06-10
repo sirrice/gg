@@ -1,76 +1,5 @@
 #<< gg/pos/position
-#
-
-class gg.pos.Interpolate extends gg.pos.Position
-  @aliases = ["interpolate"]
-
-  constructor: ->
-    super
-    @log.level = gg.util.Log.DEBUG
-
-
-  addDefaults: ->
-    group: "1"
-    y0: 0
-    x0: 'x'
-    x1: 'x'
-
-  # pts requires the schema
-  #   x: x value
-  #   y: height of the layer
-  #   y0: (optional) baseline for the layer. only y0 of firstlayer is kept
-  inputSchema: -> ['x', 'y']
-
-  # x: x position, may have been interpolated
-  # y: height of the layer
-  # y0: position of layer's base
-  # y1: position of layer's ceiling
-  # group: layer's group key
-  outputSchema: (table, env) ->
-    gg.data.Schema.fromSpec
-      group: table.schema.typeObj "group"
-      x: table.schema.type 'x'
-      y: table.schema.type 'y'
-      y0: table.schema.type 'y'
-      y1: table.schema.type 'y'
-    table.schema.clone()
-
-  parseSpec: ->
-    super
-
-
-
-  #
-  # @param xs sorted list of x values
-  # @param pts list of {x:, y:} sorted on 'x'
-  # @return array of {x:, y:} where y values are either
-  #         1) original (if it existed) or
-  #         2) linearly interpolated
-  @interpolate: (xs, pts) ->
-    if pts.length == 0
-      return pts
-
-    minx = _.first(pts).x
-    maxx = _.last(pts).x
-    ptsidx = 0
-    ret = []
-    for x, idx in xs
-      if x < minx or x > maxx
-        ret.push {x:x, y:0}
-        continue
-      while ptsidx+1 <= pts.length and pts[ptsidx].x < x
-        ptsidx += 1
-      if x is pts[ptsidx].x
-        ret.push {x:x, y: pts[ptsidx].y}
-      else
-        prev = pts[ptsidx-1]
-        cur = pts[ptsidx]
-        perc = (x-prev.x) / (cur.x - prev.x)
-        y = perc * (cur.y - prev.y) + prev.y
-        ret.push {x:x, y:y}
-    ret
-
-
+#<< gg/pos/interpolate
 
 #
 # Stacks points that have the same x values.
@@ -119,7 +48,7 @@ class gg.pos.Stack extends gg.pos.Position
   # steps
   # 1) compute all X values
   # 2) compute y0 baseline for the layers,
-  compute: (table, env) ->
+  compute: (table, env, params) ->
     @log.warn "nrows: #{table.nrows()}\tschema: #{table.colNames()}"
     @log table.get(0).raw()
 
@@ -165,7 +94,8 @@ class gg.pos.Stack extends gg.pos.Position
     stackedLayers = stack(layers)
     @log "stacked #{stackedLayers.length} layers"
 
-    rettable = new gg.data.RowTable @outputSchema(table, env)
+    schema = params.get('outputSchema') table, env, params
+    rettable = new gg.data.RowTable schema
 
     _.times groups.length, (idx) =>
       group = groups[idx]

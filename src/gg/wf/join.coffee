@@ -10,12 +10,13 @@
 class gg.wf.Join extends gg.wf.Node
   constructor: (@spec={}) ->
     super @spec
-
-    @envkey = @spec.key or @spec.envkey
-    @attr = @spec.attr or @envkey
-    @default = @spec.default
     @type = "join"
     @name = _.findGood [@spec.name, "join-#{@id}"]
+
+    @params.ensureAll
+      envkey: ['key', 'envkey']
+      attr: ['attr', 'key', 'envkey']
+      default: ['default']
 
   addInputPort: ->
     @inputs.push null
@@ -33,17 +34,19 @@ class gg.wf.Join extends gg.wf.Node
       super parent, parentPort, stop
 
 
-  ready: -> super
-
   # pop from each env's keys list
   run: ->
     unless @ready()
       throw Error("#{@name} not ready: #{@inputs.length} of #{@children().length} inputs")
 
+    envkey = @params.get 'envkey'
+    defaultVal = @params.get 'default'
+    attr = @params.get 'attr'
+
     tables = _.map @inputs, (data) =>
       table = data.table
-      val = data.env.group @envkey, @default
-      table.addConstColumn @attr, val
+      val = data.env.get envkey, defaultVal
+      table.addConstColumn attr, val
       table
 
     env = @inputs[0].env.clone()

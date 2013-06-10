@@ -7,15 +7,15 @@ class gg.pos.Shift extends gg.pos.Position
   inputSchema: -> ['x', 'y']
 
   parseSpec: ->
-    @xShift = _.findGood [@spec.x, 10]
-    @yShift = _.findGood [@spec.y, 10]
     super
+    @params.putAll
+      xShift: _.findGood [@spec.x, @spec.amount, 10]
+      yShift: _.findGood [@spec.y, @spec.amount, 10]
 
-  compute: (table, env) ->
-    scale = Math.random()
+  compute: (table, env, params) ->
     map =
-      x: (v) => v + @xShift
-      y: (v) => v * scale
+      x: (v) => v + params.get('xShift')
+      y: (v) => v + params.get('yShift')
     table.map map
     table
 

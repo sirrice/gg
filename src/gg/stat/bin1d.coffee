@@ -6,11 +6,12 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
 
 
   parseSpec: ->
-    @nbins = _.findGoodAttr @spec, ["n", "bins", "bins"], 30
     super
+    @params.put 'nbins', _.findGoodAttr @spec, ["n", "bins", "bins"], 30
 
-  inputSchema: (table, env, node) -> ['x']
-  outputSchema: (table, env, node) ->
+  inputSchema: (table, env, params) -> ['x']
+
+  outputSchema: (table, env, params) ->
     gg.data.Schema.fromSpec
       x: table.schema.type 'x'
       bin: table.schema.type 'x'
@@ -18,17 +19,17 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
       count: gg.data.Schema.numeric
       total: gg.data.Schema.numeric
 
-  compute: (table, env, node) ->
-    scales = @scales table, env
+  compute: (table, env, params) ->
+    scales = @scales table, env, params
     xType = table.schema.type 'x'
-
     xScale = scales.scale 'x', xType
+
     domain = xScale.domain()
-    #domain = xScale.defaultDomain table.getColumn('x')
     binRange = domain[1] - domain[0]
-    binSize = Math.ceil(binRange / (@nbins))
+    nbins = params.get 'nbins'
+    binSize = Math.ceil(binRange / nbins)
     nBins = Math.ceil(binRange / binSize) + 1
-    @log "nbins: #{@nbins}\tscaleid: #{xScale.id}\tscaledomain: #{xScale.domain()}\tdomain: #{domain}\tbinSize: #{binSize}"
+    @log "nbins: #{nbins}\tscaleid: #{xScale.id}\tscaledomain: #{xScale.domain()}\tdomain: #{domain}\tbinSize: #{binSize}"
 
     stats = _.map _.range(nBins), (binidx) ->
       {bin: binidx, count: 0, total: 0}
@@ -55,6 +56,7 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
       stat.x = stat.bin
       stat.y = stat.total
 
-    new gg.data.RowTable @outputSchema(table, env, node), stats
+    schema = params.get('outputSchema') table, env, params
+    new gg.data.RowTable schema, stats
 
 

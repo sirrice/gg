@@ -8,12 +8,12 @@
 class gg.wf.Barrier extends gg.wf.Node
   constructor: (@spec={}) ->
     super @spec
-
-    @compute = @spec.f or @compute
     @type = "barrier"
     @name = _.findGood [@spec.name, "barrier-#{@id}"]
 
-  compute: (tables, env, node) -> tables
+    @params.ensure 'compute', ['f'], ((args...)=>@compute args...)
+
+  compute: (tables, env, params) -> tables
 
   addInputPort: ->
     @inputs.push null
@@ -66,7 +66,8 @@ class gg.wf.Barrier extends gg.wf.Node
 
     tables = _.pluck @inputs, 'table'
     envs = _.pluck @inputs, 'env'
-    outputs = @compute tables, envs, @
+    compute = @params.get 'compute'
+    outputs = compute tables, envs, @params
     @log "barrier got #{tables.length}"
 
     for output, idx in outputs

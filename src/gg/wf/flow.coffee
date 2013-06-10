@@ -298,9 +298,11 @@ class gg.wf.Flow extends events.EventEmitter
   extend: (nodes) -> _.each nodes, (node) => @setChild null, node
 
   # @param specOrNode specification of a node or a Node object
-  # WARNING: sets @children to specOrNode (clobbers existing children array)!
+  # WARNING: sets @children to specOrNode (clobbers existing children
+  # array)!
   setChild: (klass, specOrNode) ->
     specOrNode = {} unless specOrNode?
+    console.log "setChild: #{specOrNode.constructor.name}"
     if _.isSubclass specOrNode, gg.wf.Node
       node = specOrNode
     else if _.isFunction specOrNode
@@ -319,7 +321,10 @@ class gg.wf.Flow extends events.EventEmitter
   run: (table) ->
     [root, rootcb] = @instantiate()
     if table?
-      source = new gg.wf.TableSource {wf: @, table: table}
+      source = new gg.wf.TableSource
+        params:
+          wf: @
+          table: table
       outputPort = source.addChild root, rootcb
       root.addParent source, outputPort, rootcb.port
       root = source

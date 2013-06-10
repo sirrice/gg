@@ -4,11 +4,8 @@ class gg.pos.Position extends gg.core.XForm
   @log = gg.util.Log.logger "Position", gg.util.Log.ERROR
 
   constructor: (@layer, @spec={}) ->
-    g = @layer.g if @layer?
-    super g, @spec
+    super @layer.g, @spec
     @parseSpec()
-
-
 
   @klasses: ->
     klasses = [

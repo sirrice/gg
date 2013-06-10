@@ -16,29 +16,32 @@
 class gg.wf.EnvPush extends gg.wf.Node
   constructor: (@spec={}) ->
     super @spec
-
-    @key = @spec.key
-    @compute = _.findGood [@spec.val, @spec.value, @spec.f, null]
     @type = "label"
     @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
-    unless @key?
-      throw Error("#{@name}: Did not define a label key and value/value function)")
-
     @log = gg.util.Log.logger @name
+
+    @params.ensureAll
+      compute: [ ['val', 'value', 'f'], null ]
+
+    unless @params.get('key')?
+      throw Error("#{@name}: Need label key and value/value function)")
+
 
   run: ->
     throw Error("#{@name}: node not ready") unless @ready()
 
     data = @inputs[0]
-    if _.isFunction @compute
-      val = @compute data.table, data.env, @
+    compute = @params.get 'compute'
+    key = @params.get 'key'
+    if _.isFunction compute
+      val = compute data.table, data.env, @params
     else
-      val = @compute
+      val = compute
 
-    @log "adding label #{@key} -> #{val}"
+    @log "adding label #{key} -> #{val}"
 
     env = data.env.clone()
-    env.pushGroupPair @key, val
+    env.put key, val
     @output 0, new gg.wf.Data(data.table, env)
     data.table
 
@@ -47,7 +50,7 @@ class gg.wf.EnvPush extends gg.wf.Node
 # Copy a key from the environment into a column in table
 # Abstractly:
 #
-#   table.addColumn key, env.get(key)
+#   table.addColumn attr, env.get(key)
 #
 # used to bring group-by attributes back into table
 #
@@ -59,14 +62,16 @@ class gg.wf.EnvPush extends gg.wf.Node
 class gg.wf.EnvGet extends gg.wf.Node
   constructor: (@spec={}) ->
     super @spec
-
-    @envkey = @spec.key or @spec.envkey
-    @attr = @spec.attr or @envkey
-    @default = @spec.default
     @type = "envget"
     @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
-    unless @envkey?
-      throw Error("#{@name}: Did not define a label key and value/value function)")
+
+    @params.ensureAll
+      envkey: [ ['key', 'envkey'] ]
+      attr: ['attr', 'key', 'envkey']
+      default: [[], null]
+
+    unless @params.get('envkey')?
+      throw Error("#{@name}: Need label key and value/value function)")
 
   run: ->
     throw Error("#{@name}: node not ready") unless @ready()
@@ -74,12 +79,18 @@ class gg.wf.EnvGet extends gg.wf.Node
     data = @inputs[0]
     table = data.table.clone()
 
-    unless @envkey? and data.env.contains @envkey
+    envkey = @params.get 'envkey'
+    defaultVal = @params.get 'default'
+    attr = @params.get 'attr'
+
+    unless envkey? and data.env.contains envkey
       @output 0, @inputs[0]
       return
 
-    val = data.env.group @envkey, @default
-    table.addConstColumn @attr, val
+    val = data.env.get envkey, defaultVal
+    table.addConstColumn attr, val
 
     @output 0, new gg.wf.Data table, data.env.clone()
     table
+
+

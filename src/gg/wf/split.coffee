@@ -8,15 +8,14 @@
 class gg.wf.Split extends gg.wf.Node
   constructor: (@spec={}) ->
     super @spec
-
-    @outPort2childInPort = {}
+    @type = "split"
+    @name = _.findGood [@spec.name, "split-#{@id}"]
 
     # TODO: support groupby functions that return an
     # array of keys.
-    @type = "split"
-    @name = _.findGood [@spec.name, "split-#{@id}"]
-    @gbkeyName = _.findGood [@spec.key, @name]
-    @splitFunc = _.findGood [@spec.f, @splitFunc]
+    @params.ensureAll
+      gbkeyName: [['key'], @name]
+      splitFunc: [['f'], @splitFunc]
 
   # @return array of {key: String, table: gg.Table} dictionaries
   splitFunc: (table, env, node) -> []
@@ -99,7 +98,7 @@ class gg.wf.Split extends gg.wf.Node
     table = data.table
     env = data.env
 
-    groups = @splitFunc table, env, @
+    groups = @params.get('splitFunc') table, env, @params
     unless groups? and _.isArray groups
       str = "#{@name}: Non-array result from calling
              split function"
@@ -113,13 +112,14 @@ class gg.wf.Split extends gg.wf.Node
     @log.err "Split created #{numDuplicates} groups"
     @allocateChildren numDuplicates
 
+    gbkeyName = @params.get 'gbkeyName'
 
     idx = 0
     _.each groups, (group) =>
       subtable = group.table
       key = group.key
       newData = new gg.wf.Data subtable, data.env.clone()
-      newData.env.pushGroupPair @gbkeyName, key
+      newData.env.put gbkeyName, key
       @output idx, newData
       idx += 1
       @log.err "group #{JSON.stringify key}: #{subtable.nrows()} rows"
@@ -130,11 +130,9 @@ class gg.wf.Split extends gg.wf.Node
 class gg.wf.Partition extends gg.wf.Split
   constructor: ->
     super
-
     @name = _.findGood [@spec.name, "partition-#{@id}"]
-    @gbfunc = @spec.f or @gbfunc
-    @splitFunc = (table) -> table.split @gbfunc
 
-  gbfunc: -> 1
+    gbfunc = @spec.f or (()->1)
+    @params.put 'splitFunc', ((table)->table.split gbfunc)
 
 
