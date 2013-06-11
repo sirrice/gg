@@ -10,8 +10,13 @@
 #   yaxis | pane | yFacet
 #         |______|
 #          xaxis
+#
 
 class gg.facet.pane.Container
+  # @param c pane container in _absolute_ coordinates to the parent container
+  #        all container accessors (including for pane) should be done using
+  #        method calls, which return bounds relative to upper left corner of
+  #        @bound()
   constructor: (
     @c, # container for the inner pane, not the container
     @x,
@@ -22,7 +27,12 @@ class gg.facet.pane.Container
     @bYAxis,
     @labelHeight,
     @yAxisW) ->
-      null
+      @padding = 5
+      @lpad = @rpad = @upad = @bpad = 0
+      @lpad = @padding unless @bYAxis
+      @rpad = @padding unless @bYFacet
+      @bpad = @padding unless @bXAxis
+      @upad = @padding unless @bXFacet
 
   #
   # bounds for the container (pane + facets + axes)
@@ -42,33 +52,37 @@ class gg.facet.pane.Container
   #
 
   drawC: ->
-    x0 = @yAxisC().w()
-    y0 = @xFacetC().h()
-    new gg.core.Bound x0, y0,
-      x0 + @c.w(), y0 + @c.h()
+    x0 = @yAxisW * @bYAxis + @lpad
+    y0 = @labelHeight * @bXFacet + @upad
+    w = @c.w() - @rpad - @lpad
+    h = @c.h() - @bpad - @upad
+    new gg.core.Bound x0, y0, x0+w, y0+h
 
 
   xFacetC: ->
-    new gg.core.Bound @yAxisW * @bYAxis, 0,
-      @yAxisW * @bYAxis + @c.w(),
-      @labelHeight * @bXFacet
+    x0 = @yAxisW * @bYAxis + @lpad
+    y0 = 0
+    w = @c.w() - @rpad - @lpad
+    h = @labelHeight * @bXFacet
+    new gg.core.Bound x0, y0, x0+w, y0+h
 
   yFacetC: ->
     x0 = @yAxisW * @bYAxis + @c.width()
-    y0 = @labelHeight * @bXFacet
-    new gg.core.Bound x0, y0,
-      x0 + @labelHeight * @bYFacet,
-      y0 + @c.h()
-
+    y0 = @labelHeight * @bXFacet + @upad
+    w = @labelHeight * @bYFacet
+    h = @c.h() - @upad - @bpad
+    new gg.core.Bound x0, y0, x0+w, y0+h
 
   xAxisC: ->
-    x0 = @yAxisW * @bYAxis
+    x0 = @yAxisW * @bYAxis + @lpad
     y0 = @c.h() + @labelHeight*@bXFacet
-    new gg.core.Bound x0, y0,
-      x0 + @c.w(),
-      y0 + @labelHeight * @bXAxis
+    w = @c.w() - @lpad - @rpad
+    h = @labelHeight * @bXAxis
+    new gg.core.Bound x0, y0, x0+w, y0+h
 
   yAxisC: ->
-    new gg.core.Bound 0, @labelHeight * @bXFacet,
-      @yAxisW * @bYAxis,
-      @labelHeight * @bXFacet + @c.h()
+    x0 = 0
+    y0 = @labelHeight * @bXFacet + @upad
+    w = @yAxisW * @bYAxis
+    h = @c.h() - @upad - @bpad
+    new gg.core.Bound x0, y0, x0+w, y0+h

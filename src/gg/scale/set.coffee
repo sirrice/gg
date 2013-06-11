@@ -16,7 +16,7 @@ class gg.scale.Set
     @id = gg.scale.Set::_id
     gg.scale.Set::_id += 1
 
-    @log = gg.util.Log.logger "ScaleSet-#{@id}", gg.util.Log.WARN
+    @log = gg.util.Log.logger "ScaleSet-#{@id}", gg.util.Log.DEBUG
   _id: 0
 
   clone: () ->
@@ -205,8 +205,8 @@ class gg.scale.Set
       unless col?
         console.log "aes: #{aes}"
         console.log table
-        throw Error()
-        return
+        throw Error("Set.train: attr #{aes} does not exist in table")
+
       col = col.filter _.isValid
       if col.length < table.nrows()
         @log "filtered out #{table.nrows()-col.length} col values"

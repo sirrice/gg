@@ -11,7 +11,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     log = @log
     container = lc.plotC
     [w,h] = [container.w(), container.h()]
-    paddingPane = params.get('paddingPane') or 5
+    paddingPane = params.get('paddingPane')
     showXAxis = params.get('showXAxis')
     showYAxis = params.get('showYAxis')
     xs = @xFacetVals tables, envs
@@ -19,17 +19,19 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     nxs = xs.length
     nys = ys.length
 
+
     log envs
     log xs
     log ys
 
     # Compute derived values
-    css = { 'font-size': '10pt' }
+    css = { 'font-size': '11pt' }
     dims = _.textSize @getMaxYText(envs), css
-    yAxisW = dims.w
+    yAxisW = dims.w + paddingPane
     labelHeight = _.exSize().h + 2*paddingPane
     showXFacet = not(xs.length is 1 and xs[0] is null)
     showYFacet = not(ys.length is 1 and ys[0] is null)
+    log "yAxisW: #{yAxisW}"
 
     # Initialize PaneContainers for each facet pane
     grid = _.map xs, (x, xidx) ->
@@ -72,21 +74,6 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     # total amount of width/height for panes
     paneH = (h - nonPaneH) / nys
     paneW = (w - nonPaneW) / nxs
-    # add in padding to compute actual ranges
-    xrange = [paddingPane, paneW-paddingPane]
-    yrange = [paddingPane, paneH-paddingPane]
-
-    # update all of the scales
-    _.each envs, (env) ->
-      scaleSet = gg.core.XForm.scales null, env
-
-      _.each gg.scale.Scale.xs, (aes) ->
-        _.each scaleSet.types(aes), (type) ->
-          scaleSet.scale(aes, type).range xrange
-
-      _.each gg.scale.Scale.ys, (aes) ->
-        _.each scaleSet.types(aes), (type) ->
-          scaleSet.scale(aes, type).range yrange
 
     # create bounds objects for each pane
     _.each grid, (paneCol, xidx) ->
@@ -96,24 +83,38 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
         dy = _.sum _.times yidx, (pyidx) -> grid[xidx][pyidx].h()
         pane.c.d dx, dy
         pane.c.d pane.yAxisC().w(), pane.xFacetC().h()
+        log [dx, dy]
+        log [pane.yAxisC().w(), pane.xFacetC().h()]
 
         log "pane(#{xs[xidx]},#{ys[yidx]}): #{pane.c.toString()}"
-        #throw Error()
 
 
 
-    # add each pane's bounds to their environment
+    # 1. add each pane's bounds to their environment
+    # 2. update scale sets to be within drawing container
     map = {}
     _.each xs, (x, xidx) ->
       _.each ys, (y, yidx) ->
-        map[[x,y]] = grid[xidx][yidx]
+        paneC = grid[xidx][yidx]
+        map[[x,y]] = paneC
+
         fenvs = gg.core.BForm.facetEnvs tables, envs, x, y
         _.each fenvs, (env) ->
-          env.put 'paneC', grid[xidx][yidx]
+          env.put 'paneC', paneC
 
-    #lc.paneCs = grid
-    #lc.paneMapping = map
+          # add in padding to compute actual ranges
+          drawC = paneC.drawC()
+          xrange = [paddingPane+drawC.x0, drawC.w()-2*paddingPane]
+          yrange = [paddingPane+drawC.y0, drawC.h()-2*paddingPane]
 
+          scaleSet = gg.core.XForm.scales null, env
+          _.each gg.scale.Scale.xs, (aes) ->
+            _.each scaleSet.types(aes), (type) ->
+              scaleSet.scale(aes, type).range xrange
+
+          _.each gg.scale.Scale.ys, (aes) ->
+            _.each scaleSet.types(aes), (type) ->
+              scaleSet.scale(aes, type).range yrange
 
 
 

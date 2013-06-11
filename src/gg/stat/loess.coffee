@@ -8,9 +8,9 @@ class gg.stat.LoessStat extends gg.stat.Stat
   parseSpec: ->
     super
 
-    @params.putAll
-      bandwidth: _.findGoodAttr @spec, ["bandwidth", "band", "bw"], .3
-      acc: _.findGoodAttr @spec, ["accuracy", "acc", "ac"], 1e-12
+    @params.ensureAll
+      bandwidth: [["band", "bw"], .3]
+      acc: [["accuracy", "ac"], 1e-12]
 
   inputSchema: (table, env) -> ['x', 'y']
 
@@ -27,7 +27,6 @@ class gg.stat.LoessStat extends gg.stat.Stat
     @log "contains x,y: #{table.contains 'x'}, #{table.contains 'y'}"
     xs = table.getColumn('x')
     ys = table.getColumn('y')
-    @log "nxs: #{xs.length}\tnys: #{ys.length}"
     # remove invald entries
     xys = _.zip(xs, ys)
     xys = xys.filter (xy) -> _.isValid(xy[0]) and _.isValid(xy[1])
@@ -35,16 +34,22 @@ class gg.stat.LoessStat extends gg.stat.Stat
     xs = xys.map (xy) -> xy[0]
     ys = xys.map (xy) -> xy[1]
 
+    @log params
+    console.log params
+    @log "precompute: ys: #{JSON.stringify ys.slice(0,6)}"
+
 
     loessfunc = science.stats.loess()
     acc = params.get 'acc'
-    bandwidth / params.get 'bandwidth'
+    bandwidth = params.get 'bandwidth'
     bandwidth = Math.max bandwidth, 3.0/xs.length
     loessfunc.bandwidth bandwidth
     loessfunc.accuracy acc
+    @log "nxs: #{xs.length}\tnys: #{ys.length}"
     @log.warn "bw: #{bandwidth}\tacc: #{acc}"
 
     smoothys = loessfunc(xs, ys)
+    @log "#{_.reject(smoothys, _.isValid).length} ys rejected post-loess"
     rows = []
     _.times xs.length, (idx) ->
       # sometimes it interpolates to NaN values

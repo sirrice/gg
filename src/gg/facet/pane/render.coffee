@@ -10,7 +10,6 @@ class gg.facet.pane.Svg extends gg.core.XForm
     paneC = env.get 'paneC'
     return table unless paneC?
 
-
     info = @paneInfo table, env, params
     layerIdx = info.layer
     scaleSet = @scales table, env, params
@@ -45,8 +44,9 @@ class gg.facet.pane.Svg extends gg.core.XForm
         .attr('height', xfc.h())
       xfel.append('text')
         .attr('x', xfc.w()/2)
-        .attr('dy', '1em')
-        .text(info.facetX)
+        .attr('y', xfc.h())
+        .attr('dy', '-.5em')
+        .text(String(info.facetX))
 
     if paneC.bYFacet and layerIdx is 0
       yfel = el.append('g').classed('facet-label y', yes)
@@ -63,7 +63,6 @@ class gg.facet.pane.Svg extends gg.core.XForm
     # XXX: also check if we want to show tick lines but not the labels
     if paneC.bXAxis and layerIdx is 0
       xac2 = xac.clone()
-      #xac2.d 0, xac2.h() + xfc.h()
       xael = _.subSvg el, {
         class: 'axis x'
         transform: b2translate xac2

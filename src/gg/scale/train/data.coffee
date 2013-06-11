@@ -13,11 +13,12 @@ class gg.scale.train.Data extends gg.core.BForm
     config = params.get 'config'
     fTrain = ([t,e]) =>
       info = @paneInfo t, e
-      posMapping = @posMapping info.layer
+      posMapping = e.get 'posMapping'
       scaleset = config.scales info.layer
 
       @log "trainOnData: cols:    #{t.schema.toSimpleString()}"
       @log "trainOnData: set.id:  #{scaleset.id}"
+      @log "trainOnData: pos:     #{posMapping}"
 
       scaleset.train t, null, posMapping
       e.put 'scales', scaleset

@@ -129,6 +129,13 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
     nodes = []
 
+    # add environment variables
+    nodes.push new gg.wf.EnvPush
+      params:
+        key: 'posMapping'
+        val: @geom.posMapping()
+
+
     # pre-stats transforms
     nodes.push makeStdOut "init-data"
     nodes.push @labelNode

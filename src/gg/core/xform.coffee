@@ -84,8 +84,8 @@ class gg.core.XForm
   #
   @paneInfo: (table, env) ->
     ret =
-      facetX: env.get(gg.facet.base.Facets.facetXKey) or ""
-      facetY: env.get(gg.facet.base.Facets.facetYKey) or ""
+      facetX: env.get(gg.facet.base.Facets.facetXKey)
+      facetY: env.get(gg.facet.base.Facets.facetYKey)
       layer: env.get "layer"
     ret
 

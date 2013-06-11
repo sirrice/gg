@@ -34,17 +34,18 @@ class gg.scale.train.Pixel extends gg.core.BForm
     # 4) map tables once to invert using old scales + apply new scales
 
     fAessType = ([t, e, info]) =>
-      #scales = @scales info.facetX, info.facetY, info.layer
       scaleset = e.get 'scales'
-      posMapping = @posMapping info.layer
+      posMapping = e.get 'posMapping'
       # only table columns that have a corresponding
       # ordinal scale are allowed
       f = (aes) =>
         _.map scaleset.types(aes, posMapping), (type) =>
           unless type is gg.data.Schema.ordinal
             if t.contains aes, type
-              @log "aestype: #{aes}-#{type}"
+              @log "aestype:\t#{aes}-#{type}"
               {aes: aes, type: type}
+            else
+              @log "noaestype:\t#{aes}-#{type}"
 
       _.compact _.flatten _.map t.colNames(), f
 
@@ -52,33 +53,44 @@ class gg.scale.train.Pixel extends gg.core.BForm
       #scaleset = @scales info.facetX, info.facetY, info.layer
       scaleset = e.get 'scales'
       scaleset = scaleset.clone()
+      @log "origScaleSet: #{scaleset.toString()}"
       scaleset
 
 
-    fMergeDomain = ([t, e, info, aessTypes]) =>
-      #scales = @scales info.facetX, info.facetY, info.layer
-      scaleset = e.get 'scales'
-      posMapping = @posMapping info.layer
-      f = (table, scale, aes) =>
-        col = table.getColumn(aes)
-        col = col.filter _.isValid
+    # 1. use old scales to invert column value
+    # 2. merge domains into a fresh scaleset
+    # 3. preserve existing ranges
+    fMergeDomain = ([t, e, info, aessTypes, oldscaleset]) =>
+      newscaleset = params.get('config').scales info.layer
+      posMapping = e.get 'posMapping'
+      f = (table, oldscale, aes) =>
+        if _.isSubclass oldscale, gg.scale.Identity
+          newscaleset.scale oldscale
+          return
+
+        col = table.getColumn(aes).filter _.isValid
+        @log "mergeDomain: aes #{aes} #{col? and col.length>0}"
         return unless col? and col.length > 0
 
-        # col has pixel (range) units
-        range = scale.defaultDomain col
-        domain = _.map range, (v) ->
-          if v? then scale.invert v else null
-        scale.mergeDomain domain
-        @log "merge: #{aes}\trange: #{range}"
-        @log "merge: #{aes}\tdomain: #{domain}"
-        @log "merge: #{scale.toString()}"
+        newscale = newscaleset.scale oldscale.aes, oldscale.type
+        newscale.range oldscale.range()
 
-      scaleset.useScales t, aessTypes, posMapping, f
+        # col has pixel (range) units, so first invert
+        range = oldscale.defaultDomain col
+        domain = _.map range, (v) ->
+          if v? then oldscale.invert v else null
+        newscale.mergeDomain domain
+        @log "mergeDomain: #{aes}\trange: #{range}"
+        @log "mergeDomain: #{aes}\tdomain: #{domain}"
+        @log "mergeDomain: #{newscale.toString()}"
+        @log "mergeDomain: posMap: #{JSON.stringify posMapping}"
+
+      oldscaleset.useScales t, aessTypes, posMapping, f
+      e.put 'scales', newscaleset
 
     fRescale = ([t, e, info, aessTypes, oldScales]) =>
-      #scales = @scales info.facetX, info.facetY, info.layer
       scaleset = e.get 'scales'
-      posMapping = @posMapping info.layer
+      posMapping = e.get 'posMapping'
       mappingFuncs = {}
       rescale = (table, scale, aes) =>
         oldScale = oldScales.scale aes, scale.type
