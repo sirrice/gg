@@ -8,8 +8,6 @@ class gg.coord.Coordinate extends gg.core.XForm
     @parseSpec()
     @log = gg.util.Log.logger @constructor.name, gg.util.Log.WARN
 
-
-
   compute: (table, env, params) -> @map table, env, params
 
   map: (table, env, params) -> throw Error("#{@name}.map() not implemented")

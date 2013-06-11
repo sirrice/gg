@@ -8,33 +8,31 @@ class gg.coord.Identity extends gg.coord.Coordinate
   map: (table, env, params) ->
     schema = table.schema
     scales = @scales table, env, params
-    posMapping = {}
-    _.each gg.scale.Scale.ys, (y) ->
-      posMapping[y] = 'y' if table.contains y
-
-    @log "posMapping:\t#{_.keys(posMapping)}"
-    inverted = scales.invert table, _.keys(posMapping), posMapping
-    @log inverted.raw()[0..5]
+    ytype = gg.data.Schema.unknown
+    ytype = table.schema.type('y') if table.contains 'y'
+    yscale = scales.get 'y', ytype
 
 
-    # get and flip the y range
-    # XXX: we need a better managed way to get the scale
-    #      for a given aesthetic!
-    #      Foo.getColumnFromAes('y') --> "y"
-    if table.contains 'y'
-      yScale = scales.scale 'y', table.schema.type('y')# gg.Schema.numeric
-    else
-      yScale = scales.scale 'y', gg.data.Schema.unknown
-    yRange = yScale.range()
+    origscale = yscale.clone()
+    yRange = origscale.range()
     yRange = [yRange[1], yRange[0]]
-    yScale.range(yRange)
-    @log "yrange: #{yRange}"
+    yscale.range yRange
+    transform = (v) -> yscale.scale origscale.invert v
+
+    @log origscale.toString()
+    @log yscale.toString()
+    @log "test transform: 500 -> #{origscale.invert 500} -> #{transform 500}"
 
 
-    table = scales.apply inverted, gg.scale.Scale.ys, posMapping
-    table.schema = schema
+    yaess = _.filter gg.scale.Scale.ys, (aes) -> table.contains aes
+    table.each (row) ->
+      _.each yaess, (aes) ->
+        vals = row.get aes
+        if _.isArray vals
+          row.set aes, _.map(vals, transform)
+        else
+          row.set aes, transform(vals)
 
-    @log JSON.stringify(table.raw()[0..5])
-    table
-
+    gg.wf.Stdout.print table, ['x', 'y'], 5, @log
+    return table
 

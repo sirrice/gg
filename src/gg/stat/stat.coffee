@@ -8,6 +8,8 @@ class gg.stat.Stat extends gg.core.XForm
     @parseSpec()
 
   parseSpec: ->
+    super
+
     if _.findGoodAttr(@spec, ['aes', 'aesthetic', 'mapping', 'map'], null)?
       mapSpec = _.clone @spec
       mapSpec.name = "stat-map" unless mapSpec.name?

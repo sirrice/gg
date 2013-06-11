@@ -57,8 +57,9 @@ class gg.facet.base.Render extends gg.core.BForm
       yalSvg = _.subSvg(svg, {
         transform: "translate(#{yalC.x0},#{yalC.y0})"
       })
+
       _.subSvg(yalSvg, {
-        transform: "translate(#{-yalC.x0},#{-yalC.y0})rotate(-90)#{b2translate yalC}"
+        transform: "rotate(-90)"
         'text-anchor': 'middle'
       }, 'text').text(options.yaxis)
 

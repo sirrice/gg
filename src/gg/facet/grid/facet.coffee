@@ -5,12 +5,12 @@ class gg.facet.grid.Facets extends gg.facet.base.Facets
   constructor: ->
     super
 
-    @layout1 = new gg.facet.grid.Layout @g,
+    @layout1 = new gg.facet.grid.Layout(@g,
       name: 'facet-layout1'
-      params: @layoutParams
-    @layout2 = new gg.facet.grid.Layout @g,
+      params: @layoutParams).compile()
+    @layout2 = new gg.facet.grid.Layout(@g,
       name: 'facet-layout2'
-      params: @layoutParams
+      params: @layoutParams).compile()
 
   renderPanes: ->
     new gg.facet.pane.Svg

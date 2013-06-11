@@ -2,20 +2,19 @@
 
 class gg.scale.train.Data extends gg.core.BForm
   parseSpec: ->
-    @config = @spec.scalesConfig# or new gg.scale.Config()
-    @scales = @spec.scales
     super
+    @params.ensureAll
+      config: [['scalesConfig'], @spec.scalesConfig]
 
   # these training methods assume that the tables's attribute names
   # have been mapped to the aesthetic attributes that the scales
   # expect
-  compute: (tables, envs, node) ->
+  compute: (tables, envs, params) ->
+    config = params.get 'config'
     fTrain = ([t,e]) =>
       info = @paneInfo t, e
       posMapping = @posMapping info.layer
-      scaleset = @config.scales info.layer
-      #scales = e.get 'scales'
-      #scales = @scales info.facetX, info.facetY, info.layer
+      scaleset = config.scales info.layer
 
       @log "trainOnData: cols:    #{t.schema.toSimpleString()}"
       @log "trainOnData: set.id:  #{scaleset.id}"

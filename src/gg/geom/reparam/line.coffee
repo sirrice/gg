@@ -17,6 +17,8 @@ class gg.geom.reparam.Line extends gg.core.XForm
         schema:
           x: numeric
           y: numeric
+          y0: numeric
+          y1: numeric
 
 
   compute: (table, env, params) ->

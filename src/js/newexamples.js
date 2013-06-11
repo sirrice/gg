@@ -117,10 +117,10 @@ var geom_interval = {
  //,coord: "yflip"
 };
 
-var geom_point_1 = {
+var geom_point_1 = {layers:[{
   geom: "point"
  ,aes: {x: 'd', y: 'e'}
-}
+}], facets: {x: 'f'}}
 
 var geom_point_sum = {
   geom: "point"

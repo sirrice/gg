@@ -14,6 +14,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
     info = @paneInfo table, env, params
     layerIdx = info.layer
     scaleSet = @scales table, env, params
+    dc = paneC.drawC()
     xfc = paneC.xFacetC()
     yfc = paneC.yFacetC()
     xac = paneC.xAxisC()
@@ -27,9 +28,9 @@ class gg.facet.pane.Svg extends gg.core.XForm
 
     if layerIdx is 0
       _.subSvg el, {
-        width: paneC.c.w()
-        height: paneC.c.h()
-        transform: b2translate paneC.c
+        width: dc.w()
+        height: dc.h()
+        transform: b2translate dc
         'z-index': -1
         class: 'pane-background facet-grid-background'
       }, 'rect'
@@ -71,7 +72,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
       xscale = scaleSet.scale 'x', gg.data.Schema.unknown
       axis = d3.svg.axis().scale(xscale.d3()).orient('bottom')
       if xscale.type is gg.data.Schema.numeric
-        tickSize = paneC.c.h()
+        tickSize = dc.h()
         axis.ticks(5).tickSize(-tickSize)
         #axis.tickFormat('') unless paneC.yidx is nys-1
 
@@ -88,7 +89,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
       yscale = scaleSet.scale 'y', gg.data.Schema.unknown
       axis = d3.svg.axis().scale(yscale.d3()).orient('left')
       if yscale.type is gg.data.Schema.numeric
-        tickSize = paneC.c.w()
+        tickSize = dc.w()
         axis.ticks(5, d3.format(',.0f'), 5)
             .tickSize(-tickSize)
         #axis.tickFormat('') unless paneC.xidx is 0
@@ -98,9 +99,9 @@ class gg.facet.pane.Svg extends gg.core.XForm
 
     paneSvg = _.subSvg el, {
       class: 'layer-pane facet-grid'
-      transform: b2translate(paneC.c)
-      width: paneC.c.w()
-      height: paneC.c.h()
+      transform: b2translate(dc)
+      width: dc.w()
+      height: dc.h()
       id: "facet-grid-#{paneC.xidx}-#{paneC.yidx}-#{layerIdx}"
     }
     env.put 'paneSvg', paneSvg

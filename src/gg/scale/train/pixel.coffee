@@ -105,8 +105,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
 
     # 2) retrain scales across facets/layers and expand domains
     #    must be done before rescaling!
-    scaleTrain = params.get 'scaleTrain'
-    gg.scale.train.Master.train tables, envs, params, scaleTrain
+    gg.scale.train.Master.train tables, envs, params
 
     # 3} invert data using old scales, then apply new scales
     newTables = _.map args, fRescale

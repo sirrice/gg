@@ -16,7 +16,7 @@ class gg.scale.Set
     @id = gg.scale.Set::_id
     gg.scale.Set::_id += 1
 
-    @log = gg.util.Log.logger "ScaleSet-#{@id}", gg.util.Log.DEBUG
+    @log = gg.util.Log.logger "ScaleSet-#{@id}", gg.util.Log.WARN
   _id: 0
 
   clone: () ->
@@ -171,17 +171,20 @@ class gg.scale.Set
         else
           typeAes = aes
         type = table.schema.type typeAes
-        #@log "useScales: aes: #{aes}\ttype: #{type}"
+        @log "useScales: aes: #{aes}\ttype: #{type}"
         {aes: aes, type: type}
 
 
     _.each aessTypes, (at) =>
       aes = at.aes
       type = at.type
-      #@log "useScales: check #{aes}:#{type}\ttable has? #{table.contains aes, type}"
+      @log "useScales: check #{aes}:#{type}\ttable has? #{table.contains aes, type}"
       return unless table.contains aes, type
-      #@log "useScales: fetch #{aes}\t#{type}\t#{posMapping[aes]}"
-      scale = @scale(aes, type, posMapping)
+      @log "useScales: fetch #{aes}\t#{type}\t#{posMapping[aes]}"
+      if type in @types(aes, posMapping)
+        scale = @scale(aes, type, posMapping)
+      else
+        scale = @scale aes, gg.data.Schema.unknown, posMapping
       f table, scale, aes
 
     table
@@ -199,6 +202,11 @@ class gg.scale.Set
       return if _.isSubclass scale, gg.scale.Identity
 
       col = table.getColumn(aes)
+      unless col?
+        console.log "aes: #{aes}"
+        console.log table
+        throw Error()
+        return
       col = col.filter _.isValid
       if col.length < table.nrows()
         @log "filtered out #{table.nrows()-col.length} col values"

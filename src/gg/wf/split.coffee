@@ -132,7 +132,7 @@ class gg.wf.Partition extends gg.wf.Split
     super
     @name = _.findGood [@spec.name, "partition-#{@id}"]
 
-    gbfunc = @spec.f or (()->1)
+    gbfunc = @params.get('f') or (()->1)
     @params.put 'splitFunc', ((table)->table.split gbfunc)
 
 

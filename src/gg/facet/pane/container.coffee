@@ -41,6 +41,13 @@ class gg.facet.pane.Container
   # The following accessors return Bounds relative to top-left of the container
   #
 
+  drawC: ->
+    x0 = @yAxisC().w()
+    y0 = @xFacetC().h()
+    new gg.core.Bound x0, y0,
+      x0 + @c.w(), y0 + @c.h()
+
+
   xFacetC: ->
     new gg.core.Bound @yAxisW * @bYAxis, 0,
       @yAxisW * @bYAxis + @c.w(),

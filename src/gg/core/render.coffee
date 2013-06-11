@@ -1,6 +1,8 @@
 #<< gg/core/bform
 
 class gg.core.Render extends gg.core.BForm
+  constructor: ->
+    super
 
   compute: (tables, envs, params) ->
     env = _.first envs
@@ -10,6 +12,7 @@ class gg.core.Render extends gg.core.BForm
     options = params.get 'options'
     lc = _.first(envs).get('lc')
     throw Error() unless lc?
+
 
     svg
       .attr('width', c.w())

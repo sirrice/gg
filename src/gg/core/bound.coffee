@@ -74,6 +74,8 @@ class gg.core.Bound
       y > @y1
     )
 
+  toString: ->
+    JSON.stringify [@x0, @y0, @x1, @y1]
 
 
 

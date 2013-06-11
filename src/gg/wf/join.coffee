@@ -46,7 +46,10 @@ class gg.wf.Join extends gg.wf.Node
     tables = _.map @inputs, (data) =>
       table = data.table
       val = data.env.get envkey, defaultVal
-      table.addConstColumn attr, val
+      if table.contains attr
+        table.each (row) -> row.set attr, val
+      else
+        table.addConstColumn attr, val
       table
 
     env = @inputs[0].env.clone()

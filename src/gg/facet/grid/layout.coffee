@@ -8,6 +8,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
   #
   layoutPanes: (tables, envs, params, lc) ->
     # Setup Variables
+    log = @log
     container = lc.plotC
     [w,h] = [container.w(), container.h()]
     paddingPane = params.get('paddingPane') or 5
@@ -18,8 +19,13 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     nxs = xs.length
     nys = ys.length
 
+    log envs
+    log xs
+    log ys
+
     # Compute derived values
-    dims = _.textSize @getMaxYText(envs), {}
+    css = { 'font-size': '10pt' }
+    dims = _.textSize @getMaxYText(envs), css
     yAxisW = dims.w
     labelHeight = _.exSize().h + 2*paddingPane
     showXFacet = not(xs.length is 1 and xs[0] is null)
@@ -28,10 +34,11 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     # Initialize PaneContainers for each facet pane
     grid = _.map xs, (x, xidx) ->
       _.map ys, (y, yidx) ->
-        bXFacet = showXFacet and xidx is 0
-        bYFacet = showYFacet and yidx is nys-1
-        bXAxis = showXAxis and yidx is nys-1
+        bXFacet = showXFacet and yidx is 0
+        bYFacet = showYFacet and xidx >= nxs-1
+        bXAxis = showXAxis and yidx >= nys-1
         bYAxis = showYAxis and xidx is 0
+        log "pane(#{xidx},#{yidx}): x/yfacet: #{bXFacet}, #{bYFacet}\tx/yaxis: #{bXAxis}, #{bYAxis}"
         new gg.facet.pane.Container gg.core.Bound.empty(),
           xidx,
           yidx,
@@ -90,11 +97,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
         pane.c.d dx, dy
         pane.c.d pane.yAxisC().w(), pane.xFacetC().h()
 
-        console.log pane.c
-        console.log pane.xFacetC()
-        console.log pane.yFacetC()
-        console.log pane.xAxisC()
-        console.log pane.bound()
+        log "pane(#{xs[xidx]},#{ys[yidx]}): #{pane.c.toString()}"
         #throw Error()
 
 
@@ -129,7 +132,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
       y = yscale.maxDomain()
       if _.isNumber
         _text = formatter(y)
-        text = _.text if _text.length > text.length
+        text = _text if _text? and  _text.length > text.length
 
     return text
 

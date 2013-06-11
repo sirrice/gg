@@ -36,6 +36,7 @@ class gg.facet.base.Layout extends gg.core.BForm
 
 
   xFacetVals: (tables, envs) ->
+    console.log envs
     gg.core.BForm.pick envs, gg.facet.base.Facets.facetXKey
 
   yFacetVals: (tables, envs) ->
@@ -45,9 +46,14 @@ class gg.facet.base.Layout extends gg.core.BForm
   # layout facets
   # layout panes
   getTitleHeight: (params) ->
-    _.exSize({'font-size': '13pt'}).h + params.get('paddingPane')
+    css =
+      'font-size': '11pt'
+    _.exSize(css).h + params.get('paddingPane')
 
-  getEmSize: -> _.textSize('m', {'font-size': '13pt'}).h
+  getEmSize: ->
+    css =
+      'font-size': '11pt'
+    _.textSize('m', css).h
 
   #
   # layout labels, background and container for the

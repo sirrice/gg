@@ -48,7 +48,8 @@ class gg.core.XForm
     # All of the state is encapsulated in @spec, @state, @params
     #
     @params = new gg.util.Params
-    @log = gg.util.Log.logger "#{@spec.name} #{@constructor.name}", gg.util.Log.WARN unless @log?
+    logname = "#{@spec.name} #{@constructor.name}"
+    @log = gg.util.Log.logger logname,  gg.util.Log.DEBUG unless @log?
 
     console.log @spec
     @parseSpec()

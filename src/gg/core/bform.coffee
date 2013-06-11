@@ -25,7 +25,10 @@ class gg.core.BForm extends gg.core.XForm
 
   # pick "key" from list of env objects.
   @pick: (envs, key, defaultVal=null) ->
-    vals = _.map envs, (e) -> e.get(key) or defaultVal
+    vals = []
+    for env in envs
+      if env.contains key
+        vals.push env.get(key)
     vals = _.uniq vals
     vals.sort()
     vals

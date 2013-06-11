@@ -64,11 +64,13 @@ class gg.wf.Barrier extends gg.wf.Node
   run: ->
     throw Error("Node not ready") unless @ready()
 
+    @log.level = gg.util.Log.DEBUG
     tables = _.pluck @inputs, 'table'
     envs = _.pluck @inputs, 'env'
     compute = @params.get 'compute'
+    @log "#{@name} running on #{tables.length} tables"
     outputs = compute tables, envs, @params
-    @log "barrier got #{tables.length}"
+    @log "barrier #{@name} got #{tables.length}"
 
     for output, idx in outputs
       @output idx, new gg.wf.Data(output, envs[idx].clone())

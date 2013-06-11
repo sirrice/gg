@@ -35,12 +35,12 @@ class gg.core.Graphic
       container: new gg.core.Bound 0, 0, @options.w, @options.h
       options: @options
 
-    @layoutNode = new gg.core.Layout @,
+    @layoutNode = new gg.core.Layout(@,
       name: 'core-layout'
-      params: @params
-    @renderNode = new gg.core.Render @,
+      params: @params).compile()
+    @renderNode = new gg.core.Render(@,
       name: 'core-render'
-      params: @params
+      params: @params).compile()
 
 
 

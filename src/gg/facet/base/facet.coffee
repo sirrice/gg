@@ -40,7 +40,7 @@ class gg.facet.base.Facets
     @parseSpec()
 
     @splitter = @splitterNodes()
-    @collector = new gg.core.BForm @g,
+    @collector = new gg.core.BForm(@g,
       name: 'collect-xys'
       f: (tables, envs, node) ->
         xs = gg.core.BForm.pick envs, gg.facet.base.Facets.facetXKey
@@ -49,22 +49,22 @@ class gg.facet.base.Facets
         _.each envs, (env) ->
           env.put 'xs', xs
           env.put 'ys', ys
-        tables
+        tables).compile()
 
-    @trainer = new gg.scale.train.Master @g,
-      name: 'facet_train'
+    @trainer = new gg.scale.train.Master(@g,
+      name: 'facet_train').compile()
 
 
     # These should be replaced with _actual_ implementations
-    @layout1 = new gg.facet.base.Layout @g,
+    @layout1 = new gg.facet.base.Layout(@g,
       name: 'facet-layout1'
-      params: @layoutParams
-    @layout2 = new gg.facet.base.Layout @g,
+      params: @layoutParams).compile()
+    @layout2 = new gg.facet.base.Layout(@g,
       name: 'facet-layout2'
-      params: @layoutParams
-    @render = new gg.facet.base.Render @g,
+      params: @layoutParams).compile()
+    @render = new gg.facet.base.Render(@g,
       name: 'facet-render'
-      params: @renderParams
+      params: @renderParams).compile()
 
 
   parseSpec: ->

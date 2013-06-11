@@ -8,7 +8,6 @@ class gg.util.Params
 
 
   merge: (data) ->
-    console.log data
     if data?
       if _.isSubclass data, gg.util.Params
         data = data.data

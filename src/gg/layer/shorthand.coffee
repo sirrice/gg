@@ -116,14 +116,15 @@ class gg.layer.Shorthand extends gg.layer.Layer
         params:
           n: 5
           aess: aess
+      null
 
     makeScalesOut = (name, scales=@g.scales) =>
       new gg.wf.Scales
         name: "#{name}-#{@layerIdx}"
         params:
           scales: scales
-      null
 
+      null
 
 
     nodes = []
@@ -132,6 +133,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeStdOut "init-data"
     nodes.push @labelNode
     nodes.push @map
+    nodes.push makeStdOut "post-map-#{@layerIdx}"
     nodes.push @groupby
 
 

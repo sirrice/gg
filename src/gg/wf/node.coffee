@@ -163,7 +163,7 @@ class gg.wf.Node extends events.EventEmitter
     listeners = @listeners outidx
     n = listeners.length
     listeners = _.map(listeners, (l)->l.name)
-    @log "output: port(#{outidx}) of #{n} #{listeners}\tenv: #{data.env.toString()}"
+    @log "output: port(#{outidx}) of #{n} #{listeners}\tenv: #{data.env.data}"
     @emit outidx, @, data
     @emit "output", @, data
 

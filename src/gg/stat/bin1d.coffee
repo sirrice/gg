@@ -57,6 +57,7 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
       stat.y = stat.total
 
     schema = params.get('outputSchema') table, env, params
+    console.log stats
     new gg.data.RowTable schema, stats
 
 
