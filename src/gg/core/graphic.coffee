@@ -29,6 +29,11 @@ class gg.core.Graphic
     @layers = new gg.layer.Layers @, @layerspec
     @scales = new gg.scale.Scales @, @scalespec
 
+    # connect layer specs with scales config
+    _.each @layers.layers, (layer) =>
+      @scales.scalesConfig.addLayerDefaults layer
+
+
     @svg = @options.svg or @svg
 
     @params = new gg.util.Params
@@ -60,6 +65,7 @@ class gg.core.Graphic
 
     preMulticastNodes = []
     preMulticastNodes.push @setupEnvNode()
+    preMulticastNodes.push @setupScales()
     preMulticastNodes = preMulticastNodes.concat @facets.splitter
 
     prev = null
@@ -95,6 +101,13 @@ class gg.core.Graphic
       params:
         key: 'baseSvg'
         val: @svg
+
+  setupScales: ->
+    new gg.wf.EnvPush
+      params:
+        key: 'scalesconfig'
+        val: @scales.scalesConfig
+
 
   renderGuides: -> null
 

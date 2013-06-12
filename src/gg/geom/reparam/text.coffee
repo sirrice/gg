@@ -9,6 +9,11 @@ class gg.geom.reparam.Text extends gg.core.XForm
   inputSchema: -> ['x', 'y', 'text']
 
   outputSchema: (table, env, params) ->
+    schema = table.schema.clone()
+    _.each ["x0", "x1", "y0", "y1"], (attr) ->
+      unless schema.contains attr
+        schema.addColumn attr, numeric
+    return schema
     numeric = gg.data.Schema.numeric
     gg.data.Schema.fromSpec
       group: table.schema.typeObj "group"

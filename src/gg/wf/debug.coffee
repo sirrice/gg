@@ -50,23 +50,21 @@ class gg.wf.Scales extends gg.wf.Exec
     @type = "scaleout"
     @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
 
-    unless @params.contains 'scales'
-      throw Error('scales was not passed in')
     @dlog = gg.util.Log.logger "ScaleOut: #{@name}", gg.util.Log.DEBUG
 
   compute: (table, env, params) ->
-    gg.wf.Scales.print params.get('scales'), @dlog
+    layerIdx = env.get 'layer'
+    gg.wf.Scales.print env.get('scales'), layerIdx,  @dlog
     table
 
-  @print: (scales, log=null) ->
+  # @param scales set
+  @print: (scaleset, layerIdx, log=null) ->
     log = gg.util.Log.logger("scaleout") unless log?
-    _.each scales.scalesList[0..2], (scales, idx) =>
-      log "Out: scales #{scales.id}, #{scales.scales}"
-      _.each scales.scalesList(), (scale) =>
-        aes = scale.aes
-        str = scale.toString()
-        type = scale.type
-        log "Out: layer#{idx},scaleId#{scale.id} #{type}\t#{str}"
+
+    log "Out: scaleset #{scaleset.id}, #{scaleset.scales}"
+    _.each scaleset.scalesList(), (scale) =>
+      str = scale.toString()
+      log "Out: layer #{layerIdx}, #{str}"
 
 
 

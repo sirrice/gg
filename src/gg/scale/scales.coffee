@@ -77,10 +77,6 @@ class gg.scale.Scales
   parseSpec: ->
     @scalesConfig = gg.scale.Config.fromSpec @spec
 
-    # scan through @g.layers for more scales specs
-    _.each @g.layers.layers, (layer) =>
-      @scalesConfig.addLayerDefaults layer
-
 
   layer: (layerIdx) -> @g.layers.getLayer layerIdx
 

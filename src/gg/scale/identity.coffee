@@ -5,7 +5,7 @@ class gg.scale.Identity extends gg.scale.Scale
   @aliases = "identity"
   constructor: () ->
     @d3Scale = null
-    @type = gg.data.Schema.numeric
+    @type = gg.data.Schema.unknown
     super
     @log.level = gg.util.Log.ERROR
 

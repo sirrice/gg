@@ -151,6 +151,7 @@ class gg.data.Schema
 
 
 
+  # @param newType the new (integer) type
   setType: (attr, newType) ->
     schema = @
     key = schema.attrToKeys[attr]

@@ -17,7 +17,7 @@ class gg.geom.svg.Point extends gg.geom.Render
     ['x', 'y']
 
   render: (table, env, node) ->
-    gg.wf.Stdout.print table, ['x'], 5, @log
+    gg.wf.Stdout.print table, ['x', 'fill'], 5, @log
 
     data = table.asArray()
     svg = @svg table, env

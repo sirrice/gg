@@ -126,11 +126,12 @@ class gg.core.XForm
 
   @addDefaults: (table, env, params) ->
     defaults = params.get "defaults", table, env
-    #@log "addDefaults: #{JSON.stringify defaults}"
-    #@log "             #{JSON.stringify table.schema.attrs()}"
+    log = gg.util.Log.logger('addDefaults')
+    log "expected:    #{JSON.stringify defaults}"
+    log "table attrs: #{JSON.stringify table.schema.attrs()}"
     _.each defaults, (val, col) =>
       unless table.contains col
-        #@log "addDefaults: adding: #{col} -> #{val}"
+        log "adding:      #{col} -> #{val}"
         table.addConstColumn col, val
 
   compute: (table, env, node) -> table

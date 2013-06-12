@@ -116,15 +116,10 @@ class gg.layer.Shorthand extends gg.layer.Layer
         params:
           n: 5
           aess: aess
-      null
 
     makeScalesOut = (name, scales=@g.scales) =>
       new gg.wf.Scales
         name: "#{name}-#{@layerIdx}"
-        params:
-          scales: scales
-
-      null
 
 
     nodes = []
@@ -135,12 +130,15 @@ class gg.layer.Shorthand extends gg.layer.Layer
         key: 'posMapping'
         val: @geom.posMapping()
 
-
     # pre-stats transforms
     nodes.push makeStdOut "init-data"
     nodes.push @labelNode
     nodes.push @map
     nodes.push makeStdOut "post-map-#{@layerIdx}"
+    nodes.push new gg.xform.ScalesSchema @,
+      name: "scales-schema-#{@layerIdx}"
+      params:
+        config: @g.scales.scalesConfig
     nodes.push @groupby
 
 
@@ -176,6 +174,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeStdOut "post-geommaptrain"
     nodes.push makeScalesOut "post-geommaptrain"
 
+    nodes.push new gg.xform.ScalesValidate @,
+      name: 'scales-validate'
 
 
     # layout the overall graphic, allocate space for facets
@@ -190,7 +190,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # geom: map minimum attributes (x,y) to base attributes (x0, y0, x1, y1)
     # geom: position transformation
     nodes.push @g.facets.trainer
-    nodes.push makeStdOut "pre-scaleapply"
+    nodes.push makeScalesOut "pre-scaleapply"
     nodes.push new gg.xform.ScalesApply @,
       name: "scalesapply-#{@layerIdx}"
       params:
@@ -218,12 +218,12 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push @coord
     nodes.push makeStdOut "post-coord"
 
-
     # render: render axes
     nodes.push @g.facets.render
     nodes.push @g.facets.renderPanes()
 
     # render: render geometries
+    nodes.push makeStdOut "pre-render"
     nodes.push @geom.render
 
 

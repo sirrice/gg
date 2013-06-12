@@ -14,12 +14,15 @@ class gg.scale.Factory
     unless type?
       throw Error("Factery.scale(#{aes}): type was null")
 
+    console.log "factory: #{aes} in defaults?: #{aes of @defaults}"
     scale =
       if aes of @defaults
         @defaults[aes].clone()
       else
         gg.scale.Scale.defaultFor aes, type
 
+    scale.type = type if _.isSubclass scale, gg.scale.Identity
+    console.log "return: #{scale.toString()}"
     scale
 
   scales: (layerIdx) -> new gg.scale.Set @

@@ -7,7 +7,7 @@ class gg.geom.svg.Rect extends gg.geom.Render
     "fill-opacity": 0.5
     fill: "steelblue"
     stroke: "steelblue"
-    "stroke-width": 0
+    "stroke-width": 1
     "stroke-opacity": 0.5
     group: 1
 
@@ -34,6 +34,8 @@ class gg.geom.svg.Rect extends gg.geom.Render
       y: y
       width: width
       height: height
+      stroke: (t) -> t.get('stroke')
+      'stroke-width': (t) -> t.get('stroke-width')
       "fill-opacity": (t) -> t.get('fill-opacity')
       "stroke-opacity": (t) -> t.get("stroke-opacity")
       fill: (t) -> t.get('fill')

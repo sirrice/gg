@@ -53,9 +53,11 @@ class gg.scale.Config
       _.each spec, (scaleSpec, aes) ->
         scaleSpec = {type: scaleSpec} if _.isString scaleSpec
         scaleSpec = _.clone scaleSpec
-        scaleSpec.aes = aes
-        scale = gg.scale.Scale.fromSpec scaleSpec
-        ret[aes] = scale
+        console.log "resolve: #{aes} -> #{gg.core.Aes.resolve aes}"
+        _.each gg.core.Aes.resolve(aes), (trueaes) ->
+          scaleSpec.aes = trueaes
+          scale = gg.scale.Scale.fromSpec scaleSpec
+          ret[trueaes] = scale
     ret
 
   addLayerDefaults: (layer) ->
@@ -72,7 +74,9 @@ class gg.scale.Config
     spec = _.clone @defaults
     lspec = @layerDefaults[layerIdx] or {}
     _.extend spec, lspec
-    gg.scale.Factory.fromSpec spec
+    factory = gg.scale.Factory.fromSpec spec
+    gg.scale.Config.log factory
+    factory
 
   scale: (aes, type) -> @factoryFor().scale(aes, type)
   scales: (layerIdx) -> new gg.scale.Set @factoryFor(layerIdx)

@@ -63,6 +63,8 @@ class gg.scale.Set
       @set aesOrScale
 
   set: (scale) ->
+    if scale.type is gg.data.Schema.unknown
+      throw Error("Storing scale type unknown: #{scale.toString()}")
     aes = scale.aes
     @scales[aes] = {} unless aes of @scales
     @scales[aes][scale.type] = scale
@@ -79,9 +81,6 @@ class gg.scale.Set
     @scales[aes] = {} unless aes of @scales
 
     if type is gg.data.Schema.unknown
-      if type of @scales[aes]
-        throw Error("#{aes}: stored scale type shouldn't be unknown")
-
       vals = _.values @scales[aes]
       if vals.length > 0
         vals[0]
@@ -158,6 +157,21 @@ class gg.scale.Set
     unless aessTypes?
       aessTypes = _.compact table.schema.attrs()
 
+    _.each table.colNames(), (attr) =>
+      aes = attr
+      tabletype = table.schema.type attr
+      scale = @scale aes, tabletype, posMapping
+      return f table, scale, aes
+      stypes = @types aes, posMapping
+      if stypes.length > 1
+        throw Error("stypes is >1: #{aes}: #{stypes}")
+
+      scale = @scale(aes, stypes[0], posMapping)
+      f table, scale, aes
+
+    return table
+
+
     aessTypes = _.map aessTypes, (aes) =>
       if _.isObject aes
         #@log "useScales: aes: #{aes.aes}\ttype: #{aes.type}"
@@ -166,7 +180,7 @@ class gg.scale.Set
         # XXX: it's not clear why this is the correct logic
         #      1) pick posMapped aes type from table
         #      2) pick aes type from table
-        if aes of posMapping and table.contains posMapping[aes]
+        if aes of posMapping #and table.contains posMapping[aes]
           typeAes = posMapping[aes]
         else
           typeAes = aes
@@ -174,18 +188,19 @@ class gg.scale.Set
         @log "useScales: aes: #{aes}\ttype: #{type}"
         {aes: aes, type: type}
 
-
     _.each aessTypes, (at) =>
       aes = at.aes
       type = at.type
       @log "useScales: check #{aes}:#{type}\ttable has? #{table.contains aes, type}"
       return unless table.contains aes, type
-      @log "useScales: fetch #{aes}\t#{type}\t#{posMapping[aes]}"
-      if type in @types(aes, posMapping)
+
+      stypes = @types aes, posMapping
+      @log "useScales: fetch #{aes}\t#{type}\t[#{stypes}]"
+      if type in stypes
         scale = @scale(aes, type, posMapping)
-      else
-        scale = @scale aes, gg.data.Schema.unknown, posMapping
-      f table, scale, aes
+        f table, scale, aes
+      #else
+      #scale = @scale aes, gg.data.Schema.unknown, posMapping
 
     table
 
@@ -299,7 +314,7 @@ class gg.scale.Set
 
   toString: (prefix="") ->
     arr = _.flatten _.map @scales, (map, aes) =>
-      _.map map, (scale, type) => "#{prefix}#{scale.toString()}"
+      _.map map, (scale, type) => "#{prefix}#{aes}: #{scale.toString()}"
     arr.join('\n')
 
 

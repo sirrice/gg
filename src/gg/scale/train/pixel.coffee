@@ -23,7 +23,6 @@ class gg.scale.train.Pixel extends gg.core.BForm
     super
 
     @params.ensure 'scaleTrain', [], @g.facets.scales
-    @params.ensure 'config', [], @spec.scalesConfig
 
 
   compute: (tables, envs, params) ->
@@ -36,17 +35,22 @@ class gg.scale.train.Pixel extends gg.core.BForm
     fAessType = ([t, e, info]) =>
       scaleset = e.get 'scales'
       posMapping = e.get 'posMapping'
+      console.log scaleset
       # only table columns that have a corresponding
       # ordinal scale are allowed
       f = (aes) =>
+        @log "aes types: #{aes}\t[#{scaleset.types aes, posMapping}]"
         _.map scaleset.types(aes, posMapping), (type) =>
+          if type is gg.data.Schema.ordinal
+            @log "aestype:\t#{aes} is ordinal. not in aessTypes"
+
           unless type is gg.data.Schema.ordinal
             if t.contains aes, type
               @log "aestype:\t#{aes}-#{type}"
               {aes: aes, type: type}
             else
               @log "noaestype:\t#{aes}-#{type}"
-
+      @log t.colNames()
       _.compact _.flatten _.map t.colNames(), f
 
     fOldScaleSet = ([t, e, info]) =>
@@ -59,21 +63,25 @@ class gg.scale.train.Pixel extends gg.core.BForm
 
     # 1. use old scales to invert column value
     # 2. merge domains into a fresh scaleset
+    #    - reset domains of non-ordinal scales
+    #    - preserve ordinal scales
     # 3. preserve existing ranges
     fMergeDomain = ([t, e, info, aessTypes, oldscaleset]) =>
-      newscaleset = params.get('config').scales info.layer
+      newscaleset = oldscaleset.clone()
+      seen = {}
       posMapping = e.get 'posMapping'
+
       f = (table, oldscale, aes) =>
-        if _.isSubclass oldscale, gg.scale.Identity
-          newscaleset.scale oldscale
-          return
+        return if _.isSubclass oldscale, gg.scale.Identity
 
         col = table.getColumn(aes).filter _.isValid
         @log "mergeDomain: aes #{aes} #{col? and col.length>0}"
         return unless col? and col.length > 0
 
         newscale = newscaleset.scale oldscale.aes, oldscale.type
-        newscale.range oldscale.range()
+        if newscale.id not of seen
+          newscale.resetDomain()
+          seen[newscale.id] = yes
 
         # col has pixel (range) units, so first invert
         range = oldscale.defaultDomain col
