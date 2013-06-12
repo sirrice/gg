@@ -16,7 +16,7 @@ class gg.scale.Set
     @id = gg.scale.Set::_id
     gg.scale.Set::_id += 1
 
-    @log = gg.util.Log.logger "ScaleSet-#{@id}", gg.util.Log.DEBUG
+    @log = gg.util.Log.logger "ScaleSet-#{@id}", gg.util.Log.WARN
   _id: 0
 
   clone: () ->
@@ -71,6 +71,8 @@ class gg.scale.Set
     scale
 
 
+  # Combines fetching and creating scales
+  #
   get: (aes, type, posMapping={}) ->
     unless type?
       throw Error("type cannot be null anymore: #{aes}")
@@ -153,54 +155,16 @@ class gg.scale.Set
 
 
 
-  useScales: (table, aessTypes=null, posMapping={}, f) ->
-    unless aessTypes?
-      aessTypes = _.compact table.schema.attrs()
-
-    _.each table.colNames(), (attr) =>
-      aes = attr
-      tabletype = table.schema.type attr
-      scale = @scale aes, tabletype, posMapping
-      return f table, scale, aes
-      stypes = @types aes, posMapping
-      if stypes.length > 1
-        throw Error("stypes is >1: #{aes}: #{stypes}")
-
-      scale = @scale(aes, stypes[0], posMapping)
-      f table, scale, aes
-
-    return table
-
-
-    aessTypes = _.map aessTypes, (aes) =>
-      if _.isObject aes
-        #@log "useScales: aes: #{aes.aes}\ttype: #{aes.type}"
-        aes
+  useScales: (table, posMapping={}, f) ->
+    _.each table.colNames(), (aes) =>
+      if @contains aes
+        scale = @scale aes, gg.data.Schema.unknown, posMapping
       else
-        # XXX: it's not clear why this is the correct logic
-        #      1) pick posMapped aes type from table
-        #      2) pick aes type from table
-        if aes of posMapping #and table.contains posMapping[aes]
-          typeAes = posMapping[aes]
-        else
-          typeAes = aes
-        type = table.schema.type typeAes
-        @log "useScales: aes: #{aes}\ttype: #{type}"
-        {aes: aes, type: type}
+        tabletype = table.schema.type aes
+        scale = @scale aes, tabletype, posMapping
+      console.log "fetch: #{aes}\t#{tabletype}\t#{scale.toString()}"
 
-    _.each aessTypes, (at) =>
-      aes = at.aes
-      type = at.type
-      @log "useScales: check #{aes}:#{type}\ttable has? #{table.contains aes, type}"
-      return unless table.contains aes, type
-
-      stypes = @types aes, posMapping
-      @log "useScales: fetch #{aes}\t#{type}\t[#{stypes}]"
-      if type in stypes
-        scale = @scale(aes, type, posMapping)
-        f table, scale, aes
-      #else
-      #scale = @scale aes, gg.data.Schema.unknown, posMapping
+      f table, scale, aes
 
     table
 
@@ -211,7 +175,7 @@ class gg.scale.Set
   # @param posMapping maps table attr to aesthetic with scale
   #        attr -> aes
   #        attr -> [aes, type]
-  train: (table, aessTypes=null, posMapping={}) ->
+  train: (table, posMapping={}) ->
     f = (table, scale, aes) =>
       return unless table.contains aes
       return if _.isSubclass scale, gg.scale.Identity
@@ -243,13 +207,13 @@ class gg.scale.Set
         else
           @log "train: #{aes}(#{scale.id})\t#{scale}"
 
-    @useScales table, aessTypes, posMapping, f
+    @useScales table, posMapping, f
     @
 
   # @param posMapping maps aesthetic names to the scale that
   #        should be used
   #        e.g., median, q1, q3 should use 'y' position scale
-  apply: (table, aessTypes=null, posMapping={}) ->
+  apply: (table,  posMapping={}) ->
     f = (table, scale, aes) =>
       str = scale.toString()
       g = (v) -> scale.scale v
@@ -259,28 +223,31 @@ class gg.scale.Set
 
     table = table.clone()
     @log "apply: table has #{table.nrows()} rows"
-    @useScales table, aessTypes, posMapping, f
+    @useScales table, posMapping, f
     #table.reloadSchema()
     table
 
   # @param posMapping maps aesthetic names to the scale that
   #        should be used
   #        e.g., median, q1, q3 should use 'y' position scale
-  filter: (table, aessTypes=null, posMapping={}) ->
+  filter: (table, posMapping={}) ->
     filterFuncs = []
-    console.log
     f = (table, scale, aes) =>
       g = (row) -> scale.valid row.get(aes)
+      g.aes = aes
       @log "filter: #{scale.toString()}"
       filterFuncs.push g if table.contains aes
 
-    @useScales table, aessTypes, posMapping, f
+    @useScales table, posMapping, f
 
     nRejected = 0
-    g = (row) ->
-      valid = _.all filterFuncs, (func) -> func(row)
-      nRejected += 1 unless valid
-      valid
+    g = (row) =>
+      for f in filterFuncs
+        unless f(row)
+          nRejected += 1
+          @log "Row rejected on attr #{f.aes} w val: #{row.get f.aes}"
+          return no
+      yes
 
     table = table.filter g
     @log "filter: removed #{nRejected}.  #{table.nrows()} rows left"
@@ -293,7 +260,7 @@ class gg.scale.Set
   #        that should be used
   #        e.g., median, q1, q3 should use 'y' position scale
   # @param {gg.Table} table
-  invert: (table, aessTypes=null, posMapping={}) ->
+  invert: (table, posMapping={}) ->
     f = (table, scale, aes) =>
       g = (v) -> if v? then  scale.invert(v) else null
       origDomain = scale.defaultDomain table.getColumn(aes)
@@ -306,8 +273,7 @@ class gg.scale.Set
         @log "invert: #{aes}(#{scale.id};#{scale.domain()}):\t#{origDomain} --> #{newDomain}"
 
     table = table.clone()
-    @log aessTypes
-    @useScales table, aessTypes, posMapping, f
+    @useScales table, posMapping, f
     table
 
   labelFor: -> null

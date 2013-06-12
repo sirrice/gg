@@ -32,26 +32,6 @@ class gg.scale.train.Pixel extends gg.core.BForm
     # 3) merge bounds with existing scales
     # 4) map tables once to invert using old scales + apply new scales
 
-    fAessType = ([t, e, info]) =>
-      scaleset = e.get 'scales'
-      posMapping = e.get 'posMapping'
-      console.log scaleset
-      # only table columns that have a corresponding
-      # ordinal scale are allowed
-      f = (aes) =>
-        @log "aes types: #{aes}\t[#{scaleset.types aes, posMapping}]"
-        _.map scaleset.types(aes, posMapping), (type) =>
-          if type is gg.data.Schema.ordinal
-            @log "aestype:\t#{aes} is ordinal. not in aessTypes"
-
-          unless type is gg.data.Schema.ordinal
-            if t.contains aes, type
-              @log "aestype:\t#{aes}-#{type}"
-              {aes: aes, type: type}
-            else
-              @log "noaestype:\t#{aes}-#{type}"
-      @log t.colNames()
-      _.compact _.flatten _.map t.colNames(), f
 
     fOldScaleSet = ([t, e, info]) =>
       #scaleset = @scales info.facetX, info.facetY, info.layer
@@ -66,7 +46,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
     #    - reset domains of non-ordinal scales
     #    - preserve ordinal scales
     # 3. preserve existing ranges
-    fMergeDomain = ([t, e, info, aessTypes, oldscaleset]) =>
+    fMergeDomain = ([t, e, info, oldscaleset]) =>
       newscaleset = oldscaleset.clone()
       seen = {}
       posMapping = e.get 'posMapping'
@@ -74,11 +54,19 @@ class gg.scale.train.Pixel extends gg.core.BForm
       f = (table, oldscale, aes) =>
         return if _.isSubclass oldscale, gg.scale.Identity
 
-        col = table.getColumn(aes).filter _.isValid
-        @log "mergeDomain: aes #{aes} #{col? and col.length>0}"
-        return unless col? and col.length > 0
-
         newscale = newscaleset.scale oldscale.aes, oldscale.type
+        col = table.getColumn(aes).filter _.isValid
+
+        unless col? and col.length > 0
+          @log "mergeDomain: aes #{aes} #{col? and col.length>0}"
+          @log "mergeDomain: #{newscale.toString()}"
+          return
+        if _.isSubclass oldscale, gg.scale.BaseCategorical
+          @log "mergeDomain: categorical.  skipping"
+          @log "mergeDomain: #{newscale.toString()}"
+          return
+
+        # Reset the domain if this is the first time we've seen it
         if newscale.id not of seen
           newscale.resetDomain()
           seen[newscale.id] = yes
@@ -91,12 +79,11 @@ class gg.scale.train.Pixel extends gg.core.BForm
         @log "mergeDomain: #{aes}\trange: #{range}"
         @log "mergeDomain: #{aes}\tdomain: #{domain}"
         @log "mergeDomain: #{newscale.toString()}"
-        @log "mergeDomain: posMap: #{JSON.stringify posMapping}"
 
-      oldscaleset.useScales t, aessTypes, posMapping, f
+      oldscaleset.useScales t, posMapping, f
       e.put 'scales', newscaleset
 
-    fRescale = ([t, e, info, aessTypes, oldScales]) =>
+    fRescale = ([t, e, info, oldScales]) =>
       scaleset = e.get 'scales'
       posMapping = e.get 'posMapping'
       mappingFuncs = {}
@@ -108,7 +95,8 @@ class gg.scale.train.Pixel extends gg.core.BForm
         @log "rescale: new: #{scale.toString()}"
 
 
-      scaleset.useScales t, aessTypes, posMapping, rescale
+      console.log scaleset.toString()
+      scaleset.useScales t, posMapping, rescale
       clone = t.clone()
       clone.map mappingFuncs
       clone.schema = t.schema
@@ -116,9 +104,8 @@ class gg.scale.train.Pixel extends gg.core.BForm
 
     # 0) setup some variables we'll need
     infos = _.map _.zip(tables, envs), ([t,e]) => @paneInfo t, e
-    allAessTypes = _.map _.zip(tables, envs, infos), fAessType
     oldScaleSets = _.map _.zip(tables, envs, infos), fOldScaleSet
-    args = _.zip(tables, envs, infos, allAessTypes, oldScaleSets)
+    args = _.zip(tables, envs, infos, oldScaleSets)
 
     # 1) compute new scales
     _.each args, fMergeDomain

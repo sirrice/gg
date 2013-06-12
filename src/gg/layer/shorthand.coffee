@@ -139,6 +139,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
       name: "scales-schema-#{@layerIdx}"
       params:
         config: @g.scales.scalesConfig
+    nodes.push makeStdOut "pre-gb"
     nodes.push @groupby
 
 
@@ -174,9 +175,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeStdOut "post-geommaptrain"
     nodes.push makeScalesOut "post-geommaptrain"
 
-    nodes.push new gg.xform.ScalesValidate @,
-      name: 'scales-validate'
-
 
     # layout the overall graphic, allocate space for facets
     # facets: allocate containers and compute ranges for the scales
@@ -184,6 +182,10 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push @g.renderNode
     nodes.push @g.facets.collector
     nodes.push @g.facets.layout1
+
+    nodes.push new gg.xform.ScalesValidate @,
+      name: 'scales-validate'
+
 
 
     # geom: facets have set the ranges so transform data values to pixel values

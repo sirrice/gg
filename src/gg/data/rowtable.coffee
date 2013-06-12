@@ -8,6 +8,8 @@ class gg.data.RowTable extends gg.data.Table
     @log = gg.data.Table.log
 
 
+  # XXX: This method infers schema information, and which may
+  #      lose or be inconsistent with existing schema info
   @fromArray: (rows) ->
     schema = gg.data.Table.inferSchemaFromObjs rows
     table = new gg.data.RowTable schema, rows
@@ -62,12 +64,12 @@ class gg.data.RowTable extends gg.data.Table
 
   @merge: (tables) ->
     if tables.length == 0
-        new gg.data.RowTable @schema
+      new gg.data.RowTable @schema
     else
-        t = tables[0].cloneShallow()
-        for t2, idx in tables
-            t.merge(t2) if idx > 0
-        t
+      t = tables[0].cloneShallow()
+      for t2, idx in tables
+          t.merge(t2) if idx > 0
+      t
 
 
   # gbfunc's output will be JSON encoded to differentiate groups
@@ -91,8 +93,9 @@ class gg.data.RowTable extends gg.data.Table
 
 
     ret = []
+    schema = @schema
     _.each groups, (rows, jsonKey) ->
-      partition = gg.data.RowTable.fromArray rows
+      partition = new gg.data.RowTable schema, rows
       ret.push {key: keys[jsonKey], table: partition}
     ret
 

@@ -45,7 +45,9 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
     if interval? and interval.length > 0 and not @rangeSet
       #XXX: rangeBand vs range changes depending on if we're rendering
       #     points or rectangles?
-      if gg.data.Schema.type(interval[0]) == gg.data.Schema.numeric
+      if _.isString interval[0]
+        @d3Scale.range interval
+      else if gg.data.Schema.type(interval[0]) == gg.data.Schema.numeric
         @d3Scale.rangeBands interval#, @padding
       else
         @d3Scale.rangePoints interval
@@ -55,8 +57,8 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
 
   resetDomain: ->
     @domainUpdated = false
-    @domain([])
-    @invertScale.domain []
+    @domain([]) unless @domainSet
+    @invertScale.domain [] unless @domainSet
 
   invert: (v) -> @invertScale v
 

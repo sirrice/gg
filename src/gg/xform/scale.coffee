@@ -28,16 +28,17 @@ class gg.xform.ScalesSchema extends gg.core.XForm
         stype = types[0]
         unless stype is gg.data.Schema.unknown
           if tabletype >= stype
-            table.schema.setType attr, stype
             log "settype: #{attr}\t#{stype}"
+            table.schema.setType attr, stype
           else
             throw Error("Upcast #{attr}: #{tabletype}->#{stype}")
 
       else if types.length > 1
         throw Error("#{attr} has >1 types in scaleset: #{types}")
 
-    console.log scaleset.toString()
 
+    console.log table.colNames()
+    console.log table.schema.toString()
     table
 
 
@@ -55,7 +56,7 @@ class gg.xform.ScalesApply extends gg.core.XForm
   compute: (table, env, params) ->
     @log "table has #{table.nrows()} rows"
     scales = @scales table, env, params
-    table = scales.apply table, null, env.get('posMapping')
+    table = scales.apply table, env.get('posMapping')
     table
 
 
@@ -72,9 +73,7 @@ class gg.xform.ScalesInvert extends gg.core.XForm
 
   compute: (table, env, params) ->
     scales = @scales table, env, params
-    aess = _.compact(_.union scales.aesthetics(), params.get('aess'))
-    @log ":aesthetics: #{aess}"
-    table = scales.invert table, null, env.get('posMapping')
+    table = scales.invert table, env.get('posMapping')
     table
 
 
@@ -92,8 +91,11 @@ class gg.xform.ScalesFilter extends gg.core.XForm
 
   compute: (table, env, params) ->
     @log "table has #{table.nrows()} rows"
+    nrows = table.nrows()
     scales = @scales table, env, params
-    table = scales.filter table, null, env.get('posMapping')
+    @log scales.toString()
+    table = scales.filter table, env.get('posMapping')
+    @log "filtered #{nrows - table.nrows()} rows"
     table
 
 

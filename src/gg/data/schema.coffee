@@ -11,12 +11,12 @@ class gg.data.Schema
   @unknown = -1
 
   constructor: ->
-    @schema = {}
+    @lookup = {}
     @attrToKeys = {}
     @log = gg.data.Schema.log
 
   addColumn: (key, type, schema=null) ->
-    @schema[key] =
+    @lookup[key] =
       type: type
       schema: schema
 
@@ -46,7 +46,7 @@ class gg.data.Schema
     cols = [cols] unless _.isArray cols
 
     schema = new gg.data.Schema
-    _.each @schema, (type, key) ->
+    _.each @lookup, (type, key) ->
       if key in cols
         if not recursive and type.type == gg.data.Schema.array
           # promote to nested object
@@ -55,7 +55,7 @@ class gg.data.Schema
         else
           if recursive or type.type == gg.data.Schema.nested
             # promote subkeys to raw keys
-            _.each type.schema.schema, (subtype, subkey) ->
+            _.each type.schema.lookup, (subtype, subkey) ->
               schema.addColumn subkey, subtype.type, subtype.schema
           else
             schema.addColumn key, type.type, type.schema
@@ -65,7 +65,7 @@ class gg.data.Schema
     if no
       switch type.type
         when gg.data.Schema.array, gg.data.Schema.nested
-          _.each type.schema.schema, (subtype, subkey) ->
+          _.each type.schema.lookup, (subtype, subkey) ->
             schema.addColumn subkey, subtype.type, subtype.schema
         else
           schema.addColumn key, type.type, type.schema
@@ -78,7 +78,7 @@ class gg.data.Schema
       (type is null) or @isType(attr, type)
     else
       false
-  nkeys: -> _.size @schema
+  nkeys: -> _.size @lookup
   toString: -> JSON.stringify @toJSON()
   toSimpleString: ->
     arr = _.map @attrs(), (attr) => "#{attr}(#{@type(attr)})"
@@ -94,29 +94,29 @@ class gg.data.Schema
 
   typeObj: (attr, schema=null) ->
     schema = @ unless schema? # schema class object
-    _schema = schema.schema   # internal schema datastructure
+    lookup = schema.lookup   # internal schema datastructure
     key = schema.attrToKeys[attr]
 
-    if _schema[key]?
+    if lookup[key]?
       if key is attr
-        if _schema[key].schema
-          json = _schema[key].schema.toJSON()
+        if lookup[key].schema
+          json = lookup[key].schema.toJSON()
         else
           json = null
         {
-          type: _schema[key].type
+          type: lookup[key].type
           schema: json
         }
       else
-        type = _schema[key].type
-        subSchema = _schema[key].schema
+        type = lookup[key].type
+        subSchema = lookup[key].schema
         switch type
           when gg.data.Schema.array, gg.data.Schema.nested
-            if subSchema? and attr of subSchema.schema
-              _subSchema = subSchema.schema
+            if subSchema? and attr of subSchema.lookup
+              subLookup = subSchema.lookup
               # only allow one level of nesting
               {
-                type: _subSchema[attr].type
+                type: subLookup[attr].type
                 schema: null
               }
             else
@@ -130,7 +130,7 @@ class gg.data.Schema
       null
 
 
-  isKey: (attr) -> attr of @schema
+  isKey: (attr) -> attr of @lookup
   isOrdinal: (attr) -> @isType attr, gg.data.Schema.ordinal
   isNumeric: (attr) -> @isType attr, gg.data.Schema.numeric
   isTable: (attr) -> @isType attr, gg.data.Schema.array
@@ -155,19 +155,20 @@ class gg.data.Schema
   setType: (attr, newType) ->
     schema = @
     key = schema.attrToKeys[attr]
-    if schema.schema[key]?
+    if schema.lookup[key]?
       if key is attr
-        schema.schema[key].type = newType
+        schema.lookup[key].type = newType
       else
-        type = schema.schema[key].type
-        subSchema = schema.schema[key].schema
+        type = schema.lookup[key].type
+        subSchema = schema.lookup[key].schema
         switch type
           when gg.data.Schema.array, gg.data.Schema.nested
             if subSchema?
+              @log @
               @log schema
               @log subSchema
               @log attr
-              subSchema[attr].type = newType
+              subSchema.lookup[attr].type = newType
 
 
   # @param rawrow a json object with same schema as this object
@@ -176,20 +177,20 @@ class gg.data.Schema
   extract: (rawrow, attr) ->
     return null unless @contains attr
     key = @attrToKeys[attr]
-    if @schema[key]?
+    if @lookup[key]?
       if key is attr
         rawrow[key]
       else
-        type = @schema[key].type
-        subSchema = @schema[key].schema
+        type = @lookup[key].type
+        subSchema = @lookup[key].schema
         subObject = rawrow[key]
 
         switch type
           when gg.data.Schema.array
-            if subSchema? and attr of subSchema.schema
+            if subSchema? and attr of subSchema.lookup
               _.map subObject, (o) -> o[attr]
           when gg.data.Schema.nested
-            if subSchema? and attr of subSchema.schema
+            if subSchema? and attr of subSchema.lookup
               subObject[attr]
           else
             null
@@ -245,7 +246,7 @@ class gg.data.Schema
 
   toJSON: ->
     json = {}
-    _.each @schema, (v, k) ->
+    _.each @lookup, (v, k) ->
       switch v.type
         when gg.data.Schema.nested, gg.data.Schema.array
           json[k] =

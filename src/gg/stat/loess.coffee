@@ -23,6 +23,8 @@ class gg.stat.LoessStat extends gg.stat.Stat
   # 1) every value is a finite number
   # 2) xs is monotonically increasing
   compute: (table, env, params) ->
+    if table.nrows() <= 1
+      return table
     @log "nrows: #{table.nrows()}"
     @log "contains x,y: #{table.contains 'x'}, #{table.contains 'y'}"
     xs = table.getColumn('x')

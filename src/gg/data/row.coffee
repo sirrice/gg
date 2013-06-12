@@ -163,7 +163,8 @@ class gg.data.Row
 
     # may be inefficient to infer the schema for
     # every flattened row!
-    gg.data.RowTable.fromArray rowDatas
+    schema = @schema.flatten cols, recursive
+    new gg.data.RowTable schema, rowDatas
 
 
   addColumn: (attr, val) -> @data[attr] = val

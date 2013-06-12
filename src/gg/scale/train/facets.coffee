@@ -20,7 +20,7 @@ class gg.scale.train.Master extends gg.core.BForm
     if scalesTrain is 'fixed'
       _.each envs, (env) ->
         scaleSet = env.get 'scales'
-        scaleSet.merge masterScaleSet, no#, true
+        scaleSet.merge masterScaleSet, no
     else
       xs = @pick envs, 'x'
       ys = @pick envs, 'y'
