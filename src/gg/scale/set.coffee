@@ -153,8 +153,6 @@ class gg.scale.Set
 
 
 
-
-
   useScales: (table, posMapping={}, f) ->
     _.each table.colNames(), (aes) =>
       if @contains aes

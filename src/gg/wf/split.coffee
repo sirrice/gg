@@ -126,13 +126,33 @@ class gg.wf.Split extends gg.wf.Node
     groups
 
 
-# Shorthand for non-overlapping group-by functionality
+# Shorthand for non-overlapping group-by
+# on table column(s)
 class gg.wf.Partition extends gg.wf.Split
   constructor: ->
     super
     @name = _.findGood [@spec.name, "partition-#{@id}"]
 
-    gbfunc = @params.get('f') or (()->1)
-    @params.put 'splitFunc', ((table)->table.split gbfunc)
+    gbfunc = @params.get('f') or (()->"1")
+    splitFunc = (table) -> table.split gbfunc
+    @params.put 'splitFunc', splitFunc
+
+
+# Shorthand for non-overlapping group-by
+# on table column(s)
+class gg.wf.PartitionCols extends gg.wf.Split
+  constructor: ->
+    super
+    @name = _.findGood [@spec.name, "partition-#{@id}"]
+
+    unless @params.contains 'cols'
+      if @params.contains 'col'
+        @params.put 'cols', [@params.get 'col']
+      else
+        throw Error("Partition needs >0 columns")
+
+    cols = @params.get 'cols'
+    splitFunc = (table) -> table.partition cols
+    @params.put 'splitFunc', splitFunc
 
 

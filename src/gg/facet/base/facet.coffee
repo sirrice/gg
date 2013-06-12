@@ -114,8 +114,16 @@ class gg.facet.base.Facets
     facetYKey = gg.facet.base.Facets.facetYKey
     x = @splitParams.get('x')
     y = @splitParams.get('y')
-    facetXNode = gg.xform.Split.createNode facetXKey, x
-    facetYNode = gg.xform.Split.createNode facetYKey, y
+    facetXNode = new gg.wf.Partition
+      name: 'facet-x'
+      params:
+        key: facetXKey
+        f: (row) -> row.get x
+    facetYNode = new gg.wf.Partition
+      name: 'facet-y'
+      params:
+        key: facetYKey
+        f: (row) -> row.get y
     [facetXNode, facetYNode]
 
   # This executes on a per-facet-layer basis

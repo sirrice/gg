@@ -19,10 +19,11 @@ class gg.facet.pane.Svg extends gg.core.XForm
     xac = paneC.xAxisC()
     yac = paneC.yAxisC()
 
-    el = svg.append('g')
-      .classed('pane-container', yes)
-      .attr('z-index', "#{layerIdx}")
-      .attr('transform', b2translate(paneC.bound()))
+    el = _.subSvg svg, {
+      class: "pane-container layer-#{layerIdx}"
+      'z-index': "#{layerIdx+1}"
+      transform: b2translate(paneC.bound())
+    }
 
 
     if layerIdx is 0
@@ -30,7 +31,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
         width: dc.w()
         height: dc.h()
         transform: b2translate dc
-        'z-index': -1
+        'z-index': 0
         class: 'pane-background facet-grid-background'
       }, 'rect'
 

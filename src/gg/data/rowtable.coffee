@@ -72,32 +72,56 @@ class gg.data.RowTable extends gg.data.Table
       t
 
 
-  # gbfunc's output will be JSON encoded to differentiate groups
-  # however the actual key will be the original gbfunc's output
-  #
-  # @param {Function} gbfunc (row) -> key
-  # @return {Array} of objects: {key: group key, table: partition}
+  # Horizontally split table using an arbitrary splitting function
+  # (preserves all existing columns)
   split: (gbfunc) ->
     if _.isString gbfunc
       gbfunc = ((key) -> (tuple) -> tuple.get(key))(gbfunc)
 
-
     keys = {}
-    groups = {} # arrays of rows
+    groups = {}
     _.each @rows, (row) ->
       key = gbfunc row
       jsonKey = JSON.stringify key
-      groups[jsonKey] = [] if jsonKey not of groups
+      groups[jsonKey] = [] unless jsonKey of groups
       groups[jsonKey].push row
       keys[jsonKey] = key
 
-
     ret = []
-    schema = @schema
+    schema = @schema.clone()
     _.each groups, (rows, jsonKey) ->
       partition = new gg.data.RowTable schema, rows
       ret.push {key: keys[jsonKey], table: partition}
     ret
+
+
+
+  # Partition table on a set of table columns
+  # Removes those columns from each partition's tuples
+  partition: (cols) ->
+    cols = _.flatten [cols]
+    cols = _.filter cols, (col) => @schema.contains col
+
+    keys = {}
+    groups = {}
+    _.each @rows, (row) ->
+      key = _.map cols, (col) -> row.get col
+      jsonKey = JSON.stringify key
+      groups[jsonKey] = [] unless jsonKey of groups
+      groups[jsonKey].push row
+      keys[jsonKey] = key
+
+    ret = []
+    schema = @schema.clone()
+    console.log "removing #{cols}"
+    _.each cols, (col) -> schema.rmColumn col
+    _.each groups, (rows, jsonKey) ->
+      _.each rows, (row) -> row.rmColumns cols
+      partition = new gg.data.RowTable schema, rows
+      gg.wf.Stdout partition, null, 5, gg.util.Log.logger('partition')
+      ret.push {key: keys[jsonKey], table: partition}
+    ret
+
 
   flatten: (cols=null, recursive=false) ->
     table = new gg.data.RowTable @schema.flatten(cols, recursive)

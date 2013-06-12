@@ -15,16 +15,36 @@ class gg.data.Schema
     @attrToKeys = {}
     @log = gg.data.Schema.log
 
+  # XXX: if key exists in schema, simply overwrites
   addColumn: (key, type, schema=null) ->
     @lookup[key] =
       type: type
       schema: schema
 
     @attrToKeys[key] = key
-    switch type
-      when gg.data.Schema.array, gg.data.Schema.nested
-        _.each schema.attrs(), (attr) =>
-          @attrToKeys[attr] = key
+    if type in [gg.data.Schema.array, gg.data.Schema.nested]
+      _.each schema.attrs(), (attr) =>
+        @attrToKeys[attr] = key
+
+  rmColumn: (col) ->
+    if @contains col
+      key = @attrToKeys[col]
+      if key is col
+        # clean up subkeys if col is a nested or array type
+        if @isArray(col) or @isNested(col)
+          _.each @lookup[key].schema.attrs(), (attr) =>
+            delete @attrToKeys[attr]
+
+        delete @lookup[key]
+      else
+        # col is within a nesting
+        @lookup[key].schema.rmColumn col
+        if @lookup[key].schema.nkeys() == 0
+          delete @lookup[key]
+
+      delete @attrToKeys[col]
+
+
 
   # promotes all attributes in cols parameter
   # 1) within nests into raw attributes,

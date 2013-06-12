@@ -65,7 +65,6 @@ class gg.core.Graphic
 
     preMulticastNodes = []
     preMulticastNodes.push @setupEnvNode()
-    preMulticastNodes.push @setupScales()
     preMulticastNodes = preMulticastNodes.concat @facets.splitter
 
     prev = null
@@ -96,18 +95,11 @@ class gg.core.Graphic
     wf
 
   setupEnvNode: ->
-    new gg.wf.EnvPush
-      name: 'set-base-svg'
+    new gg.wf.EnvPut
       params:
-        key: 'baseSvg'
-        val: @svg
-
-  setupScales: ->
-    new gg.wf.EnvPush
-      params:
-        key: 'scalesconfig'
-        val: @scales.scalesConfig
-
+        data:
+          scalesconfig: @scales.scalesConfig
+          baseSvg: @svg
 
   renderGuides: -> null
 

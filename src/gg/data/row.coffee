@@ -8,7 +8,6 @@ class gg.data.Row
   constructor: (@data, @schema) ->
     @log = gg.data.Row.log
 
-
   rawKeys: ->
     @schema.attrs().filter (attr) => @schema.isRaw(attr)
   nestedKeys: ->
@@ -87,6 +86,10 @@ class gg.data.Row
       @data[attr] = val
 
   # Project attributes while keeping the nested and array structures
+  # If attr1 is nested type and attr1 + attr1.attr2 are listed,
+  # will copy over attr1
+  #
+  # Really only used for debugging purposes in gg.wf.debug
   project: (attrs) ->
     copy = {}
     _.each attrs, (attr) =>
@@ -107,6 +110,21 @@ class gg.data.Row
         copy[attr] = @data[attr]
     new gg.data.Row copy
 
+  rmColumns: (attrs) ->
+    _.each attrs, (attr) =>
+      key = @schema.attrToKeys[attr]
+      if @schema.isRaw attr
+        delete @data[attr]
+      else if @schema.inNested attr
+        delete @data[key][attr]
+      else if @schema.inArray attr
+        arr = @data[key]
+        if arr?
+          _.each arr, (subrow) -> delete subrow[attr]
+    @
+
+  rmColumn: (attr) ->
+    @rmColumns _.flatten([attr])
 
   merge: (row) ->
     _.extend @data, row.data
@@ -168,6 +186,7 @@ class gg.data.Row
 
 
   addColumn: (attr, val) -> @data[attr] = val
+  rmColumn: (attr, val) ->
 
   ncols: -> _.size(@data)
 

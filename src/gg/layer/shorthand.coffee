@@ -41,26 +41,23 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @coordSpec = @extractSpec "coord"
     @coordSpec.name = "coord-#{@layerIdx}"
     @groupSpec = "group" if "group" of @mapSpec.aes
-    @labelSpec =
-      params:
-        key: "layer"
-        val: @layerIdx
 
 
     @geom = gg.geom.Geom.fromSpec @, @geomSpec
     @stat = gg.stat.Stat.fromSpec @, @statSpec
     @pos = gg.pos.Position.fromSpec @, @posSpec
     @map = gg.xform.Mapper.fromSpec @g, @mapSpec
-    @labelNode = new gg.wf.EnvPush @labelSpec
     @coord = gg.coord.Coordinate.fromSpec @, @coordSpec
     if @groupSpec?
-      @groupby = gg.xform.Split.createNode "group", "group"
+      @groupby = new gg.wf.PartitionCols
+        name: "group-#{@layerIdx}"
+        params:
+          key: "group"
+          cols: ['group']
       @groupbylabel = new gg.wf.Join#EnvGet
         name: "groupbylabel-#{@layerIdx}"
         params:
           key: "group"
-
-    #@pos = null if _.isSubclass @pos, gg.pos.Identity
 
     super
 
@@ -125,14 +122,14 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes = []
 
     # add environment variables
-    nodes.push new gg.wf.EnvPush
+    nodes.push new gg.wf.EnvPut
       params:
-        key: 'posMapping'
-        val: @geom.posMapping()
+        data:
+          layer: @layerIdx
+          posMapping: @geom.posMapping()
 
     # pre-stats transforms
     nodes.push makeStdOut "init-data"
-    nodes.push @labelNode
     nodes.push @map
     nodes.push makeStdOut "post-map-#{@layerIdx}"
     nodes.push new gg.xform.ScalesSchema @,
@@ -141,6 +138,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
         config: @g.scales.scalesConfig
     nodes.push makeStdOut "pre-gb"
     nodes.push @groupby
+    nodes.push makeStdOut "post-gb"
 
 
     # Statistics transforms

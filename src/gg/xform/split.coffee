@@ -2,25 +2,30 @@
 
 # Helper functions that return workflow nodes
 # that perform different group-bys
+#
+# @deprecated
 class gg.xform.Split
 
   @createNode: (name, gbspec) ->
     console.log [name, gbspec]
     node = if _.isString gbspec
-      @byColValues name, gbspec
+      @byColumns name, [gbspec]
     else if _.isFunction gbspec
       @byFunction name, gbspec
     else if _.isArray(gbspec) and gbspec.length > 0
       if _.isString gbspec[0]
-        @byColNames name, gbspec
+        @fold name, gbspec
       else:
         throw Error("Faceting by transformations not implemented yet")
 
     node
     # TODO: also support varying run-time parameters
 
-  @byColValues: (name, col) ->
-    @byFunction name, (row) -> row.get(col)
+  @byColumns: (name, col) ->
+    new gg.wf.PartitionCols
+      name: name
+      params:
+        col: col
 
   # Partition by using a function
   @byFunction: (name, f) ->
@@ -50,7 +55,7 @@ class gg.xform.Split
   #   1 2 3 3
   #   4 5 6 6
   #
-  @byColNames: (name, cols) ->
+  @fold: (name, cols) ->
     throw Error() unless cols.length == 0 or _.isString cols[0]
 
     f = (table) ->

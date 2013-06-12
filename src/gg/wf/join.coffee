@@ -34,7 +34,6 @@ class gg.wf.Join extends gg.wf.Node
       super parent, parentPort, stop
 
 
-  # pop from each env's keys list
   run: ->
     unless @ready()
       throw Error("#{@name} not ready: #{@inputs.length} of #{@children().length} inputs")
@@ -45,7 +44,12 @@ class gg.wf.Join extends gg.wf.Node
 
     tables = _.map @inputs, (data) =>
       table = data.table
-      val = data.env.get envkey, defaultVal
+      env = data.env
+      val =
+        if env.contains(envkey)
+          env.get(envkey)
+        else
+          defaultVal
       if table.contains attr
         table.each (row) -> row.set attr, val
       else

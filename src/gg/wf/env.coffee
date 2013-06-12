@@ -1,49 +1,34 @@
 #<< gg/wf/node
 
-
-#
-# Add group pair into the environment.  Abstractly:
-#
-#   env.push {key: val}
-#
-# used by first xform in layer to name the rest of the workflow
-#
-# spec.key  label name e.g., "layer"
-# spec.val  label value e.g., "layer-2"
-#           also: spec.value
-# spec.f    function to dynamically compute label value
-#
-class gg.wf.EnvPush extends gg.wf.Node
-  constructor: (@spec={}) ->
-    super @spec
+class gg.wf.EnvPut extends gg.wf.Node
+  constructor: ->
+    super
     @type = "label"
     @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
     @log = gg.util.Log.logger @name
 
-    @params.ensureAll
-      compute: [ ['val', 'value', 'f'], null ]
 
-    unless @params.get('key')?
-      throw Error("#{@name}: Need label key and value/value function)")
-
+    # data is a mapping of key -> val where
+    # key:  label name in environment
+    # val:  label value or a function with signature
+    #       (table, env) -> value
+    #
+    # note: if function, it will be evaluated when the key
+    #       is accessed
+    @params.ensure 'data', [], {}
 
   run: ->
     throw Error("#{@name}: node not ready") unless @ready()
 
-    data = @inputs[0]
-    compute = @params.get 'compute'
-    key = @params.get 'key'
-    if _.isFunction compute
-      val = compute data.table, data.env, @params
-    else
-      val = compute
+    params = @params
+    table = @inputs[0].table
+    env = @inputs[0].env
+    newenv = env.clone()
+    _.each params.get('data'), (val, key) ->
+      newenv.put key, val
 
-    @log "adding label #{key} -> #{val}"
-
-    env = data.env.clone()
-    env.put key, val
-    @output 0, new gg.wf.Data(data.table, env)
-    data.table
+    @output 0, new gg.wf.Data(table, newenv)
+    table
 
 
 #
