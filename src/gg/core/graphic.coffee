@@ -99,7 +99,8 @@ class gg.core.Graphic
       params:
         data:
           scalesconfig: @scales.scalesConfig
-          baseSvg: @svg
+          svg:
+            base: @svg
 
   renderGuides: -> null
 

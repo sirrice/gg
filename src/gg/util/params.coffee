@@ -2,6 +2,7 @@
 # Data structure to implement a pseuda-monad
 #
 class gg.util.Params
+  @ggpackage = 'gg.util.Params'
   constructor: (data) ->
     @data = {}
     @merge data
@@ -78,29 +79,16 @@ class gg.util.Params
     env
 
   toString: ->
-    _.map(@data, (v,k) -> "#{k} -> #{v}").join("\n")
+    _.map(@data, (v,k) -> "#{k} -> #{JSON.stringify v}").join("\n")
 
   toJSON: ->
-    ret = {}
-    _.each @data, (v, k) ->
-      if _.isFunction v
-        ret[k] = {type: "function", val: v.toString()}
-      else
-        ret[k] = {type: "object", val: v}
-    ret
+    _.toJSON @data
 
   # Only accepts json objects formatted
   # from toJSON above
   #
   # XXX: This is pretty dangerous.
   @fromJSON: (json) ->
-    json = _.o2map json, (v, k) ->
-      val = switch v.type
-        when 'function'
-          f = Function "return (#{v.val})"
-          f()
-        else
-          v.val
-      [k, val]
-    new gg.util.Params json
+    data = _.fromJSON json
+    new gg.util.Params data
 

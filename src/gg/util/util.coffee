@@ -6,6 +6,50 @@ _ = require 'underscore'
 
 
 class gg.util.Util
+  @toJSON: (o, stack=0) ->
+    if o? and 'ggpackage' of o.constructor
+      ret = { type: 'gg', ggpackage: o.constructor.ggpackage }
+      ret.val = o.toJSON()
+    else if _.isArray o
+      ret = { type: "array", val: [], props: {} }
+      _.each o, (v) ->
+        ret.val.push gg.util.Util.toJSON(v, stack+1)
+      _.each _.reject(_.keys(o), _.isNumber), (k) ->
+        ret.props[k] = gg.util.Util.toJSON(o[k], stack+1)
+    else if _.isObject o
+      ret = { type: "object", val: {} }
+      _.each o, (v,k) ->
+        ret.val[k] = gg.util.Util.toJSON(v, stack+1)
+    else
+      ret = { type: 'primitive', val: o }
+    ret
+
+  @fromJSON: (json) ->
+    type = json.type
+    switch json.type
+      when 'gg'
+        klass = _.ggklass json.ggpackage
+        klass.fromJSON json.val
+      when 'array'
+        ret = []
+        _.each json.val, (v) ->
+          ret.push gg.util.Util.fromJSON(v)
+        _.each json.props, (vjson, k) ->
+          ret[k] = gg.util.Util.fromJSON(vjson)
+        ret
+      when 'object'
+        ret = {}
+        _.each json.val, (v, k) ->
+          ret[k] = gg.util.Util.fromJSON(v)
+        ret
+      else
+        json.val
+
+
+
+  @ggklass: (ggpackage) ->
+    cmd = "return ('gg' in window)? window.#{ggpackage} : #{ggpackage}"
+    Function(cmd)()
 
   @isValid: (v) -> not(_.isNull(v) or _.isNaN(v) or _.isUndefined(v))
 
@@ -73,6 +117,9 @@ findGood = gg.util.Util.findGood
 findGoodAttr = gg.util.Util.findGoodAttr
 
 _.mixin
+  toJSON: gg.util.Util.toJSON
+  fromJSON: gg.util.Util.fromJSON
+  ggklass: gg.util.Util.ggklass
   isValid: gg.util.Util.isValid
   list2map: gg.util.Util.list2map
   o2map: gg.util.Util.o2map

@@ -40,17 +40,6 @@ class gg.facet.base.Facets
     @parseSpec()
 
     @splitter = @splitterNodes()
-    @collector = new gg.core.BForm(@g,
-      name: 'collect-xys'
-      f: (tables, envs, node) ->
-        xs = gg.core.BForm.pick envs, gg.facet.base.Facets.facetXKey
-        ys = gg.core.BForm.pick envs, gg.facet.base.Facets.facetYKey
-
-        _.each envs, (env) ->
-          env.put 'xs', xs
-          env.put 'ys', ys
-        tables).compile()
-
     @trainer = new gg.scale.train.Master(@g,
       name: 'facet_train').compile()
 

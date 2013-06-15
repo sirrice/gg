@@ -2,6 +2,7 @@
 #<< gg/data/schema
 
 class gg.scale.BaseCategorical extends gg.scale.Scale
+  @ggpackage = 'gg.scale.BaseCategorical'
 
   # subclasses are responsible for instantiating @d3Scale and @invertScale
   constructor: (@spec) ->

@@ -15,16 +15,7 @@ class gg.geom.Render extends gg.core.XForm
   parseSpec: ->
     super
 
-  svg: (table, env, node) ->
-    svg = env.get 'paneSvg'
-    svg
-    #info = @paneInfo table, env
-    #svg = @g.facets.svgPane info.facetX, info.facetY
-    #ret = svg.append("g")
-    #ret.classed(@name, true) if @name?
-    #ret.classed("layer-#{@layer.layerIdx}", true)
-    #ret
-
+  svg: (table, env, node) -> env.get('svg').pane
 
   groups: (g, klass, data) ->
     g.selectAll("g.#{klass}")
@@ -48,6 +39,7 @@ class gg.geom.Render extends gg.core.XForm
     @log "rendering #{table.nrows()} rows"
     gg.wf.Stdout.print table, null, 2, @log
     @render table, env, node
+    table
 
   # @override this
   render: (table) -> throw Error("#{@name}.render() not implemented")

@@ -41,7 +41,8 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
         bXAxis = showXAxis and yidx >= nys-1
         bYAxis = showYAxis and xidx is 0
         log "pane(#{xidx},#{yidx}): x/yfacet: #{bXFacet}, #{bYFacet}\tx/yaxis: #{bXAxis}, #{bYAxis}"
-        new gg.facet.pane.Container gg.core.Bound.empty(),
+        new gg.facet.pane.Container(
+          gg.core.Bound.empty(),
           xidx,
           yidx,
           bXFacet,
@@ -50,6 +51,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
           bYAxis,
           labelHeight,
           yAxisW
+        )
 
     # compute actual pane sizes
     # constraints:
@@ -78,13 +80,15 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     # create bounds objects for each pane
     _.each grid, (paneCol, xidx) ->
       _.each paneCol, (pane, yidx) ->
-        pane.c= new gg.core.Bound 0, 0, paneW, paneH
+        pane.c.x1 = paneW
+        pane.c.y1 = paneH
         dx = _.sum _.times xidx, (pxidx) -> grid[pxidx][yidx].w()
         dy = _.sum _.times yidx, (pyidx) -> grid[xidx][pyidx].h()
         pane.c.d dx, dy
         pane.c.d pane.yAxisC().w(), pane.xFacetC().h()
         log [dx, dy]
         log [pane.yAxisC().w(), pane.xFacetC().h()]
+        log pane.constructor.name
 
         log "pane(#{xs[xidx]},#{ys[yidx]}): #{pane.c.toString()}"
 

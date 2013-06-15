@@ -73,6 +73,14 @@ class gg.wf.Barrier extends gg.wf.Node
     @log "barrier #{@name} got #{tables.length}"
 
     for output, idx in outputs
+      if envs[idx].contains 'paneC'
+        pc = envs[idx].get('paneC')
+        if pc.constructor.name != 'Container'
+          throw Error("pre-clone not right")
+        clone = envs[idx].clone()
+        pc = clone.get 'paneC'
+        if pc.constructor.name != 'Container'
+          throw Error("post-clone not right")
       @output idx, new gg.wf.Data(output, envs[idx].clone())
     outputs
 

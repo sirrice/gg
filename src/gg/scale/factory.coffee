@@ -2,10 +2,13 @@
 
 
 class gg.scale.Factory
+  @ggpackage = 'gg.scale.Factory'
+
+
   constructor: (@defaults) ->
 
-  @fromSpec: (spec) ->
-    sf = new gg.scale.Factory spec
+  @fromSpec: (defaults) ->
+    sf = new gg.scale.Factory defaults
     sf
 
   scale: (aes, type) ->
@@ -28,6 +31,20 @@ class gg.scale.Factory
     arr = _.map @defaults, (scale, aes) ->
       "\t#{aes} -> #{scale.toString()}"
     arr.join("\n")
+
+  toJSON: ->
+    json = {}
+    _.each @defaults, (scale, aes) ->
+      json[aes] = scale.toJSON()
+    json
+
+  @fromJSON: (json) ->
+    defaults = {}
+    _.each json, (scaleJSON, aes) ->
+      defaults[aes] = gg.scale.Scale.fromJSON scaleJSON
+    new gg.scale.Factory defaults
+
+
 
 
 

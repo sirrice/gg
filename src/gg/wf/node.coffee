@@ -160,6 +160,11 @@ class gg.wf.Node extends events.EventEmitter
     @on outidx, cb if outidx >= 0 and outidx < @children.length
 
   output: (outidx, data) ->
+    if data.env and data.env.contains 'paneC'
+      paneC = data.env.get('paneC')
+      if paneC.constructor.name != 'Container'
+        console.log paneC
+        throw Error("#{@name} got bad paneC")
     listeners = @listeners outidx
     n = listeners.length
     listeners = _.map(listeners, (l)->l.name)

@@ -13,6 +13,8 @@
 #
 
 class gg.facet.pane.Container
+  @ggpackage = 'gg.facet.pane.Container'
+
   # @param c pane container in _absolute_ coordinates to the parent container
   #        all container accessors (including for pane) should be done using
   #        method calls, which return bounds relative to upper left corner of
@@ -33,6 +35,34 @@ class gg.facet.pane.Container
       @rpad = @padding unless @bYFacet
       @bpad = @padding unless @bXAxis
       @upad = @padding unless @bXFacet
+
+  clone: ->
+    gg.facet.pane.Container.fromJSON @toJSON()
+
+  toJSON: ->
+    c: _.toJSON @c
+    x: _.toJSON @x
+    y: _.toJSON @y
+    bXFacet: @bXFacet
+    bYFacet: @bYFacet
+    bXAxis: @bXAxis
+    bYAxis: @bYAxis
+    labelHeight: @labelHeight
+    yAxisW: @yAxisW
+
+  @fromJSON: (json) ->
+    new gg.facet.pane.Container(
+      _.fromJSON json.c
+      _.fromJSON json.x
+      _.fromJSON json.y
+      json.bXFacet
+      json.bYFacet
+      json.bXAxis
+      json.bYAxis
+      json.labelHeight
+      json.yAxisW
+    )
+
 
   #
   # bounds for the container (pane + facets + axes)

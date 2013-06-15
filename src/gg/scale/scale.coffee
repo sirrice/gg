@@ -65,8 +65,12 @@
 #  }
 #
 class gg.scale.Scale
+  @ggpackage = 'gg.scale.Scale'
   @aliases = "scale"
   _id: 0
+
+
+
   constructor: (@spec={}) ->
     @aes = null
 
@@ -190,6 +194,7 @@ class gg.scale.Scale
     s
 
   clone: ->
+    return gg.scale.Scale.fromJSON @toJSON()
     klass = @constructor
     spec = _.clone @spec
     spec.aes = @aes
@@ -203,6 +208,43 @@ class gg.scale.Scale
     ret = new klass spec
     ret.d3Scale = @d3Scale.copy() if @d3Scale?
     ret
+
+  toJSON: ->
+    spec = _.clone @spec
+    spec.aes = @aes
+    spec.type = @type
+    spec.domainUpdated = @domainUpdated
+    spec.domainSet = @domainSet
+    spec.rangeUpdated = @rangeUpdated
+    spec.rangeSet = @rangeSet
+    spec.center = @center
+
+    spec.ggpackage = @constructor.ggpackage
+    spec.domain = @domain()
+    spec.range = @range()
+
+    return spec
+
+  @fromJSON: (json) ->
+    klass = _.ggklass json.ggpackage
+    clone = new klass json
+    clone.type = json.type
+    clone.domainUpdated = json.domainUpdated
+    clone.domainSet = json.domainSet
+    clone.rangeUpdated = json.rangeUpdated
+    clone.rangeSet = json.rangeSet
+    clone.center = json.center
+
+    clone.domain json.domain
+    clone.range json.range
+
+    clone
+
+
+
+
+
+
 
 
   defaultDomain: (col) ->

@@ -24,11 +24,14 @@
 #
 
 class gg.scale.Config
+  @ggpackage = 'gg.scale.Config'
   @log = gg.util.Log.logger "scaleConfig", gg.util.Log.ERROR
 
   # @param defaults:        aes -> scale
   # @param layerDefaults:   layer -> {aes -> scale}
-  constructor: (@defaults, @layerDefaults)  ->
+  constructor: (@defaults, @layerDefaults, @specs={})  ->
+    @specs.spec = {} unless @specs.spec
+    @specs.layerSpecs = {} unless @specs.layerSpecs
 
   @fromSpec: (spec, layerSpecs={}) ->
 
@@ -45,7 +48,17 @@ class gg.scale.Config
       layerConfig = gg.scale.Config.loadSpec scalesSpec
       layerDefaults[layerIdx] = layerConfig
 
-    new gg.scale.Config defaults, layerDefaults
+    specs =
+      spec: _.clone spec
+      layerSpecs: _.clone layerSpecs
+
+
+    new gg.scale.Config defaults, layerDefaults, specs
+
+  toJSON: -> @specs
+  @fromJSON: (json) ->
+    @fromSpec json.spec, json.layerSpecs
+
 
   @loadSpec: (spec) ->
     ret = {}
@@ -66,15 +79,17 @@ class gg.scale.Config
     scalesSpec = layerSpec.scales
     layerConfig = gg.scale.Config.loadSpec scalesSpec
     @layerDefaults[layerIdx] = layerConfig
+    @specs.layerSpecs[layerIdx] = layerSpec
     gg.scale.Config.log "addLayer: #{layerConfig}"
 
 
 
   factoryFor: (layerIdx) ->
-    spec = _.clone @defaults
-    lspec = @layerDefaults[layerIdx] or {}
-    _.extend spec, lspec
-    factory = gg.scale.Factory.fromSpec spec
+    defaults = _.clone @defaults
+    ldefaults = @layerDefaults[layerIdx] or {}
+    _.extend defaults, ldefaults
+    lspec = @specs.layerSpecs[layerIdx]
+    factory = gg.scale.Factory.fromSpec defaults, lspec
     gg.scale.Config.log factory
     factory
 

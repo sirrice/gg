@@ -2,6 +2,7 @@
 #<< gg/data/schema
 
 class gg.scale.Identity extends gg.scale.Scale
+  @ggpackage = 'gg.scale.Identity'
   @aliases = "identity"
   constructor: () ->
     @d3Scale = null

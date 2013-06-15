@@ -10,6 +10,8 @@
 # uses internal scalesFactory for creation
 #
 class gg.scale.Set
+  @ggpackage = 'gg.scale.Set'
+
   constructor: (@factory) ->
     @scales = {}
     @spec = {}
@@ -24,6 +26,19 @@ class gg.scale.Set
     ret.spec = _.clone @spec
     ret.merge @, yes
     ret
+
+  toJSON: ->
+    factory: _.toJSON @factory
+    scales: _.toJSON @scales
+    spec: _.toJSON @spec
+
+  @fromJSON: (json) ->
+    factory = _.fromJSON json.factory
+    set = new gg.scale.Set factory
+    set.scales = _.fromJSON json.scales
+    set.spec =_.fromJSON json.spec
+    set
+
 
   # overwriting
   keep: (aesthetics) ->

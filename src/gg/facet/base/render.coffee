@@ -15,7 +15,7 @@ class gg.facet.base.Render extends gg.core.BForm
     options = params.get 'options'
     fXLabel = params.get 'fXLabel'
     fYLabel = params.get 'fYLabel'
-    svg = _.first(envs).get 'facetsSvg'
+    svg = _.first(envs).get('svg').facets
     bgC = lc.background
     xflC = lc.xFacetLabelC
     yflC = lc.yFacetLabelC
@@ -75,7 +75,7 @@ class gg.facet.base.Render extends gg.core.BForm
 
     # update environment
     _.each envs, (env) ->
-      env.put 'plotSvg', plotSvg
+      env.get('svg').plot = plotSvg
 
 
 

@@ -1,5 +1,7 @@
 
 class gg.core.Bound
+  @ggpackage = 'gg.core.Bound'
+
   constructor: (@x0, @y0, @x1=null, @y1=null) ->
     @x1 = @x0 unless @x0?
     @y1 = @y0 unless @y0?
@@ -73,6 +75,16 @@ class gg.core.Bound
       y < @y0 or
       y > @y1
     )
+
+  @fromJSON: (spec) ->
+    new gg.core.Bound spec.x0, spec.y0, spec.x1, spec.y1
+
+
+  toJSON: ->
+    x0: @x0
+    y0: @y0
+    x1: @x1
+    y1: @y1
 
   toString: ->
     JSON.stringify [@x0, @y0, @x1, @y1]

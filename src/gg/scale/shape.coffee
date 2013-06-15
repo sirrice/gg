@@ -1,6 +1,7 @@
 #<< gg/scale/categorical
 
 class gg.scale.Shape extends gg.scale.BaseCategorical
+  @ggpackage = 'gg.scale.Shape'
   @aliases = "shape"
 
   constructor: (@padding=1) ->

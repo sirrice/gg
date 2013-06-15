@@ -1,6 +1,7 @@
 #<< gg/scale/scale
 
 class gg.scale.Text extends gg.scale.Scale
+  @ggpackage = 'gg.scale.Text'
   @aliases = "text"
   constructor: () ->
       @type = gg.data.Schema.ordinal

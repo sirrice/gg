@@ -6,7 +6,7 @@ class gg.core.Render extends gg.core.BForm
 
   compute: (tables, envs, params) ->
     env = _.first envs
-    svg = env.get 'baseSvg'
+    svg = env.get('svg').base
     lc = env.get 'lc'
     c = lc.baseC
     options = params.get 'options'
@@ -49,7 +49,7 @@ class gg.core.Render extends gg.core.BForm
 
     # update env variables
     _.each envs, (env) ->
-      env.put 'facetsSvg', facetsSvg
+      env.get('svg').facets = facetsSvg
 
     tables
 

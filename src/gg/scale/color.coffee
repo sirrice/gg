@@ -2,6 +2,7 @@
 #<< gg/scale/categorical
 
 class gg.scale.ColorCont extends gg.scale.Scale
+  @ggpackage = 'gg.scale.ColorCont'
   @aliases = "color_cont"
   constructor: (@spec={}) ->
     @d3Scale = d3.scale.linear()
@@ -20,6 +21,7 @@ class gg.scale.ColorCont extends gg.scale.Scale
 
 
 class gg.scale.Color extends gg.scale.BaseCategorical
+  @ggpackage = 'gg.scale.Color'
   @aliases = "color"
 
   constructor: (@spec={}) ->

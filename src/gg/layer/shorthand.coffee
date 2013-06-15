@@ -178,7 +178,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # facets: allocate containers and compute ranges for the scales
     nodes.push @g.layoutNode
     nodes.push @g.renderNode
-    nodes.push @g.facets.collector
     nodes.push @g.facets.layout1
 
     nodes.push new gg.xform.ScalesValidate @,
@@ -225,6 +224,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # render: render geometries
     nodes.push makeStdOut "pre-render"
     nodes.push @geom.render
+
+    nodes.push new gg.wf.RPC
 
 
     nodes = @compileNodes nodes

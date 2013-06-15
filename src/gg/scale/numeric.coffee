@@ -3,6 +3,7 @@
 
 
 class gg.scale.Linear extends gg.scale.Scale
+  @ggpackage = 'gg.scale.Linear'
   @aliases = "linear"
   constructor: (@spec) ->
     @d3Scale = d3.scale.linear()
@@ -11,6 +12,7 @@ class gg.scale.Linear extends gg.scale.Scale
 
 
 class gg.scale.Time extends gg.scale.Scale
+  @ggpackage = 'gg.scale.Time'
   @aliases = "time"
   constructor: (@spec) ->
       @d3Scale = d3.time.scale()
@@ -18,6 +20,7 @@ class gg.scale.Time extends gg.scale.Scale
       super
 
 class gg.scale.Log extends gg.scale.Scale
+  @ggpackage = 'gg.scale.Log'
   @aliases = "log"
   constructor: (@spec) ->
       @d3Scale = d3.scale.log()

@@ -5,7 +5,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
   # Create SVG elements for all facets, axes, and panes
   # Does not render the geometries, simply allocates them
   compute: (table, env, params) ->
-    svg = env.get 'plotSvg'
+    svg = env.get('svg').plot
     b2translate = (b) -> "translate(#{b.x0},#{b.y0})"
     paneC = env.get 'paneC'
     return table unless paneC?
@@ -104,7 +104,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
       height: dc.h()
       id: "facet-grid-#{paneC.xidx}-#{paneC.yidx}-#{layerIdx}"
     }
-    env.put 'paneSvg', paneSvg
+    env.get('svg').pane = paneSvg
 
 
     table

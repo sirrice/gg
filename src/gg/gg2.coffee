@@ -6,8 +6,8 @@ science = require 'science'
 _ = require 'underscore'
 io = require "socket.io-client"
 
-# Need to do this because underscore is an asshole and sets the exports
-# variable if we don't
+# Need to do this because underscore is an asshole and sets the
+# exports variable if we don't
 exports = module.exports = @
 
 #<< gg/util/*

@@ -14,19 +14,28 @@ class gg.wf.RPC extends gg.wf.Node
 
     throw Error("node not ready") unless @ready()
 
-    compute = @params.get 'compute'
-
     data = @inputs[0]
-    dataJson = data.table.toJSON()
-    envJson = data.env.toJSON()
-    context = {}
-    compute = compute.toString()
+    table = data.table
+    env = data.env
+
+    # To prepare the env objects for transport:
+    # 1. remove SVG/dom elements
+    removedEls =
+      svg: env.get('svg')
+    env.rm('svg')
+
+    tableJson = table.toJSON()
+    envJson = env.toJSON()
+    paramsJSON = @params.toJSON()
+
+    env2 = gg.wf.Env.fromJSON envJson
+    console.log env
+    console.log envJson
 
     payload =
-      data: dataJson
+      table: tableJson
       env: envJson
-      compute: compute
-      context: context
+      params: paramsJSON
 
     proto = "http:"
     hostname = "localhost"
@@ -34,13 +43,16 @@ class gg.wf.RPC extends gg.wf.Node
     socket = io.connect "#{proto}//#{hostname}:#{port}"
 
     socket.on "connect", () ->
-      socket.emit "noop", payload
+      socket.emit "map", payload
 
     socket.on "result", (respData) =>
       console.log "got response"
-      console.log respData.data
-      table = gg.data.RowTable.fromJSON respData.data
+      console.log respData.table
+      table = gg.data.RowTable.fromJSON respData.table
       newenv = gg.wf.Env.fromJSON respData.env
+      newenv.merge removedEls
+
+      # add removed elements back
       @output 0, new gg.wf.Data(table, newenv)
       socket.disconnect()
 

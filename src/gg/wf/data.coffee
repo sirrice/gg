@@ -15,13 +15,6 @@ class gg.wf.Data
 # Data structure to implement a pseuda-monad
 #
 class gg.wf.Env extends gg.util.Params
-  merge: (data) ->
-    if data?
-      if _.isSubclass data, gg.wf.Env
-        data = data.data
-      _.each data, (v,k) => @data[k] = v
-
-
   clone: ->
     env = new gg.wf.Env
     _.each @data, (v,k) =>
@@ -36,5 +29,7 @@ class gg.wf.Env extends gg.util.Params
     env
 
 
-  @fromJSON: (json) -> new gg.wf.Env json
+  @fromJSON: (json) ->
+    params = gg.util.Params.fromJSON json
+    new gg.wf.Env params
 
