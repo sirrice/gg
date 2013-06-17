@@ -222,9 +222,10 @@ var geoms = {
 };
 
 var selected_geoms = {
-  point: true,
+  point: false,
   boxplot:false,
-  line: false
+  line: false,
+  jitter: true
 
 };
 

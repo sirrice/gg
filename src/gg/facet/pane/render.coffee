@@ -37,7 +37,6 @@ class gg.facet.pane.Svg extends gg.core.XForm
 
 
     if paneC.bXFacet and layerIdx is 0
-      console.log el
       xfel = el.append('g').classed('facet-label x', yes)
         .attr('transform', b2translate(xfc))
       xfel.append('rect')

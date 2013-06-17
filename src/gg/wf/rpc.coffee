@@ -6,6 +6,17 @@ class gg.wf.RPC extends gg.wf.Node
   constructor: (@spec={}) ->
     super
 
+    @params.ensureAll
+      proto: [[], "http:"]
+      hostname: [[], "localhost"]
+      port: [[], 8000]
+
+    proto = @params.get 'proto'
+    hostname = @params.get 'hostname'
+    port = @params.get 'port'
+
+    @params.ensure 'uri', [], "#{proto}//#{hostname}:#{port}"
+
   run: ->
     # create message
     # send message
@@ -22,8 +33,7 @@ class gg.wf.RPC extends gg.wf.Node
     # To prepare the env objects for transport:
     # 1. remove SVG/dom elements
     removedEls =
-      svg: env.get('svg')
-    env.rm('svg')
+      svg: env.rm 'svg'
 
     tableJson = table.toJSON()
     envJson = env.toJSON()
@@ -34,28 +44,54 @@ class gg.wf.RPC extends gg.wf.Node
       env: envJson
       params: paramsJSON
 
-    proto = "http:"
-    hostname = "localhost"
-    port = 8000
-    socket = io.connect "#{proto}//#{hostname}:#{port}"
 
-    socket.on "connect", () ->
+    socket = io.connect @params.get 'uri'
+
+    if socket.socket.connected
       socket.emit "compute", payload
+    else
+      socket.on "connect", () ->
+        socket.removeAllListeners "connect"
+        socket.emit "compute", payload
 
     socket.on "result", (respData) =>
-      console.log "got response"
-      console.log respData.table
+      socket.removeAllListeners "result"
+
       table = gg.data.RowTable.fromJSON respData.table
       newenv = gg.wf.Env.fromJSON respData.env
       newenv.merge removedEls
 
-      # add removed elements back
       @output 0, new gg.wf.Data(table, newenv)
-      socket.disconnect()
 
 class gg.wf.RPCBarrier extends gg.wf.Barrier
   constructor: (@spec={}) ->
     super
+
+    @params.ensureAll
+      proto: [[], "http:"]
+      hostname: [[], "localhost"]
+      port: [[], 8000]
+
+    proto = @params.get 'proto'
+    hostname = @params.get 'hostname'
+    port = @params.get 'port'
+
+    @params.ensure 'uri', [], "#{proto}//#{hostname}:#{port}"
+
+  validateEnvs: ->
+    valid = _.all @inputs, (data) ->
+      env = data.env
+      # ensure doesn't have an svg or function
+      yes
+    unless valid
+      throw Error("environment was invalid")
+
+  validateParams: ->
+    # ensure doesn't have an svg or function
+    valid = yes
+    unless valid
+      throw Error("params were invalid")
+
 
   run: ->
     # create message
@@ -69,9 +105,14 @@ class gg.wf.RPCBarrier extends gg.wf.Barrier
 
     # To prepare the env objects for transport:
     # 1. remove SVG/dom elements
+    # 2. reject environments/params that contain functions
+    #    or do something smarter?
     removedEls =
       _.map @inputs, (data) ->
         {svg: data.env.rm('svg')}
+
+    @validateEnvs()
+    @validateParams()
 
     tableJSONs = _.map @inputs, (data) -> data.table.toJSON()
     envJSONs = _.map @inputs, (data) -> data.env.toJSON()
@@ -82,32 +123,28 @@ class gg.wf.RPCBarrier extends gg.wf.Barrier
       envs: envJSONs
       params: paramsJSON
 
-    console.log @inputs[0].env
-    console.log JSON.stringify envJSONs[0].val.scalesconfig
+    socket = io.connect @params.get 'uri'
 
-    proto = "http:"
-    hostname = "localhost"
-    port = 8000
-    socket = io.connect "#{proto}//#{hostname}:#{port}"
-
-    socket.on "connect", () ->
+    if socket.socket.connected
       socket.emit "computeBarrier", payload
+    else
+      socket.on "connect", () ->
+        socket.removeAllListeners "connect"
+        socket.emit "computeBarrier", payload
 
     socket.on "result", (respData) =>
+      socket.removeAllListeners "result"
+
       tables = _.map respData.tables, (json) ->
         gg.data.RowTable.fromJSON json
 
       envs = _.map respData.envs, (json, i) ->
         env = gg.wf.Env.fromJSON json
         env.merge removedEls[i]
-        env
-
-      console.log "got result"
-      console.log respData.envs[0]
 
       for i in [0...tables.length]
-        console.log "barrier rpc output: #{i}"
         @output i, new gg.wf.Data(tables[i], envs[i])
-      socket.disconnect()
+
+
 
 

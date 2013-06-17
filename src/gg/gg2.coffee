@@ -47,4 +47,5 @@ renderArray = (array, domEl, userSpec={}) ->
 @gg = fromSpec
 _.extend @gg, gg
 @gg.renderArray = renderArray
+@gg.io = io
 

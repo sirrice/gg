@@ -26,7 +26,7 @@ class gg.util.Params
   # ensure @key exists by trying to retrieve from @altkeys
   # if none of the altKeys exist in @data, set to defaultVal
   ensure: (key, altkeys, defaultVal=null) ->
-    return if key of @data
+    return @ if key of @data
     if altkeys?
       for alt in altkeys
         if alt of @data
@@ -44,6 +44,7 @@ class gg.util.Params
   #   [ altkey1, ..., altkeyn]
   #   [ [altkeys...] ]
   #   [ [altkeys...], default value]
+  #
   ensureAll: (o) ->
     _.each o, (v, k) =>
       if (_.isArray(v[0]) and v.length is 1)
@@ -51,7 +52,7 @@ class gg.util.Params
       else if _.isString v[0]
         v = [v, null]
       @ensure k, v[0], v[1]
-
+    @
 
   contains: (key) -> key of @data
 

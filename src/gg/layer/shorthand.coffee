@@ -113,10 +113,12 @@ class gg.layer.Shorthand extends gg.layer.Layer
         params:
           n: 5
           aess: aess
+      null
 
     makeScalesOut = (name, scales=@g.scales) =>
       new gg.wf.Scales
         name: "#{name}-#{@layerIdx}"
+      null
 
 
     nodes = []
