@@ -54,10 +54,6 @@ class gg.wf.Node extends events.EventEmitter
     # output port to child's input port
     @out2child = {}
 
-    # workflow node belongs to
-    # the workflow keeps track of execution state.
-    @wf = @spec.wf or null
-
     # if this object is a clone instance, or a blueprint
     @isInstance = _.findGood [@spec.instance, no]
     # The blueprint
@@ -69,6 +65,11 @@ class gg.wf.Node extends events.EventEmitter
 
     # Compute parameters
     @params = new gg.util.Params @spec.params
+    if @params.contains 'data'
+      console.log @name
+      console.log @
+      console.log @params
+      throw Error("why does params contain data")
 
 
     @log = gg.util.Log.logger "#{@name}-#{@id}\t#{@constructor.name}", gg.util.Log.WARN
@@ -89,17 +90,23 @@ class gg.wf.Node extends events.EventEmitter
     klass
 
 
+  # Return the base object of this node instance
   base: -> if @_base? then @_base else @
+
+  # given an input port, return the corresponding child node
   childFromPort: (inPort) -> @children[0]
+
   uniqChildren: -> _.compact @children
+
   nChildren: -> @uniqChildren().length
+
   hasChildren: -> @nChildren() > 0
+
   toSpec: ->
     spec = _.clone @spec
     _.extend spec, {
       instance: yes
       base: @base()
-      wf: @wf
       params: @params.clone()
     }
     spec

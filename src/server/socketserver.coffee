@@ -5,6 +5,7 @@ globals = require '../../globals'
 gg = require '../../ggplotjs2'
 us = require 'underscore'
 app = express()
+$ = require 'jQuery'
 
 app.configure () ->
   app.use (req, res, next) ->
@@ -33,16 +34,55 @@ socket.on 'connection', (client) ->
   client.on 'noop', (payload) ->
     client.emit "result", payload
 
-  client.on 'map', (payload) ->
+  client.on 'compute', (payload) ->
     table = gg.data.RowTable.fromJSON payload.table
     env = gg.wf.Env.fromJSON payload.env
-    payload.env = env.toJSON()
+    params = gg.util.Params.fromJSON payload.params
+    klassname = params.get 'klassname'
 
-    console.log env
-    console.log env.get('paneC').bound()
-    console.log env.get('paneC').w()
+    klass = gg.util.Util.ggklass klassname
+    o = new klass {
+      name: 'tmp'
+      params: params
+    }
+    restable = o.compute table, env, params
 
+
+    payload =
+      table: restable.toJSON()
+      env: env.toJSON()
+    client.emit "result", payload
+
+  client.on 'computeBarrier', (payload) ->
+    tables = us.map payload.tables, (json) ->
+      gg.data.RowTable.fromJSON json
+    envs = us.map payload.envs, (json) ->
+      gg.wf.Env.fromJSON json
+    params = gg.util.Params.fromJSON payload.params
+    klassname = params.get 'klassname'
+
+    klass = gg.util.Util.ggklass klassname
+    o = new klass {
+      name: 'tmp'
+      params: params
+    }
+
+    console.log "pre env"
+    console.log JSON.stringify payload.envs[0].val.scalesconfig
+    console.log us.first(envs).get 'scalesconfig'
+
+    restables = o.compute tables, envs, params
+
+    console.log "post env"
+    console.log us.first(envs).get 'scalesconfig'
+
+    tableJSONs = us.map restables, (t) -> t.toJSON()
+    envJSONs = us.map envs, (env) -> env.toJSON()
+    payload =
+      tables: tableJSONs
+      envs: envJSONs
 
     client.emit "result", payload
+
 
   client.on 'disconnect', () ->

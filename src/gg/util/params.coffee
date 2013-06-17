@@ -13,9 +13,15 @@ class gg.util.Params
       if _.isSubclass data, gg.util.Params
         data = data.data
       _.each data, (v,k) => @data[k] = v
+    @
 
-  put: (key, val) -> @data[key] = val
-  putAll: (o) -> _.extend @data, o
+  put: (key, val) ->
+    @data[key] = val
+    @
+
+  putAll: (o) ->
+    _.extend @data, o
+    @
 
   # ensure @key exists by trying to retrieve from @altkeys
   # if none of the altKeys exist in @data, set to defaultVal
@@ -27,7 +33,7 @@ class gg.util.Params
           @put key, @get(alt)
           return
     @put key, defaultVal
-    return
+    @
 
   # o has the following structure:
   #
@@ -66,23 +72,26 @@ class gg.util.Params
     val
 
   clone: ->
-    env = new gg.util.Params
-    _.each @data, (v,k) =>
-      if v? and  _.isFunction v.clone
-        env.put k, v.clone()
-      else if _.isFunction v
-        env.put k, v
-      else if _.isArray(v) and v.selectAll? # is this d3 selection?
-        env.put k, v
-      else
-        env.put k, _.clone(v)
-    env
+    # compute all the non-JSONable elements
+    removedEls =
+      svg: @rm 'svg'
+      pairs: _.clone(@rm 'pairs')
+    _.each _.keys(@data), (key) =>
+      if _.isFunction @data[key]
+        removedEls[key] = @rm key
+
+    console.log @data
+    json = @toJSON()
+    clone = gg.util.Params.fromJSON json
+
+    @merge removedEls
+    clone.merge removedEls
+    clone
 
   toString: ->
     _.map(@data, (v,k) -> "#{k} -> #{JSON.stringify v}").join("\n")
 
-  toJSON: ->
-    _.toJSON @data
+  toJSON: -> _.toJSON @data
 
   # Only accepts json objects formatted
   # from toJSON above

@@ -114,15 +114,13 @@ class gg.wf.Split extends gg.wf.Node
 
     gbkeyName = @params.get 'gbkeyName'
 
-    idx = 0
-    _.each groups, (group) =>
+    _.each groups, (group, idx) =>
       subtable = group.table
       key = group.key
       newData = new gg.wf.Data subtable, data.env.clone()
       newData.env.put gbkeyName, key
       @output idx, newData
-      idx += 1
-      @log.err "group #{JSON.stringify key}: #{subtable.nrows()} rows"
+      @log.warn "group #{JSON.stringify key} port(#{idx}): #{subtable.nrows()} rows"
     groups
 
 

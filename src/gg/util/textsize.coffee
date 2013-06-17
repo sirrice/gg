@@ -23,7 +23,7 @@ class gg.util.Textsize
   # @param text the string to compute size of
   # @param opts css attributes
   # @return {width: [pixels], height: [pixels]}
-  @textSize: (text, opts) ->
+  @textSize: (text, opts={}) ->
     try
       body = document.getElementsByTagName("body")[0]
       div = document.createElement("span")
@@ -57,7 +57,12 @@ class gg.util.Textsize
     catch error
       log = gg.util.Textsize.log
       log.warn "return defaults.  error: #{error}"
-      defaults = gg.util.Textsize.exDefault opts["font-size"]
+      fontsize =
+        if 'font-size' of opts
+          opts['font-size']
+        else
+          '12pt'
+      defaults = gg.util.Textsize.exDefault fontsize
       defaults.width = defaults.w = defaults.width * text.length
       defaults
 

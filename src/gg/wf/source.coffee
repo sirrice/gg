@@ -17,6 +17,7 @@ class gg.wf.Source extends gg.wf.Node
     # always ready!
     compute = @params.get 'compute'
     env = new gg.wf.Env
+    console.log "running with params #{@params}"
     table = compute null, env, @params
     @output 0, new gg.wf.Data(table, env)
     table
@@ -33,6 +34,7 @@ class gg.wf.TableSource extends gg.wf.Source
       throw Error("TableSource needs a table as parameter")
 
   compute: (table, env, params) ->
+    console.log params
     params.get 'table'
 
 

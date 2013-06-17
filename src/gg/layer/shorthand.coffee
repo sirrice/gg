@@ -124,7 +124,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # add environment variables
     nodes.push new gg.wf.EnvPut
       params:
-        data:
+        pairs:
           layer: @layerIdx
           posMapping: @geom.posMapping()
 
@@ -178,7 +178,10 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # facets: allocate containers and compute ranges for the scales
     nodes.push @g.layoutNode
     nodes.push @g.renderNode
-    nodes.push @g.facets.layout1
+    #nodes.push @g.facets.layout1
+    nodes.push @g.facets.layout1rpc
+
+
 
     nodes.push new gg.xform.ScalesValidate @,
       name: 'scales-validate'
@@ -225,7 +228,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeStdOut "pre-render"
     nodes.push @geom.render
 
-    nodes.push new gg.wf.RPC
 
 
     nodes = @compileNodes nodes

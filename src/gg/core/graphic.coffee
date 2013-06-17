@@ -97,7 +97,7 @@ class gg.core.Graphic
   setupEnvNode: ->
     new gg.wf.EnvPut
       params:
-        data:
+        pairs:
           scalesconfig: @scales.scalesConfig
           svg:
             base: @svg

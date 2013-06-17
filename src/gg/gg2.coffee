@@ -4,7 +4,8 @@ events = require 'events'
 science = require 'science'
 # this is a problem because of how node deals with _
 _ = require 'underscore'
-io = require "socket.io-client"
+io = require 'socket.io-client'
+async = require 'async'
 
 # Need to do this because underscore is an asshole and sets the
 # exports variable if we don't

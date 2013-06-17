@@ -1,11 +1,19 @@
 TODO
 
-* separate facet/graphic layout from rendering
+* DONE separate facet/graphic layout from rendering
   * layout just computes bounds for containers, render actually creates and styles elements
 
-* Separate specification based data (@params) from values derived from data (e.g., yAxisText)
+* DONE Separate specification based data (@params) from values
+  derived from data (e.g., yAxisText)
   * @params is stored in the object
   * env stores values derived from data
+
+* Be able to mark operators as client/server
+* Run facet layout algorithm on the server and pass control back
+  * Either serialize compute function, or add a pointer to
+    retrieve function on the server side
+  * Latter needs to unique ID every function
+
 
 * Validation requires
   * data schema validation
@@ -50,12 +58,6 @@ Main Svgs
         plotSvg
           paneSvg
 
-B/XForm and Node operators
-
-* parameters are submitted in spec.params
-
-
-gg operators
 
 
 

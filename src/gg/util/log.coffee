@@ -30,19 +30,19 @@ class gg.util.Log
 
   # pass through
   log: (args...) ->
-    prefix = switch @level
-      when gg.util.Log.DEBUG then "D"
-      when gg.util.Log.WARN then "W"
-      when gg.util.Log.ERROR then "E"
-    prefix = "#{prefix} "
-    if @logname != ""
-      prefix = "#{prefix}[#{@logname}]:\t"
-    args.unshift prefix
-    console.log args...
+    @logLevel @level, args...
 
   logLevel: (level, args...) ->
     if level >= @level
-      @log args...
+      prefix = switch level
+        when gg.util.Log.DEBUG then "D"
+        when gg.util.Log.WARN then "W"
+        when gg.util.Log.ERROR then "E"
+      prefix = "#{prefix} "
+      if @logname != ""
+        prefix = "#{prefix}[#{@logname}]:\t"
+      args.unshift prefix
+      console.log args...
 
   debug: (args...) -> @logLevel gg.util.Log.DEBUG, args...
   warn: (args...) -> @logLevel gg.util.Log.WARN, args...

@@ -36,7 +36,6 @@ class gg.facet.base.Layout extends gg.core.BForm
 
 
   xFacetVals: (tables, envs) ->
-    console.log envs
     gg.core.BForm.pick envs, gg.facet.base.Facets.facetXKey
 
   yFacetVals: (tables, envs) ->

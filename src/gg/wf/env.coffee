@@ -15,7 +15,7 @@ class gg.wf.EnvPut extends gg.wf.Node
     #
     # note: if function, it will be evaluated when the key
     #       is accessed
-    @params.ensure 'data', [], {}
+    @params.ensure 'pairs', [], {}
 
   run: ->
     throw Error("#{@name}: node not ready") unless @ready()
@@ -24,7 +24,7 @@ class gg.wf.EnvPut extends gg.wf.Node
     table = @inputs[0].table
     env = @inputs[0].env
     newenv = env.clone()
-    _.each params.get('data'), (val, key) ->
+    _.each params.get('pairs'), (val, key) ->
       newenv.put key, val
 
     @output 0, new gg.wf.Data(table, newenv)

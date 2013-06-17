@@ -47,7 +47,6 @@ class gg.xform.Mapper extends gg.core.XForm
     @params.putAll
       mapping: mapping
       aes: _.keys mapping
-      aesthetics: _.keys mapping
       inverse: @spec.inverse or {}
     @log "spec: #{JSON.stringify @mapping}"
 

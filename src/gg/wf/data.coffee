@@ -16,20 +16,21 @@ class gg.wf.Data
 #
 class gg.wf.Env extends gg.util.Params
   clone: ->
-    env = new gg.wf.Env
-    _.each @data, (v,k) =>
-      if v? and  _.isFunction v.clone
-        env.put k, v.clone()
-      else if _.isFunction v
-        env.put k, v
-      else if _.isArray(v) and v.selectAll? # is this d3 selection?
-        env.put k, v
-      else
-        env.put k, _.clone(v)
-    env
+    # compute all the non-JSONable elements
+    removedEls =
+      svg: @rm 'svg'
+    _.each _.keys(@data), (key) =>
+      if _.isFunction @data[key]
+        removedEls[key] = @rm key
+
+    clone = gg.wf.Env.fromJSON @toJSON()
+    @merge removedEls
+    clone.merge removedEls
+    clone
+
 
 
   @fromJSON: (json) ->
-    params = gg.util.Params.fromJSON json
-    new gg.wf.Env params
+    data = _.fromJSON json
+    new gg.wf.Env data
 

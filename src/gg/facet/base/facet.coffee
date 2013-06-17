@@ -45,6 +45,11 @@ class gg.facet.base.Facets
 
 
     # These should be replaced with _actual_ implementations
+    layoutParams = @layoutParams.clone()
+    layoutParams.put 'klassname', 'gg.facet.grid.Layout'
+    @layout1rpc = new gg.wf.RPCBarrier
+      name: 'facet-layout1rpc'
+      params: layoutParams
     @layout1 = new gg.facet.base.Layout(@g,
       name: 'facet-layout1'
       params: @layoutParams).compile()
