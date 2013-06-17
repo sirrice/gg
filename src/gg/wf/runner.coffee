@@ -17,6 +17,7 @@ class gg.wf.Runner extends events.EventEmitter
     @seen = {}
     @keyf = (node) -> node.id
 
+    # Execute a workflow node
     worker = (node, cb) =>
       if node.id of @seen
         console.log "\t#{node.name} seen. skipping"
@@ -30,25 +31,17 @@ class gg.wf.Runner extends events.EventEmitter
         return
 
       if node.nChildren() > 0
-        finalIdx = node.nChildren() - 1
-        console.log "\t#{node.name}: finalIdx #{finalIdx}"
         node.on 'output', (skip, result) =>
-          try
-            for child in node.uniqChildren()
-              console.log "\tadding #{child.name}"
-              @queue.push child, @callback
-          catch err
-            console.log err
+          for child in node.uniqChildren()
+            console.log "\tadding #{child.name}"
+            @queue.push child, @callback
+
+          if node.nChildren() == 0
+            @emit 'output', node, result.table
 
           delete @active[node.id]
           cb()
-      else
-        console.log "\t#{node.name}: no children!"
-        node.on 'output', (skip, result) =>
-          @emit 'output', node, result.table
-          cb()
 
-      console.log "\t#{node.name} running"
       @active[node.id] = node
       @seen[node.id] = yes
       node.run()
@@ -59,11 +52,6 @@ class gg.wf.Runner extends events.EventEmitter
 
 
     ondrain = () =>
-      # can't differentiate between
-      # 1) no active processes because we are done
-      # 2) no active processes because we can't make progress
-      #
-      # XXX: compare with list of all nodes in the graph and see that they have all been seen
       unless _.size @active
         console.log "done! can you believe it?"
         @emit 'done', yes
@@ -92,77 +80,4 @@ class gg.wf.Runner extends events.EventEmitter
 
   run: () ->
     @queue.push @root, @callback
-    return
-
-
-
-    queue = new gg.util.UniqQueue [@root]
-
-    seen = {}
-    results = []
-    nprocessed = 0
-    firstUnready = null
-
-    until queue.empty()
-      cur = queue.pop()
-      continue unless cur?
-      continue if cur.id of seen
-
-
-      @log "run #{cur.name} id:#{cur.id} with #{cur.nChildren()} children"
-      if cur.ready()
-        nprocessed += 1
-
-        unless cur.nChildren()
-          # cur is a sink, register output handler for it
-          cur.addOutputHandler 0, (id, result) =>
-            @emit "output", id, result.table
-        else
-          # XXX: hack to detect when a node (normal or barrier)
-          #      has finished by using output port nchildren-1
-          #
-          #      Avoids decrementing a counter for every
-          #      "output" emitted
-          cur.on (cur.nChildren()-1), (node, result) ->
-            for nextNode in cur.uniqChildren()
-              queue.push nextNode unless nextNode.id of seen
-
-            # trigger something
-
-        cur.run()
-        seen[cur.id] = yes
-
-        #
-        #
-        #
-        # Needs to block while all ready nodes are actively
-        # executing and resume + check when any of the
-        # nodes finish (e.g., emit outputs)
-        #
-        #
-        #
-
-      else
-        @log.warn "not ready #{cur.name} id: #{cur.id}.
-          #{cur.inputs.length}, #{cur.children.length}"
-
-        if firstUnready is cur
-          if nprocessed == 0
-            filled = _.map cur.inputs, (v) -> v?
-            @log.error "#{cur.name} inputs buffer: #{cur.inputs.length}"
-            @log.error "#{cur.name} ninputs filled: #{filled}"
-            @log.error "#{cur.name} parents: #{_.map(cur.parents, (p)->p.name).join(',')}"
-            @log.error "#{cur.name} children: #{_.map(cur.children, (p)->p.name).join(',')}"
-
-            throw Error("could not make progress.  Stopping on #{cur.name}")
-          else
-            firstUnready = null
-
-        unless firstUnready?
-            firstUnready = cur
-            nprocessed = 0
-        queue.push cur
-
-    @emit "done", yes
-
 
