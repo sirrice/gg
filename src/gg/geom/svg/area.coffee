@@ -1,6 +1,7 @@
 #<< gg/geom/render
 
 class gg.geom.svg.Area extends gg.geom.Render
+  @ggpackage = "gg.geom.svg.Area"
   @aliases = ["area"]
 
 

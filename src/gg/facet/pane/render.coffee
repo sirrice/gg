@@ -1,6 +1,7 @@
 #<< gg/core/xform
 
 class gg.facet.pane.Svg extends gg.core.XForm
+  @ggpackage = "gg.facet.pane.Svg"
 
   # Create SVG elements for all facets, axes, and panes
   # Does not render the geometries, simply allocates them

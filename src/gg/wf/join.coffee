@@ -8,6 +8,8 @@
 #
 # Does not compute anything
 class gg.wf.Join extends gg.wf.Node
+  @ggpackage = "gg.wf.Join"
+
   constructor: (@spec={}) ->
     super @spec
     @type = "join"

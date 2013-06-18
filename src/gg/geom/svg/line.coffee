@@ -2,6 +2,7 @@
 
 
 class gg.geom.svg.Line extends gg.geom.Render
+  @ggpackage = "gg.geom.svg.Line"
   @aliases = "line"
 
   defaults: (table) ->

@@ -2,6 +2,7 @@
 
 
 class gg.pos.Jitter extends gg.pos.Position
+  @ggpackage = "gg.pos.Jitter"
   @aliases = "jitter"
 
   inputSchema: -> ['x', 'y']

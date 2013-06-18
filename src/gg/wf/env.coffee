@@ -1,6 +1,8 @@
 #<< gg/wf/node
 
 class gg.wf.EnvPut extends gg.wf.Node
+  @ggpackage = "gg.wf.EnvPut"
+
   constructor: ->
     super
     @type = "label"
@@ -45,6 +47,8 @@ class gg.wf.EnvPut extends gg.wf.Node
 #              set to null if don't add if envkey not found.
 #
 class gg.wf.EnvGet extends gg.wf.Node
+  @ggpackage = "gg.wf.EnvGet"
+
   constructor: (@spec={}) ->
     super @spec
     @type = "envget"

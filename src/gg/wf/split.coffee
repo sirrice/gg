@@ -6,6 +6,8 @@
 #
 # @spec.f {Function} splitting function with signature: (table) -> [ {key:, table:}, ...]
 class gg.wf.Split extends gg.wf.Node
+  @ggpackage = "gg.wf.Split"
+
   constructor: (@spec={}) ->
     super @spec
     @type = "split"
@@ -127,6 +129,8 @@ class gg.wf.Split extends gg.wf.Node
 # Shorthand for non-overlapping group-by
 # on table column(s)
 class gg.wf.Partition extends gg.wf.Split
+  @ggpackage = "gg.wf.Partition"
+
   constructor: ->
     super
     @name = _.findGood [@spec.name, "partition-#{@id}"]
@@ -139,6 +143,8 @@ class gg.wf.Partition extends gg.wf.Split
 # Shorthand for non-overlapping group-by
 # on table column(s)
 class gg.wf.PartitionCols extends gg.wf.Split
+  @ggpackage = "gg.wf.PartitionCols"
+
   constructor: ->
     super
     @name = _.findGood [@spec.name, "partition-#{@id}"]

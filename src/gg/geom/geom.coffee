@@ -48,8 +48,8 @@ class gg.geom.Geom
 
   # { type:, aes:, param:}
   parseSpec: ->
-    @render = gg.geom.Render.fromSpec @layer, @spec.type
-    @map = gg.xform.Mapper.fromSpec @g, @spec
+    @render = gg.geom.Render.fromSpec @spec.type
+    @map = gg.xform.Mapper.fromSpec @spec
 
   # @return mapping of attribute -> aesthetic
   posMapping: -> {}
@@ -91,7 +91,7 @@ class gg.geom.Geom
     @log "fromSpec: klass: #{spec.type} -> #{klass.name}"
 
     spec.name = klass.name unless spec.name?
-    geom = new klass(layer, spec)
+    geom = new klass layer, spec
 
     geom
 

@@ -20,6 +20,7 @@
 #    - around axis labels
 #
 class gg.facet.base.Layout extends gg.core.BForm
+  @ggpackage = "gg.facet.base.Layout"
   constructor: (@g, @spec) ->
     super
 
@@ -32,7 +33,6 @@ class gg.facet.base.Layout extends gg.core.BForm
       showYAxis: [[], yes]
       paddingPane: [[], 5]
       margin: [[], 1]
-      options: [[], @g.options]
 
 
   xFacetVals: (tables, envs) ->

@@ -1,20 +1,33 @@
 #<< gg/util/array
 #
-# Ghetto no-update spatial tree index
-# using ghetto grids.  Ghetto.
+# Ghetto no-update spatial tree index using ghetto grids.  Ghetto.
 #
 # Did I mention ghetto?
+#
 
 
+
+#
+# Indexes arbitrary objects that contain a bounding box.
+# Bounding boxes are of the format [[xmin, xmax], [ymin, ymax]]
+#
 # Usage:
 #
 #   idx = new gg.util.SpatialIndex()
+#
+#   # Set the global grid bounds (used to compute cell sizes)
+#   # By default, infered from boxes passed into load
 #   idx.gridBounds( bounds )
+#
+#   # Index a list of boxes
 #   idx.load( boxes )
 #
 class gg.util.SpatialIndex
-  # @param boxes array of objects to index
-  # bounding boxes are of the format [[xmin,xmax][ymin,ymax]]
+  #
+  # @param keyf function called to extract the bounding box from an index item
+  # @param valf function called to extract a unique id for an index item.  Used
+  #             to detect duplicates
+  #
   constructor: (@keyf=null, @valf=null) ->
     @keyf = ((box) -> box) unless @keyf?
     @valf = ((box) -> box) unless @valf?
@@ -40,6 +53,7 @@ class gg.util.SpatialIndex
 
   # Get or set the key (bounding box) accessor
   # By default, the getter is item.box
+  #
   key: (getter=null) ->
     if getter?
       getter = ((box) -> box[getter]) unless _.isFunction(getter)
@@ -79,7 +93,6 @@ class gg.util.SpatialIndex
       sumboxw += w
       sumboxh += h
 
-    # TODO: check if nothing was updated for some reason
     n = @boxes.length
     globalw = maxx - minx
     globalh = maxy - miny

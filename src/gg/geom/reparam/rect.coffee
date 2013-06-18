@@ -2,6 +2,7 @@
 #<< gg/data/schema
 
 class gg.geom.reparam.Rect extends gg.core.XForm
+  @ggpackage = "gg.geom.reparam.Rect"
 
   inputSchema: -> ['x', 'y']
 

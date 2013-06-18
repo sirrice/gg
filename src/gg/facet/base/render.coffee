@@ -1,6 +1,7 @@
 
 
 class gg.facet.base.Render extends gg.core.BForm
+  @ggpackage = "gg.facet.base.Render"
 
 
   parseSpec: ->
@@ -8,7 +9,6 @@ class gg.facet.base.Render extends gg.core.BForm
       'svg': [[], @spec.svg]
       'fXLabel': [[], 'x facet']
       'fYLabel': [[], 'y facet']
-      'options': [[], @g.options]
 
 
   renderLabels: (tables, envs, params, lc) ->
@@ -90,6 +90,6 @@ class gg.facet.base.Render extends gg.core.BForm
 
     tables
 
-  @fromSpec: (g, spec) ->
-    new gg.facet.grid.Render g, spec
+  @fromSpec: (spec) ->
+    new gg.facet.grid.Render spec
 

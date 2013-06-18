@@ -3,6 +3,8 @@
 
 
 class gg.facet.grid.Layout extends gg.facet.base.Layout
+  @ggpackage = "gg.facet.grid.Layout"
+
   #
   # compute layout information for each pane in the grid view
   #

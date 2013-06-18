@@ -6,6 +6,8 @@
 # node handles the rest.
 #
 class gg.wf.Exec extends gg.wf.Node
+  @ggpackage = "gg.wf.Exec"
+
   constructor: (@spec={}) ->
     super @spec
     @type = "exec"

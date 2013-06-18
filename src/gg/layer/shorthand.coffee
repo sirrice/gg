@@ -44,10 +44,10 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
 
     @geom = gg.geom.Geom.fromSpec @, @geomSpec
-    @stat = gg.stat.Stat.fromSpec @, @statSpec
-    @pos = gg.pos.Position.fromSpec @, @posSpec
-    @map = gg.xform.Mapper.fromSpec @g, @mapSpec
-    @coord = gg.coord.Coordinate.fromSpec @, @coordSpec
+    @stat = gg.stat.Stat.fromSpec @statSpec
+    @pos = gg.pos.Position.fromSpec @posSpec
+    @map = gg.xform.Mapper.fromSpec @mapSpec
+    @coord = gg.coord.Coordinate.fromSpec @coordSpec
     if @groupSpec?
       @groupby = new gg.wf.PartitionCols
         name: "group-#{@layerIdx}"
@@ -180,8 +180,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # facets: allocate containers and compute ranges for the scales
     nodes.push @g.layoutNode
     nodes.push @g.renderNode
-    #nodes.push @g.facets.layout1
-    nodes.push @g.facets.layout1rpc
+    nodes.push @g.facets.layout1
+    #nodes.push @g.facets.layout1rpc
 
 
 

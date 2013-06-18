@@ -44,12 +44,14 @@ class gg.wf.Runner extends events.EventEmitter
 
       @active[node.id] = node
       @seen[node.id] = yes
+
+      # TODO: create a now worker thread
+      #       make sure not to copy the data!
       node.run()
 
     # this does nothing
     callback = (err) =>
       throw Error(err) if err?
-
 
     ondrain = () =>
       unless _.size @active

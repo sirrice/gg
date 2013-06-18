@@ -1,6 +1,8 @@
 #<< gg/core/bform
 
 class gg.scale.train.Data extends gg.core.BForm
+  @ggpackage = "gg.scale.train.Data"
+
   parseSpec: ->
     super
 

@@ -15,16 +15,15 @@ events = require 'events'
 # 3) Bridging edges that skip barriers
 #
 # (2) has aliasing problems, because if the following configuration occurs
+#     it can't differentiate if a -> b or a -> y
 #
 #   a -> Barrier -> b
 #   x -> Barrier -> y
 #
-# (2) can't differentiate if a -> b or a -> y
-# (3) bridging edges disambiguate
+# (3) bridging edges disambiguate the above
 #
-#
-#
-# The blueprint can be instantiated into a runnable workflow by calling flow.instantiate()
+# The blueprint can be instantiated into a runnable workflow
+# by calling flow.instantiate()
 #
 class gg.wf.Flow extends events.EventEmitter
   constructor: (@spec={}) ->

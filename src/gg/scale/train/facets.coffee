@@ -4,6 +4,9 @@
 # master scale set, then merges components back to each layer's
 # scale set
 class gg.scale.train.Master extends gg.core.BForm
+  @ggpackage = "gg.scale.train.Master"
+
+
   parseSpec: ->
     @params.ensure 'scalesTrain', [], 'fixed'
 

@@ -3,8 +3,8 @@
 class gg.pos.Position extends gg.core.XForm
   @log = gg.util.Log.logger "Position", gg.util.Log.ERROR
 
-  constructor: (@layer, @spec={}) ->
-    super @layer.g, @spec
+  constructor: (@spec={}) ->
+    super
     @parseSpec()
 
   @klasses: ->
@@ -24,7 +24,7 @@ class gg.pos.Position extends gg.core.XForm
         ret[klass.aliases] = klass
     ret
 
-  @fromSpec: (layer, spec) ->
+  @fromSpec: (spec) ->
     klasses = gg.pos.Position.klasses()
     if _.isString spec
       type = spec
@@ -36,10 +36,11 @@ class gg.pos.Position extends gg.core.XForm
 
     @log "fromSpec: #{klass.name}\tspec: #{JSON.stringify spec}"
 
-    ret = new klass layer, spec
+    ret = new klass spec
     ret
 
 class gg.pos.Identity extends gg.pos.Position
+  @ggpackage = "gg.pos.Identity"
   @aliases = ["identity"]
 
 

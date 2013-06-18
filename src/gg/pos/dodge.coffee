@@ -2,6 +2,7 @@
 
 
 class gg.pos.Dodge extends gg.pos.Position
+  @ggpackage = "gg.pos.Dodge"
   @aliases = ["dodge"]
 
   addDefaults: (table, env) ->

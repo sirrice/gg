@@ -19,7 +19,7 @@ class gg.geom.Point extends gg.geom.Geom
         y0: 'y'
         y1: 'y'
 
-    @reparam = gg.xform.Mapper.fromSpec @g, reparamSpec
-    @render = new gg.geom.svg.Point @layer, {}
+    @reparam = gg.xform.Mapper.fromSpec reparamSpec
+    @render = new gg.geom.svg.Point {}
 
 

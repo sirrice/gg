@@ -1,6 +1,8 @@
 #<< gg/wf/node
 
 class gg.wf.Stdout extends gg.wf.Exec
+  @ggpackage = "gg.wf.Stdout"
+
   constructor: (@spec={}) ->
     super
     @type = "stdout"
@@ -45,6 +47,7 @@ class gg.wf.Stdout extends gg.wf.Exec
 
 
 class gg.wf.Scales extends gg.wf.Exec
+  @ggpackage = "gg.wf.Scales"
   constructor: (@spec={}) ->
     super
     @type = "scaleout"

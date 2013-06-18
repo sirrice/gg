@@ -1,10 +1,12 @@
 #<< gg/core/xform
 
 class gg.coord.Coordinate extends gg.core.XForm
+  @ggpackage = "gg.coord.Coordinate"
+
   @log = gg.util.Log.logger "Coord"
 
-  constructor: (@layer, @spec={}) ->
-    super @layer.g, @spec
+  constructor: (@spec={}) ->
+    super
     @parseSpec()
     @log = gg.util.Log.logger @constructor.name, gg.util.Log.WARN
 
@@ -27,7 +29,7 @@ class gg.coord.Coordinate extends gg.core.XForm
         ret[klass.aliases] = klass
     ret
 
-  @fromSpec: (layer, spec) ->
+  @fromSpec: (spec) ->
     klasses = gg.coord.Coordinate.klasses()
     if _.isString spec
       type = spec
@@ -39,6 +41,6 @@ class gg.coord.Coordinate extends gg.core.XForm
 
     @log "fromSpec: #{klass.name}\tspec: #{JSON.stringify spec}"
 
-    ret = new klass layer, spec
+    ret = new klass spec
     ret
 

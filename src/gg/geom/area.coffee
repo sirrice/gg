@@ -5,8 +5,8 @@ class gg.geom.Area extends gg.geom.Geom
 
   parseSpec: ->
     super
-    @reparam = new gg.geom.reparam.Line @g, {name: "area-reparam"}
-    @render = new gg.geom.svg.Area @layer, {}
+    @reparam = new gg.geom.reparam.Line {name: "area-reparam"}
+    @render = new gg.geom.svg.Area {}
 
   posMapping: ->
     y0: 'y'

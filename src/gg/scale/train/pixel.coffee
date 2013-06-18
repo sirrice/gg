@@ -19,10 +19,7 @@
 #
 #
 class gg.scale.train.Pixel extends gg.core.BForm
-  parseSpec: ->
-    super
-
-    @params.ensure 'scaleTrain', [], @g.facets.scales
+  @ggpackage = "gg.scale.train.Pixel"
 
 
   compute: (tables, envs, params) ->

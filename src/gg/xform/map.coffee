@@ -16,13 +16,14 @@
 #
 #
 class gg.xform.Mapper extends gg.core.XForm
-  constructor: (@g, @spec) ->
-    super @g, @spec
+  @ggpackage = "gg.xform.Mapper"
 
+  constructor: (@spec) ->
+    super
     @parseSpec()
 
 
-  @fromSpec: (g, spec) ->
+  @fromSpec: (spec) ->
     console.log spec
     spec = _.clone spec
     attrs = ["mapping", "map", "aes", "aesthetic", "aesthetics"]
@@ -37,7 +38,7 @@ class gg.xform.Mapper extends gg.core.XForm
     inverse = {}
     _.each mapping, (val, key) -> inverse[val] = key
 
-    new gg.xform.Mapper g, spec
+    new gg.xform.Mapper spec
 
 
   parseSpec: ->
@@ -46,9 +47,8 @@ class gg.xform.Mapper extends gg.core.XForm
     mapping = @spec.aes
     @params.putAll
       mapping: mapping
-      aes: _.keys mapping
       inverse: @spec.inverse or {}
-    @log "spec: #{JSON.stringify @mapping}"
+    @log "spec: #{@params}"
 
 
   compute: (table, env, params) ->

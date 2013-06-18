@@ -8,9 +8,9 @@ class gg.geom.Boxplot extends gg.geom.Geom
   parseSpec: ->
     super
 
-    @reparam = new gg.geom.reparam.Boxplot @g,
+    @reparam = new gg.geom.reparam.Boxplot
       name: "schema-reparam:#{@layer.layerIdx}"
-    @render = new gg.geom.svg.Boxplot @layer, {}
+    @render = new gg.geom.svg.Boxplot  {}
 
   posMapping: ->
     ys = ['q1', 'median', 'q3', 'lower', 'upper',

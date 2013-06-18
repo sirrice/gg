@@ -5,6 +5,7 @@
 # reparameterization needs to separate the original data
 # from the derived data, and the bounding box data
 class gg.geom.reparam.Boxplot extends gg.core.XForm
+  @ggpackage = 'gg.geom.reparam.Boxplot'
 
 
   defaults: ->

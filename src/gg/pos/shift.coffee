@@ -2,6 +2,7 @@
 
 
 class gg.pos.Shift extends gg.pos.Position
+  @ggpackage = "gg.pos.Shift"
   @aliases = ["shift"]
 
   inputSchema: -> ['x', 'y']

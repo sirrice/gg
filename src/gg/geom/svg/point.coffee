@@ -2,6 +2,7 @@
 
 
 class gg.geom.svg.Point extends gg.geom.Render
+  @ggpackage = "gg.geom.svg.Point"
   @aliases = ["point", "pt"]
 
   defaults: (table, env) ->

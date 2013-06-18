@@ -2,6 +2,7 @@
 
 
 class gg.geom.svg.Text extends gg.geom.Render
+  @ggpackage = "gg.geom.svg.Text"
   @aliases = ["text", "label"]
 
   defaults: (table, env) ->

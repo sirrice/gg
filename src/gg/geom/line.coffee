@@ -7,8 +7,8 @@ class gg.geom.Line extends gg.geom.Geom
 
   parseSpec: ->
     super
-    @reparam = new gg.geom.reparam.Line @g, {name: "line-reparam"}
-    @render = new gg.geom.svg.Line @layer, {}
+    @reparam = new gg.geom.reparam.Line {name: "line-reparam"}
+    @render = new gg.geom.svg.Line {}
 
   posMapping: ->
     y0: 'y'

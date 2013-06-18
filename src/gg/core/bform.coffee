@@ -58,7 +58,13 @@ class gg.core.BForm extends gg.core.XForm
       compute tables, envs, params
 
     spec.params = @params.clone()
+    spec.params.put 'klassname', @constructor.ggpackage
     spec.params.put 'compute', _compute
     spec.params.put '__compute__', (args...) => @compute args...
+
+    unless spec.params.get('klassname')?
+      console.log @
+      throw Error("No classname")
+
     node = new gg.wf.Barrier spec
     [node]

@@ -3,6 +3,7 @@
 
 
 class gg.coord.YFlip extends gg.coord.Coordinate
+  @ggpackage = "gg.coord.YFlip"
   @aliases = ["yflip"]
 
   map: (table, env) ->
@@ -10,6 +11,7 @@ class gg.coord.YFlip extends gg.coord.Coordinate
     table
 
 class gg.coord.XFlip extends gg.coord.Coordinate
+  @ggpackage = "gg.coord.XFlip"
   @aliases = ["xflip"]
 
   map: (table, env, params) ->
@@ -48,6 +50,7 @@ class gg.coord.XFlip extends gg.coord.Coordinate
 
 
 class gg.coord.Flip extends gg.coord.Coordinate
+  @ggpackage = "gg.coord.Flip"
   @aliases = ["flip", 'xyflip']
 
   map: (table, env, params) ->

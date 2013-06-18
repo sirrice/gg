@@ -1,6 +1,7 @@
 #<< gg/geom/render
 
 class gg.geom.svg.Boxplot extends gg.geom.Render
+  @ggpackage = "gg.geom.svg.Boxplot"
   @aliases: ["schema", "boxplot"]
 
 

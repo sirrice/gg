@@ -1,6 +1,8 @@
 #<< gg/wf/node
 
 class gg.wf.Source extends gg.wf.Node
+  @ggpackage = "gg.wf.Source"
+
   constructor: (@spec={}) ->
     super
     @type = "source"
@@ -27,6 +29,8 @@ class gg.wf.Source extends gg.wf.Node
 
 
 class gg.wf.TableSource extends gg.wf.Source
+  @ggpackage = "gg.wf.TableSource"
+
   constructor: (@spec) ->
     super
 
@@ -39,6 +43,8 @@ class gg.wf.TableSource extends gg.wf.Source
 
 
 class gg.wf.CsvSource extends gg.wf.Source
+  @ggpackage = "gg.wf.CsvSource"
+
   constructor: (@spec) ->
     super
 

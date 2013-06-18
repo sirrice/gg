@@ -1,6 +1,7 @@
 #<< gg/geom/render
 
 class gg.geom.svg.Rect extends gg.geom.Render
+  @ggpackage = "gg.geom.svg.Rect"
   @aliases = "rect"
 
   defaults: (table, env) ->

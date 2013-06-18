@@ -8,8 +8,26 @@ TODO
   * @params is stored in the object
   * env stores values derived from data
 
+Serializing a wf Operator
+
+* Methods can be referenced using a function object, or the containing class
+  * klass name + params object fully describe a single transform
+  * add parent/child/port relationships to serialize a workflow node
+* XForm operators can be re-instantiated
+  * inputSchema
+  * outputSchema
+  * provenance stuff
+  * defaults
+  * compute
+* wf nodes simply call compute
+* Workflow state
+  * children, parents, port relationships
+
+* Create Specs for workflow
 * Be able to mark operators as client/server
-* Run facet layout algorithm on the server and pass control back
+* Support passing functions or function references to the server
+* Differentiate XForm/BForm rpc operators from wf operators
+* DONE: Run facet layout algorithm on the server and pass control back
   * Either serialize compute function, or add a pointer to
     retrieve function on the server side
   * Latter needs to unique ID every function
@@ -20,6 +38,8 @@ TODO
   * environment validation
   * parameter validation
 
+Distinguishing State
+--------------------
 
 Compute operators
 
@@ -51,7 +71,7 @@ Env
 * Facet values
 * Label text
 
-Main Svgs
+Main SVG dom elements:
 
     baseSvg
       facetsSvg
@@ -75,3 +95,21 @@ structures that are passed into the operators
 
 This decision was because splitting execution between the browser and backend
 is too complex otherwise.
+
+June 17, 2013
+-------------------
+
+Implemented simple RPC-based barrier and exec using socket.io.  Can run the facet layout algorithm.
+
+Changed the workflow runner to use callback based execution (for rpc nodes).
+
+Need a way to pass static functions (inputSchema, outputSchema, validate) to the server.  In general,
+@params may include static functions.  Need an automatic way to identify them.
+
+  * inputSchema
+  * defaults
+  * outputSchema
+  * provenanceCode
+
+
+

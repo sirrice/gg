@@ -32,8 +32,9 @@
 #
 #
 class gg.core.XForm
+  @ggpackage = 'gg.core.XForm'
 
-  constructor: (@g, @spec={}) ->
+  constructor: (@spec={}) ->
 
     # Before executing the operator, we will add the
     # * table,
@@ -71,13 +72,10 @@ class gg.core.XForm
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?
     val = _.findGoodAttr spec, [attr], null
-    if val?
-      unless _.isFunction val
-        (table, env) -> val
-      else
-        val
-    else
-      @[attr]
+    val = @[attr] unless val?
+    if _.isFunction val
+      val.constructorname = @constructor.ggpackage
+    val
 
   #
   # Convenience functions during workflow execution
@@ -100,9 +98,6 @@ class gg.core.XForm
 
   paneInfo: (args...) -> gg.core.XForm.paneInfo args...
   scales: (args...) -> gg.core.XForm.scales args...
-  posMapping: (layerIdx) ->
-    @g.layers.getLayer(layerIdx).geom.posMapping()
-
 
   #
   # Schema verification functions that subclasses can override
@@ -156,8 +151,13 @@ class gg.core.XForm
       compute table, env, params
 
     spec.params = @params.clone()
+    spec.params.put 'klassname', @constructor.ggpackage
     spec.params.put 'compute', _compute
     spec.params.put '__compute__', (args...) => @compute args...
+
+    unless spec.params.get('klassname')?
+      console.log @
+      throw Error("No classname")
     node = new gg.wf.Exec spec
     [node]
 

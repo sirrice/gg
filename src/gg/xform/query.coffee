@@ -22,8 +22,8 @@
 #    project row attributes.
 #    can't directly do deep inspection into object or array columns
 class gg.xform.Query extends gg.core.XForm
-  constructor: (@g, @spec) ->
-    super @g, @spec
+  @ggpackage = "gg.xform.Query"
+
 
   @fromSpec: (g, spec) ->
     unnest = spec.unnest

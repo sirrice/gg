@@ -2,6 +2,9 @@
 
 _ = require 'underscore'
 
+#
+# Encodes a node graph.  Edges can have associated metadata (e.g., edge weight, name, etc)
+#
 class gg.util.Graph
 
   constructor: (@idFunc=((node)->node)) ->

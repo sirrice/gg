@@ -8,6 +8,7 @@
 # the lines all have the same number of points and the x values are aligned.
 #
 class gg.pos.Stack extends gg.pos.Position
+  @ggpackage = "gg.pos.Stack"
   @aliases = ["stack", "stacked"]
 
   constructor: ->

@@ -5,9 +5,9 @@
 # group attribute
 #
 class gg.geom.Render extends gg.core.XForm
-  constructor: (@layer, @spec={}) ->
+  constructor: (@spec={}) ->
     @spec.name = _.findGoodAttr @spec, ['name'], @constructor.name
-    super @layer.g, @spec
+    super
     @parseSpec()
     @log = gg.util.Log.logger @spec.name
 
@@ -62,7 +62,7 @@ class gg.geom.Render extends gg.core.XForm
     ret
 
 
-  @fromSpec: (layer, spec) ->
+  @fromSpec: (spec) ->
     klasses = gg.geom.Render.klasses()
     if _.isString spec
       type = spec
@@ -72,7 +72,7 @@ class gg.geom.Render extends gg.core.XForm
 
     klass = klasses[type] or gg.geom.svg.Point
     gg.util.Log.logger("geom.Render") "Render klass #{type} -> #{klass.name}"
-    new klass layer, spec
+    new klass spec
 
 
 

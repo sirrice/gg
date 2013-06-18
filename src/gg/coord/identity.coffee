@@ -3,6 +3,7 @@
 # The identity coordinate needs to flip the y-scale range because
 # SVG and Canvas orgin is in the upper left.
 class gg.coord.Identity extends gg.coord.Coordinate
+  @ggpackage = "gg.coord.Identity"
   @aliases = ["identity"]
 
   map: (table, env, params) ->

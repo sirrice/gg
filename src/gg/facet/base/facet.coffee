@@ -40,7 +40,7 @@ class gg.facet.base.Facets
     @parseSpec()
 
     @splitter = @splitterNodes()
-    @trainer = new gg.scale.train.Master(@g,
+    @trainer = new gg.scale.train.Master(
       name: 'facet_train').compile()
 
 
@@ -50,13 +50,13 @@ class gg.facet.base.Facets
     @layout1rpc = new gg.wf.RPCBarrier
       name: 'facet-layout1rpc'
       params: layoutParams
-    @layout1 = new gg.facet.base.Layout(@g,
+    @layout1 = new gg.facet.base.Layout(
       name: 'facet-layout1'
       params: @layoutParams).compile()
-    @layout2 = new gg.facet.base.Layout(@g,
+    @layout2 = new gg.facet.base.Layout(
       name: 'facet-layout2'
       params: @layoutParams).compile()
-    @render = new gg.facet.base.Render(@g,
+    @render = new gg.facet.base.Render(
       name: 'facet-render'
       params: @renderParams).compile()
 

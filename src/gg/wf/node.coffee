@@ -39,6 +39,8 @@ catch error
 #
 #
 class gg.wf.Node extends events.EventEmitter
+  @ggpackage = "gg.wf.Node"
+
   constructor: (@spec={}) ->
     @parents = []
     # mapping from parent node id to its input port
@@ -65,12 +67,6 @@ class gg.wf.Node extends events.EventEmitter
 
     # Compute parameters
     @params = new gg.util.Params @spec.params
-    if @params.contains 'data'
-      console.log @name
-      console.log @
-      console.log @params
-      throw Error("why does params contain data")
-
 
     @log = gg.util.Log.logger "#{@name}-#{@id}\t#{@constructor.name}", gg.util.Log.WARN
 

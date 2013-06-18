@@ -2,6 +2,7 @@
 
 
 class gg.pos.Interpolate extends gg.pos.Position
+  @ggpackage = "gg.pos.Interpolate"
   @aliases = ["interpolate"]
 
   constructor: ->

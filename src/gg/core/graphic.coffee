@@ -16,7 +16,7 @@ class gg.core.Graphic
   ]
 
 
-  constructor: (@spec) ->
+  constructor: (@spec={}) ->
     @aesspec = _.findGoodAttr @spec, ["aes", "aesthetic", "mapping"], {}
     @layerspec = @spec.layers or []
     @facetspec = @spec.facets or @spec.facet or {}

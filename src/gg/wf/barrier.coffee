@@ -6,6 +6,8 @@
 # such that the positions of the input and output tables match up
 #
 class gg.wf.Barrier extends gg.wf.Node
+  @ggpackage = "gg.wf.Barrier"
+
   constructor: (@spec={}) ->
     super @spec
     @type = "barrier"

@@ -1,6 +1,8 @@
 
 
 class gg.xform.AddCol extends gg.core.XForm
+  @ggpackage = "gg.xform.AddCol"
+
   parseSpec: ->
     super
 

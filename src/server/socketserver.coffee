@@ -34,17 +34,25 @@ socket.on 'connection', (client) ->
   client.on 'noop', (payload) ->
     client.emit "result", payload
 
+  # Exec
   client.on 'compute', (payload) ->
+    console.log "COMPUTE"
     table = gg.data.RowTable.fromJSON payload.table
     env = gg.wf.Env.fromJSON payload.env
     params = gg.util.Params.fromJSON payload.params
     klassname = params.get 'klassname'
+
+    console.log "table:"
+    console.log table
+
+    console.log params
 
     klass = gg.util.Util.ggklass klassname
     o = new klass {
       name: 'tmp'
       params: params
     }
+
     restable = o.compute table, env, params
 
 
@@ -53,7 +61,9 @@ socket.on 'connection', (client) ->
       env: env.toJSON()
     client.emit "result", payload
 
+  # Barrier
   client.on 'computeBarrier', (payload) ->
+    console.log "COMPUTEBARRIER"
     tables = us.map payload.tables, (json) ->
       gg.data.RowTable.fromJSON json
     envs = us.map payload.envs, (json) ->
@@ -67,14 +77,8 @@ socket.on 'connection', (client) ->
       params: params
     }
 
-    console.log "pre env"
-    console.log JSON.stringify payload.envs[0].val.scalesconfig
-    console.log us.first(envs).get 'scalesconfig'
-
     restables = o.compute tables, envs, params
 
-    console.log "post env"
-    console.log us.first(envs).get 'scalesconfig'
 
     tableJSONs = us.map restables, (t) -> t.toJSON()
     envJSONs = us.map envs, (env) -> env.toJSON()

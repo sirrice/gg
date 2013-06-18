@@ -6,6 +6,8 @@
 # NOTE: ONLY workflow node with multiple children at compile time!
 #
 class gg.wf.Multicast extends gg.wf.Node
+  @ggpackage = "gg.wf.Multicast"
+
   constructor: (@spec={}) ->
     super @spec
 

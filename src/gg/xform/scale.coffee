@@ -5,9 +5,7 @@
 # Enforces that the table's schema is consistent with
 # the scaleset's data types
 class gg.xform.ScalesSchema extends gg.core.XForm
-  constructor: (@layer, @spec) ->
-    super @layer.g, @spec
-    @parseSpec()
+  @ggpackage = "gg.xform.ScalesSchema"
 
   compute: (table, env, params) ->
     scaleset = @scales table, env, params
@@ -44,9 +42,7 @@ class gg.xform.ScalesSchema extends gg.core.XForm
 
 # transforms data -> pixel/aesthetic values
 class gg.xform.ScalesApply extends gg.core.XForm
-  constructor: (@layer, @spec) ->
-    super @layer.g, @spec
-    @parseSpec()
+  @ggpackage = "gg.xform.ScalesApply"
 
   parseSpec: ->
     super
@@ -62,9 +58,7 @@ class gg.xform.ScalesApply extends gg.core.XForm
 
 # transforms pixel -> data
 class gg.xform.ScalesInvert extends gg.core.XForm
-  constructor: (@layer, @spec) ->
-    super @layer.g, @spec
-    @parseSpec()
+  @ggpackage = "gg.xform.ScalesInvert"
 
   parseSpec: ->
     super
@@ -78,11 +72,9 @@ class gg.xform.ScalesInvert extends gg.core.XForm
 
 
 
-#
+# Filter out data in table outside the domain of the scale set's scales
 class gg.xform.ScalesFilter extends gg.core.XForm
-  constructor: (@layer, @spec) ->
-    super @layer.g, @spec
-    @parseSpec()
+  @ggpackage = "gg.xform.ScalesFilter"
 
   parseSpec: ->
     super
@@ -99,7 +91,11 @@ class gg.xform.ScalesFilter extends gg.core.XForm
     table
 
 
+# Ensure that each layer+pane's scale set only has a single scale for a given
+# aesthetic
 class gg.xform.ScalesValidate extends gg.core.XForm
+  @ggpackage = "gg.xform.ScalesValidate"
+
   constructor: (@layer, @spec) ->
     super @layer.g, @spec
     @parseSpec()

@@ -6,9 +6,9 @@ class gg.geom.Text extends gg.geom.Geom
   parseSpec: ->
     super
 
-    @reparam = new gg.geom.reparam.Text @g,
+    @reparam = new gg.geom.reparam.Text
       name: "text-reparam:#{@layer.layerIdx}"
-    @render = new gg.geom.svg.Text @layer, {}
+    @render = new gg.geom.svg.Text {}
 
   posMapping: ->
     ys = ["y", "y0", "y1"]

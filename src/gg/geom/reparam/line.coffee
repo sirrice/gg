@@ -2,6 +2,7 @@
 #<< gg/data/*
 
 class gg.geom.reparam.Line extends gg.core.XForm
+  @ggpackage = "gg.geom.reparam.Line"
 
   defaults: (table, env, node) ->
     { group: '1' }

@@ -3,6 +3,8 @@
 
 
 class gg.wf.RPC extends gg.wf.Node
+  @ggpackage = "gg.wf.RPC"
+
   constructor: (@spec={}) ->
     super
 

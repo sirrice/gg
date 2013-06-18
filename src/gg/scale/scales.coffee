@@ -52,17 +52,17 @@ class gg.scale.Scales
     @parseSpec()
 
 
-    @prestats = new gg.scale.train.Data(@g,
+    @prestats = new gg.scale.train.Data(
       name: 'scales-prestats'
       params:
         config: @scalesConfig).compile()
-    @postgeommap = new gg.scale.train.Data(@g,
+    @postgeommap = new gg.scale.train.Data(
       name: 'scales-postgeommap'
       params:
         config: @scalesConfig).compile()
-    @facets = new gg.scale.train.Master(@g,
+    @facets = new gg.scale.train.Master(
       name: 'scales-facet').compile()
-    @pixel = new gg.scale.train.Pixel(@g,
+    @pixel = new gg.scale.train.Pixel(
       name: 'scales-pixel'
       params:
         scaleTrain: @g.facets.scales

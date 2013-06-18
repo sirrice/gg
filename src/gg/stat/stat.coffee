@@ -1,7 +1,7 @@
 
 class gg.stat.Stat extends gg.core.XForm
-  constructor: (@layer, @spec={}) ->
-    super @layer.g, @spec
+  constructor: (@spec={}) ->
+    super
 
     @map = null
 
@@ -13,7 +13,7 @@ class gg.stat.Stat extends gg.core.XForm
     if _.findGoodAttr(@spec, ['aes', 'aesthetic', 'mapping', 'map'], null)?
       mapSpec = _.clone @spec
       mapSpec.name = "stat-map" unless mapSpec.name?
-      @map = gg.xform.Mapper.fromSpec @g, mapSpec
+      @map = gg.xform.Mapper.fromSpec mapSpec
 
   @klasses = []
 
@@ -38,7 +38,7 @@ class gg.stat.Stat extends gg.core.XForm
         ret[klass.aliases] = klass
     ret
 
-  @fromSpec: (layer, spec) ->
+  @fromSpec: (spec) ->
     klasses = @getKlasses()
     if _.isString spec
       type = spec
@@ -47,7 +47,7 @@ class gg.stat.Stat extends gg.core.XForm
       type = _.findGood [spec.type, spec.stat, "identity"]
 
     klass = klasses[type] or gg.stat.IdentityStat
-    ret = new klass layer, spec
+    ret = new klass spec
     console.log klasses
     console.log "klass #{klass.name} from type: #{type}"
     ret
