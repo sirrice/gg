@@ -1,5 +1,23 @@
-TODO
 
+
+June 07, 2013
+--------------
+
+Lost all the previous notes thanks to stupidity with git.
+
+Switching all operators to be pure functions that only depend on three data
+structures that are passed into the operators
+
+1. User defined parameter values.  Assigned at compile time
+2. Table(s)
+3. Environment values (derived from computation)
+
+This decision was because splitting execution between the browser and backend
+is too complex otherwise.
+
+
+June 10, 2013
+-------------
 * DONE separate facet/graphic layout from rendering
   * layout just computes bounds for containers, render actually creates and styles elements
 
@@ -39,8 +57,8 @@ Serializing a wf Operator
   * environment validation
   * parameter validation
 
-Distinguishing State
---------------------
+
+### Distinguishing State
 
 Compute operators
 
@@ -81,21 +99,6 @@ Main SVG dom elements:
 
 
 
-
-June 07, 2013
---------------
-
-Lost all the previous notes thanks to stupidity with git.
-
-Switching all operators to be pure functions that only depend on three data
-structures that are passed into the operators
-
-1. User defined parameter values.  Assigned at compile time
-2. Table(s)
-3. Environment values (derived from computation)
-
-This decision was because splitting execution between the browser and backend
-is too complex otherwise.
 
 June 17, 2013
 -------------------

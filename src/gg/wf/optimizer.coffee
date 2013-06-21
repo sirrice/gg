@@ -87,8 +87,8 @@ class gg.wf.Optimizer
       gg.wf.RPCSource
     else if _.isSubclass(node, gg.wf.Split)
       gg.wf.RPCSplit
-    else if _.isSubclass(node, gg.wf.Join)
-      gg.wf.RPCJoin
+    else if _.isSubclass(node, gg.wf.Merge)
+      gg.wf.RPCMerge
     else
       gg.wf.RPC
 

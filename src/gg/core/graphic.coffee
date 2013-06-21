@@ -71,7 +71,6 @@ class gg.core.Graphic
     for node in preMulticastNodes
       wf.node node
       wf.connectBridge prev, node if prev?
-      wf.connect prev, node if prev?
       prev = node
 
 
@@ -80,7 +79,6 @@ class gg.core.Graphic
         clientonly: yes
     wf.node multicast
     wf.connectBridge prev, multicast if prev?
-    wf.connect prev, multicast if prev?
 
     _.each @layers.compile(), (nodes) ->
       prev = multicast

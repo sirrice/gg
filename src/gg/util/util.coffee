@@ -110,6 +110,8 @@ class gg.util.Util
               return no
           c = c.constructor.__super__
 
+  @isType: (args...) -> @isSubclass args...
+
   @subSvg: (svg, opts, tag="g") ->
     el = svg.append(tag)
     left = findGood [opts.left, 0]
@@ -151,6 +153,7 @@ _.mixin
   findGood: gg.util.Util.findGood
   findGoodAttr: gg.util.Util.findGoodAttr
   isSubclass: gg.util.Util.isSubclass
+  isType: gg.util.Util.isSubclass
   textSize: gg.util.Textsize.textSize
   exSize: gg.util.Textsize.exSize
   fontsize: gg.util.Textsize.fontSize

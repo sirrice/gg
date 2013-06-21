@@ -54,7 +54,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
         params:
           key: "group"
           cols: ['group']
-      @groupbylabel = new gg.wf.Join#EnvGet
+      @groupbylabel = new gg.wf.Merge#EnvGet
         name: "groupbylabel-#{@layerIdx}"
         params:
           key: "group"

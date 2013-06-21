@@ -16,17 +16,13 @@ class gg.wf.Source extends gg.wf.Node
   ready: -> yes
 
   run: ->
-    # always ready!
     compute = @params.get 'compute'
     env = new gg.wf.Env
-    console.log "running with params #{@params}"
     table = compute null, env, @params
-    @output 0, new gg.wf.Data(table, env)
-    table
 
-
-
-
+    outputs = [ new gg.wf.Data(table, env) ]
+    @output 0, outputs
+    outputs
 
 class gg.wf.TableSource extends gg.wf.Source
   @ggpackage = "gg.wf.TableSource"
@@ -53,6 +49,7 @@ class gg.wf.CsvSource extends gg.wf.Source
 
   compute: ->
     throw Error("not implemented")
+
 # CSVSource
 # JDBC/SQLSource
 # MapSource

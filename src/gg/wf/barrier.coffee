@@ -17,73 +17,33 @@ class gg.wf.Barrier extends gg.wf.Node
 
   compute: (tables, env, params) -> tables
 
-  addInputPort: ->
-    @inputs.push null
-    @getAddInputCB @inputs.length - 1
-
-  childFromPort: (inPort) ->
-    outPort = @in2out[inPort]
-    @children[outPort]
-
-  # Looks up the correct child node for @parent before cloning
-  # @param parent parent node
-  # @param parentPort parent's output port connected to this node
-  #
-  cloneSubplan: (parent, parentPort, stop) ->
-    inPort = @parent2in[[parent.id, parentPort]]
-
-    unless inPort?
-      throw Error("no input port for parent: #{parent.toString()}")
-    unless @in2out[inPort]?
-      throw Error("no matching output port for input port #{inPort}")
-    if @in2out[inPort].length != 1
-      throw Error("Barrier input port maps to #{@in2out[inPort].length} output ports")
-
-    child = @children[@in2out[inPort][0]]
-
-    [child, childCb] = child.cloneSubplan @, @in2out[inPort], stop
-    outputPort = @addChild child, childCb
-    cb = @addInputPort()
-    @connectPorts cb.port, outputPort, childCb.port
-    child.addParent @, outputPort, childCb.port
-
-    @log "cloneSubplan: #{parent.name}-#{parent.id}(#{parentPort}) -> me(#{cb.port} -> #{outputPort}) -> #{child.name}-#{child.id}(#{@in2out[inPort]})"
-
-    [@, cb]
-
-  addChild: (child, inputCb=null) ->
-    childport = if inputCb? then inputCb.port else -1
-    myStr = "#{@base().name} port(#{@nChildren()})"
-    childStr = "#{child.base().name} port(#{childport})"
-    #@log "addChild #{myStr} -> #{childStr}"
-
-    outputPort = @nChildren()
-    @children.push child
-    @addOutputHandler outputPort, inputCb if inputCb?
-    outputPort
-
-
   run: ->
     throw Error("Node not ready") unless @ready()
 
+
+    # prepare inputs for compute function
+    [flat, md] = gg.wf.Inputs.flatten @inputs
+    tables = _.map flat, (d) -> d.table
+    envs = _.map flat, (d) -> d.env
+    console.log flat
+    console.log md
+
+    # Execute compute function
     @log.level = gg.util.Log.DEBUG
-    tables = _.pluck @inputs, 'table'
-    envs = _.pluck @inputs, 'env'
-    compute = @params.get 'compute'
     @log "#{@name} running on #{tables.length} tables"
-    outputs = compute tables, envs, @params
-    @log "barrier #{@name} got #{tables.length}"
+    @log tables
+    @log @inputs
+    compute = @params.get 'compute'
+    tables = compute tables, envs, @params
+    @log "#{@name} returned #{tables.length} tables"
 
-    for output, idx in outputs
-      if envs[idx].contains 'paneC'
-        pc = envs[idx].get('paneC')
-        if pc.constructor.name != 'Container'
-          throw Error("pre-clone not right")
-        clone = envs[idx].clone()
-        pc = clone.get 'paneC'
-        if pc.constructor.name != 'Container'
-          throw Error("post-clone not right")
-      @output idx, new gg.wf.Data(output, envs[idx].clone())
+    # reconstruct original inputs structure
+    datas = _.times tables.length, (idx) ->
+      new gg.wf.Data tables[idx], envs[idx]
+    outputs = gg.wf.Inputs.unflatten datas, md
+
+    @log outputs
+    @log "#{@name} outputing #{outputs.length} outputs"
+    _.each outputs, (output, idx) => @output idx, output
     outputs
-
 

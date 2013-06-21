@@ -136,7 +136,7 @@ _.extend gg.wf.RPCSource::, RPCBase
 
 
 class gg.wf.RPCSplit extends gg.wf.Split
-  @ggpackage = "gg.wf.RPCSource"
+  @ggpackage = "gg.wf.RPCSplit"
 
   command: -> "split"
 
@@ -162,8 +162,8 @@ class gg.wf.RPCSplit extends gg.wf.Split
 _.extend gg.wf.RPCSplit::, RPCBase
 
 
-class gg.wf.RPCJoin extends gg.wf.Join
-  @ggpackage = "gg.wf.RPCSource"
+class gg.wf.RPCMerge extends gg.wf.Merge
+  @ggpackage = "gg.wf.RPCMerge"
 
   command: -> "split"
 
@@ -180,4 +180,4 @@ class gg.wf.RPCJoin extends gg.wf.Join
       respData, @removedEls)
 
     @output 0, new gg.wf.Data(table, env)
-_.extend gg.wf.RPCJoin::, RPCBase
+_.extend gg.wf.RPCMerge::, RPCBase

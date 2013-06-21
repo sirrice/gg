@@ -25,44 +25,89 @@
 #   queue.length = 0
 #
 class gg.wf.Runner extends events.EventEmitter
-  constructor: (@root) ->
-    @log = gg.util.Log.logger "Runner", gg.util.Log.WARN
+  constructor: (@flow) ->
+    @log = gg.util.Log.logger "Runner", gg.util.Log.DEBUG
     @active = {}
     @seen = {}
     @keyf = (node) -> node.id
     @rpcnodes = {}
 
-    runNode = (node) ->
+    runNode = (node) =>
       #var blob = new Blob ["onmessage = function() { console.log(gg);  }"]
       #var worker = new Worker(window.URL.createObjectURL(blob))
+      @log "#{node.name} in(#{node.inputs.length}) out(#{node.nChildren}) running"
       node.run()
 
-    # Execute a workflow node
-    qworker = (node, cb) =>
+    nodeCanRun = (node) =>
       if node.id of @seen
-        console.log "\t#{node.name} seen. skipping"
-        cb()
-        return
+        @log "\t#{node.name} seen. skipping"
+        return no
 
       # queue will naturally be cleared of all non-ready nodes
       unless node.ready()
-        console.log "\t#{node.name} not ready.
+        @log "\t#{node.name} not ready.
           #{node.nReady()} of #{node.inputs.length} inputs ready"
+        return no
+
+      yes
+
+    setChildInputs = (node, child, idx, input) =>
+      outputPorts = @flow.outputPorts node, child
+      inputPorts = @flow.inputPorts node, child
+      unless outputPorts.length == inputPorts.length
+        throw Error("output and input ports don't match
+          out:#{outputPorts} != in:#{inputPorts}")
+
+      # of all of node's output ports, the port at idx
+      # is what index of node's output ports to child?
+      #
+      # node's outports: [0, 0, 1, 0, 1]
+      # idx: 3
+      # node->child ports: [0, 0, 0]
+      # index into node->child ports: 2
+      cid = child.id
+      outputPorts = _.map @flow.children(node), (c) =>
+        _.times @flow.edgeWeight(node, c), ()->c.id
+      outputPorts = _.flatten outputPorts
+      outputPorts = _.first outputPorts, idx+1
+      outputPorts = _.filter outputPorts, (p) -> p == cid
+      inportIdx = outputPorts.length - 1
+
+      inport = inputPorts[inportIdx]
+
+      @log "setInput #{node.name}:#{idx}:#{inportIdx}->
+            #{child.name}:#{inport}"
+      child.setInput inport, input
+
+      if child.ready()
+        @log "\t#{child.name} adding"
+        @queue.push child, @callback
+      else
+        @log "\t#{child.name} not ready
+          #{child.nReady()} of #{child.nParents} ready"
+
+
+    # Execute a workflow node
+    qworker = (node, cb) =>
+      unless nodeCanRun node
         cb()
         return
 
+      node.on 'output', (idx, result) =>
+        @log "#{node.name} got output in port #{idx}"
+        if node.nChildren == 0
+          # not sure what the semantics should be for flow's output
+          @emit 'output', idx, result
+        else
+          # idx tells us which child this result is meant for
+          children = _.map @flow.children(node), (child) =>
+            _.times @flow.edgeWeight(node,child), ()->child
+          children = _.flatten children
+          child = children[idx]
+          setChildInputs node, child, idx, result
 
-      if node.nChildren() > 0
-        node.on 'output', (skip, result) =>
-          for child in node.uniqChildren()
-            console.log "\tadding #{child.name}"
-            @queue.push child, @callback
-
-          if node.nChildren() == 0
-            @emit 'output', node, result.table
-
-          delete @active[node.id]
-          cb()
+        delete @active[node.id]
+        cb()
 
       @active[node.id] = node
       @seen[node.id] = yes
@@ -72,19 +117,22 @@ class gg.wf.Runner extends events.EventEmitter
     callback = (err) =>
       throw Error(err) if err?
 
-    ondrain = () =>
+    ondrain =  =>
       unless _.size @active
-        console.log "done! can you believe it?"
+        @log "done! can you believe it?"
+        @log @
         @emit 'done', yes
 
 
-
     @queue = new async.queue qworker, 1
-    @queue.drain = ondrain.bind(@)
+    @queue.drain = ondrain
 
 
   run: () ->
-    @queue.push @root, @callback
+    @log "adding sources"
+    _.each @flow.sources(), (source) =>
+      @log "adding source #{source.name}"
+      @queue.push source, @callback
 
 
 

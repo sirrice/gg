@@ -1,3 +1,84 @@
+#<< gg/util/util
+
+class gg.wf.Inputs
+  @isLeafArray: (arr) ->
+    arr? and (arr.length == 0 or not _.isArray(arr[0]))
+
+  # @param f function that takes a list of data objects as input
+  #         ([data...]) -> data or [data...]
+  # split -> split -> barrier -> join -> join
+  # [t]
+  # [ [t1, t2] ]
+  # [ [ [a, b, c], [x, y] ] ]
+  # [ [ abc, xy ] ]
+  # [ abcxy ]
+  @mapLeafArrays: (inputs, f) ->
+    return unless inputs?
+    return inputs if inputs.length == 0
+    _.map inputs, (subinput, idx) ->
+      if gg.wf.Inputs.isLeafArray subinput
+        f subinput
+      else
+        gg.wf.Inputs.mapLeafArrays subinput, f
+
+
+  # @param f function that takes a single data object as input
+  #          (data) -> data or [data...]
+  @mapLeaves: (inputs, f) ->
+    return unless inputs?
+
+    _.map inputs, (input, idx) ->
+      if _.isArray input
+        gg.wf.Inputs.mapLeaves input, f
+      else
+        inputs[idx] = f input
+
+  # Flatten the input array but compute metadata for the nested structure
+  # @return [array, metadata]
+  #         array:    flattened array of gg.wf.Data objects
+  #         metadata: metadata that tracks each object in array to originial structure
+  @flatten: (inputs, md=[], arr=[], path=[]) ->
+    # md: array idx -> original indices
+
+    _.each inputs, (input, idx) ->
+      path.push idx
+      if _.isArray input
+        gg.wf.Inputs.flatten input, md, arr, path
+      else
+        md[arr.length] = _.clone path
+        arr.push input
+      path.pop()
+
+    [arr, md]
+
+  # Reconstruct hierarchical array structure from a flattened array and the metadata
+  # We expect that for a hierarchical array Arr:
+  #
+  #   [flat, md] = gg.wf.Inputs.flatten(Arr)
+  #   Arr == gg.wf.Inputs.unflatten(flat, md)
+  #
+  @unflatten: (arr, md) ->
+    output = []
+    setAtPath = (o, path, data) ->
+      idx = _.first path
+      path = _.rest path
+      if path.length == 0
+        o[idx] = data
+      else
+        o[idx] = [] unless o.length > idx
+        setAtPath o[idx], path, data
+
+    _.each arr, (data, idx) ->
+      path = md[idx]
+      setAtPath output, path, data
+
+    output
+
+
+
+
+
+
 #
 # class that encapsulates data passed through the xforms
 #

@@ -29,7 +29,7 @@ class gg.wf.Flow extends gg.wf.Node
   constructor: (@spec={}) ->
     @graph = new gg.util.Graph (node)->node.id
     @g = @spec.g  # graphic object that compiled into this workflow
-    @log = gg.util.Log.logger "flow ", gg.util.Log.WARN
+    @log = gg.util.Log.logger "flow ", gg.util.Log.DEBUG
 
     # port/inputs index -> [source node id, source inport]
     @inport2sourceport = {}
@@ -38,171 +38,20 @@ class gg.wf.Flow extends gg.wf.Node
     # [base sink node id, child inport] -> outport
     @sinkport2outport = {}
 
-  # need some mapping from input ports to source ports
-  #
-  # Each sink output port is tied to an RPC sender node which
-  # 0) maps [sink,port] to a buffer
-  # 1) buffers cloneSubplan call arguments
-  #    parentid, parent port, stopid
-  # 2) constructs a fake callback handler
-  #    tied to the assoc. cloneSubplan call  arguments
-  #
-  # Each sender node is tied to a reciever node that
-  # 0) is tied to sinks in the next flow
-  #
 
-  cloneSubplan: (parent, parentPort, stop) ->
-    # there should only be one source in a flow
-    source = @sources()[0]
-    clone = @clone source
-    cb = clone.addInputPort()
+  # Setup nodes metadata
+  instantiate: ->
+    f = (node) =>
+      parentWeights = _.map @parents(node), (parent) =>
+        @edgeWeight parent, node
+      childWeights = _.map @children(node), (child) =>
+        @edgeWeight node, child
+      nParents = _.sum parentWeights
+      nChildren = _.sum childWeights
+      node.setup nParents, nChildren
 
-    sinks = @sinks()
-    sinks = sinks # filter for "orginial sinks"
-
-    for sink, idx in sinks
-      sink.cloneSubplan @, idx
-
-
-
-    inPort = @parent2in[[parent.id, parentPort]]
-    [source, sourceport] = @inport2sourceport[inPort]
-
-
-
-    child = @children[@in2out[inPort][0]]
-
-
-    if @nChildren() > 0
-      [child, childCb] = @children
-
-    [child, childCb] = child.cloneSubplan @, @in2out[inPort][0], stop
-    outputPort = @addChild child, childCb
-    cb = @addIn
-
-    child.cloneSubplan @, outPort, child
-
-
-  addChild: (child, inputCb=null) ->
-
-
-  #
-  # Create a mutable instance of the workflow that can be sent to a gg.wf.Runner
-  #
-  # Each node is cloned and their output/input handlers are linked together
-  #
-  # During execution, the nodes are locally responsible for creating additional
-  # duplicates e.g., after Partition operators
-  #
-  # Details of how nodes are linked:
-  #
-  # 1) each node has an input handler for each input slot
-  # 2) each node calls @emit "output" after running
-  #
-  # @param node the node to recursively clone.  If null, uses sources()
-  #
-  # @param barriercache this cache is used to ensure only a single instance of
-  #        a barrier is every created
-  #
-  instantiate: (node=null, barriercache={}) ->
-    if node?
-      @log "instantitate #{node.name}-#{node.id}\t#{_.isSubclass node, gg.wf.Barrier}"
-
-      if _.isSubclass node, gg.wf.Barrier
-        unless node.id of barriercache
-          clone = node.clone()
-          barriercache[node.id] = clone
-
-        clone = barriercache[node.id]
-        cb = clone.addInputPort()
-        return [clone, cb]
-
-      else
-        clone = node.clone()
-        cb = clone.addInputPort()
-        endNodes = @bridgedChildren node
-        @log "endNodes #{node.name}: [#{@nodes2str endNodes}]"
-        @log "children #{node.name}: [#{@nodes2str @children(node)}]"
-
-        for child in @children node
-          paths = @nonBarrierPaths child, endNodes
-          @log "nonBarrierPaths #{node.name}->#{child.name} has #{paths.length} paths"
-          for path in paths
-            [child, childCb] = @instantiatePath path, barriercache
-            outputPort = clone.addChild child, childCb
-            clone.connectPorts cb.port, outputPort, childCb.port
-            child.addParent clone, outputPort, childCb.port
-
-        [clone, cb]
-
-    else
-      sources = @sources()
-      root = switch sources.length
-        when 0 then throw Error("No sources, cannot instantiate")
-        when 1
-          if _.isSubclass sources[0], gg.wf.Barrier
-            throw Error("Source is a Barrier.  ")
-          @instantiate sources[0]
-        else
-          root = new gg.wf.Multicast
-          _.each sources, (source) =>
-            [srcclone, srccb] = @instantiate source
-            outputPort = root.addChild srcclone, srccb
-            srcclone.addParent root, outputPort, srccb.port
-          [root, root.getAddInputCB 0]
-
-
-  #
-  #
-  # @param path a series of barrier nodes that optionally ends with a non-barrier node
-  #        [barrierNode*, [nonBarrierNode]]
-  instantiatePath: (path, barriercache) ->
-    unless _.every(_.initial(path), ((node) -> _.isSubclass(node, gg.wf.Barrier)))
-      throw Error()
-    if path.length == 0
-      throw Error("instantiatePath: Path length is 0")
-    @log "instantiatePath [#{path.map((v)->v.name).join "  "}]"
-
-    first = null
-    firstCb = null
-    prev = null
-    prevCb = null
-    for node in path
-      [clone, cloneCb] = @instantiate node, barriercache
-
-      if prev?
-        outputPort = prev.addChild clone, cloneCb
-        prev.connectPorts prevCb.port, outputPort, cloneCb.port
-        clone.addParent prev, outputPort, cloneCb.port
-
-      [prev, prevCb] = [clone, cloneCb]
-      [first, firstCb] = [clone, cloneCb] unless first?
-
-    [first, firstCb]
-
-
-  nonBarrierPaths: (node, endNodes, curPath=null, seen=null, paths=null) ->
-    curPath = [] unless curPath?
-    seen = {} unless seen?
-    paths = [] unless paths?
-
-    if node in endNodes
-      newPath = _.clone curPath
-      newPath.push node
-      paths.push newPath if newPath.length > 0
-      #@log "nonBarrierPaths add: [#{newPath.map((v) -> v.name).join("  ")}]"
-    else if _.isSubclass node, gg.wf.Barrier
-      curPath.push node
-      children = _.uniq @children node
-      #@log "nonBarrierPaths children: #{children.map((v)->"#{v.name}-#{v.id}").join "  "}"
-      for child in children
-        #@log "nonBarrierPaths barrier #{child.name} has weight: #{@edgeWeight(node, child)}"
-        @nonBarrierPaths child, endNodes, curPath, seen, paths
-      curPath.pop()
-    else
-      #@log "nonBarrierPaths skip: #{node.name}"
-
-    paths
+    @graph.bfs f
+    @
 
 
 
@@ -215,7 +64,8 @@ class gg.wf.Flow extends gg.wf.Node
   toString: ->
     arr = []
     f = (node) =>
-        childnames = _.map @children(node), (c) -> c.name
+        childnames = _.map @children(node), (c) =>
+          "#{c.name}(#{@edgeWeight node, c})"
         cns = childnames.join(', ') or "SINK"
         arr.push "#{node.name}\t->\t#{cns}"
     @graph.bfs f
@@ -335,6 +185,28 @@ class gg.wf.Flow extends gg.wf.Node
   parents: (node) -> @graph.parents node, "normal"
   bridgedParents: (node) -> @graph.parents node, "bridge"
 
+  # Get node's input ports that are mapped to parent's outputs
+  inputPorts: (parent, node) ->
+    pids = _.map @parents(node), (p) =>
+      weight = @edgeWeight p, node
+      _.times weight, () -> p.id
+    pids = _.flatten pids
+    idxs = []
+    _.each pids, (pid, idx) ->
+      idxs.push idx if pid == parent.id
+    idxs
+
+  # Get node's output ports that map to child
+  outputPorts: (node, child=null) ->
+    cids = _.map @children(node), (c) =>
+      weight = @edgeWeight node, c
+      _.times weight, () -> c.id
+    cids = _.flatten cids
+    idxs = []
+    _.each cids, (cid, idx) ->
+      idxs.push idx if not child? or cid == child.id
+    idxs
+
   sources: -> @graph.sources()
   sinks: -> @graph.sinks()
 
@@ -348,7 +220,7 @@ class gg.wf.Flow extends gg.wf.Node
   exec: (specOrNode) -> @setChild gg.wf.Exec, specOrNode
   split: (specOrNode) -> @setChild gg.wf.Split, specOrNode
   partition: (specOrNode) -> @setChild gg.wf.Partition, specOrNode
-  join: (specOrNode) -> @setChild gg.wf.Join, specOrNode
+  merge: (specOrNode) -> @setChild gg.wf.Merge, specOrNode
   barrier: (specOrNode) -> @setChild gg.wf.Barrier, specOrNode
   multicast: (specOrNode) -> @setChild gg.wf.Multicast, specOrNode
   extend: (nodes) -> _.each nodes, (node) => @setChild null, node
@@ -367,25 +239,30 @@ class gg.wf.Flow extends gg.wf.Node
 
     sinks = @sinks()
     throw Error("setChild only works for non-forking flows") if sinks.length > 1
-    prevNode = if sinks.length > 0 then sinks[0] else null
+    prevNode = null
+    prevNode = sinks[0] if sinks.length > 0
     @connect prevNode, node if prevNode?
     @add node
     this
 
 
   run: (table) ->
-    [root, rootcb] = @instantiate()
     if table?
-      source = new gg.wf.TableSource
+      tablesource = new gg.wf.TableSource
         params:
           table: table
-      outputPort = source.addChild root, rootcb
-      source.connectPorts -1, outputPort, rootcb.port
-      root.addParent source, outputPort, rootcb.port
-      root = source
+      _.each @sources(), (source) =>
+        @connect tablesource, source
+        @connectBridge tablesource, source
 
+    unless @sources().length == 1
+      throw Error()
 
-    runner = new gg.wf.Runner root
-    runner.on "output", (id, data) => @emit "output", id, data
+    @instantiate()
+
+    console.log @toString()
+
+    runner = new gg.wf.Runner @
+    runner.on "output", (idx, data) => @emit "output", idx, data
     runner.run()
 

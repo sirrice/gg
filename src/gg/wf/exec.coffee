@@ -13,7 +13,7 @@ class gg.wf.Exec extends gg.wf.Node
     @type = "exec"
     @name = _.findGood [@spec.name, "exec-#{@id}"]
 
-    @params.ensure 'compute', ['f'], ((args...)=>@compute args...)
+    @params.ensure 'compute', ['f'], @compute.bind(@)
 
   compute: (table, env, node) -> table
 
@@ -21,17 +21,15 @@ class gg.wf.Exec extends gg.wf.Node
   run: ->
     throw Error("node not ready") unless @ready()
 
-    data = @inputs[0]
+    params = @params
     compute = @params.get 'compute'
-    output = compute data.table, data.env, @params
-    envclone = data.env.clone()
-    if data.env.get('svg')? and not envclone.get('svg')?
-      console.log _.keys(data.env.data)
-      console.log _.keys(envclone.data)
-      throw Error("clonig was not correct")
-    data = new gg.wf.Data(output, envclone)
-    @output 0, data
-    output
+    f = (data) ->
+      table = compute data.table, data.env, params
+      new gg.wf.Data table, data.env
+    outputs = gg.wf.Inputs.mapLeaves @inputs[0], f
+
+    @output 0, outputs
+    outputs
 
   @create: (params, compute) ->
     new gg.wf.Exec
