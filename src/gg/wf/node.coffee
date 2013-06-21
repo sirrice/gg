@@ -67,6 +67,7 @@ class gg.wf.Node extends events.EventEmitter
 
     # Compute parameters
     @params = new gg.util.Params @spec.params
+    @params.ensure "klassname", [], @constructor.ggpackage
 
     @log = gg.util.Log.logger "#{@name}-#{@id}\t#{@constructor.name}", gg.util.Log.WARN
 
@@ -155,6 +156,7 @@ class gg.wf.Node extends events.EventEmitter
     cb.port = idx
     cb
 
+  nReady: -> _.sum _.filter(@inputs, (val) -> val?)
   ready: -> _.all @inputs, (val) -> val?
 
   # @param {Int} outidx The index of the child the output should be routed to
@@ -163,15 +165,11 @@ class gg.wf.Node extends events.EventEmitter
     @on outidx, cb if outidx >= 0 and outidx < @children.length
 
   output: (outidx, data) ->
-    if data.env and data.env.contains 'paneC'
-      paneC = data.env.get('paneC')
-      if paneC.constructor.name != 'Container'
-        console.log paneC
-        throw Error("#{@name} got bad paneC")
     listeners = @listeners outidx
     n = listeners.length
-    listeners = _.map(listeners, (l)->l.name)
-    @log "output: port(#{outidx}) of #{n} #{listeners}\tenv: #{data.env.data}"
+    listeners = _.map(listeners, (l)->l.portidx)
+    @log.warn @listeners(outidx)
+    @log.warn "output: port(#{outidx}) of #{n}\t#{listeners}\tenv: #{data.env.data}"
     @emit outidx, @, data
     @emit "output", @, data
 
@@ -220,6 +218,7 @@ class gg.wf.Node extends events.EventEmitter
   #
   run: -> throw Error("gg.wf.Node.run not implemented")
 
+  compile: -> [@]
 
   # DFS of the workflow starting from this node
   walk: (f, seen=null) ->

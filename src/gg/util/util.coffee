@@ -6,20 +6,37 @@ _ = require 'underscore'
 
 
 class gg.util.Util
-  @toJSON: (o, stack=0) ->
+  @toJSON: (o, path=[]) ->
+    if path.length >= 25
+      console.log o
+      throw Error("Max stack #{path} hit")
     if o? and 'ggpackage' of o.constructor
       ret = { type: 'gg', ggpackage: o.constructor.ggpackage }
       ret.val = o.toJSON()
+    else if _.isFunction o
+      # functions are expected to be pure and not use context
+      ret = { type: "function", val: null, props: {} }
+      ret.val = o.toString()
+      _.each _.keys(o), (k) ->
+        path.push k
+        ret.props[k] = gg.util.Util.toJSON(o[k], path)
+        path.pop()
     else if _.isArray o
       ret = { type: "array", val: [], props: {} }
-      _.each o, (v) ->
-        ret.val.push gg.util.Util.toJSON(v, stack+1)
+      _.each o, (v, idx) ->
+        path.push idx
+        ret.val.push gg.util.Util.toJSON(v, path)
+        path.pop()
       _.each _.reject(_.keys(o), _.isNumber), (k) ->
-        ret.props[k] = gg.util.Util.toJSON(o[k], stack+1)
+        path.push k
+        ret.props[k] = gg.util.Util.toJSON(o[k], path)
+        path.pop()
     else if _.isObject o
       ret = { type: "object", val: {} }
       _.each o, (v,k) ->
-        ret.val[k] = gg.util.Util.toJSON(v, stack+1)
+        path.push k
+        ret.val[k] = gg.util.Util.toJSON(v, path)
+        path.pop()
     else
       ret = { type: 'primitive', val: o }
     ret
@@ -41,6 +58,11 @@ class gg.util.Util
         ret = {}
         _.each json.val, (v, k) ->
           ret[k] = gg.util.Util.fromJSON(v)
+        ret
+      when 'function'
+        ret = Function("return (#{json.val})")()
+        _.each json.props, (vjson, k) ->
+          ret[k] = gg.util.Util.fromJSON(vjson)
         ret
       else
         json.val

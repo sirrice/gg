@@ -2,6 +2,7 @@
 
 
 class gg.stat.LoessStat extends gg.stat.Stat
+  @ggpackage = "gg.stat.LoessStat"
   @aliases = ['loess', 'smooth']
 
 

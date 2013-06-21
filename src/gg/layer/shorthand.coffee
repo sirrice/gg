@@ -125,6 +125,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
     # add environment variables
     nodes.push new gg.wf.EnvPut
+      name: "layer-envput-#{@layerIdx}"
       params:
         pairs:
           layer: @layerIdx
@@ -134,7 +135,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeStdOut "init-data"
     nodes.push @map
     nodes.push makeStdOut "post-map-#{@layerIdx}"
-    nodes.push new gg.xform.ScalesSchema @,
+    nodes.push new gg.xform.ScalesSchema
       name: "scales-schema-#{@layerIdx}"
       params:
         config: @g.scales.scalesConfig
@@ -146,7 +147,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # Statistics transforms
     nodes.push @g.scales.prestats
     nodes.push makeStdOut "post-train"
-    nodes.push new gg.xform.ScalesFilter @,
+    nodes.push new gg.xform.ScalesFilter
       name: "scalesfilter-#{@layerIdx}"
       params:
         posMapping: @geom.posMapping()
@@ -185,7 +186,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
 
 
-    nodes.push new gg.xform.ScalesValidate @,
+    nodes.push new gg.xform.ScalesValidate
       name: 'scales-validate'
 
 
@@ -195,7 +196,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # geom: position transformation
     nodes.push @g.facets.trainer
     nodes.push makeScalesOut "pre-scaleapply"
-    nodes.push new gg.xform.ScalesApply @,
+    nodes.push new gg.xform.ScalesApply
       name: "scalesapply-#{@layerIdx}"
       params:
         posMapping: @geom.posMapping()

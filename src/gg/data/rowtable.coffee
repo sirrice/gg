@@ -1,6 +1,8 @@
 #<< gg/data/table
 
 class gg.data.RowTable extends gg.data.Table
+  @ggpackage = "gg.data.RowTable"
+
   constructor: (@schema, rows=[]) ->
     throw Error("schema not present") unless @schema?
     @rows = []

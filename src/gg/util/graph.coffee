@@ -3,7 +3,8 @@
 _ = require 'underscore'
 
 #
-# Encodes a node graph.  Edges can have associated metadata (e.g., edge weight, name, etc)
+# Encodes a node graph.
+# Edges are typed and can carry metadata e.g., edge weight, name
 #
 class gg.util.Graph
 
@@ -129,15 +130,21 @@ class gg.util.Graph
     _.map ids, (id) => @id2node[id]
 
 
+  # @param f function to execute on every visited node
+  #          (node, depth) -> ...
+  #          depth starts from 0
+  # @param sources list of nodes to start search from
+  #        defaults to graph's sources
   bfs: (f, sources=null) ->
     if sources
       sources = [sources] unless _.isArray sources
-      queue = sources
+      queue = _.map sources, (s) -> [s, 0]
     else
-      queue = @sources()
+      queue = _.map @sources(), (s) -> [s, 0]
+
     seen = {}
     while _.size queue
-      node = queue.shift()
+      [node, depth] = queue.shift()
       id = @idFunc node
       continue if id of seen
 
@@ -145,25 +152,32 @@ class gg.util.Graph
       f node
 
       _.each @children(node), (child) =>
-        queue.push child if child? and @idFunc(child) not of seen
+        if child? and @idFunc(child) not of seen
+          queue.push [child, depth+1]
 
   #
-  # Visit nodes depth first
+  # Visit nodes depth first via the parent to child
+  # edges
   #
-  dfs: (f, node=null, seen=null) ->
+  # @params f function to call on every visited node
+  #           (node, depth) -> ...
+  #           depth is the node's depth
+  # @params node the node to start searching from
+  #
+  dfs: (f, node=null, seen=null, depth=0) ->
     seen = {} unless seen?
 
     if node?
       id = @idFunc node
       return if id of seen
       seen[id] = yes
-      f node
+      f node, depth
 
       _.each @children(node), (child) =>
-        @dfs f, child, seen
+        @dfs f, child, seen, depth+1
     else
       _.each @sources(), (child) =>
-        @dfs f, child, seen
+        @dfs f, child, seen, depth+1
 
 
 

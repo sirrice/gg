@@ -5,6 +5,8 @@ class gg.facet.base.Render extends gg.core.BForm
 
 
   parseSpec: ->
+    super
+
     @params.ensureAll
       'svg': [[], @spec.svg]
       'fXLabel': [[], 'x facet']

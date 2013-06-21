@@ -18,6 +18,7 @@
 
 
 class gg.data.Table
+
   @reEvalJS = /^{.*}$/
   @reVariable = /^[a-zA-Z]\w*$/
   @reNestedAttr = /^[a-zA-Z]+\.[a-zA-Z]+$/

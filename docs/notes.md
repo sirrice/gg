@@ -19,6 +19,7 @@ Serializing a wf Operator
   * provenance stuff
   * defaults
   * compute
+  * klassname
 * wf nodes simply call compute
 * Workflow state
   * children, parents, port relationships

@@ -2,6 +2,7 @@
 
 # TODO: the proper API given array types
 class gg.stat.SortStat extends gg.stat.Stat
+  @ggpackage = "gg.stat.SortStat"
   @aliases = ['sort', 'sorted']
 
   parseSpec: ->

@@ -4,15 +4,19 @@
 class gg.util.Params
   @ggpackage = 'gg.util.Params'
   constructor: (data) ->
+    @id = gg.util.Params.id()
     @data = {}
     @merge data
 
+  @id: -> gg.util.Params::_id += 1
+  _id: 0
 
-  merge: (data) ->
-    if data?
-      if _.isSubclass data, gg.util.Params
-        data = data.data
-      _.each data, (v,k) => @data[k] = v
+
+  merge: (data={}) ->
+    if _.isSubclass data, gg.util.Params
+      data = data.data
+
+    _.each data, (v,k) => @data[k] = v
     @
 
   put: (key, val) ->
@@ -20,7 +24,8 @@ class gg.util.Params
     @
 
   putAll: (o) ->
-    _.extend @data, o
+    _.each o, (v, k) =>
+      @data[k] = v
     @
 
   # ensure @key exists by trying to retrieve from @altkeys
@@ -81,7 +86,6 @@ class gg.util.Params
       if _.isFunction @data[key]
         removedEls[key] = @rm key
 
-    console.log @data
     json = @toJSON()
     clone = gg.util.Params.fromJSON json
 

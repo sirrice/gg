@@ -2,6 +2,7 @@
 
 
 class gg.stat.Bin1DStat extends gg.stat.Stat
+  @ggpackage = "gg.stat.Bin1DStat"
   @aliases = ['1dbin', 'bin', 'bin1d']
 
 
@@ -56,6 +57,7 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
       stat.x = stat.bin
       stat.y = stat.total
 
+    console.log params
     schema = params.get('outputSchema') table, env, params
     console.log stats
     new gg.data.RowTable schema, stats

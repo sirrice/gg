@@ -2,6 +2,7 @@
 
 
 class gg.stat.BoxplotStat extends gg.stat.Stat
+  @ggpackage = "gg.stat.BoxplotStat"
   @aliases = ['boxplot', 'quantile']
 
   defaults: ->

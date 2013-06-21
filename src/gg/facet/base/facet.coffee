@@ -90,10 +90,11 @@ class gg.facet.base.Facets
       showXTicks: _.findGood [@spec.showXTicks, true]
       showYTicks: _.findGood [@spec.showYTicks, true]
       options: @g.options
+      clientonly: yes
     }
 
 
-    @log "spec: #{JSON.stringify @spec}"
+    @log @renderParams
 
 
 
@@ -108,16 +109,16 @@ class gg.facet.base.Facets
     facetYKey = gg.facet.base.Facets.facetYKey
     x = @splitParams.get('x')
     y = @splitParams.get('y')
-    facetXNode = new gg.wf.Partition
+    facetXNode = new gg.wf.PartitionCols
       name: 'facet-x'
       params:
         key: facetXKey
-        f: (row) -> row.get x
-    facetYNode = new gg.wf.Partition
+        cols: x
+    facetYNode = new gg.wf.PartitionCols
       name: 'facet-y'
       params:
         key: facetYKey
-        f: (row) -> row.get y
+        cols: y
     [facetXNode, facetYNode]
 
   # This executes on a per-facet-layer basis

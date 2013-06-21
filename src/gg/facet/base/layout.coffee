@@ -46,7 +46,7 @@ class gg.facet.base.Layout extends gg.core.BForm
   # layout panes
   getTitleHeight: (params) ->
     css =
-      'font-size': '11pt'
+      'font-size': '10pt'
     _.exSize(css).h + params.get('paddingPane')
 
   getEmSize: ->
@@ -70,6 +70,8 @@ class gg.facet.base.Layout extends gg.core.BForm
     unless options.minimal
       titleH = @getTitleHeight(params)
       em = @getEmSize()
+      @log.warn "title size: #{titleH}"
+      @log.warn "em size: #{em}"
 
       # main labels
       xFacetLabelC = new gg.core.Bound titleH, paddingPane/2

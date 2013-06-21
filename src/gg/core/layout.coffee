@@ -1,5 +1,6 @@
 
 class gg.core.Layout extends gg.core.BForm
+  @ggpackage = "gg.core.Layout"
 
   compute: (tables, envs, params) ->
     options = params.get 'options'

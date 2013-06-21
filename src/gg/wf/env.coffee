@@ -1,6 +1,6 @@
 #<< gg/wf/node
 
-class gg.wf.EnvPut extends gg.wf.Node
+class gg.wf.EnvPut extends gg.wf.Exec
   @ggpackage = "gg.wf.EnvPut"
 
   constructor: ->
@@ -19,17 +19,10 @@ class gg.wf.EnvPut extends gg.wf.Node
     #       is accessed
     @params.ensure 'pairs', [], {}
 
-  run: ->
-    throw Error("#{@name}: node not ready") unless @ready()
-
-    params = @params
-    table = @inputs[0].table
-    env = @inputs[0].env
-    newenv = env.clone()
+  compute: (table, env, params) ->
     _.each params.get('pairs'), (val, key) ->
-      newenv.put key, val
-
-    @output 0, new gg.wf.Data(table, newenv)
+      console.log "envput: #{key} -> #{val}"
+      env.put key, val
     table
 
 
@@ -46,7 +39,7 @@ class gg.wf.EnvPut extends gg.wf.Node
 # spec.default value if envkey not found.
 #              set to null if don't add if envkey not found.
 #
-class gg.wf.EnvGet extends gg.wf.Node
+class gg.wf.EnvGet extends gg.wf.Exec
   @ggpackage = "gg.wf.EnvGet"
 
   constructor: (@spec={}) ->
@@ -62,24 +55,16 @@ class gg.wf.EnvGet extends gg.wf.Node
     unless @params.get('envkey')?
       throw Error("#{@name}: Need label key and value/value function)")
 
-  run: ->
-    throw Error("#{@name}: node not ready") unless @ready()
+  compute: (table, env, params) ->
+    envkey = params.get 'envkey'
+    defaultVal = params.get 'default'
+    attr = params.get 'attr'
 
-    data = @inputs[0]
-    table = data.table.clone()
+    if envkey? and env.contains envkey
+      val = defaultVal
+      val = env.get(envkey) if env.contains(envkey)
+      table.addConstColumn attr, val
 
-    envkey = @params.get 'envkey'
-    defaultVal = @params.get 'default'
-    attr = @params.get 'attr'
-
-    unless envkey? and data.env.contains envkey
-      @output 0, @inputs[0]
-      return
-
-    val = data.env.get envkey, defaultVal
-    table.addConstColumn attr, val
-
-    @output 0, new gg.wf.Data table, data.env.clone()
     table
 
 

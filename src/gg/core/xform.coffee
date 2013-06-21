@@ -50,7 +50,7 @@ class gg.core.XForm
     #
     @params = new gg.util.Params
     logname = "#{@spec.name} #{@constructor.name}"
-    @log = gg.util.Log.logger logname,  gg.util.Log.DEBUG unless @log?
+    @log = gg.util.Log.logger logname,  gg.util.Log.WARN unless @log?
 
     console.log @spec
     @parseSpec()
@@ -61,11 +61,12 @@ class gg.core.XForm
 
     @params.merge @spec.params
 
-    # add all the necessary during execution state here
     @params.putAll
       inputSchema: @extractAttr "inputSchema"
       outputSchema: @extractAttr "outputSchema"
       defaults: @extractAttr "defaults"
+
+    # add all the necessary during execution state here
 
     @compute = @spec.f or @compute
 
@@ -129,7 +130,7 @@ class gg.core.XForm
         log "adding:      #{col} -> #{val}"
         table.addConstColumn col, val
 
-  compute: (table, env, node) -> table
+  compute: (table, env, params) -> table
 
 
   # Wraps @compute to validate inputs and add defaults

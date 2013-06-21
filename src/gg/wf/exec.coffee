@@ -24,7 +24,13 @@ class gg.wf.Exec extends gg.wf.Node
     data = @inputs[0]
     compute = @params.get 'compute'
     output = compute data.table, data.env, @params
-    @output 0, new gg.wf.Data(output, data.env.clone())
+    envclone = data.env.clone()
+    if data.env.get('svg')? and not envclone.get('svg')?
+      console.log _.keys(data.env.data)
+      console.log _.keys(envclone.data)
+      throw Error("clonig was not correct")
+    data = new gg.wf.Data(output, envclone)
+    @output 0, data
     output
 
   @create: (params, compute) ->

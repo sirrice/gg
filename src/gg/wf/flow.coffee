@@ -25,12 +25,65 @@ events = require 'events'
 # The blueprint can be instantiated into a runnable workflow
 # by calling flow.instantiate()
 #
-class gg.wf.Flow extends events.EventEmitter
+class gg.wf.Flow extends gg.wf.Node
   constructor: (@spec={}) ->
     @graph = new gg.util.Graph (node)->node.id
     @g = @spec.g  # graphic object that compiled into this workflow
     @log = gg.util.Log.logger "flow ", gg.util.Log.WARN
-    _.extend @constructor.prototype, events.EventEmitter.prototype
+
+    # port/inputs index -> [source node id, source inport]
+    @inport2sourceport = {}
+    # port -> [child node id, child inport]
+    @outport2childport = {}
+    # [base sink node id, child inport] -> outport
+    @sinkport2outport = {}
+
+  # need some mapping from input ports to source ports
+  #
+  # Each sink output port is tied to an RPC sender node which
+  # 0) maps [sink,port] to a buffer
+  # 1) buffers cloneSubplan call arguments
+  #    parentid, parent port, stopid
+  # 2) constructs a fake callback handler
+  #    tied to the assoc. cloneSubplan call  arguments
+  #
+  # Each sender node is tied to a reciever node that
+  # 0) is tied to sinks in the next flow
+  #
+
+  cloneSubplan: (parent, parentPort, stop) ->
+    # there should only be one source in a flow
+    source = @sources()[0]
+    clone = @clone source
+    cb = clone.addInputPort()
+
+    sinks = @sinks()
+    sinks = sinks # filter for "orginial sinks"
+
+    for sink, idx in sinks
+      sink.cloneSubplan @, idx
+
+
+
+    inPort = @parent2in[[parent.id, parentPort]]
+    [source, sourceport] = @inport2sourceport[inPort]
+
+
+
+    child = @children[@in2out[inPort][0]]
+
+
+    if @nChildren() > 0
+      [child, childCb] = @children
+
+    [child, childCb] = child.cloneSubplan @, @in2out[inPort][0], stop
+    outputPort = @addChild child, childCb
+    cb = @addIn
+
+    child.cloneSubplan @, outPort, child
+
+
+  addChild: (child, inputCb=null) ->
 
 
   #
@@ -235,8 +288,6 @@ class gg.wf.Flow extends events.EventEmitter
         id2node[par.id].children.push id2node[id]
     root
 
-
-
   toDot: ->
     text = []
     text.push "digraph G {"
@@ -252,7 +303,9 @@ class gg.wf.Flow extends events.EventEmitter
 
 
 
-
+  #
+  # Flow Manipulation
+  #
 
   add: (node) ->
     node.wf = @
@@ -273,19 +326,23 @@ class gg.wf.Flow extends events.EventEmitter
     @connect from, to, "bridge"
     @
 
-
   edgeWeight: (from, to, type="normal") ->
     @graph.metadata(from, to, type) or 0
 
   children: (node) -> @graph.children node, "normal"
   bridgedChildren: (node) -> @graph.children node, "bridge"
 
+  parents: (node) -> @graph.parents node, "normal"
+  bridgedParents: (node) -> @graph.parents node, "bridge"
+
   sources: -> @graph.sources()
   sinks: -> @graph.sinks()
 
 
+  #
   # Convenience functions for linearly adding nodes to the workflow
   # If you want to use multicast to construct a tree, you will need to do that manually.
+  #
   isNode: (specOrNode) -> not (specOrNode.constructor.name is 'Object')
   node: (node) -> @setChild null, node
   exec: (specOrNode) -> @setChild gg.wf.Exec, specOrNode
@@ -296,9 +353,8 @@ class gg.wf.Flow extends events.EventEmitter
   multicast: (specOrNode) -> @setChild gg.wf.Multicast, specOrNode
   extend: (nodes) -> _.each nodes, (node) => @setChild null, node
 
+  # Add child to end of workflow
   # @param specOrNode specification of a node or a Node object
-  # WARNING: sets @children to specOrNode (clobbers existing children
-  # array)!
   setChild: (klass, specOrNode) ->
     specOrNode = {} unless specOrNode?
     console.log "setChild: #{specOrNode.constructor.name}"
@@ -322,16 +378,14 @@ class gg.wf.Flow extends events.EventEmitter
     if table?
       source = new gg.wf.TableSource
         params:
-          wf: @
           table: table
       outputPort = source.addChild root, rootcb
+      source.connectPorts -1, outputPort, rootcb.port
       root.addParent source, outputPort, rootcb.port
       root = source
+
 
     runner = new gg.wf.Runner root
     runner.on "output", (id, data) => @emit "output", id, data
     runner.run()
-
-
-#_.extend gg.wf.Flow.prototype, events.EventEmitter
 

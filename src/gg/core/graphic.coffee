@@ -40,10 +40,10 @@ class gg.core.Graphic
       container: new gg.core.Bound 0, 0, @options.w, @options.h
       options: @options
 
-    @layoutNode = new gg.core.Layout(@,
+    @layoutNode = new gg.core.Layout(
       name: 'core-layout'
       params: @params).compile()
-    @renderNode = new gg.core.Render(@,
+    @renderNode = new gg.core.Render(
       name: 'core-render'
       params: @params).compile()
 
@@ -76,6 +76,8 @@ class gg.core.Graphic
 
 
     multicast = new gg.wf.Multicast
+      params:
+        clientonly: yes
     wf.node multicast
     wf.connectBridge prev, multicast if prev?
     wf.connect prev, multicast if prev?
@@ -96,11 +98,14 @@ class gg.core.Graphic
 
   setupEnvNode: ->
     new gg.wf.EnvPut
+      name: "graphic-setupenv"
       params:
         pairs:
           scalesconfig: @scales.scalesConfig
           svg:
             base: @svg
+          options: @options
+        clientonly: yes
 
   renderGuides: -> null
 
@@ -119,6 +124,9 @@ class gg.core.Graphic
       $(svg[0]).empty()
       @svg = @svg.append('svg')
       @compile()
+
+      optimizer = new gg.wf.Optimizer
+      @workflow = optimizer.optimize @workflow
       @workflow.run table
 
 

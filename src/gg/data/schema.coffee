@@ -1,6 +1,7 @@
 #<< gg/util/log
 
 class gg.data.Schema
+  @ggpackage = "gg.data.Schema"
   @log = gg.util.Log.logger "Schema", gg.util.Log.ERROR
 
   @ordinal = 0

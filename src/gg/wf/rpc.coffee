@@ -2,83 +2,26 @@
 #<< gg/wf/barrier
 
 
-class gg.wf.RPC extends gg.wf.Node
-  @ggpackage = "gg.wf.RPC"
+###
+Send
+  payload: payload
+  inputSchema:
+  outputSchema
+  defaults
+  compute
+  nodewfmetadata
+###
 
-  constructor: (@spec={}) ->
-    super
+RPCBase =
+  #command: -> "compute"
 
-    @params.ensureAll
-      proto: [[], "http:"]
-      hostname: [[], "localhost"]
-      port: [[], 8000]
+  # @overridable
+  #serialize: ->
+  #  throw Error("serialize not implemented")
 
-    proto = @params.get 'proto'
-    hostname = @params.get 'hostname'
-    port = @params.get 'port'
-
-    @params.ensure 'uri', [], "#{proto}//#{hostname}:#{port}"
-
-  run: ->
-    # create message
-    # send message
-    # wait for response
-    #  emit outputs
-    #  XXX: ensure that flow Runner makes progress through event handlers and not synchronous calls.  Use some library to manage?
-
-    throw Error("node not ready") unless @ready()
-
-    data = @inputs[0]
-    table = data.table
-    env = data.env
-
-    # To prepare the env objects for transport:
-    # 1. remove SVG/dom elements
-    removedEls =
-      svg: env.rm 'svg'
-
-    tableJson = table.toJSON()
-    envJson = env.toJSON()
-    paramsJSON = @params.toJSON()
-
-    payload =
-      table: tableJson
-      env: envJson
-      params: paramsJSON
-
-
-    socket = io.connect @params.get 'uri'
-
-    if socket.socket.connected
-      socket.emit "compute", payload
-    else
-      socket.on "connect", () ->
-        socket.removeAllListeners "connect"
-        socket.emit "compute", payload
-
-    socket.on "result", (respData) =>
-      socket.removeAllListeners "result"
-
-      table = gg.data.RowTable.fromJSON respData.table
-      newenv = gg.wf.Env.fromJSON respData.env
-      newenv.merge removedEls
-
-      @output 0, new gg.wf.Data(table, newenv)
-
-class gg.wf.RPCBarrier extends gg.wf.Barrier
-  constructor: (@spec={}) ->
-    super
-
-    @params.ensureAll
-      proto: [[], "http:"]
-      hostname: [[], "localhost"]
-      port: [[], 8000]
-
-    proto = @params.get 'proto'
-    hostname = @params.get 'hostname'
-    port = @params.get 'port'
-
-    @params.ensure 'uri', [], "#{proto}//#{hostname}:#{port}"
+  # @overridable
+  #deserialize: (respData) ->
+  #  throw Error("deserialize not implemented")
 
   validateEnvs: ->
     valid = _.all @inputs, (data) ->
@@ -94,59 +37,147 @@ class gg.wf.RPCBarrier extends gg.wf.Barrier
     unless valid
       throw Error("params were invalid")
 
-
   run: ->
-    # create message
-    # send message
-    # wait for response
-    #  emit outputs
-    #  XXX: ensure that flow Runner makes progress through event handlers and not synchronous calls.  Use some library to manage?
-
     throw Error("node not ready") unless @ready()
 
+    channelName = "result#{Math.random()}"
+    payload = @serialize()
+    payload.channelName = channelName
 
-    # To prepare the env objects for transport:
-    # 1. remove SVG/dom elements
-    # 2. reject environments/params that contain functions
-    #    or do something smarter?
-    removedEls =
-      _.map @inputs, (data) ->
-        {svg: data.env.rm('svg')}
+    proto = @params.get('proto') or "http:"
+    hostname = @params.get('hostname') or "localhost"
+    port = @params.get('port') or 8000
+    socket = io.connect "#{proto}//#{hostname}:#{port}"
+    command = @command()
 
-    @validateEnvs()
-    @validateParams()
+    console.log payload
 
-    tableJSONs = _.map @inputs, (data) -> data.table.toJSON()
-    envJSONs = _.map @inputs, (data) -> data.env.toJSON()
-    paramsJSON = @params.toJSON()
-
-    payload =
-      tables: tableJSONs
-      envs: envJSONs
-      params: paramsJSON
-
-    socket = io.connect @params.get 'uri'
-
+    # XXX: race condition.
     if socket.socket.connected
-      socket.emit "computeBarrier", payload
+      socket.emit command, payload
     else
       socket.on "connect", () ->
         socket.removeAllListeners "connect"
-        socket.emit "computeBarrier", payload
+        socket.emit command, payload
 
-    socket.on "result", (respData) =>
-      socket.removeAllListeners "result"
+    socket.on channelName, (respData) =>
+      socket.removeAllListeners channelName
+      console.log respData
 
-      tables = _.map respData.tables, (json) ->
-        gg.data.RowTable.fromJSON json
-
-      envs = _.map respData.envs, (json, i) ->
-        env = gg.wf.Env.fromJSON json
-        env.merge removedEls[i]
-
-      for i in [0...tables.length]
-        @output i, new gg.wf.Data(tables[i], envs[i])
+      @deserialize respData
 
 
+# Single input
+class gg.wf.RPC extends gg.wf.Node
+  @ggpackage = "gg.wf.RPC"
+
+  command: -> "compute"
+
+  serialize: ->
+    data = @inputs[0]
+    [payload, @removedEls] = gg.wf.rpc.Util.serializeOne(
+      data.table
+      data.env
+      @params)
+    payload.name = @name
+    payload
+
+  deserialize: (respData) ->
+    [table, env] = gg.wf.rpc.Util.deserializeOne(
+      respData, @removedEls)
+
+    @output 0, new gg.wf.Data(table, env)
+_.extend gg.wf.RPC::, RPCBase
+
+# Multiple table inputs
+class gg.wf.RPCBarrier extends gg.wf.Barrier
+  @ggpackage = "gg.wf.RPCBarrier"
+
+  command: -> "barrier"
+
+  serialize: ->
+    [payload, @removedEls] = gg.wf.rpc.Util.serializeMany(
+      _.map @inputs, (data) -> data.table
+      _.map @inputs, (data) -> data.env
+      @params)
+    payload.name = @name
+    payload
+
+  deserialize: (respData) ->
+    [tables, envs] = gg.wf.rpc.Util.deserializeMany(
+      respData, @removedEls)
+
+    for i in [0...tables.length]
+      @output i, new gg.wf.Data(tables[i], envs[i])
+_.extend gg.wf.RPCBarrier::, RPCBase
 
 
+
+# No inputs
+class gg.wf.RPCSource extends gg.wf.Source
+  @ggpackage = "gg.wf.RPCSource"
+
+  command: -> "source"
+
+  serialize: ->
+    payload = {
+      params: @params.toJSON()
+    }
+    payload.name = @name
+    payload
+
+  deserialize: (respData) ->
+    table = gg.data.RowTable.fromJSON respData.table
+    env = gg.wf.Env.fromJSON respData.env
+
+
+    @output 0, new gg.wf.Data(table, env)
+_.extend gg.wf.RPCSource::, RPCBase
+
+
+class gg.wf.RPCSplit extends gg.wf.Split
+  @ggpackage = "gg.wf.RPCSource"
+
+  command: -> "split"
+
+  serialize: ->
+    [payload, @removedEls] = gg.wf.rpc.Util.serializeOne(
+      @inputs[0].table
+      @inputs[0].env
+      @params)
+
+    payload.name = @name
+    payload
+
+  deserialize: (respData) ->
+    [tables, envs] = gg.wf.rpc.Util.deserializeMany(
+      respData, @removedEls)
+
+    @allocateChildren tables.length
+
+    _.times tables.length, (idx) =>
+      data = new gg.wf.Data(tables[idx], envs[idx])
+      @output idx, data
+    tables
+_.extend gg.wf.RPCSplit::, RPCBase
+
+
+class gg.wf.RPCJoin extends gg.wf.Join
+  @ggpackage = "gg.wf.RPCSource"
+
+  command: -> "split"
+
+  serialize: ->
+    [payload, @removedEls] = gg.wf.rpc.Util.serializeMany(
+      _.map @inputs, (data) -> data.table
+      _.map @inputs, (data) -> data.env
+      @params)
+    payload.name = @name
+    payload
+
+  deserialize: (respData) ->
+    [table, env] = gg.wf.rpc.Util.deserializeOne(
+      respData, @removedEls)
+
+    @output 0, new gg.wf.Data(table, env)
+_.extend gg.wf.RPCJoin::, RPCBase

@@ -1,11 +1,15 @@
 #<< gg/core/bform
 
 class gg.core.Render extends gg.core.BForm
-  constructor: ->
+  @ggpackage = "gg.core.Render"
+
+  parseSpec: ->
     super
+    @params.put "clientonly", yes
 
   compute: (tables, envs, params) ->
     env = _.first envs
+    console.log env
     svg = env.get('svg').base
     lc = env.get 'lc'
     c = lc.baseC

@@ -4,6 +4,7 @@ http = require 'http'
 globals = require '../../globals'
 gg = require '../../ggplotjs2'
 us = require 'underscore'
+_ = require 'underscore'
 app = express()
 $ = require 'jQuery'
 
@@ -34,59 +35,119 @@ socket.on 'connection', (client) ->
   client.on 'noop', (payload) ->
     client.emit "result", payload
 
-  # Exec
-  client.on 'compute', (payload) ->
-    console.log "COMPUTE"
-    table = gg.data.RowTable.fromJSON payload.table
-    env = gg.wf.Env.fromJSON payload.env
+  # Source 0 -> 1
+  client.on 'source', (payload) ->
+    channel = payload.channelName
+    env = new gg.wf.Env()
+
     params = gg.util.Params.fromJSON payload.params
     klassname = params.get 'klassname'
-
-    console.log "table:"
-    console.log table
-
-    console.log params
-
     klass = gg.util.Util.ggklass klassname
     o = new klass {
-      name: 'tmp'
+      name: payload.name or 'tmp'
+      params: params
+    }
+
+    restable = o.compute null, env, params
+
+
+    [payload, skip] = gg.wf.rpc.Util.serializeOne restable, env
+    console.log "source returning to client on channel #{channel}"
+    client.emit channel, payload
+
+
+  # Exec 1 -> 1
+  client.on 'compute', (payload) ->
+    channel = payload.channelName
+    [table, env] = gg.wf.rpc.Util.deserializeOne(payload)
+    params = gg.util.Params.fromJSON payload.params
+
+    klassname = params.get 'klassname'
+    name = payload.name or 'tmp'
+    klass = gg.util.Util.ggklass klassname
+    o = new klass {
+      name: name
       params: params
     }
 
     restable = o.compute table, env, params
 
+    [payload, skip] = gg.wf.rpc.Util.serializeOne restable, env
+    payload.name = name
+    console.log "exec #{name} returning to client on channel #{channel}"
+    client.emit channel, payload
 
-    payload =
-      table: restable.toJSON()
-      env: env.toJSON()
-    client.emit "result", payload
 
-  # Barrier
-  client.on 'computeBarrier', (payload) ->
-    console.log "COMPUTEBARRIER"
-    tables = us.map payload.tables, (json) ->
-      gg.data.RowTable.fromJSON json
-    envs = us.map payload.envs, (json) ->
-      gg.wf.Env.fromJSON json
+  # Split 1 -> N
+  client.on 'split', (payload) ->
+    channel = payload.channelName
+    [table, env] = gg.wf.rpc.Util.deserializeOne(payload)
     params = gg.util.Params.fromJSON payload.params
-    klassname = params.get 'klassname'
 
+    klassname = params.get 'klassname'
+    name = payload.name or 'tmp'
     klass = gg.util.Util.ggklass klassname
     o = new klass {
-      name: 'tmp'
+      name: payload.name or 'split'
       params: params
     }
 
+    o.addInputPort()
+    o.getAddInputCB(0)(null, new gg.wf.Data(table, env))
+    datas = o.run()
+
+    [payload, skip] = gg.wf.rpc.Util.serializeMany(
+      _.map(datas, (data) -> data.table)
+      _.map(datas, (data) -> data.env))
+    payload.name = name
+    console.log "split #{name} returning to client on channel #{channel}"
+    client.emit channel, payload
+
+  # Join N -> 1
+  client.on 'join', (payload) ->
+    channel = payload.channelName
+    [tables, envs] = gg.wf.rpc.Util.deserializeMany(payload)
+    params = gg.util.Params.fromJSON payload.params
+
+    klassname = params.get 'klassname'
+    name = payload.name or 'tmp'
+    klass = gg.util.Util.ggklass klassname
+    o = new klass {
+      name: payload.name or 'tmp'
+      params: params
+    }
+
+    restable = o.compute tables, envs, params
+    env = _.first(envs)
+
+    [payload, skip] = gg.wf.rpc.Util.serializeOne restable, env
+    payload.name = name
+    console.log "join #{name} returning to client on channel #{channel}"
+    client.emit channel, payload
+
+
+
+  # Barrier N -> N
+  client.on 'barrier', (payload) ->
+    channel = payload.channelName
+    [tables, envs] = gg.wf.rpc.Util.deserializeMany(payload)
+    params = gg.util.Params.fromJSON payload.params
+
+    klassname = params.get 'klassname'
+    name = payload.name or 'tmp'
+    klass = gg.util.Util.ggklass klassname
+    o = new klass {
+      name: payload.name or 'tmp'
+      params: params
+    }
+
+    console.log params
     restables = o.compute tables, envs, params
 
-
-    tableJSONs = us.map restables, (t) -> t.toJSON()
-    envJSONs = us.map envs, (env) -> env.toJSON()
-    payload =
-      tables: tableJSONs
-      envs: envJSONs
-
-    client.emit "result", payload
+    [payload, skip] = gg.wf.rpc.Util.serializeMany restables, envs
+    payload.name = name
+    console.log "barrier #{name} returning to client on channel #{channel}"
+    client.emit channel, payload
 
 
   client.on 'disconnect', () ->

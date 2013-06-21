@@ -35,33 +35,43 @@ class gg.wf.Join extends gg.wf.Node
     else
       super parent, parentPort, stop
 
-
-  run: ->
-    unless @ready()
-      throw Error("#{@name} not ready: #{@inputs.length} of #{@children().length} inputs")
-
+  compute: (tables, envs, params) ->
     envkey = @params.get 'envkey'
     defaultVal = @params.get 'default'
     attr = @params.get 'attr'
 
-    tables = _.map @inputs, (data) =>
-      table = data.table
-      env = data.env
+    _.times tables.length, (idx) ->
+      table = tables[idx]
+      env = envs[idx]
       val =
         if env.contains(envkey)
           env.get(envkey)
         else
           defaultVal
+
       if table.contains attr
+        if table.schema.isArray attr
+          # XXX: attr better not be an array type!
+          throw Error("Join doesn't support setting array types")
         table.each (row) -> row.set attr, val
       else
         table.addConstColumn attr, val
-      table
 
-    env = @inputs[0].env.clone()
-    output = gg.data.Table.merge _.values(tables)
-    @output 0, new gg.wf.Data output, env
+    gg.data.Table.merge tables
 
+
+  run: ->
+    unless @ready()
+      throw Error("#{@name} not ready: #{@inputs.length} of #{@children().length} inputs")
+
+    tables = _.pick @inputs, 'table'
+    envs = _.pick @inputs, 'env'
+
+    table = @compute tables, envs, params
+    env = _.first(envs).clone()
+    data = new gg.wf.Data table, env
+
+    @output 0, data
     output
 
 

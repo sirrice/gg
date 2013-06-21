@@ -90,6 +90,24 @@ class gg.wf.Split extends gg.wf.Node
 
 
 
+  compute: (table, env, params) ->
+    groups = params.get('splitFunc') table, env, params
+    unless groups? and _.isArray groups
+      str = "Non-array result from calling split function"
+      throw Error str
+
+
+    gbkeyName = params.get 'gbkeyName'
+
+    datas = _.map groups, (group, idx) =>
+      subtable = group.table
+      key = group.key
+      newData = new gg.wf.Data subtable, env.clone()
+      newData.env.put gbkeyName, key
+      newData
+
+    datas
+
 
   run: ->
     unless @ready()
@@ -100,30 +118,16 @@ class gg.wf.Split extends gg.wf.Node
     table = data.table
     env = data.env
 
-    groups = @params.get('splitFunc') table, env, @params
-    unless groups? and _.isArray groups
-      str = "#{@name}: Non-array result from calling
-             split function"
-      throw Error str
-
-
-    # TODO: parameterize MAXGROUPS threshold
-    numDuplicates = groups.length
-    if numDuplicates > 1000
+    datas = @compute table, env, @params
+    if datas.length > 1000
       throw Error("I don't want to support more than 1000 groups!")
-    @log.err "Split created #{numDuplicates} groups"
-    @allocateChildren numDuplicates
 
-    gbkeyName = @params.get 'gbkeyName'
+    @allocateChildren datas.length
 
-    _.each groups, (group, idx) =>
-      subtable = group.table
-      key = group.key
-      newData = new gg.wf.Data subtable, data.env.clone()
-      newData.env.put gbkeyName, key
-      @output idx, newData
-      @log.warn "group #{JSON.stringify key} port(#{idx}): #{subtable.nrows()} rows"
-    groups
+    _.each datas, (data, idx) => @output idx, data
+
+    console.log "returning #{datas.length} datas"
+    datas
 
 
 # Shorthand for non-overlapping group-by
@@ -155,8 +159,23 @@ class gg.wf.PartitionCols extends gg.wf.Split
       else
         throw Error("Partition needs >0 columns")
 
-    cols = @params.get 'cols'
-    splitFunc = (table) -> table.partition cols
-    @params.put 'splitFunc', splitFunc
+    cols = _.flatten(@params.get 'cols')
+    @params.put 'cols', cols
+
+
+  compute: (table, env, params) ->
+    cols = params.get 'cols'
+    f = (row) -> _.first _.map cols, ((col) -> row.get(col))
+    groups = table.split f
+    gbkeyName = params.get 'gbkeyName'
+    datas = _.map groups, (group, idx) =>
+      subtable = group.table
+      key = group.key
+      newData = new gg.wf.Data subtable, env.clone()
+      newData.env.put gbkeyName, key
+      newData
+
+    datas
+
 
 

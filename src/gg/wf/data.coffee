@@ -18,7 +18,8 @@ class gg.wf.Env extends gg.util.Params
   clone: ->
     # compute all the non-JSONable elements
     removedEls =
-      svg: @rm 'svg'
+      svg: _.clone(@rm 'svg')
+
     _.each _.keys(@data), (key) =>
       if _.isFunction @data[key]
         removedEls[key] = @rm key

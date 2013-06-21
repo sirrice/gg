@@ -16,4 +16,6 @@ class gg.facet.grid.Facets extends gg.facet.base.Facets
 
   renderPanes: ->
     new gg.facet.pane.Svg(
-      name: 'render-panes').compile()
+      name: 'render-panes'
+      params:
+        clientonly: yes).compile()
