@@ -113,4 +113,27 @@ Need a way to pass static functions (inputSchema, outputSchema, validate) to the
   * provenanceCode
 
 
+June 20, 2013
+------------------
 
+Talked to Sam, the execution model is too complicated.  Switching to model where
+
+1. each operator consumes and produces a nested array of gg.wf.Data objects
+  * run(nestedArray, params) -> nestedArray
+    * emits its results
+    * returns its results too
+  * ready() -> bool
+  * Single child nodes
+    * exec calls compute on the leaves (each gg.wf.Data object)
+    * split transforms each leaf into an array of gg.wf.Data objects
+    * join merges the leaf arrays
+  * Multi-child nodes
+    * barrier takes multiple arrays as input, and sends each array out to the corresponding child nodes
+    * multicast "clones" its inputs and sends the clones to the corresponding child nodes
+2. no parallelization except within an operator.
+   This means each operator is blocking until its complete
+3. workflow tracks
+  * number of input slots and children for each operator
+  * consumes operator output and places them in child slots
+  * calls operator.ready()
+  * doesnt need to instantiate
