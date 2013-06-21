@@ -13,6 +13,9 @@ class gg.xform.ScalesSchema extends gg.core.XForm
     log = @log
     log.level = gg.util.Log.DEBUG
 
+    log scaleset
+    log env
+
     _.each table.colNames(), (attr) ->
       tabletype = table.schema.type attr
       types = scaleset.types attr, posMapping
@@ -29,14 +32,13 @@ class gg.xform.ScalesSchema extends gg.core.XForm
             log "settype: #{attr}\t#{stype}"
             table.schema.setType attr, stype
           else
+            log table.getColumn(attr)[0...10]
             throw Error("Upcast #{attr}: #{tabletype}->#{stype}")
 
       else if types.length > 1
         throw Error("#{attr} has >1 types in scaleset: #{types}")
 
 
-    console.log table.colNames()
-    console.log table.schema.toString()
     table
 
 

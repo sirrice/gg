@@ -50,7 +50,7 @@ class gg.core.XForm
     #
     @params = new gg.util.Params
     logname = "#{@spec.name} #{@constructor.name}"
-    @log = gg.util.Log.logger logname,  gg.util.Log.WARN unless @log?
+    @log = gg.util.Log.logger logname,  gg.util.Log.DEBUG unless @log?
 
     console.log @spec
     @parseSpec()
@@ -89,13 +89,15 @@ class gg.core.XForm
     ret
 
   @scales: (table, env) ->
-    info = @paneInfo table, env
-    scaleset = env.get 'scales'
-    unless scaleset?
-      config = env.get 'scalesconfig'
-      scaleset = config.scales info.layer
-      env.put 'scales', scaleset
-    scaleset
+    layer = env.get "layer"
+    unless env.contains "scales"
+      console.log "XFORM.GET SCALES #{layer}"
+      config = env.get "scalesconfig"
+      scaleset = config.scales layer
+      console.log config
+      console.log scaleset
+      env.put "scales", scaleset
+    env.get "scales"
 
   paneInfo: (args...) -> gg.core.XForm.paneInfo args...
   scales: (args...) -> gg.core.XForm.scales args...
@@ -122,7 +124,7 @@ class gg.core.XForm
 
   @addDefaults: (table, env, params) ->
     defaults = params.get "defaults", table, env
-    log = gg.util.Log.logger('addDefaults')
+    log = gg.util.Log.logger(params.get 'name')
     log "expected:    #{JSON.stringify defaults}"
     log "table attrs: #{JSON.stringify table.schema.attrs()}"
     _.each defaults, (val, col) =>
@@ -155,6 +157,7 @@ class gg.core.XForm
     spec.params.put 'klassname', @constructor.ggpackage
     spec.params.put 'compute', _compute
     spec.params.put '__compute__', (args...) => @compute args...
+    spec.params.put 'name', spec.name or @constructor.name
 
     unless spec.params.get('klassname')?
       console.log @

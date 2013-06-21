@@ -175,7 +175,6 @@ class gg.scale.Set
       else
         tabletype = table.schema.type aes
         scale = @scale aes, tabletype, posMapping
-      console.log "fetch: #{aes}\t#{tabletype}\t#{scale.toString()}"
 
       f table, scale, aes
 

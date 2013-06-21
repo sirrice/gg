@@ -29,7 +29,7 @@ class gg.wf.Flow extends gg.wf.Node
   constructor: (@spec={}) ->
     @graph = new gg.util.Graph (node)->node.id
     @g = @spec.g  # graphic object that compiled into this workflow
-    @log = gg.util.Log.logger "flow ", gg.util.Log.DEBUG
+    @log = gg.util.Log.logger "flow ", gg.util.Log.WARN
 
     # port/inputs index -> [source node id, source inport]
     @inport2sourceport = {}
@@ -38,9 +38,11 @@ class gg.wf.Flow extends gg.wf.Node
     # [base sink node id, child inport] -> outport
     @sinkport2outport = {}
 
+    @portGraph = null
 
-  # Setup nodes metadata
+
   instantiate: ->
+    # setup node metadata and input slots
     f = (node) =>
       parentWeights = _.map @parents(node), (parent) =>
         @edgeWeight parent, node
@@ -51,7 +53,56 @@ class gg.wf.Flow extends gg.wf.Node
       node.setup nParents, nChildren
 
     @graph.bfs f
+
+    #
+    # Explicitly allocate outport to inport mappings between
+    # nodes.  Ensure that bridges are correctly connected
+    #
+    inportsMap = _.o2map @nodes(), (node) -> [node.id, 0]
+    outportsMap =_.o2map @nodes(), (node) -> [node.id, 0]
+    @portGraph = new gg.util.Graph (o) -> "#{o.n.id}-#{o.p}"
+    connectPath = (path) =>
+      from = null
+      for to in path
+        if from?
+          outport = outportsMap[from.id]
+          inport = inportsMap[to.id]
+
+          f = {n: from, p: outport}
+          t = {n: to, p: inport}
+          @portGraph.connect f, t
+
+          outportsMap[from.id] += 1
+          inportsMap[to.id] += 1
+
+        from = to
+
+    for [from, to, type, weight] in @graph.edges("bridge")
+      # find the path of barrier nodes connecting
+      # from -> to and allocate port mappings
+      path = @findPath from, to
+      for weightid in [0...weight]
+        connectPath path
+
     @
+
+
+  findPath: (from, to) ->
+    search = (node, path=[]) =>
+      path.push node
+      if node.id == to.id
+        return path
+
+      for child in @children(node)
+        result = search child, path
+        return result if result?
+      path.pop()
+      null
+    path = search from
+    path
+
+
+
 
 
 
@@ -161,6 +212,8 @@ class gg.wf.Flow extends gg.wf.Node
     node.wf = @
     @graph.add node
 
+  nodes: -> @graph.nodes()
+
   connect: (from, to, type="normal") ->
     if @graph.edgeExists from, to, type
       weight = 1 + @graph.metadata from, to, type
@@ -229,7 +282,7 @@ class gg.wf.Flow extends gg.wf.Node
   # @param specOrNode specification of a node or a Node object
   setChild: (klass, specOrNode) ->
     specOrNode = {} unless specOrNode?
-    console.log "setChild: #{specOrNode.constructor.name}"
+    @log "setChild: #{specOrNode.constructor.name}"
     if _.isSubclass specOrNode, gg.wf.Node
       node = specOrNode
     else if _.isFunction specOrNode

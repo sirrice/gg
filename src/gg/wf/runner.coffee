@@ -26,7 +26,7 @@
 #
 class gg.wf.Runner extends events.EventEmitter
   constructor: (@flow) ->
-    @log = gg.util.Log.logger "Runner", gg.util.Log.DEBUG
+    @log = gg.util.Log.logger "Runner", gg.util.Log.WARN
     @active = {}
     @seen = {}
     @keyf = (node) -> node.id
@@ -51,32 +51,15 @@ class gg.wf.Runner extends events.EventEmitter
 
       yes
 
-    setChildInputs = (node, child, idx, input) =>
-      outputPorts = @flow.outputPorts node, child
-      inputPorts = @flow.inputPorts node, child
-      unless outputPorts.length == inputPorts.length
-        throw Error("output and input ports don't match
-          out:#{outputPorts} != in:#{inputPorts}")
+    setChildInputs = (node, idx, input) =>
+      children = @flow.portGraph.children({n: node, p: idx})
+      if children.length != 1
+        throw Error
+      o = children[0]
+      child = o.n
+      inport = o.p
 
-      # of all of node's output ports, the port at idx
-      # is what index of node's output ports to child?
-      #
-      # node's outports: [0, 0, 1, 0, 1]
-      # idx: 3
-      # node->child ports: [0, 0, 0]
-      # index into node->child ports: 2
-      cid = child.id
-      outputPorts = _.map @flow.children(node), (c) =>
-        _.times @flow.edgeWeight(node, c), ()->c.id
-      outputPorts = _.flatten outputPorts
-      outputPorts = _.first outputPorts, idx+1
-      outputPorts = _.filter outputPorts, (p) -> p == cid
-      inportIdx = outputPorts.length - 1
-
-      inport = inputPorts[inportIdx]
-
-      @log "setInput #{node.name}:#{idx}:#{inportIdx}->
-            #{child.name}:#{inport}"
+      @log "setInput #{node.name}:#{idx}-> #{child.name}:#{inport}"
       child.setInput inport, input
 
       if child.ready()
@@ -99,12 +82,7 @@ class gg.wf.Runner extends events.EventEmitter
           # not sure what the semantics should be for flow's output
           @emit 'output', idx, result
         else
-          # idx tells us which child this result is meant for
-          children = _.map @flow.children(node), (child) =>
-            _.times @flow.edgeWeight(node,child), ()->child
-          children = _.flatten children
-          child = children[idx]
-          setChildInputs node, child, idx, result
+          setChildInputs node, idx, result
 
         delete @active[node.id]
         cb()

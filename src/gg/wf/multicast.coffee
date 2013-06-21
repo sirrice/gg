@@ -20,10 +20,10 @@ class gg.wf.Multicast extends gg.wf.Node
 
     inputs = @inputs[0]
     outputs  = _.times @nChildren, (idx) =>
-      if idx < @nChildren-1
+      if idx < @nChildren
         gg.wf.Inputs.mapLeaves(inputs, (data) -> data.clone())
       else
-        inputs
+        gg.wf.Inputs.mapLeaves inputs, (data) -> data
 
     _.each outputs, (output, idx) => @output idx, output
     outputs

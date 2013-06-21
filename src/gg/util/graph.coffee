@@ -90,6 +90,7 @@ class gg.util.Graph
   #
   # @param type null to return all filtered edges, otherwise filter for specified edges
   # @param filter boolean function
+  # @return array of [from, to, edge type, metadata]
   edges: (type, filter=(metadata)->true) ->
     ret = []
     _.each @pid2cid, (cmap, pid) =>
