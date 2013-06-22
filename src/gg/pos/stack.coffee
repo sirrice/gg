@@ -87,7 +87,9 @@ class gg.pos.Stack extends gg.pos.Position
       rows = _.values x2row
       rows.sort (a,b) -> a.x - b.x
       _.each rows, (row) -> row.y -= row.y0 or 0
-      rows = gg.pos.Interpolate.interpolate xs, rows
+      # if x,y values are in an array, then stacking should be interpolated
+      if inArray
+        rows = gg.pos.Interpolate.interpolate xs, rows
       layers.push rows
 
     stack = d3.layout.stack()

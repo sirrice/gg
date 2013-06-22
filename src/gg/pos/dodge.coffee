@@ -5,13 +5,18 @@ class gg.pos.Dodge extends gg.pos.Position
   @ggpackage = "gg.pos.Dodge"
   @aliases = ["dodge"]
 
+  parseSpec: ->
+    super
+
+    @params.put "padding", _.findGoodAttr @spec, ['pad', 'padding'], 0.05
+
   addDefaults: (table, env) ->
 
   inputSchema: -> ['x', 'x0', 'x1', 'y', 'y0', 'y1', 'group']
 
 
-  compute: (table, env) ->
-    groups = table.split (row) -> JSON.stringify [row.get('x0'), row.get('x1')]
+  compute: (table, env, params) ->
+    groups = table.split (row) -> [row.get('x0'),row.get('x1')]
     maxGroup = _.mmax groups, (group) -> group.table.nrows()
     keys = _.uniq _.flatten _.map(groups, (group) -> _.uniq(group.table.getColumn "group"))
     keys = _.uniq _.map(keys, (key) -> JSON.stringify key)
@@ -23,12 +28,12 @@ class gg.pos.Dodge extends gg.pos.Position
     @log.warn "ngroups: #{groups.length}\tnKeys: #{nkeys}"
 
     log = @log
-    table = table.clone()
+    padding = 1.0 - params.get('padding')
     table.each (row) ->
       key = JSON.stringify row.get("group")
       idx = key2Idx[key]
       width = row.get('x1') - row.get('x0')
-      newWidth = width / nkeys
+      newWidth = padding * width / nkeys
       x = row.get 'x'
       newx = x - width/2 + idx*newWidth + newWidth
       newx0 = newx - newWidth / 2
@@ -38,7 +43,7 @@ class gg.pos.Dodge extends gg.pos.Position
       row.set 'x0', newx0
       row.set 'x1', newx1
 
-      log.warn "#{key}\tidx: #{idx}\told: #{x},#{width}\tnew: #{newx},#{newWidth}"
+      log "#{key}\tidx: #{idx}\told: #{x},#{width}\tnew: #{newx},#{newWidth}"
 
 
     table

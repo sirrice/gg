@@ -131,7 +131,8 @@ var geom_point_sum = {
 
 var geom_point_interval = {
   geom: "interval"
- ,aes: {x: 'd', y: 'e'}
+ ,pos: "dodge"
+ ,aes: {x: '{Math.floor(d/10.)*10 + "d"}', y: 'e', group: {color: 'g'}}
  ,stat: "bin"
 }
 
@@ -223,10 +224,11 @@ var geoms = {
 
 var selected_geoms = {
   point: false,
+  interval: true,
   boxplot:false,
   line: false,
   jitter:false,
-  multiline: true
+  multiline: false
 
 };
 

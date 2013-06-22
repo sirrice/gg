@@ -4,21 +4,37 @@
 class gg.geom.reparam.Rect extends gg.core.XForm
   @ggpackage = "gg.geom.reparam.Rect"
 
+  parseSpec: ->
+    @params.put "padding", _.findGoodAttr @spec, ["pad", "padding"], 0.1
+
   inputSchema: -> ['x', 'y']
 
   compute: (table, env, params) ->
-    scales = @scales table, env
+    scales = env.get "scales"
     yscale = scales.scale 'y', gg.data.Schema.numeric
+    padding = 1.0 - params.get("padding")
 
-    # XXX: assume xs is numerical!!
-    xs = _.uniq(table.getColumn("x")).sort (a,b)->a-b
-    diffs = _.map _.range(xs.length-1), (idx) ->
-      xs[idx+1]-xs[idx]
-    mindiff = _.mmin diffs or 1
-    width = Math.max(1,mindiff * 0.8)
+    groups = table.split "group"
+    width = null
+    mindiff = null
+    _.each groups, (group) ->
+      subtable = group.table
+
+      # XXX: assume xs is numerical!!
+      xs = _.uniq(subtable.getColumn("x")).sort (a,b)->a-b
+      console.log xs
+      diffs = _.map _.range(xs.length-1), (idx) ->
+        xs[idx+1]-xs[idx]
+      mindiff = _.mmin diffs or 1
+      mindiff *= padding
+      subwidth = Math.max(1,mindiff)
+      width = subwidth unless width?
+      width = Math.min(width, subwidth)
+
     minY = yscale.minDomain()
     minY = 0
     getHeight = (row) -> yscale.scale(Math.abs(yscale.invert(row.get('y')) - minY))
+    console.log "mindiff: #{mindiff}\twidth: #{width}"
 
 
     mapping =

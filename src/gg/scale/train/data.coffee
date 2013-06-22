@@ -25,6 +25,7 @@ class gg.scale.train.Data extends gg.core.BForm
       e.put 'scales', scaleset
 
     _.each _.zip(tables, envs), fTrain
+    gg.scale.train.Master.train tables, envs, params
     tables
 
 

@@ -170,10 +170,11 @@ class gg.scale.Set
 
   useScales: (table, posMapping={}, f) ->
     _.each table.colNames(), (aes) =>
-      if @contains aes
+      if @contains (posMapping[aes] or aes)
         scale = @scale aes, gg.data.Schema.unknown, posMapping
       else
         tabletype = table.schema.type aes
+        console.log "scaleset doesn't contain #{aes} creating using type #{tabletype}"
         scale = @scale aes, tabletype, posMapping
 
       f table, scale, aes

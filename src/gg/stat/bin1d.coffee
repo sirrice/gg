@@ -21,24 +21,36 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
       total: gg.data.Schema.numeric
 
   compute: (table, env, params) ->
+    @log.level = gg.util.Log.DEBUG
     scales = @scales table, env, params
     xType = table.schema.type 'x'
     xScale = scales.scale 'x', xType
-
     domain = xScale.domain()
-    binRange = domain[1] - domain[0]
-    nbins = params.get 'nbins'
-    binSize = Math.ceil(binRange / nbins)
-    nBins = Math.ceil(binRange / binSize) + 1
-    @log "nbins: #{nbins}\tscaleid: #{xScale.id}\tscaledomain: #{xScale.domain()}\tdomain: #{domain}\tbinSize: #{binSize}"
 
-    stats = _.map _.range(nBins), (binidx) ->
-      {bin: binidx, count: 0, total: 0}
+    switch table.schema.type 'x'
+      when gg.data.Schema.ordinal
+        xtoidx = _.o2map domain, (x, idx) -> [x, idx]
+        toBinidx = (x) -> xtoidx[x]
+        stats = _.map domain, (x) ->
+          {bin: x, count: 0, total: 0}
+      when gg.data.Schema.numeric
+        binRange = domain[1] - domain[0]
+        nbins = params.get 'nbins'
+        binSize = Math.ceil(binRange / nbins)
+        nBins = Math.ceil(binRange / binSize) + 1
+        @log "nbins: #{nbins}\tscaleid: #{xScale.id}\tscaledomain: #{xScale.domain()}\tdomain: #{domain}\tbinSize: #{binSize}"
+        toBinidx = (x) -> Math.floor((x-domain[0]) / binSize)
+        stats = _.map _.range(nBins), (binidx) ->
+          {
+            bin: (binidx * binSize) + domain[0] + binSize/2
+            count: 0
+            total: 0
+          }
 
     table.each (row) =>
       x = row.get('x')
       y = row.get('y') || 0
-      binidx = Math.floor((x - domain[0]) / binSize)
+      binidx = toBinidx x
       try
         stats[binidx].count += 1
       catch error
@@ -52,14 +64,12 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
 
     # augment rows with additional attributes
     _.each stats, (stat) ->
-      stat.bin = (stat.bin * binSize) + domain[0] + binSize/2
       stat.sum = stat.total
       stat.x = stat.bin
       stat.y = stat.total
 
-    console.log params
     schema = params.get('outputSchema') table, env, params
-    console.log stats
+    console.log _.map(stats, (s) -> s.x)
     new gg.data.RowTable schema, stats
 
 

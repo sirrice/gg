@@ -50,7 +50,7 @@ class gg.core.XForm
     #
     @params = new gg.util.Params
     logname = "#{@spec.name} #{@constructor.name}"
-    @log = gg.util.Log.logger logname,  gg.util.Log.DEBUG unless @log?
+    @log = gg.util.Log.logger logname,  gg.util.Log.WARN unless @log?
 
     console.log @spec
     @parseSpec()

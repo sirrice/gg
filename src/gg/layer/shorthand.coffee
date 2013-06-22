@@ -113,12 +113,10 @@ class gg.layer.Shorthand extends gg.layer.Layer
         params:
           n: 5
           aess: aess
-      null
 
     makeScalesOut = (name, scales=@g.scales) =>
       new gg.wf.Scales
         name: "#{name}-#{@layerIdx}"
-      null
 
 
     nodes = []
@@ -211,10 +209,10 @@ class gg.layer.Shorthand extends gg.layer.Layer
       nodes.push @pos
       nodes.push makeStdOut "post-position"
 
+      nodes.push @g.scales.pixel
+
       # reconfigure the layout after positioning
       nodes.push @g.facets.layout2
-
-      nodes.push @g.scales.pixel
 
 
     # coord: pixel -> domain -> transformed -> pixel

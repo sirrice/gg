@@ -29,6 +29,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
     # 3) merge bounds with existing scales
     # 4) map tables once to invert using old scales + apply new scales
 
+    @log.level = gg.util.Log.DEBUG
 
     fOldScaleSet = ([t, e, info]) =>
       #scaleset = @scales info.facetX, info.facetY, info.layer
@@ -51,7 +52,13 @@ class gg.scale.train.Pixel extends gg.core.BForm
       f = (table, oldscale, aes) =>
         return if _.isSubclass oldscale, gg.scale.Identity
 
-        newscale = newscaleset.scale oldscale.aes, oldscale.type
+        @log "retrive #{aes}: #{oldscale.aes}\t#{oldscale.type}"
+
+        if newscaleset.contains oldscale.aes
+          newscale = newscaleset.scale oldscale.aes, gg.data.Schema.unknown
+        else
+          newscale = oldscale.clone()
+          newscaleset.scale newscale
         col = table.getColumn(aes).filter _.isValid
 
         unless col? and col.length > 0
@@ -81,23 +88,23 @@ class gg.scale.train.Pixel extends gg.core.BForm
       e.put 'scales', newscaleset
 
     fRescale = ([t, e, info, oldScales]) =>
+      @log "fRescale called layer: #{e.get "layer"}"
+      @log t.getColumn("x")[0...10]
       scaleset = e.get 'scales'
       posMapping = e.get 'posMapping'
       mappingFuncs = {}
       rescale = (table, scale, aes) =>
-        oldScale = oldScales.scale aes, scale.type
+        return if scale.type == gg.data.Schema.ordinal
+        oldScale = oldScales.scale aes, gg.data.Schema.unknown
         g = (v) -> scale.scale oldScale.invert(v)
         mappingFuncs[aes] = g
         @log "rescale: old: #{oldScale.toString()}"
         @log "rescale: new: #{scale.toString()}"
 
-
-      console.log scaleset.toString()
       scaleset.useScales t, posMapping, rescale
-      clone = t.clone()
-      clone.map mappingFuncs
-      clone.schema = t.schema
-      clone
+      console.log scaleset.toString()
+      t.map mappingFuncs
+      t
 
     # 0) setup some variables we'll need
     infos = _.map _.zip(tables, envs), ([t,e]) => @paneInfo t, e

@@ -7,7 +7,9 @@ class gg.geom.Rect extends gg.geom.Geom
   parseSpec: ->
     super
 
-    @reparam = new gg.geom.reparam.Rect  {name: "rect-reparam"}
+    spec = _.clone @spec
+    spec.name = "rect-reparam"
+    @reparam = new gg.geom.reparam.Rect spec
     @render = new gg.geom.svg.Rect  {}
 
   posMapping: ->
