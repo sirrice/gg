@@ -98,7 +98,8 @@ class gg.data.Row
       else if @schema.inNested attr
         key = @schema.attrToKeys[attr]
         copy[key] = {} unless key of copy
-        copy[key][attr] = @data[key][attr]
+        if key of @data
+          copy[key][attr] = @data[key][attr]
       else if @schema.inArray attr
         key = @schema.attrToKeys[attr]
         arr = @data[key]
