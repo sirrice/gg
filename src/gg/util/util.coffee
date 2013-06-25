@@ -6,10 +6,14 @@ _ = require 'underscore'
 
 
 class gg.util.Util
-  @toJSON: (o, path=[]) ->
+  @toJSON: (o, reject=(()->no), path=[]) ->
     if path.length >= 25
       console.log o
       throw Error("Max stack #{path} hit")
+    unless _.isFunction reject
+      reject = () -> no
+    if reject o
+      return { type: "rejected" }
     if o? and 'ggpackage' of o.constructor
       ret = { type: 'gg', ggpackage: o.constructor.ggpackage }
       ret.val = o.toJSON()
@@ -19,23 +23,23 @@ class gg.util.Util
       ret.val = o.toString()
       _.each _.keys(o), (k) ->
         path.push k
-        ret.props[k] = gg.util.Util.toJSON(o[k], path)
+        ret.props[k] = gg.util.Util.toJSON(o[k], reject, path)
         path.pop()
     else if _.isArray o
       ret = { type: "array", val: [], props: {} }
       _.each o, (v, idx) ->
         path.push idx
-        ret.val.push gg.util.Util.toJSON(v, path)
+        ret.val.push gg.util.Util.toJSON(v, reject, path)
         path.pop()
       _.each _.reject(_.keys(o), _.isNumber), (k) ->
         path.push k
-        ret.props[k] = gg.util.Util.toJSON(o[k], path)
+        ret.props[k] = gg.util.Util.toJSON(o[k], reject, path)
         path.pop()
     else if _.isObject o
       ret = { type: "object", val: {} }
       _.each o, (v,k) ->
         path.push k
-        ret.val[k] = gg.util.Util.toJSON(v, path)
+        ret.val[k] = gg.util.Util.toJSON(v, reject, path)
         path.pop()
     else
       ret = { type: 'primitive', val: o }
@@ -60,10 +64,15 @@ class gg.util.Util
           ret[k] = gg.util.Util.fromJSON(v)
         ret
       when 'function'
-        ret = Function("return (#{json.val})")()
+        try
+          ret = Function("return (#{json.val})")()
+        catch err
+          throw Error(json.val)
         _.each json.props, (vjson, k) ->
           ret[k] = gg.util.Util.fromJSON(vjson)
         ret
+      when 'rejected'
+        null
       else
         json.val
 

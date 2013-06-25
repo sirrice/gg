@@ -8,7 +8,6 @@ class gg.wf.Source extends gg.wf.Node
     @type = "source"
     @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
 
-    @params.ensure 'compute', ['f'], ((args...)=>@compute args...)
 
   compute: ->
     throw Error("Source not setup to generate tables")
@@ -16,9 +15,8 @@ class gg.wf.Source extends gg.wf.Node
   ready: -> yes
 
   run: ->
-    compute = @params.get 'compute'
     env = new gg.wf.Env
-    table = compute null, env, @params
+    table = @compute null, env, @params
 
     outputs = [ new gg.wf.Data(table, env) ]
     @output 0, outputs

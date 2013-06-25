@@ -38,6 +38,7 @@ class gg.wf.Node extends events.EventEmitter
     @id = gg.wf.Node.id()
     @nChildren = @spec.nChildren or 0
     @nParents = @spec.nParents or 0
+    @location = @spec.location or "client" # or "server"
 
     #
     # User specified properties
@@ -66,8 +67,8 @@ class gg.wf.Node extends events.EventEmitter
     listeners = @listeners outidx
     n = listeners.length
     @log.warn "output: port(#{outidx}) "
-    @emit outidx, outidx, data
-    @emit "output", outidx, data
+    @emit outidx, @id, outidx, data
+    @emit "output", @id, outidx, data
 
     listeners = _.map(listeners, (l)->l.portidx)
 
@@ -87,6 +88,7 @@ class gg.wf.Node extends events.EventEmitter
       name: json.name
       nChildren: json.nChildren
       nParents: json.nParents
+      location: json.location
       params: gg.util.Params.fromJSON json.params
     o = new klass spec
     o.id = json.id if json.id?
@@ -94,13 +96,15 @@ class gg.wf.Node extends events.EventEmitter
 
   # XXX: may lose SVG and other non-clonable parameters!!
   toJSON: ->
+    reject = (o) -> o? and (o.ENTITY_NODE? or o.jquery? or o.selectAll?)
     {
       klassname: @constructor.ggpackage
       id: @id
       name: @name
       nChildren: @nChildren
       nParents: @nParents
-      params: @params.toJSON()
+      location: @location
+      params: @params.toJSON(reject)
     }
 
 
@@ -109,6 +113,7 @@ class gg.wf.Node extends events.EventEmitter
       name: @name
       nChildren: @nChildren
       nParents: @nParents
+      location: @location
       params: @params.clone()
     o = new @constructor spec
     o.id = @id if keepid

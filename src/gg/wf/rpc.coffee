@@ -12,172 +12,89 @@ Send
   nodewfmetadata
 ###
 
-RPCBase =
-  #command: -> "compute"
+class gg.wf.RPC extends events.EventEmitter
+  @ggpackage = "gg.wf.Flow"
+  @id: -> gg.wf.RPC::_id += 1
+  _id: 0
 
-  # @overridable
-  #serialize: ->
-  #  throw Error("serialize not implemented")
+  constructor: (@spec) ->
+    @id = gg.wf.RPC.id()
+    @callid = 0
+    @ready = no
+    @nonce2cb = {}
+    @buffer = []
+    @params = new gg.util.Params @spec.params
 
-  # @overridable
-  #deserialize: (respData) ->
-  #  throw Error("deserialize not implemented")
+    @setup()
 
-  validateEnvs: ->
-    valid = _.all @inputs, (data) ->
-      env = data.env
-      # ensure doesn't have an svg or function
-      yes
-    unless valid
-      throw Error("environment was invalid")
+  setup: ->
+    uri = @params.get("uri") or "http://localhost:8000"
+    @socket = io.connect uri
+    @socket.on "connect", () =>
+      @ready = yes
+      @sendBuffer()
 
-  validateParams: ->
-    # ensure doesn't have an svg or function
-    valid = yes
-    unless valid
-      throw Error("params were invalid")
+    @socket.on "disconnect", () =>
+      @ready = no
 
-  run: ->
-    throw Error("node not ready") unless @ready()
-
-    channelName = "result#{Math.random()}"
-    payload = @serialize()
-    payload.channelName = channelName
-
-    proto = @params.get('proto') or "http:"
-    hostname = @params.get('hostname') or "localhost"
-    port = @params.get('port') or 8000
-    socket = io.connect "#{proto}//#{hostname}:#{port}"
-    command = @command()
-
-    console.log payload
-
-    # XXX: race condition.
-    if socket.socket.connected
-      socket.emit command, payload
-    else
-      socket.on "connect", () ->
-        socket.removeAllListeners "connect"
-        socket.emit command, payload
-
-    socket.on channelName, (respData) =>
-      socket.removeAllListeners channelName
-      console.log respData
-
-      @deserialize respData
+    callback = (respData) =>
+      nonce = respData.nonce
+      if nonce? and nonce of @nonce2cb
+        cb = @nonce2cb[nonce]
+        delete @nonce2cb[nonce]
+        cb respData
 
 
-# Single input
-class gg.wf.RPC extends gg.wf.Node
-  @ggpackage = "gg.wf.RPC"
+    @socket.on "register", callback
+    @socket.on "runflow", callback
 
-  command: -> "compute"
+  sendBuffer: ->
+    # XXX: This is not thread safe
+    while @buffer.length > 0
+      break unless @ready
+      [command, payload, cb] = @buffer.shift()
+      nonce = @callid
+      @callid += 1
+      payload = {} unless payload?
+      payload.nonce = nonce
+      @nonce2cb[nonce] = cb if _.isFunction cb
+      console.log "sending #{command} nonce: #{nonce}"
+      @socket.emit command, payload
 
-  serialize: ->
-    data = @inputs[0]
-    [payload, @removedEls] = gg.wf.rpc.Util.serializeOne(
-      data.table
-      data.env
-      @params)
-    payload.name = @name
-    payload
+  send: (command, payload, cb) ->
+    @buffer.push [command, payload, cb]
+    @sendBuffer()
 
-  deserialize: (respData) ->
-    [table, env] = gg.wf.rpc.Util.deserializeOne(
-      respData, @removedEls)
+  register: (flow, cb) ->
+    payload =
+      flow : flow.toJSON()
+      flowid: flow.id
 
-    @output 0, new gg.wf.Data(table, env)
-_.extend gg.wf.RPC::, RPCBase
+    @send "register", payload, (respData) =>
+      unless respData.status is "OK"
+        console.log "warning: flow registration failed"
+      cb respData.status if _.isFunction cb
+      @emit "register", respData.status
 
-# Multiple table inputs
-class gg.wf.RPCBarrier extends gg.wf.Barrier
-  @ggpackage = "gg.wf.RPCBarrier"
 
-  command: -> "barrier"
+  run: (flowid, nodeid, outport, inputs, cb) ->
+    [inputsJson, removedEls] = gg.wf.rpc.Util.serialize inputs
 
-  serialize: ->
-    [payload, @removedEls] = gg.wf.rpc.Util.serializeMany(
-      _.map @inputs, (data) -> data.table
-      _.map @inputs, (data) -> data.env
-      @params)
-    payload.name = @name
-    payload
+    payload =
+      flowid: flowid
+      nodeid: nodeid
+      outport: outport
+      inputs: inputsJson
 
-  deserialize: (respData) ->
-    [tables, envs] = gg.wf.rpc.Util.deserializeMany(
-      respData, @removedEls)
+    @send "runflow", payload, (respData) =>
+      nodeid = respData.nodeid
+      outport = respData.outport
+      console.log respData.outputs
+      outputs = gg.wf.rpc.Util.deserialize(
+        respData.outputs, removedEls)
 
-    for i in [0...tables.length]
-      @output i, new gg.wf.Data(tables[i], envs[i])
-_.extend gg.wf.RPCBarrier::, RPCBase
+      cb nodeid, outport, outputs if _.isFunction cb
+      @emit "runflow", nodeid, outport, outputs
 
 
 
-# No inputs
-class gg.wf.RPCSource extends gg.wf.Source
-  @ggpackage = "gg.wf.RPCSource"
-
-  command: -> "source"
-
-  serialize: ->
-    payload = {
-      params: @params.toJSON()
-    }
-    payload.name = @name
-    payload
-
-  deserialize: (respData) ->
-    table = gg.data.RowTable.fromJSON respData.table
-    env = gg.wf.Env.fromJSON respData.env
-
-
-    @output 0, new gg.wf.Data(table, env)
-_.extend gg.wf.RPCSource::, RPCBase
-
-
-class gg.wf.RPCSplit extends gg.wf.Split
-  @ggpackage = "gg.wf.RPCSplit"
-
-  command: -> "split"
-
-  serialize: ->
-    [payload, @removedEls] = gg.wf.rpc.Util.serializeOne(
-      @inputs[0].table
-      @inputs[0].env
-      @params)
-
-    payload.name = @name
-    payload
-
-  deserialize: (respData) ->
-    [tables, envs] = gg.wf.rpc.Util.deserializeMany(
-      respData, @removedEls)
-
-    @allocateChildren tables.length
-
-    _.times tables.length, (idx) =>
-      data = new gg.wf.Data(tables[idx], envs[idx])
-      @output idx, data
-    tables
-_.extend gg.wf.RPCSplit::, RPCBase
-
-
-class gg.wf.RPCMerge extends gg.wf.Merge
-  @ggpackage = "gg.wf.RPCMerge"
-
-  command: -> "split"
-
-  serialize: ->
-    [payload, @removedEls] = gg.wf.rpc.Util.serializeMany(
-      _.map @inputs, (data) -> data.table
-      _.map @inputs, (data) -> data.env
-      @params)
-    payload.name = @name
-    payload
-
-  deserialize: (respData) ->
-    [table, env] = gg.wf.rpc.Util.deserializeOne(
-      respData, @removedEls)
-
-    @output 0, new gg.wf.Data(table, env)
-_.extend gg.wf.RPCMerge::, RPCBase

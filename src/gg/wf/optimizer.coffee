@@ -5,7 +5,6 @@
 class gg.wf.Optimizer
   constructor: (@rules) ->
   optimize: (flow) ->
-    return flow
 
     canRpcify = (node) ->
       not _.any [
@@ -13,33 +12,19 @@ class gg.wf.Optimizer
         node.params.get('clientonly')
       ]
 
+    # Mark RPC-able nodes as "server"
     nodes = flow.graph.nodes canRpcify
-
-    # swap node for rpcified node
     _.each nodes, (node) ->
-      rpc = gg.wf.Optimizer.rpcify node
-      cs = flow.children(node)
-      bcs = flow.bridgedChildren(node)
-      ps = flow.parents(node)
-      bps = flow.bridgedParents(node)
-      flow.graph.rm node
-      flow.add rpc
-      _.each cs, (c) -> flow.connect rpc, c
-      _.each bcs, (c) -> flow.connectBridge rpc, c
-      _.each ps, (p) -> flow.connect p, rpc
-      _.each bps, (p) -> flow.connectBridge p, rpc
+      node.location = "server"
 
     flows = gg.wf.Optimizer.findSplit flow
-
 
     flow
 
   @findSplit: (flow) ->
-    isRPC = (node) ->
-      /RPC/.test node.constructor.name
     isSame = (n1, n2) ->
       if n1?
-        isRPC(n1) == isRPC(n2)
+        n1.location == n2.location
       else
         true
 
@@ -51,7 +36,7 @@ class gg.wf.Optimizer
         else
           prevflow.add cur
 
-        unless _.isSubclass cur, gg.wf.Barrier
+        unless cur.type == 'barrier'
           prevNonBarrier = cur
           if prev?
             prevflow.connectBridge prevNonBarrier, cur
@@ -77,11 +62,27 @@ class gg.wf.Optimizer
 
     flows
 
+  @swapForSPC: (flow, nodes) ->
+    # swap node for rpcified node
+    _.each nodes, (node) ->
+      rpc = gg.wf.Optimizer.rpcify node
+      cs = flow.children(node)
+      bcs = flow.bridgedChildren(node)
+      ps = flow.parents(node)
+      bps = flow.bridgedParents(node)
+      flow.graph.rm node
+      flow.add rpc
+      _.each cs, (c) -> flow.connect rpc, c
+      _.each bcs, (c) -> flow.connectBridge rpc, c
+      _.each ps, (p) -> flow.connect p, rpc
+      _.each bps, (p) -> flow.connectBridge p, rpc
+
+
   @rpcify: (node) ->
     return node if /RPC/.test node.constructor.name
     return node if node.params.get('clientonly')
 
-    klass = if _.isSubclass(node, gg.wf.Barrier)
+    klass = if node.type == 'barrier'
       gg.wf.RPCBarrier
     else if _.isSubclass(node, gg.wf.Source)
       gg.wf.RPCSource

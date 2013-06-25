@@ -13,19 +13,24 @@ class gg.wf.Exec extends gg.wf.Node
     @type = "exec"
     @name = _.findGood [@spec.name, "exec-#{@id}"]
 
-    @params.ensure 'compute', ['f'], @compute.bind(@)
+    @params.ensure 'compute', ['f'], null
 
-  compute: (table, env, node) -> table
+  compute: (table, env, params) ->
+    compute = params.get "compute"
+    if compute?
+      compute table, env, params
+    else
+      table
 
   # @return emits to single child node
   run: ->
     throw Error("node not ready") unless @ready()
 
     params = @params
-    compute = @params.get 'compute'
-    f = (data) ->
-      table = compute data.table, data.env, params
-      new gg.wf.Data table, data.env
+    f = (data) =>
+      table = @compute data.table, data.env, params
+      data = new gg.wf.Data table, data.env
+      data
     outputs = gg.wf.Inputs.mapLeaves @inputs[0], f
 
     @output 0, outputs

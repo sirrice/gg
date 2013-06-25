@@ -25,23 +25,23 @@ events = require 'events'
 # The blueprint can be instantiated into a runnable workflow
 # by calling flow.instantiate()
 #
-class gg.wf.Flow extends gg.wf.Node
+class gg.wf.Flow
+  @ggpackage = "gg.wf.Flow"
+  @id: -> gg.wf.Flow::_id += 1
+  _id: 0
+
   constructor: (@spec={}) ->
+    @id = gg.wf.Flow.id()
     @graph = new gg.util.Graph (node)->node.id
-    @g = @spec.g  # graphic object that compiled into this workflow
     @log = gg.util.Log.logger "flow ", gg.util.Log.WARN
 
-    # port/inputs index -> [source node id, source inport]
-    @inport2sourceport = {}
-    # port -> [child node id, child inport]
-    @outport2childport = {}
-    # [base sink node id, child inport] -> outport
-    @sinkport2outport = {}
-
+    # dynamically instantiated
+    # nodes are {n: nodeid, p: port}
     @portGraph = null
 
 
   instantiate: ->
+
     # setup node metadata and input slots
     f = (node) =>
       parentWeights = _.map @parents(node), (parent) =>
@@ -122,47 +122,68 @@ class gg.wf.Flow extends gg.wf.Node
     @graph.bfs f
     arr.join("\n")
 
-  toJSON: (type="graph") ->
-    switch type
-      when "tree" then @toJSONTree()
-      else @toJSONGraph()
-
-
-  # @return JSON object tha encapsulates the workflow graph
-  #       list triples: [source, dest, edge type, weight]
+  # @return JSON object that encapsulates the workflow graph
   #
-  #       edge type: "normal", "bridge"
+  #     id:
+  #     spec: ...
+  #     graph:
+  #       nodes:
+  #         [
+  #           {
+  #             node:    node object
+  #             name:    node name
+  #             barrier: barrier node?
+  #             id:      node.id
+  #           }
+  #         ]
+  #       links:
+  #         [
+  #           {
+  #             source: idx into nodes
+  #             target: idx into nodes
+  #             weight: edge weight
+  #             type:   "normal" | "barrier"
   #
-  toJSONGraph: ->
-    json = {}
-    nodes = _.map @nodes, (node) ->
-      name: node.name
-      barrier: _.isSubclass node, gg.wf.Barrier
-      id: node.id
-      #node: node
+  #           }
+  #         ]
+  #
+  toJSON: () ->
+    id2idx = _.list2map @nodes(), (node, idx) -> [node.id, idx]
+    node2json = (node) ->
+      node.toJSON()
+    edge2json = (from, to, type, md) ->
+      source: id2idx[from.id]
+      target: id2idx[to.id]
+      type: type
+      weight: md
 
-    id2idx = _.list2map @nodes, (node, idx) -> [node.id, idx]
+    {
+      id: @id
+      graph: @graph.toJSON node2json, edge2json
+      spec: _.toJSON @spec
+    }
 
-    links = []
-    _.map @nodes, (node) =>
-      norms =  _.map _.uniq(@children(node)), (child) =>
-        source: id2idx[node.id]
-        target: id2idx[child.id]
-        weight: @edgeWeight node, child
-        type: "normal"
 
-      bridges = _.map _.uniq(@bridgedChildren(node)), (child) =>
-        source: id2idx[node.id]
-        target: id2idx[child.id]
-        weight: @edgeWeight node, child
-        type: "bridge"
 
-      links.push.apply links, norms
-      links.push.apply links, bridges
+  @fromJSON: (json) ->
+    json2edge = (link, nodes) ->
+      [
+        nodes[link.source]
+        nodes[link.target]
+        link.type
+        link.weight
+      ]
+    json2node = gg.wf.Node.fromJSON
+    graph = gg.util.Graph.fromJSON json.graph, json2node, json2edge
+    spec = _.fromJSON json.spec
+    flow = new gg.wf.Flow spec
+    flow.graph = graph
+    flow.id = json.id
+    flow
 
-    json.nodes = nodes
-    json.links = links
-    json
+  # this loses the DOM and other self-referential objects in node spec and params
+  clone: -> gg.wf.Flow.fromJSON @toJSON()
+
 
   toJSONTree: ->
     root = {
@@ -212,6 +233,10 @@ class gg.wf.Flow extends gg.wf.Node
     node.wf = @
     @graph.add node
 
+  nodeFromId: (id) ->
+    nodes = @graph.nodes((node) -> node.id == id)
+    if nodes.length then nodes[0] else null
+
   nodes: -> @graph.nodes()
 
   connect: (from, to, type="normal") ->
@@ -219,13 +244,12 @@ class gg.wf.Flow extends gg.wf.Node
       weight = 1 + @graph.metadata from, to, type
     else
       weight = 1
-    @log "connect #{from.name}\t#{to.name}\t#{type}\t#{weight}"
     @graph.connect from, to, type, weight
     @
 
   connectBridge: (from, to) ->
-    throw Error() if _.isSubclass from, gg.wf.Barrier
-    throw Error() if _.isSubclass to, gg.wf.Barrier
+    throw Error() if from.type == 'barrier'
+    throw Error() if from.type == 'barrier'
     @connect from, to, "bridge"
     @
 
@@ -282,7 +306,6 @@ class gg.wf.Flow extends gg.wf.Node
   # @param specOrNode specification of a node or a Node object
   setChild: (klass, specOrNode) ->
     specOrNode = {} unless specOrNode?
-    @log "setChild: #{specOrNode.constructor.name}"
     if _.isSubclass specOrNode, gg.wf.Node
       node = specOrNode
     else if _.isFunction specOrNode
@@ -299,6 +322,7 @@ class gg.wf.Flow extends gg.wf.Node
     this
 
 
+  # Execute this flow on the client side
   run: (table) ->
     if table?
       tablesource = new gg.wf.TableSource
@@ -313,9 +337,24 @@ class gg.wf.Flow extends gg.wf.Node
 
     @instantiate()
 
-    console.log @toString()
 
-    runner = new gg.wf.Runner @
+    runner = new gg.wf.Runner @, null
+
+    rpc = new gg.wf.RPC
+      params:
+        uri: "http://localhost:8000"
+
+    rpc.on "register", (status) ->
+      console.log "registered! #{status}"
+    rpc.on "runflow", (nodeid, outport, outputs) ->
+      console.log "runflow got result: #{nodeid}, #{outport}"
+      runner.ch.push nodeid, outport, outputs
+
+    rpc.register @
+
+    runner.ch.xferControl = (nodeid, outport, outputs) =>
+      rpc.run @id, nodeid, outport, outputs
+
     runner.on "output", (idx, data) => @emit "output", idx, data
     runner.run()
 

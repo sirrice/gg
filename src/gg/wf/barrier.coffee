@@ -13,9 +13,14 @@ class gg.wf.Barrier extends gg.wf.Node
     @type = "barrier"
     @name = _.findGood [@spec.name, "barrier-#{@id}"]
 
-    @params.ensure 'compute', ['f'], ((args...)=>@compute args...)
+    @params.ensure 'compute', ['f']
 
-  compute: (tables, env, params) -> tables
+  compute: (tables, env, params) ->
+    compute = params.get "compute"
+    if _.isFunction compute
+      compute table, env, params
+    else
+      tables
 
   run: ->
     throw Error("Node not ready") unless @ready()
@@ -33,8 +38,7 @@ class gg.wf.Barrier extends gg.wf.Node
     @log "#{@name} running on #{tables.length} tables"
     @log tables
     @log @inputs
-    compute = @params.get 'compute'
-    tables = compute tables, envs, @params
+    tables = @compute tables, envs, @params
     @log "#{@name} returned #{tables.length} tables"
 
     # reconstruct original inputs structure

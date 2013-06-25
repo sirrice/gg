@@ -48,4 +48,5 @@ renderArray = (array, domEl, userSpec={}) ->
 _.extend @gg, gg
 @gg.renderArray = renderArray
 @gg.io = io
+@gg.log = gg.util.Log
 

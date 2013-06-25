@@ -96,7 +96,7 @@ class gg.util.Params
   toString: ->
     _.map(@data, (v,k) -> "#{k} -> #{JSON.stringify v}").join("\n")
 
-  toJSON: -> _.toJSON @data
+  toJSON: (reject) -> _.toJSON @data, reject
 
   # Only accepts json objects formatted
   # from toJSON above

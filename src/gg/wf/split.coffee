@@ -19,11 +19,14 @@ class gg.wf.Split extends gg.wf.Node
       gbkeyName: [['key'], @name]
       splitFunc: [['f'], @splitFunc]
 
+  # This method must not depend on "this"!
   # @return array of {key: String, table: gg.Table} dictionaries
   splitFunc: (table, env, params) -> [ {table: table, key: null} ]
 
   compute: (table, env, params) ->
-    groups = params.get('splitFunc') table, env, params
+    splitFunc = params.get('splitFunc')
+    splitFunc = @splitFunc unless _.isFunction splitFunc
+    groups = splitFunc table, env, params
 
     unless groups? and _.isArray groups
       str = "Non-array result from calling split function"
@@ -64,9 +67,10 @@ class gg.wf.Partition extends gg.wf.Split
     super
     @name = @spec.name or "partition-#{@id}"
 
-    gbfunc = @params.get('f') or (()->"1")
-    splitFunc = (table) -> table.split gbfunc
-    @params.put 'splitFunc', splitFunc
+  splitFunc: (table, env, params) ->
+    gbfunc = params.get 'f'
+    gbfunc = (()->"1") unless gbfunc? and _.isFunction gbfunc
+    table.split gbfunc
 
 
 # Shorthand for non-overlapping group-by

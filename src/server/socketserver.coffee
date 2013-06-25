@@ -31,123 +31,84 @@ socket.configure 'development', () ->
 server.listen(8000)
 
 socket.on 'connection', (client) ->
+  flows = {}
+  runners = {}
+  nonces = {} # [nodeid, outport] -> nonce
+
+  lookupAndRmNonce = (flow, outnodeid, outport) ->
+    # step backward in flow until find
+    outnode = flow.nodeFromId outnodeid
+
+    # go from node's outport to inpont
+    if outnode.type == "barrier"
+      inport = outport
+    else
+      inport = 0
+
+    ps = flow.portGraph.parents {n: outnode, p: inport}
+    if ps.length > 1
+      throw Error("#{outnode.name}:inport(#{inport})
+                  has #{ps.length} parents")
+    if ps.length == 0
+      return null
+
+    parent = ps[0].n
+    port = ps[0].p
+    if [parent.id, port] of nonces
+      nonce = nonces[[parent.id, port]]
+      delete nonces[[parent.id, port]]
+      return nonce
+    return lookupAndRmNonce flow, parent.id, port
+
 
   client.on 'noop', (payload) ->
     client.emit "result", payload
 
-  # Source 0 -> 1
-  client.on 'source', (payload) ->
-    channel = payload.channelName
-    env = new gg.wf.Env()
+  client.on "register", (payload) ->
+    flowid = payload.flowid
+    flow = gg.wf.Flow.fromJSON payload.flow
+    nonce = payload.nonce
+    flow.instantiate()
 
-    params = gg.util.Params.fromJSON payload.params
-    klassname = params.get 'klassname'
-    klass = gg.util.Util.ggklass klassname
-    o = new klass {
-      name: payload.name or 'tmp'
-      params: params
-    }
+    sendback = (nodeid, outport, outputs) ->
+      # lookup something for the correct nonce
+      nonce = lookupAndRmNonce flow, nodeid, outport
+      unless nonce?
+        console.log "#{nodeid}:port#{outport}
+        Couldn't find a nonce!!"
+      console.log "emit to client nonce: #{nonce}"
+      client.emit "runflow",
+        nodeid: nodeid
+        outport: outport
+        nonce: nonce
+        outputs: gg.wf.rpc.Util.serialize(outputs)[0]
 
-    restable = o.compute null, env, params
+    runner = new gg.wf.Runner flow, sendback
 
+    flows[flowid] = flow
+    runners[flowid] = runner
 
-    [payload, skip] = gg.wf.rpc.Util.serializeOne restable, env
-    console.log "source returning to client on channel #{channel}"
-    client.emit channel, payload
-
-
-  # Exec 1 -> 1
-  client.on 'compute', (payload) ->
-    channel = payload.channelName
-    [table, env] = gg.wf.rpc.Util.deserializeOne(payload)
-    params = gg.util.Params.fromJSON payload.params
-
-    klassname = params.get 'klassname'
-    name = payload.name or 'tmp'
-    klass = gg.util.Util.ggklass klassname
-    o = new klass {
-      name: name
-      params: params
-    }
-
-    restable = o.compute table, env, params
-
-    [payload, skip] = gg.wf.rpc.Util.serializeOne restable, env
-    payload.name = name
-    console.log "exec #{name} returning to client on channel #{channel}"
-    client.emit channel, payload
+    client.emit "register",
+      nonce: nonce
+      status: "OK"
 
 
-  # Split 1 -> N
-  client.on 'split', (payload) ->
-    channel = payload.channelName
-    [table, env] = gg.wf.rpc.Util.deserializeOne(payload)
-    params = gg.util.Params.fromJSON payload.params
-
-    klassname = params.get 'klassname'
-    name = payload.name or 'tmp'
-    klass = gg.util.Util.ggklass klassname
-    o = new klass {
-      name: payload.name or 'split'
-      params: params
-    }
-
-    o.addInputPort()
-    o.getAddInputCB(0)(null, new gg.wf.Data(table, env))
-    datas = o.run()
-
-    [payload, skip] = gg.wf.rpc.Util.serializeMany(
-      _.map(datas, (data) -> data.table)
-      _.map(datas, (data) -> data.env))
-    payload.name = name
-    console.log "split #{name} returning to client on channel #{channel}"
-    client.emit channel, payload
-
-  # Join N -> 1
-  client.on 'join', (payload) ->
-    channel = payload.channelName
-    [tables, envs] = gg.wf.rpc.Util.deserializeMany(payload)
-    params = gg.util.Params.fromJSON payload.params
-
-    klassname = params.get 'klassname'
-    name = payload.name or 'tmp'
-    klass = gg.util.Util.ggklass klassname
-    o = new klass {
-      name: payload.name or 'tmp'
-      params: params
-    }
-
-    restable = o.compute tables, envs, params
-    env = _.first(envs)
-
-    [payload, skip] = gg.wf.rpc.Util.serializeOne restable, env
-    payload.name = name
-    console.log "join #{name} returning to client on channel #{channel}"
-    client.emit channel, payload
+  client.on "runflow", (payload) ->
+    # flowid of the master flow
+    flowid = payload.flowid
+    nodeid = payload.nodeid
+    outport = payload.outport
+    console.log payload.inputs
+    inputs = gg.wf.rpc.Util.deserialize payload.inputs
+    nonce = payload.nonce
+    nonces[[nodeid, outport]] = nonce
+    console.log inputs
 
 
-
-  # Barrier N -> N
-  client.on 'barrier', (payload) ->
-    channel = payload.channelName
-    [tables, envs] = gg.wf.rpc.Util.deserializeMany(payload)
-    params = gg.util.Params.fromJSON payload.params
-
-    klassname = params.get 'klassname'
-    name = payload.name or 'tmp'
-    klass = gg.util.Util.ggklass klassname
-    o = new klass {
-      name: payload.name or 'tmp'
-      params: params
-    }
-
-    console.log params
-    restables = o.compute tables, envs, params
-
-    [payload, skip] = gg.wf.rpc.Util.serializeMany restables, envs
-    payload.name = name
-    console.log "barrier #{name} returning to client on channel #{channel}"
-    client.emit channel, payload
+    flow = flows[flowid]
+    runner = runners[flowid]
+    console.log "flowid #{flowid}, node #{nodeid}, port: #{outport}"
+    runner.ch.routeNodeResult nodeid, outport, inputs
 
 
   client.on 'disconnect', () ->

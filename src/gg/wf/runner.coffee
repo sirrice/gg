@@ -25,92 +25,137 @@
 #   queue.length = 0
 #
 class gg.wf.Runner extends events.EventEmitter
-  constructor: (@flow) ->
+  constructor: (@flow, xferControl) ->
     @log = gg.util.Log.logger "Runner", gg.util.Log.WARN
-    @active = {}
+    @done = {}
     @seen = {}
-    @keyf = (node) -> node.id
-    @rpcnodes = {}
+    @setupQueue()
 
-    runNode = (node) =>
-      #var blob = new Blob ["onmessage = function() { console.log(gg);  }"]
-      #var worker = new Worker(window.URL.createObjectURL(blob))
-      @log "#{node.name} in(#{node.inputs.length}) out(#{node.nChildren}) running"
-      node.run()
+    @ch = new gg.wf.ClearingHouse(
+      @, xferControl)
 
-    nodeCanRun = (node) =>
-      if node.id of @seen
-        @log "\t#{node.name} seen. skipping"
-        return no
-
-      # queue will naturally be cleared of all non-ready nodes
-      unless node.ready()
-        @log "\t#{node.name} not ready.
-          #{node.nReady()} of #{node.inputs.length} inputs ready"
-        return no
-
-      yes
-
-    setChildInputs = (node, idx, input) =>
-      children = @flow.portGraph.children({n: node, p: idx})
-      if children.length != 1
-        throw Error
-      o = children[0]
-      child = o.n
-      inport = o.p
-
-      @log "setInput #{node.name}:#{idx}-> #{child.name}:#{inport}"
-      child.setInput inport, input
-
-      if child.ready()
-        @log "\t#{child.name} adding"
-        @queue.push child, @callback
-      else
-        @log "\t#{child.name} not ready
-          #{child.nReady()} of #{child.nParents} ready"
+    # every node's output goes through the clearing house
+    @flow.graph.bfs (node) =>
+      node.on "output", @ch.push.bind(@ch)
 
 
+  setupQueue: ->
     # Execute a workflow node
     qworker = (node, cb) =>
-      unless nodeCanRun node
+      unless @nodeCanRun node
         cb()
         return
 
-      node.on 'output', (idx, result) =>
-        @log "#{node.name} got output in port #{idx}"
-        if node.nChildren == 0
-          # not sure what the semantics should be for flow's output
-          @emit 'output', idx, result
-        else
-          setChildInputs node, idx, result
-
-        delete @active[node.id]
-        cb()
-
-      @active[node.id] = node
       @seen[node.id] = yes
-      runNode(node)
+      @runNode(node)
+      cb()
 
-    # this does nothing
-    callback = (err) =>
-      throw Error(err) if err?
-
-    ondrain =  =>
-      unless _.size @active
+    ondrain =  ()=>
+      sources = @flow.sources()
+      unless _.all(sources, (s) => @done[s.id])
         @log "done! can you believe it?"
-        @log @
         @emit 'done', yes
 
 
     @queue = new async.queue qworker, 1
     @queue.drain = ondrain
 
+  runNode: (node) ->
+    @log "#{node.name} in(#{node.inputs.length})
+          out(#{node.nChildren}) running"
+    node.run()
+
+  nodeCanRun: (node) ->
+    if node.id of @seen
+      @log "\t#{node.name} seen. skipping"
+      return no
+
+    # queue will naturally be cleared of all non-ready nodes
+    unless node.ready()
+      @log "\t#{node.name} skip:
+            #{node.nReady()} of #{node.nParents} inputs ready"
+      return no
+
+    yes
 
   run: () ->
-    @log "adding sources"
     _.each @flow.sources(), (source) =>
       @log "adding source #{source.name}"
-      @queue.push source, @callback
+      @queue.push source
+
+
+class gg.wf.ClearingHouse extends events.EventEmitter
+  constructor: (@runner, @xferControl) ->
+    @flow = @runner.flow
+    @log = gg.util.Log.logger "clearinghouse"
+
+
+  push: (nodeid, outport, outputs) ->
+    if @isSink(nodeid)
+      @emit "output", nodeid, outport, outputs
+    else if @clientToServer nodeid, outport
+      @xferControl nodeid, outport, outputs
+    else if @serverToClient nodeid, outport
+      @xferControl nodeid, outport, outputs
+    else
+      @runner.done[nodeid] = yes
+      @routeNodeResult nodeid, outport, outputs
+
+
+  clientToServer: (nodeid, outport) ->
+    node = @flow.nodeFromId nodeid
+    return no unless node.location is "client"
+    children = @flow.portGraph.children
+      n: node
+      p: outport
+    console.log [node.name, nodeid, outport]
+    console.log children
+    o = children[0]
+    child = o.n
+    inport = o.p
+
+    child.location is "server"
+
+
+  serverToClient: (nodeid, outport) ->
+    node = @flow.nodeFromId nodeid
+    return no unless node.location is "server"
+    children = @flow.portGraph.children({n: node, p: outport})
+    console.log [node.name, nodeid, outport]
+    console.log children
+    o = children[0]
+    child = o.n
+    inport = o.p
+
+    child.location is "client"
+
+  isSink: (nodeid) ->
+    nodeid in _.map(@flow.sinks(), (sink) -> sink.id)
+
+  routeNodeResult: (nodeid, outport, input) ->
+    node = @flow.nodeFromId nodeid
+    children = @flow.portGraph.children
+      n: node
+      p: outport
+    if children.length != 1
+      throw Error("children should only be 1")
+
+    o = children[0]
+    child = o.n
+    inport = o.p
+
+    @log "setInput #{node.name}:#{outport} ->
+          #{child.name}:#{inport} of #{child.inputs.length}"
+
+    child.setInput inport, input
+    console.log child.inputs[inport]
+
+    if child.ready()
+      @log "\t#{child.name} adding"
+      @runner.queue.push child
+    else
+      @log "\t#{child.name} not ready
+        #{child.nReady()} of #{child.nParents} ready"
 
 
 

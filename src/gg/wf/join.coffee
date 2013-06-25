@@ -18,7 +18,6 @@ class gg.wf.Merge extends gg.wf.Node
       envkey: ['key', 'envkey']
       attr: ['attr', 'key', 'envkey']
       default: ['default']
-      compute: [['f'], @compute.bind(@)]
 
   compute: (tables, envs, params) ->
     envkey = params.get 'envkey'
@@ -51,10 +50,10 @@ class gg.wf.Merge extends gg.wf.Node
 
     params = @params
     compute = @params.get 'compute'
-    f = (datas) ->
+    f = (datas) =>
       tables = _.map datas, (d) -> d.table
       envs = _.map datas, (d) -> d.env
-      table = compute tables, envs, params
+      table = @compute tables, envs, params
       new gg.wf.Data table, _.first(envs)
 
     outputs = gg.wf.Inputs.mapLeafArrays @inputs[0], f

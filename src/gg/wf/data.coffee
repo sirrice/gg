@@ -24,6 +24,7 @@ class gg.wf.Inputs
 
   # @param f function that takes a single data object as input
   #          (data) -> data or [data...]
+  # @return transformed datas with the same hirearchical structure
   @mapLeaves: (inputs, f) ->
     return unless inputs?
 
@@ -31,7 +32,7 @@ class gg.wf.Inputs
       if _.isArray input
         gg.wf.Inputs.mapLeaves input, f
       else
-        inputs[idx] = f input
+        f input
 
   # Flatten the input array but compute metadata for the nested structure
   # @return [array, metadata]
@@ -83,19 +84,28 @@ class gg.wf.Inputs
 # class that encapsulates data passed through the xforms
 #
 class gg.wf.Data
-    constructor: (@table, @env=null) ->
-      @env = new gg.wf.Env unless @env?
+  @ggpackage = "gg.wf.Data"
+  constructor: (@table, @env=null) ->
+    @env = new gg.wf.Env unless @env?
 
-    clone: -> new gg.wf.Data @table, @env.clone()
+  clone: -> new gg.wf.Data @table, @env.clone()
 
+  toJSON: ->
+    table: @table.toJSON()
+    env: @env.toJSON()
 
-    toJSON: -> ""
-    @fromJSON: -> throw Error("not implemented")
+  @fromJSON: (json) ->
+    new gg.wf.Data(
+      gg.data.RowTable.fromJSON json.table
+      gg.wf.Env.fromJSON json.env
+    )
+
 
 #
 # Data structure to implement a pseuda-monad
 #
 class gg.wf.Env extends gg.util.Params
+  @ggpackage = "gg.wf.Env"
   clone: ->
     # compute all the non-JSONable elements
     removedEls =

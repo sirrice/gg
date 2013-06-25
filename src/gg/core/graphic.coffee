@@ -56,7 +56,7 @@ class gg.core.Graphic
 
 
   compile: ->
-    @workflow = new gg.wf.Flow {g: @}
+    @workflow = new gg.wf.Flow
     wf = @workflow
 
     #
@@ -88,7 +88,7 @@ class gg.core.Graphic
 
       prev = multicast
       for node in nodes
-        unless _.isSubclass node, gg.wf.Barrier
+        unless node.type == 'barrier'
           wf.connectBridge prev, node
           prev = node
 

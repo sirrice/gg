@@ -17,6 +17,8 @@ class gg.util.Graph
   id: (@idFunc) ->
 
   add: (node) ->
+    unless node?
+      console.log node
     id = @idFunc node
     return @ if id of @id2node
     @id2node[id] = node
@@ -82,6 +84,20 @@ class gg.util.Graph
     else
       _.map edges, (md, t) -> md
 
+  # retrieve type and metadata information for all edges between from and to
+  # @return list of { type:, md: }
+  edgedatas: (from, to) ->
+    fid = @idFunc from
+    tid = @idFunc to
+    return [] unless fid of @id2node
+    edges = @pid2cid[fid][tid]
+    return [] unless edges?
+    _.map edges, (md, type) ->
+      type: type
+      md: md
+
+  node: (id) -> @id2node[id]
+
   nodes: (filter=(node)->true) ->
     _.filter _.values(@id2node), filter
 
@@ -104,7 +120,7 @@ class gg.util.Graph
   # @param type null to check all edges, otherwise filter for specified edges
   # @param filter takes edge metadata as input
   #
-  children: (node, type, filter=((metadata)->true)) ->
+  children: (node, type=null, filter=((metadata)->true)) ->
     id = @idFunc node
     children = []
     _.each @pid2cid[id], (edges, id) =>
@@ -129,6 +145,48 @@ class gg.util.Graph
     ids = _.filter _.keys(@id2node), (id) =>
       id not of @pid2cid or _.size(@pid2cid[id]) == 0
     _.map ids, (id) => @id2node[id]
+
+
+  # @param node2json function mapping a node to a JSON object
+  #       (node) -> json
+  # @param edge2json function mapping an edge to a JSON object
+  #       (from, to, edge type, metadata) -> json
+  toJSON: (node2json, edge2json) ->
+    nodes = _.map @id2node, node2json
+
+    links = []
+    _.each @id2node, (node) =>
+      _.each @children(node), (child) =>
+        _.each @edgedatas(node, child), (data) =>
+          link = edge2json node, child, data.type, data.md
+          links.push link
+
+    json =
+      nodes: nodes
+      links: links
+      idFunc: gg.util.Util.toJSON @idFunc
+    json
+
+
+  # @param json2edge (linkjson, graph object) -> [fromnode, tonode, type, metadata]
+  @fromJSON: (json, json2node, json2edge) ->
+    idFunc = gg.util.Util.fromJSON json.idFunc
+    graph = new gg.util.Graph idFunc
+
+    nodes = _.map json.nodes, json2node
+    graph.add.apply graph, nodes
+
+    for linkJson in json.links
+      link = json2edge linkJson, nodes
+      graph.connect link[0], link[1], link[2], link[3]
+
+    graph
+
+
+
+
+
+
 
 
   # @param f function to execute on every visited node
