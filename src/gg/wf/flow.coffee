@@ -25,7 +25,7 @@ events = require 'events'
 # The blueprint can be instantiated into a runnable workflow
 # by calling flow.instantiate()
 #
-class gg.wf.Flow
+class gg.wf.Flow extends events.EventEmitter
   @ggpackage = "gg.wf.Flow"
   @id: -> gg.wf.Flow::_id += 1
   _id: 0
@@ -33,7 +33,7 @@ class gg.wf.Flow
   constructor: (@spec={}) ->
     @id = gg.wf.Flow.id()
     @graph = new gg.util.Graph (node)->node.id
-    @log = gg.util.Log.logger "flow ", gg.util.Log.WARN
+    @log = gg.util.Log.logger "flow ", gg.util.Log.DEBUG
 
     # dynamically instantiated
     # nodes are {n: nodeid, p: port}
@@ -118,7 +118,7 @@ class gg.wf.Flow
         childnames = _.map @children(node), (c) =>
           "#{c.name}(#{@edgeWeight node, c})"
         cns = childnames.join(', ') or "SINK"
-        arr.push "#{node.name}\t->\t#{cns}"
+        arr.push "#{node.name}@#{node.location}\t->\t#{cns}"
     @graph.bfs f
     arr.join("\n")
 
@@ -336,7 +336,7 @@ class gg.wf.Flow
       throw Error()
 
     @instantiate()
-
+    @log @toString()
 
     runner = new gg.wf.Runner @, null
 
@@ -346,15 +346,20 @@ class gg.wf.Flow
 
     rpc.on "register", (status) ->
       console.log "registered! #{status}"
-    rpc.on "runflow", (nodeid, outport, outputs) ->
-      console.log "runflow got result: #{nodeid}, #{outport}"
-      runner.ch.push nodeid, outport, outputs
+    rpc.on "runflow", (nodeid, outport, outputs) =>
+      node = @nodeFromId nodeid
+      @log.warn "runflow result: #{[node.name, nodeid, outport, node.location]}"
+      runner.ch.routeNodeResult nodeid, outport, outputs
 
     rpc.register @
 
     runner.ch.xferControl = (nodeid, outport, outputs) =>
       rpc.run @id, nodeid, outport, outputs
 
-    runner.on "output", (idx, data) => @emit "output", idx, data
+    runner.on "output", (idx, data) =>
+      @emit "output", idx, data
+    runner.on "done", () =>
+      rpc.deregister @id
+      @emit "done", yes
     runner.run()
 

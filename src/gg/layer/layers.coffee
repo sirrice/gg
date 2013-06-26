@@ -16,9 +16,6 @@ class gg.layer.Layers
     compile: ->
       _.map @layers, (l) =>
         nodes = l.compile()
-        @log "compile layer #{l.layerIdx}"
-        _.each nodes, (node) =>
-          @log "compile node: #{node.name}"
         nodes
 
     getLayer: (layerIdx) ->

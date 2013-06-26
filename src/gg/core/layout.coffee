@@ -2,6 +2,7 @@
 class gg.core.Layout extends gg.core.BForm
   @ggpackage = "gg.core.Layout"
 
+
   compute: (tables, envs, params) ->
     options = params.get 'options'
     c = new gg.core.Bound 0, 0, options.w, options.h

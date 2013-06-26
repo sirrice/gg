@@ -1,4 +1,5 @@
 #<< gg/wf/node
+#<< gg/wf/exec
 
 
 #
@@ -31,44 +32,24 @@
 # }
 #
 #
-class gg.core.XForm
+class gg.core.XForm extends gg.wf.Exec
   @ggpackage = 'gg.core.XForm'
-
-  constructor: (@spec={}) ->
-
-    # Before executing the operator, we will add the
-    # * table,
-    # * environment
-    # * node object
-    #
-    # to this state variable, so they can be accessed from
-    # the compute function
-    #
-    # The state variable is released after the operator exits
-    #
-    # All of the state is encapsulated in @spec, @state, @params
-    #
-    @params = new gg.util.Params
-    logname = "#{@spec.name} #{@constructor.name}"
-    @log = gg.util.Log.logger logname,  gg.util.Log.WARN unless @log?
-
-    console.log @spec
-    @parseSpec()
-
 
   parseSpec: ->
     @log "XForm spec: #{JSON.stringify @spec}"
-
-    @params.merge @spec.params
 
     @params.putAll
       inputSchema: @extractAttr "inputSchema"
       outputSchema: @extractAttr "outputSchema"
       defaults: @extractAttr "defaults"
+    @params.ensure "klassname", [], @constructor.ggpackage
 
-    # add all the necessary during execution state here
-
-    @compute = @spec.f or @compute
+    # wrap compute in a verification method
+    compute = @spec.f or @compute.bind(@)
+    @compute = (table, env, params) =>
+      gg.core.XForm.addDefaults table, env, params, @log
+      gg.core.XForm.validateInput table, env, params
+      compute table, env, params
 
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?
@@ -91,11 +72,8 @@ class gg.core.XForm
   @scales: (table, env) ->
     layer = env.get "layer"
     unless env.contains "scales"
-      console.log "XFORM.GET SCALES #{layer}"
       config = env.get "scalesconfig"
       scaleset = config.scales layer
-      console.log config
-      console.log scaleset
       env.put "scales", scaleset
     env.get "scales"
 
@@ -122,48 +100,19 @@ class gg.core.XForm
       gg.wf.Stdout.print table, null, 5, gg.util.Log.logger("err")
       throw Error("#{params.get 'name'}: input schema did not contain #{missing.join(",")}")
 
-  @addDefaults: (table, env, params) ->
+  @addDefaults: (table, env, params, log) ->
     defaults = params.get "defaults", table, env
-    log = gg.util.Log.logger(params.get 'name')
-    log "expected:    #{JSON.stringify defaults}"
-    log "table attrs: #{JSON.stringify table.schema.attrs()}"
+    unless log?
+      log = gg.util.Log.logger(params.get 'name')
+    log "table schema: #{table.schema.toSimpleString()}"
+    log "expected:     #{JSON.stringify defaults}"
     _.each defaults, (val, col) =>
       unless table.contains col
         log "adding:      #{col} -> #{val}"
         table.addConstColumn col, val
 
+
   compute: (table, env, params) -> table
-
-
-  # Wraps @compute to validate inputs and add defaults
-  #
-  # The complete state necessary to execute compute must be
-  # self contained and easily pickleable
-  compile: ->
-    spec = _.clone @spec
-    log = @log
-    _compute = (table, env, params) ->
-      log "table schema: #{table.schema.toSimpleString()}"
-
-      table = table.cloneDeep()
-
-      gg.core.XForm.addDefaults table, env, params
-      gg.core.XForm.validateInput table, env, params
-      #table = @filterInput table, env
-      compute = params.get '__compute__'
-      compute table, env, params
-
-    spec.params = @params.clone()
-    spec.params.put 'klassname', @constructor.ggpackage
-    spec.params.put 'compute', _compute
-    spec.params.put '__compute__', (args...) => @compute args...
-    spec.params.put 'name', spec.name or @constructor.name
-
-    unless spec.params.get('klassname')?
-      console.log @
-      throw Error("No classname")
-    node = new gg.wf.Exec spec
-    [node]
 
 
 

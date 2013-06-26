@@ -3,6 +3,10 @@
 class gg.facet.pane.Svg extends gg.core.XForm
   @ggpackage = "gg.facet.pane.Svg"
 
+  parseSpec: ->
+    super
+    @params.put "clientonly", yes
+
   # Create SVG elements for all facets, axes, and panes
   # Does not render the geometries, simply allocates them
   compute: (table, env, params) ->
@@ -37,6 +41,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
       }, 'rect'
 
 
+    # Top Facet
     if paneC.bXFacet and layerIdx is 0
       xfel = el.append('g').classed('facet-label x', yes)
         .attr('transform', b2translate(xfc))
@@ -49,6 +54,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
         .attr('dy', '-.5em')
         .text(String(info.facetX))
 
+    # Right Facet
     if paneC.bYFacet and layerIdx is 0
       yfel = el.append('g').classed('facet-label y', yes)
         .attr('transform', b2translate(yfc))
@@ -62,6 +68,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
         .text(info.facetY)
 
     # XXX: also check if we want to show tick lines but not the labels
+    # X Axis
     if paneC.bXAxis and layerIdx is 0
       xac2 = xac.clone()
       xael = _.subSvg el, {
@@ -78,6 +85,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
 
       xael.call axis
 
+    # Y Axis
     if paneC.bYAxis and layerIdx is 0
       yac2 = yac.clone()
       yac2.d yac.w(), 0

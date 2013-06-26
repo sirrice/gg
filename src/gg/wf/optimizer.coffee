@@ -6,18 +6,23 @@ class gg.wf.Optimizer
   constructor: (@rules) ->
   optimize: (flow) ->
 
+    return flow
     canRpcify = (node) ->
       not _.any [
         /RPC/.test node.constructor.name
         node.params.get('clientonly')
       ]
 
+    multicasts = flow.graph.nodes (n) -> n.type == 'multicast'
+    multicast = multicasts[0]
+
     # Mark RPC-able nodes as "server"
     nodes = flow.graph.nodes canRpcify
     _.each nodes, (node) ->
+      #unless flow.graph.isAncestor node, multicast
       node.location = "server"
 
-    flows = gg.wf.Optimizer.findSplit flow
+    #flows = gg.wf.Optimizer.findSplit flow
 
     flow
 

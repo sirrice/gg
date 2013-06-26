@@ -20,11 +20,10 @@ class gg.xform.Mapper extends gg.core.XForm
 
   constructor: (@spec) ->
     super
-    @parseSpec()
+
 
 
   @fromSpec: (spec) ->
-    console.log spec
     spec = _.clone spec
     attrs = ["mapping", "map", "aes", "aesthetic", "aesthetics"]
     mapping = _.findGoodAttr spec, attrs, null
@@ -45,9 +44,9 @@ class gg.xform.Mapper extends gg.core.XForm
     super
 
     mapping = @spec.aes
-    @params.putAll
-      mapping: mapping
-      inverse: @spec.inverse or {}
+    @params.ensureAll
+      mapping: [[], mapping]
+      inverse: [[], @spec.inverse or {}]
     @log "spec: #{@params}"
 
 
@@ -59,6 +58,7 @@ class gg.xform.Mapper extends gg.core.XForm
     # resolve aesthetic aliases in mapping
     functions = _.mappingToFunctions table, params.get('mapping')
     table = table.transform functions, yes
+    console.log table
     table
 
 

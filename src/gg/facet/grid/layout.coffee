@@ -11,6 +11,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
   layoutPanes: (tables, envs, params, lc) ->
     # Setup Variables
     log = @log
+    log.level = 0
     container = lc.plotC
     [w,h] = [container.w(), container.h()]
     paddingPane = params.get('paddingPane')
@@ -22,17 +23,19 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     nys = ys.length
 
 
+    log "paddingPane, envs, xs, ys:"
+    log paddingPane
     log envs
     log xs
     log ys
 
     # Compute derived values
-    css = { 'font-size': '11pt' }
+    css = { 'font-size': '10pt' }
     dims = _.textSize @getMaxYText(envs), css
     yAxisW = dims.w + paddingPane
     labelHeight = _.exSize().h + 2*paddingPane
-    showXFacet = not(xs.length is 1 and xs[0] is null)
-    showYFacet = not(ys.length is 1 and ys[0] is null)
+    showXFacet = not(xs.length is 1 and not xs[0]?)
+    showYFacet = not(ys.length is 1 and not ys[0]?)
     log "yAxisW: #{yAxisW}"
 
     # Initialize PaneContainers for each facet pane
@@ -80,6 +83,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     paneW = (w - nonPaneW) / nxs
 
     # create bounds objects for each pane
+    log "creating bound sobjects for each pane"
     _.each grid, (paneCol, xidx) ->
       _.each paneCol, (pane, yidx) ->
         pane.c.x1 = paneW
@@ -88,9 +92,6 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
         dy = _.sum _.times yidx, (pyidx) -> grid[xidx][pyidx].h()
         pane.c.d dx, dy
         pane.c.d pane.yAxisC().w(), pane.xFacetC().h()
-        log [dx, dy]
-        log [pane.yAxisC().w(), pane.xFacetC().h()]
-        log pane.constructor.name
 
         log "pane(#{xs[xidx]},#{ys[yidx]}): #{pane.c.toString()}"
 
@@ -110,9 +111,10 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
 
           # add in padding to compute actual ranges
           drawC = paneC.drawC()
-          xrange = [paddingPane+drawC.x0, drawC.w()-2*paddingPane]
-          yrange = [paddingPane+drawC.y0, drawC.h()-2*paddingPane]
+          xrange = [paddingPane, drawC.w()-2*paddingPane]
+          yrange = [paddingPane, drawC.h()-2*paddingPane]
 
+          # update the scales
           scaleSet = gg.core.XForm.scales null, env
           _.each gg.scale.Scale.xs, (aes) ->
             _.each scaleSet.types(aes), (type) ->
@@ -121,6 +123,11 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
           _.each gg.scale.Scale.ys, (aes) ->
             _.each scaleSet.types(aes), (type) ->
               scaleSet.scale(aes, type).range yrange
+
+    set = _.first gg.core.BForm.scalesList(tables, envs)
+    @log "grid layout scale set"
+    @log set.toString()
+
 
 
 

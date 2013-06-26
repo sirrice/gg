@@ -1,14 +1,56 @@
-
+#<< gg/wf/barrier
 
 # A Barrier Transformation
 #
-class gg.core.BForm extends gg.core.XForm
+class gg.core.BForm extends gg.wf.Barrier
+  @ggpackage = "gg.core.BForm"
 
   parseSpec: ->
-    super
+    @log "XForm spec: #{JSON.stringify @spec}"
+
+    @params.putAll
+      inputSchema: @extractAttr "inputSchema"
+      outputSchema: @extractAttr "outputSchema"
+      defaults: @extractAttr "defaults"
+    @params.ensure "klassname", [], @constructor.ggpackage
+
+    # wrap compute in a verification method
+    compute = @spec.f or @compute.bind(@)
+    @compute = (tables, envs, params) =>
+      gg.core.BForm.multiAddDefaults tables, envs, params, @log
+      gg.core.BForm.multiValidateInput tables, envs, params
+      compute tables, envs, params
+
+  extractAttr: (attr, spec=null) ->
+    spec = @spec unless spec?
+    val = _.findGoodAttr spec, [attr], null
+    val = @[attr] unless val?
+    if _.isFunction val
+      val.constructorname = @constructor.ggpackage
+    val
+
+
+
+  @multiAddDefaults: (tables, envs, params, log) ->
+    _.times tables.length, (idx) =>
+      gg.core.XForm.addDefaults tables[idx], envs[idx], params, log
+
+  @multiValidateInput: (tables, envs, params) ->
+    _.each tables, (table, idx) =>
+      gg.core.XForm.validateInput table, envs[idx], params
 
   @scalesList: (tables, envs) ->
     _.map envs, (env) -> env.get 'scales'
+
+  #
+  # Convenience functions during workflow execution
+  #
+  @paneInfo: (table, env) ->
+    ret =
+      facetX: env.get(gg.facet.base.Facets.facetXKey)
+      facetY: env.get(gg.facet.base.Facets.facetYKey)
+      layer: env.get "layer"
+    ret
 
   # Retrieve _any_ of the scaleSets related to the x/y facet
   @scales: (tables, envs, xFacet, yFacet) ->
@@ -33,38 +75,10 @@ class gg.core.BForm extends gg.core.XForm
     vals.sort()
     vals
 
+  paneInfo: (args...) -> gg.core.BForm.paneInfo args...
   scalesList: (args...) -> gg.core.BForm.scalesList args...
   scales: (args...) -> gg.core.BForm.scales args...
   facetEnvs: (args...) -> gg.core.BForm.facetEnvs args...
   pick: (args...) -> gg.core.BForm.pick args...
 
 
-  @multiAddDefaults: (tables, envs, params) ->
-    _.times tables.length, (idx) =>
-      @addDefaults tables[idx], envs[idx], params
-
-  @multiValidateInput: (tables, envs, params) ->
-    _.each tables, (table, idx) =>
-      @validateInput table, envs[idx], params
-
-  compile: ->
-    spec = _.clone @spec
-    _compute = (tables, envs, params) =>
-      # optionally clone tables?
-
-      gg.core.BForm.multiAddDefaults tables, envs, params
-      gg.core.BForm.multiValidateInput tables, envs, params
-      compute = params.get '__compute__'
-      compute tables, envs, params
-
-    spec.params = @params.clone()
-    spec.params.put 'klassname', @constructor.ggpackage
-    spec.params.put 'compute', _compute
-    spec.params.put '__compute__', (args...) => @compute args...
-
-    unless spec.params.get('klassname')?
-      console.log @
-      throw Error("No classname")
-
-    node = new gg.wf.Barrier spec
-    [node]

@@ -11,6 +11,7 @@ class gg.facet.base.Render extends gg.core.BForm
       'svg': [[], @spec.svg]
       'fXLabel': [[], 'x facet']
       'fYLabel': [[], 'y facet']
+    @params.put "clientonly", yes
 
 
   renderLabels: (tables, envs, params, lc) ->

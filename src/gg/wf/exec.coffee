@@ -9,18 +9,13 @@ class gg.wf.Exec extends gg.wf.Node
   @ggpackage = "gg.wf.Exec"
 
   constructor: (@spec={}) ->
-    super @spec
+    super
     @type = "exec"
     @name = _.findGood [@spec.name, "exec-#{@id}"]
 
     @params.ensure 'compute', ['f'], null
 
-  compute: (table, env, params) ->
-    compute = params.get "compute"
-    if compute?
-      compute table, env, params
-    else
-      table
+  compute: (table, env, params) -> table
 
   # @return emits to single child node
   run: ->

@@ -34,6 +34,8 @@ class gg.facet.base.Layout extends gg.core.BForm
       paddingPane: [[], 5]
       margin: [[], 1]
 
+    #@params.put "clientonly", yes
+
 
   xFacetVals: (tables, envs) ->
     gg.core.BForm.pick envs, gg.facet.base.Facets.facetXKey

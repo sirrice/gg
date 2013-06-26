@@ -90,7 +90,9 @@ class gg.wf.Node extends events.EventEmitter
       nParents: json.nParents
       location: json.location
       params: gg.util.Params.fromJSON json.params
+    console.log spec
     o = new klass spec
+    console.log json
     o.id = json.id if json.id?
     o
 

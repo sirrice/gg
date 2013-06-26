@@ -166,7 +166,9 @@ class gg.data.RowTable extends gg.data.Table
       newvalue = try
         f row
       catch error
-        @log.warn error
+        @log.error row.raw()
+        @log.error f.toString()
+        @log.error error
         throw error
 
       if _.isArray newvalue

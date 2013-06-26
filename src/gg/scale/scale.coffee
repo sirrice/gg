@@ -228,6 +228,13 @@ class gg.scale.Scale
   @fromJSON: (json) ->
     klass = _.ggklass json.ggpackage
     clone = new klass json
+    if clone.d3Scale?
+      clone.d3Scale.domain json.domain
+      clone.d3Scale.range json.range
+    else
+      clone.domain json.domain
+      clone.range json.range
+
     clone.type = json.type
     clone.domainUpdated = json.domainUpdated
     clone.domainSet = json.domainSet
@@ -235,8 +242,6 @@ class gg.scale.Scale
     clone.rangeSet = json.rangeSet
     clone.center = json.center
 
-    clone.domain json.domain
-    clone.range json.range
 
     clone
 

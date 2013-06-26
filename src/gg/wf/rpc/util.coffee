@@ -22,15 +22,24 @@ class gg.wf.rpc.Util
   @deserialize: (respData, removedEls=null) ->
     inputs = _.fromJSON respData.inputs
 
-    if removedEls?
-      [removedEls, skip] = gg.wf.Inputs.flatten removedEls if _.isArray removedEls
-      [flatinputs, skip] = gg.wf.Inputs.flatten inputs
-      for input, idx in flatinputs
-        if _.isArray removedEls
-          input.env.merge removedEls[idx]
-        else if _.isObject removedEls
-          input.env.merge removedEls
+    mergeREs = (arr, res) ->
+      unless _.isArray res
+        console.log arr
+        gg.wf.Inputs.mapLeaves arr, (data) ->
+          console.log data
+          data.env.merge res
+        return
 
+      if arr.length != res.length
+        console.log "arrlength: #{arr.length}"
+        console.log "reslength: #{res.length}"
+        throw Error("lengths don't match between daat and removedEls")
+
+      for idx in _.range(arr.length)
+        mergeREs arr[idx], res[idx]
+
+    mergeREs inputs, removedEls if removedEls?
     inputs
+
 
 

@@ -146,6 +146,16 @@ class gg.util.Graph
       id not of @pid2cid or _.size(@pid2cid[id]) == 0
     _.map ids, (id) => @id2node[id]
 
+  isAncestor: (ancestor, desc) ->
+    node = ancestor
+    ret = false
+    check = (n) =>
+      ret = ret or (@idFunc(n) == @idFunc(desc))
+    @dfs check, node
+    ret
+
+  isDescendant: (desc, ancestor) ->
+    @isAncestor ancestor, desc
 
   # @param node2json function mapping a node to a JSON object
   #       (node) -> json

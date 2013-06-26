@@ -24,12 +24,15 @@ class gg.wf.RPC extends events.EventEmitter
     @nonce2cb = {}
     @buffer = []
     @params = new gg.util.Params @spec.params
+    @log = gg.util.Log.logger "rpc"
 
     @setup()
 
   setup: ->
     uri = @params.get("uri") or "http://localhost:8000"
     @socket = io.connect uri
+    @ready = @socket.socket.connected
+
     @socket.on "connect", () =>
       @ready = yes
       @sendBuffer()
@@ -38,6 +41,7 @@ class gg.wf.RPC extends events.EventEmitter
       @ready = no
 
     callback = (respData) =>
+      @log "recieved response for nonce #{respData.nonce}"
       nonce = respData.nonce
       if nonce? and nonce of @nonce2cb
         cb = @nonce2cb[nonce]
@@ -46,6 +50,7 @@ class gg.wf.RPC extends events.EventEmitter
 
 
     @socket.on "register", callback
+    @socket.on "deregister", callback
     @socket.on "runflow", callback
 
   sendBuffer: ->
@@ -58,7 +63,7 @@ class gg.wf.RPC extends events.EventEmitter
       payload = {} unless payload?
       payload.nonce = nonce
       @nonce2cb[nonce] = cb if _.isFunction cb
-      console.log "sending #{command} nonce: #{nonce}"
+      @log "sending #{command} nonce: #{nonce}"
       @socket.emit command, payload
 
   send: (command, payload, cb) ->
@@ -72,9 +77,20 @@ class gg.wf.RPC extends events.EventEmitter
 
     @send "register", payload, (respData) =>
       unless respData.status is "OK"
-        console.log "warning: flow registration failed"
+        @log "warning: flow registration failed"
       cb respData.status if _.isFunction cb
       @emit "register", respData.status
+
+  dregister: (flowid, cb) ->
+    payload =
+      flowid: flow.id
+
+    @send "deregister", payload, (respData) =>
+      unless respData.status is "OK"
+        @log "warning: flow deregistration failed"
+      cb respData.status if _.isFunction cb
+      @emit "deregister", respData.status
+
 
 
   run: (flowid, nodeid, outport, inputs, cb) ->
@@ -89,7 +105,6 @@ class gg.wf.RPC extends events.EventEmitter
     @send "runflow", payload, (respData) =>
       nodeid = respData.nodeid
       outport = respData.outport
-      console.log respData.outputs
       outputs = gg.wf.rpc.Util.deserialize(
         respData.outputs, removedEls)
 

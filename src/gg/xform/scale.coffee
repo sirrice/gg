@@ -98,10 +98,6 @@ class gg.xform.ScalesFilter extends gg.core.XForm
 class gg.xform.ScalesValidate extends gg.core.XForm
   @ggpackage = "gg.xform.ScalesValidate"
 
-  constructor: (@layer, @spec) ->
-    super @layer.g, @spec
-    @parseSpec()
-
   compute: (table, env, params) ->
     scaleset = @scales table, env, params
 

@@ -28,11 +28,14 @@ class gg.wf.Inputs
   @mapLeaves: (inputs, f) ->
     return unless inputs?
 
-    _.map inputs, (input, idx) ->
-      if _.isArray input
-        gg.wf.Inputs.mapLeaves input, f
-      else
-        f input
+    if _.isArray inputs
+      _.map inputs, (input, idx) ->
+        if _.isArray input
+          gg.wf.Inputs.mapLeaves input, f
+        else
+          f input
+    else
+      f inputs
 
   # Flatten the input array but compute metadata for the nested structure
   # @return [array, metadata]

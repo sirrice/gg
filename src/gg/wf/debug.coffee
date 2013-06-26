@@ -14,7 +14,6 @@ class gg.wf.Stdout extends gg.wf.Exec
     @log = gg.util.Log.logger "StdOut: #{@name}-#{@id}"
 
   compute: (table, env, params) ->
-    console.log @
     @log "facetX: #{env.get("facetX")}\tfacetY: #{env.get("facetY")}"
     gg.wf.Stdout.print table, params.get('aess'), params.get('n'), @log
     table

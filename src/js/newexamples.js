@@ -223,8 +223,8 @@ var geoms = {
 };
 
 var selected_geoms = {
-  point: false,
-  interval: true,
+  point: true,
+  interval: false,
   boxplot:false,
   line: false,
   jitter:false,

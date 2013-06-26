@@ -33,6 +33,7 @@ class gg.wf.Runner extends events.EventEmitter
 
     @ch = new gg.wf.ClearingHouse(
       @, xferControl)
+    @ch.on "output", (args...) => @emit "output", args...
 
     # every node's output goes through the clearing house
     @flow.graph.bfs (node) =>
@@ -92,6 +93,7 @@ class gg.wf.ClearingHouse extends events.EventEmitter
 
   push: (nodeid, outport, outputs) ->
     if @isSink(nodeid)
+      @log "sink node: #{@flow.nodeFromId(nodeid).name} #{nodeid}"
       @emit "output", nodeid, outport, outputs
     else if @clientToServer nodeid, outport
       @xferControl nodeid, outport, outputs
@@ -104,29 +106,30 @@ class gg.wf.ClearingHouse extends events.EventEmitter
 
   clientToServer: (nodeid, outport) ->
     node = @flow.nodeFromId nodeid
+    @log "clienttoserver: #{[node.name, nodeid, outport, node.location]}"
     return no unless node.location is "client"
     children = @flow.portGraph.children
       n: node
       p: outport
-    console.log [node.name, nodeid, outport]
-    console.log children
     o = children[0]
     child = o.n
     inport = o.p
 
+    @log "clienttoserver: child: #{child.name} #{child.location}"
     child.location is "server"
 
 
   serverToClient: (nodeid, outport) ->
     node = @flow.nodeFromId nodeid
+    @log "servertoclient: #{[node.name, nodeid, outport, node.location]}"
     return no unless node.location is "server"
     children = @flow.portGraph.children({n: node, p: outport})
-    console.log [node.name, nodeid, outport]
-    console.log children
     o = children[0]
     child = o.n
     inport = o.p
 
+    @log "servertoclient: #{[node.name, nodeid, outport, node.location]}"
+    @log "servertoclient: child: #{child.name} #{child.location}"
     child.location is "client"
 
   isSink: (nodeid) ->
@@ -145,10 +148,9 @@ class gg.wf.ClearingHouse extends events.EventEmitter
     inport = o.p
 
     @log "setInput #{node.name}:#{outport} ->
-          #{child.name}:#{inport} of #{child.inputs.length}"
+          #{child.name}:#{inport} #{child.location}"
 
     child.setInput inport, input
-    console.log child.inputs[inport]
 
     if child.ready()
       @log "\t#{child.name} adding"

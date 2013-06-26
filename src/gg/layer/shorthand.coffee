@@ -107,12 +107,16 @@ class gg.layer.Shorthand extends gg.layer.Layer
     debugaess = ['x', 'y', 'q1', 'q3', 'median']
     debugaess = ['x', 'group', 'stroke']
     debugaess = null
-    makeStdOut = (name, n=5, aess=debugaess) =>
+    makeStdOut = (name, params) =>
+      arg = _.clone params
+      params =
+        n: 5
+        aess: null
+      _.extend params, arg
       new gg.wf.Stdout
         name: "#{name}-#{@layerIdx}"
-        params:
-          n: 5
-          aess: aess
+        params: params
+      null
 
     makeScalesOut = (name, scales=@g.scales) =>
       new gg.wf.Scales
@@ -178,7 +182,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # layout the overall graphic, allocate space for facets
     # facets: allocate containers and compute ranges for the scales
     nodes.push @g.layoutNode
-    nodes.push @g.renderNode
     nodes.push @g.facets.layout1
     #nodes.push @g.facets.layout1rpc
 
@@ -221,12 +224,17 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push @coord
     nodes.push makeStdOut "post-coord"
 
+    #
+    # Rendering Nodes are all Client only
+    #
     # render: render axes
+    nodes.push @g.renderNode
     nodes.push @g.facets.render
     nodes.push @g.facets.renderPanes()
 
     # render: render geometries
     nodes.push makeStdOut "pre-render"
+      clientonly: yes
     nodes.push @geom.render
 
 

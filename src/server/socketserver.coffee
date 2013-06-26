@@ -69,6 +69,7 @@ socket.on 'connection', (client) ->
     flow = gg.wf.Flow.fromJSON payload.flow
     nonce = payload.nonce
     flow.instantiate()
+    console.log flow.toString()
 
     sendback = (nodeid, outport, outputs) ->
       # lookup something for the correct nonce
@@ -102,12 +103,18 @@ socket.on 'connection', (client) ->
     inputs = gg.wf.rpc.Util.deserialize payload.inputs
     nonce = payload.nonce
     nonces[[nodeid, outport]] = nonce
-    console.log inputs
+
+    flat = gg.wf.Inputs.flatten(inputs)[0]
+    env = _.first(flat).env
+    if env? and env.contains("scales")
+      console.log "scales for node #{nodeid} nonce #{nonce}"
+      console.log env.get('scales').toString()
 
 
     flow = flows[flowid]
     runner = runners[flowid]
-    console.log "flowid #{flowid}, node #{nodeid}, port: #{outport}"
+    node = flow.nodeFromId nodeid
+    console.log "runflow called: flow #{flowid}, node #{node.name} id #{nodeid}, port: #{outport}"
     runner.ch.routeNodeResult nodeid, outport, inputs
 
 

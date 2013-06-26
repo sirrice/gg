@@ -4,7 +4,13 @@ _ = require "underscore"
 class gg.util.Textsize
   @log = gg.util.Log.logger "Textsize"
   @_exSizeCache = {}
-  @_defaultWidth = 19.23076923076923
+  @_defaultWidths = (->
+    defaultWidths = {}
+    pixels = [0.5576923076923077, 1.6346153846153846, 2.173076923076923, 2.769230769230769, 3.8653846153846154, 4.384615384615385, 4.865384615384615, 6.038461538461538, 6.480769230769231, 7.115384615384615, 8.211538461538462, 8.673076923076923, 9.211538461538462, 10.288461538461538, 10.788461538461538, 11.461538461538462, 12.557692307692308, 12.942307692307692, 13.596153846153847, 14.653846153846153, 15.096153846153847, 15.76923076923077, 16.884615384615383, 17.26923076923077, 17.826923076923077, 19, 19.442307692307693, 20, 21.23076923076923, 21.615384615384617, 22.23076923076923, 23.28846153846154, 23.76923076923077, 24.403846153846153, 25.48076923076923, 25.923076923076923, 26.51923076923077, 27.596153846153847, 28.076923076923077, 28.71153846153846, 29.73076923076923, 30.307692307692307, 30.76923076923077, 32, 32.34615384615385, 32.98076923076923, 34.17307692307692, 34.57692307692308, 35.17307692307692]
+    for fontSize, idx in _.range(1, 50)
+      defaultWidths["#{fontSize}pt"] = pixels[idx]
+    return defaultWidths
+  )()
   @_defaultHeights = (->
     defaultHeights = {}
     pixels = [1,4,5,6,7,9,10,12,14,15,17,18,20,22,23,24,27,28,29,31,32,33,36,37,38,40,42,42,44,45,47,49,50,52,55,55,56,59,60,61,64,65,66,68,69,70,72,74,75]
@@ -13,12 +19,12 @@ class gg.util.Textsize
     return defaultHeights
   )()
   @exDefault: (fontSize) ->
-    {
-      width: gg.util.Textsize._defaultWidth
-      w: gg.util.Textsize._defaultWidth
+    size =
+      width: gg.util.Textsize._defaultWidths[fontSize] or 10
       height: gg.util.Textsize._defaultHeights[fontSize] or 18
-      h: gg.util.Textsize._defaultHeights[fontSize] or 18
-    }
+    size.w = size.width
+    size.h = size.height
+    size
 
   # @param text the string to compute size of
   # @param opts css attributes
@@ -56,13 +62,13 @@ class gg.util.Textsize
       ret
     catch error
       log = gg.util.Textsize.log
-      log.warn "return defaults.  error: #{error}"
       fontsize =
         if 'font-size' of opts
           opts['font-size']
         else
           '12pt'
       defaults = gg.util.Textsize.exDefault fontsize
+      log.warn "textSize defaults: #{text}\t#{defaults.w} x #{defaults.h}.  error: #{error}"
       defaults.width = defaults.w = defaults.width * text.length
       defaults
 
