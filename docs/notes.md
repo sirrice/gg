@@ -1,3 +1,16 @@
+Features
+----------
+
+
+1. SQL source operator.  Server only
+1. Compile a server-side source + map/group operator into a SQL statement
+1. IMplement a generalized Group-by aggregate operator
+1. Schema based provenance.  Use to do between-operator schema mapping
+1. Data provenance to map from dom element to data and back
+1. Better JS interface
+  * ggplot2-like interface
+
+
 
 
 June 07, 2013
@@ -140,3 +153,26 @@ Talked to Sam, the execution model is too complicated.  Switching to model where
   * consumes operator output and places them in child slots
   * calls operator.ready()
   * doesnt need to instantiate
+
+June 27, 2013
+----------------
+
+Sucessfully switched to simpler model.  Currently
+
+1. On execution, client serializes and registers workflow with server
+2. Nodes block until full result set is competed -- no incremental computing
+3. Nodes are labeled with the location they should execute (client/server)
+4. Workflows are executed via message passing, and edges that cross client/server
+   boundaries are serialized and passed.
+5. Workflow runner uses a clearing house that figures out what node to pass a dataset off to next.
+   Runner has access to a read-only workflow instance.
+
+Next step -- operator to SQL mapping
+
+1. set server-side only operator
+1. node->node rule
+
+Misc
+
+1. Reorganize package hierarchy.
+1. util/ is really messy
