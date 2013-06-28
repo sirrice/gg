@@ -11,22 +11,71 @@ Features
   * ggplot2-like interface
 
 
+June 27, 2013
+----------------
+
+Sucessfully switched to simpler model.  Currently
+
+1. On execution, client serializes and registers workflow with server
+2. Nodes block until full result set is competed -- no incremental computing
+3. Nodes are labeled with the location they should execute (client/server)
+4. Workflows are executed via message passing, and edges that cross client/server
+   boundaries are serialized and passed.
+5. Workflow runner uses a clearing house that figures out what node to pass a dataset off to next.
+   Runner has access to a read-only workflow instance.
+
+Next step -- operator to SQL mapping
+
+1. set server-side only operator
+1. node->node rule
+
+Misc
+
+1. Reorganize package hierarchy.
+1. util/ is really messy
 
 
-June 07, 2013
---------------
+June 20, 2013
+------------------
 
-Lost all the previous notes thanks to stupidity with git.
+Talked to Sam, the execution model is too complicated.  Switching to model where
 
-Switching all operators to be pure functions that only depend on three data
-structures that are passed into the operators
+1. each operator consumes and produces a nested array of gg.wf.Data objects
+  * run(nestedArray, params) -> nestedArray
+    * emits its results
+    * returns its results too
+  * ready() -> bool
+  * Single child nodes
+    * exec calls compute on the leaves (each gg.wf.Data object)
+    * split transforms each leaf into an array of gg.wf.Data objects
+    * join merges the leaf arrays
+  * Multi-child nodes
+    * barrier takes multiple arrays as input, and sends each array out to the corresponding child nodes
+    * multicast "clones" its inputs and sends the clones to the corresponding child nodes
+2. no parallelization except within an operator.
+   This means each operator is blocking until its complete
+3. workflow tracks
+  * number of input slots and children for each operator
+  * consumes operator output and places them in child slots
+  * calls operator.ready()
+  * doesnt need to instantiate
 
-1. User defined parameter values.  Assigned at compile time
-2. Table(s)
-3. Environment values (derived from computation)
 
-This decision was because splitting execution between the browser and backend
-is too complex otherwise.
+June 17, 2013
+-------------------
+
+Implemented simple RPC-based barrier and exec using socket.io.  Can run the facet layout algorithm.
+
+Changed the workflow runner to use callback based execution (for rpc nodes).
+
+Need a way to pass static functions (inputSchema, outputSchema, validate) to the server.  In general,
+@params may include static functions.  Need an automatic way to identify them.
+
+  * inputSchema
+  * defaults
+  * outputSchema
+  * provenanceCode
+
 
 
 June 10, 2013
@@ -113,66 +162,21 @@ Main SVG dom elements:
 
 
 
-June 17, 2013
--------------------
 
-Implemented simple RPC-based barrier and exec using socket.io.  Can run the facet layout algorithm.
+June 07, 2013
+--------------
 
-Changed the workflow runner to use callback based execution (for rpc nodes).
+Lost all the previous notes thanks to stupidity with git.
 
-Need a way to pass static functions (inputSchema, outputSchema, validate) to the server.  In general,
-@params may include static functions.  Need an automatic way to identify them.
+Switching all operators to be pure functions that only depend on three data
+structures that are passed into the operators
 
-  * inputSchema
-  * defaults
-  * outputSchema
-  * provenanceCode
+1. User defined parameter values.  Assigned at compile time
+2. Table(s)
+3. Environment values (derived from computation)
+
+This decision was because splitting execution between the browser and backend
+is too complex otherwise.
 
 
-June 20, 2013
-------------------
 
-Talked to Sam, the execution model is too complicated.  Switching to model where
-
-1. each operator consumes and produces a nested array of gg.wf.Data objects
-  * run(nestedArray, params) -> nestedArray
-    * emits its results
-    * returns its results too
-  * ready() -> bool
-  * Single child nodes
-    * exec calls compute on the leaves (each gg.wf.Data object)
-    * split transforms each leaf into an array of gg.wf.Data objects
-    * join merges the leaf arrays
-  * Multi-child nodes
-    * barrier takes multiple arrays as input, and sends each array out to the corresponding child nodes
-    * multicast "clones" its inputs and sends the clones to the corresponding child nodes
-2. no parallelization except within an operator.
-   This means each operator is blocking until its complete
-3. workflow tracks
-  * number of input slots and children for each operator
-  * consumes operator output and places them in child slots
-  * calls operator.ready()
-  * doesnt need to instantiate
-
-June 27, 2013
-----------------
-
-Sucessfully switched to simpler model.  Currently
-
-1. On execution, client serializes and registers workflow with server
-2. Nodes block until full result set is competed -- no incremental computing
-3. Nodes are labeled with the location they should execute (client/server)
-4. Workflows are executed via message passing, and edges that cross client/server
-   boundaries are serialized and passed.
-5. Workflow runner uses a clearing house that figures out what node to pass a dataset off to next.
-   Runner has access to a read-only workflow instance.
-
-Next step -- operator to SQL mapping
-
-1. set server-side only operator
-1. node->node rule
-
-Misc
-
-1. Reorganize package hierarchy.
-1. util/ is really messy
