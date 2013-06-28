@@ -111,16 +111,21 @@ var geom_boxplot =  {
 };
 
 var geom_interval = {
-  geom: { type:"interval", aes: {y: '{total/(1+count)}'} }
- ,aes: {x: 'd', y: 'e', 'fill': 'f',  "fill-opacity": 0.9}
- ,stat: "bin"
- //,coord: "yflip"
+  layers: [{
+    geom: { type:"interval", aes: {y: '{total/(1+count)}'} }
+   ,aes: {x: 'd', y: 'e', 'fill': 'f',  "fill-opacity": 0.9}
+   ,stat: "bin"
+   //,coord: "yflip"
+  }],
+  facets: {y: 't'}
 };
 
 var geom_point_1 = {layers:[{
   geom: "point"
  ,aes: {x: 'd', y: 'e'}
-}], facets: {x: 'f'}}
+}], facets: {x: 'f', y: 't', ylabel: "T", xlabel: "F"},
+  opts: {title: "hi"}
+  }
 
 var geom_point_sum = {
   geom: "point"
@@ -130,11 +135,15 @@ var geom_point_sum = {
 }
 
 var geom_point_interval = {
-  geom: "interval"
- ,pos: "dodge"
- ,aes: {x: '{Math.floor(d/10.)*10 + "d"}', y: 'e', group: {color: 'g'}}
- ,stat: "bin"
+  layers: [{
+    geom: "interval"
+   ,pos: "dodge"
+   ,aes: {x: '{Math.floor(d/10.)*10 + "d"}', y: 'e', group: {color: 'g'}}
+   ,stat: "bin"
+  }],
+  facets: {y: 't'}
 }
+
 
 var geom_point_2 = {
   geom: "point"
@@ -223,8 +232,8 @@ var geoms = {
 };
 
 var selected_geoms = {
-  point: true,
-  interval: false,
+  point: false,
+  interval: true,
   boxplot:false,
   line: false,
   jitter:false,

@@ -35,7 +35,6 @@ class gg.core.Render extends gg.core.BForm
       text = _.subSvg svg, {
         'text-anchor': 'middle'
         class: 'graphic-title'
-        style: 'font-size: 30pt'
         dx: titleC.x0
         dy: '1em'
       }, 'text'

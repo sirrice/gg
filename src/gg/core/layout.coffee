@@ -14,17 +14,20 @@ class gg.core.Layout extends gg.core.BForm
     facetC = new gg.core.Bound 0, 0, w, h
 
 
-    if options.minimal
+    unless options.minimal
       title = options.title
       if title?
-        titleH = _.exSize({'class': 'graphic-title'}).h
-        titleC = new gg.core.Bound w / 2, 0
+        textSize = _.textSize title,
+          class: "graphic-title"
+          padding: 2
+        titleH = textSize.h * 1.1
+        titleC = new gg.core.Bound w / 2, 0, w/2, titleH
         facetC.y0 += titleH
 
     # TODO: layout guides
 
 
-    # Add data to the environment
+    # Add containers to the environment
     lc = _.first(envs).get('lc') or {}
     lc.titleC = titleC
     lc.facetC = facetC

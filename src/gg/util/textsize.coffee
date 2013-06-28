@@ -36,29 +36,30 @@ class gg.util.Textsize
       div.textContent = text
       css =
         opacity: 0
-        "font-size": "12pt"
-        "font-family": "arial"
         padding: 0
         margin: 0
+        position: "absolute"
+        left: -10000000
       _.extend css, opts
-      _.extend div.style, css
+      #div.style = css
+      $(div).css css
+      $(div).attr css
 
       body.appendChild div
       width = $(div).width()
       height = $(div).height()
-      #width = div.clientWidth
-      #height = div.clientHeight
-      body.removeChild div
+      #body.removeChild div
+      console.log "textsize"
+      console.log div
 
       if _.any [width, height], ((v) -> _.isNaN(v) or v is 0)
         throw Error("exSize: width(#{width}), height(#{height})")
 
-      ret = {
+      ret =
         width: width
         height: height
         w: width
         h: height
-      }
       ret
     catch error
       log = gg.util.Textsize.log

@@ -33,7 +33,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     css = { 'font-size': '10pt' }
     dims = _.textSize @getMaxYText(envs), css
     yAxisW = dims.w + paddingPane
-    labelHeight = _.exSize().h + 2*paddingPane
+    labelHeight = _.exSize().h + paddingPane
     showXFacet = not(xs.length is 1 and not xs[0]?)
     showYFacet = not(ys.length is 1 and not ys[0]?)
     log "yAxisW: #{yAxisW}"

@@ -80,8 +80,8 @@ class gg.facet.base.Facets
 
     fClass = _.findGoodAttr @spec, ['facetclass', 'class'], ''
     @renderParams = new gg.util.Params {
-      fXLabel: _.findGoodAttr @spec, ['xlabel', 'xLabel'], ""
-      fYLabel: _.findGoodAttr @spec, ['ylabel', 'yLabel'], ""
+      fXLabel: _.findGoodAttr @spec, ['xlabel', 'xLabel'], "x facets"
+      fYLabel: _.findGoodAttr @spec, ['ylabel', 'yLabel'], "y facets"
       fClass: fClass
       exSize: _.exSize {class: fClass}
       showXTicks: _.findGood [@spec.showXTicks, true]

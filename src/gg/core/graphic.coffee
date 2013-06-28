@@ -21,7 +21,7 @@ class gg.core.Graphic
     @layerspec = @spec.layers or []
     @facetspec = @spec.facets or @spec.facet or {}
     @scalespec = @spec.scales or {}
-    @optspec = @spec.opts or @spec.options or {}
+    @optspec = @spec.opts or @spec.opt or @spec.options or {}
 
     # The order to instantiate these objects matters
     @options = new gg.core.Options @optspec

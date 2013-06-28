@@ -5,7 +5,6 @@
 class gg.wf.Optimizer
   constructor: (@rules) ->
   optimize: (flow) ->
-
     return flow
     canRpcify = (node) ->
       not _.any [

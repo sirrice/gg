@@ -24,10 +24,16 @@ class gg.facet.pane.Svg extends gg.core.XForm
     xac = paneC.xAxisC()
     yac = paneC.yAxisC()
 
+    console.log paneC.toString()
+    console.log paneC.bound().toString()
+    console.log paneC.drawC().toString()
+    console.log paneC.xAxisC().toString()
+
     el = _.subSvg svg, {
       class: "pane-container layer-#{layerIdx}"
       'z-index': "#{layerIdx+1}"
       transform: b2translate(paneC.bound())
+      container: paneC.bound().toString()
     }
 
 

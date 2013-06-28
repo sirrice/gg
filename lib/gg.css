@@ -62,6 +62,9 @@ g.axis g text {
   font-size: 10px;
   font-weight: 300;
 }
+.graphic-title {
+  font-size: 25pt;
+}
 .graphicText {
   font-size: 10px;
   cursor: pointer;

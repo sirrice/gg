@@ -28,8 +28,8 @@ class gg.facet.pane.Container
     @bXAxis,
     @bYAxis,
     @labelHeight,
-    @yAxisW) ->
-      @padding = 5
+    @yAxisW,
+    @padding=5) ->
       @lpad = @rpad = @upad = @bpad = 0
       @lpad = @padding unless @bYAxis
       @rpad = @padding unless @bYFacet
@@ -62,6 +62,9 @@ class gg.facet.pane.Container
       json.labelHeight
       json.yAxisW
     )
+
+  toString: ->
+    JSON.stringify @toJSON()
 
 
   #

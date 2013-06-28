@@ -47,14 +47,8 @@ class gg.facet.base.Layout extends gg.core.BForm
   # layout facets
   # layout panes
   getTitleHeight: (params) ->
-    css =
-      'font-size': '10pt'
-    _.exSize(css).h + params.get('paddingPane')
-
-  getEmSize: ->
-    css =
-      'font-size': '11pt'
-    _.textSize('m', css).h
+    css = {}
+    _.exSize(css).h# + params.get('paddingPane')
 
   #
   # layout labels, background and container for the
@@ -66,35 +60,86 @@ class gg.facet.base.Layout extends gg.core.BForm
     options = params.get 'options'
     container = lc.facetC
     [w, h] = [container.w(), container.h()]
+    Bound = gg.core.Bound
+
+    xs = @xFacetVals tables, envs
+    ys = @yFacetVals tables, envs
+    nxs = xs.length
+    nys = ys.length
+    showXFacet = not(xs.length is 1 and not xs[0]?)
+    showYFacet = not(ys.length is 1 and not ys[0]?)
+
 
     paddingPane = params.get 'paddingPane'
 
     unless options.minimal
       titleH = @getTitleHeight(params)
-      em = @getEmSize()
+      em = _.textSize("m", {}).h
       @log.warn "title size: #{titleH}"
       @log.warn "em size: #{em}"
 
-      # main labels
-      xFacetLabelC = new gg.core.Bound titleH, paddingPane/2
+      plotW = w
+      plotW -= (paddingPane + titleH) # yaxis
+      plotW -= (paddingPane + titleH) if showYFacet
+      plotH = h
+      plotH -= (paddingPane + titleH) # xaxis
+      plotH -= (paddingPane + titleH) if showXFacet
+
+      toffset = 0
+      toffset += paddingPane + titleH if showXFacet
+
+      plotC = new Bound 0, 0, plotW, plotH
+      plotC.d (paddingPane+titleH), toffset
+      container = new gg.facet.pane.Container plotC,
+        0,
+        0,
+        showXFacet,
+        showYFacet,
+        true,
+        true,
+        em,
+        em,
+        0
+
+      xFacetLabelC = container.xFacetC()
       xFacetLabelC.d (w-2*titleH)/2, em
 
-      # to compensate for rotation later
-      yFacetLabelC = new gg.core.Bound titleH+(h-2*titleH)/2,
-        -(w-titleH-paddingPane)
+      yFacetLabelC = container.yFacetC()
+      yFacetLabelC = new Bound yFacetLabelC.x0, (plotH/2 + (paddingPane+titleH))
+      #yFacetLabelC.d (w-2*titleH)/2, (h-2*titleH)/2
 
-      xAxisLabelC = new gg.core.Bound titleH, h-titleH-paddingPane
+      xAxisLabelC = container.xAxisC()
       xAxisLabelC.d (w-2*titleH)/2, em
 
-      # compensate for rotation later
-      yAxisLabelC = new gg.core.Bound -(titleH+(h-2*titleH)/2),
-        titleH
-      yAxisLabelC = new gg.core.Bound titleH, (titleH+(h-2*titleH)/2)
+      yAxisLabelC = container.yAxisC()
+      yAxisLabelC = new Bound yAxisLabelC.y0, -yAxisLabelC.x0
+      yAxisLabelC.d em/2, (h-2*titleH)/2
 
-      plotC = new gg.core.Bound titleH+paddingPane,
-        titleH+paddingPane,
-        w-2*(titleH-paddingPane)+titleH,
-        h-2*(titleH-paddingPane)+titleH
+      plotC = container.drawC()
+
+
+
+      ## figure out top and left side containers
+      ## main labels
+      #xFacetLabelC = new gg.core.Bound titleH, paddingPane/2
+      #xFacetLabelC.d (w-2*titleH)/2, em
+
+      ## to compensate for rotation later
+      #yFacetLabelC = new gg.core.Bound titleH+(h-2*titleH)/2,
+      #  -(w-titleH-paddingPane)
+
+      #xAxisLabelC = new gg.core.Bound titleH, h-titleH-paddingPane
+      #xAxisLabelC.d (w-2*titleH)/2, em
+
+      ## compensate for rotation later
+      #yAxisLabelC = new gg.core.Bound -(titleH+(h-2*titleH)/2),
+      #  titleH
+      #yAxisLabelC = new gg.core.Bound titleH, (titleH+(h-2*titleH)/2)
+
+      #plotC = new gg.core.Bound titleH+paddingPane,
+      #  titleH+paddingPane,
+      #  w-2*(titleH-paddingPane)+titleH,
+      #  h-2*(titleH-paddingPane)+titleH
 
     else
       xFacetLabelC = null

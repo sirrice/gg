@@ -36,22 +36,29 @@ class gg.facet.base.Render extends gg.core.BForm
     if xflC?
       _.subSvg(svg, {
         transform: "translate(#{xflC.x0}, #{xflC.y0})"
-        class: 'facet-title'
+        class: 'facet-title x-facet-title'
       }).append('text')
         .text(fXLabel)
         .attr('text-anchor', 'middle')
 
     if yflC?
-      _.subSvg(svg.append('g'), {
-        transform: "rotate(90)translate(#{yflC.x0}, #{yflC.y0})"
-        'text-anchor': 'middle'
-        class: 'facet-title'
+      c = _.subSvg svg, {
+        transform: "translate(#{yflC.x0}, #{yflC.y0})"
+        class: 'facet-title y-facet-title'
+        container: yflC.toString()
+      }
+      _.subSvg(c, {
+        "text-anchor": "middle"
+        transform: "rotate(90)"
+        dx: ".5em"
+        y: 0
+        #y: yflC.h()/2
       }, 'text').text(fYLabel)
-
 
     if xalC?
       _.subSvg(svg, {
         transform: "translate(#{xalC.x0},#{xalC.y0})"
+        class: "x-axis-container"
       }).append('text')
         .text(options.xaxis)
         .attr('text-anchor', 'middle')
@@ -59,6 +66,8 @@ class gg.facet.base.Render extends gg.core.BForm
     if yalC?
       yalSvg = _.subSvg(svg, {
         transform: "translate(#{yalC.x0},#{yalC.y0})"
+        class: "y-axis-container"
+        container: yalC.toString()
       })
 
       _.subSvg(yalSvg, {
@@ -74,6 +83,7 @@ class gg.facet.base.Render extends gg.core.BForm
     plotSvg = _.subSvg svg, {
       transform: "matrix(#{matrix})"
       class: 'graphic-with-margin'
+      container: plotC.toString()
     }
 
     # update environment
