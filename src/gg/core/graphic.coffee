@@ -123,8 +123,8 @@ class gg.core.Graphic
       @svg = @svg.append('svg')
       @compile()
 
-      optimizer = new gg.wf.Optimizer
-      @workflow = optimizer.optimize @workflow
+      optimizer = new gg.wf.Optimizer [new gg.wf.rule.RPCify]
+      @workflow = optimizer.run @workflow
       @workflow.run table
 
 

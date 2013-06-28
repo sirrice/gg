@@ -1,6 +1,5 @@
-Features
+Desired Features
 ----------
-
 
 1. SQL source operator.  Server only
 1. Compile a server-side source + map/group operator into a SQL statement
@@ -9,6 +8,7 @@ Features
 1. Data provenance to map from dom element to data and back
 1. Better JS interface
   * ggplot2-like interface
+1. Node-failure tolerance.  If a node throws an exception, dont block workflow on the next barrier, keep going.
 
 
 June 27, 2013

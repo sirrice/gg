@@ -13,7 +13,6 @@ catch error
 # ::Specification::
 #
 # {
-#   type: [exec, split, join, barrier, multicast]
 #   name: {String}
 #   params: Params or Object
 # }

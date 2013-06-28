@@ -87,21 +87,6 @@ class gg.wf.Flow extends events.EventEmitter
     @
 
 
-  findPath: (from, to) ->
-    search = (node, path=[]) =>
-      path.push node
-      if node.id == to.id
-        return path
-
-      for child in @children(node)
-        result = search child, path
-        return result if result?
-      path.pop()
-      null
-    path = search from
-    path
-
-
 
 
 
@@ -185,6 +170,13 @@ class gg.wf.Flow extends events.EventEmitter
   clone: -> gg.wf.Flow.fromJSON @toJSON()
 
 
+  # Encode graph as a tree structure
+  # @returns data structure of the form
+  # {
+  #   name:
+  #   id:
+  #   children: [ ... ] # recursive
+  # }
   toJSONTree: ->
     root = {
       name: "root",
@@ -210,6 +202,7 @@ class gg.wf.Flow extends events.EventEmitter
         id2node[par.id].children.push id2node[id]
     root
 
+  # Export graph is a DOT formatted string
   toDot: ->
     text = []
     text.push "digraph G {"
@@ -233,11 +226,16 @@ class gg.wf.Flow extends events.EventEmitter
     node.wf = @
     @graph.add node
 
+  rm: (node) ->
+    @graph.rm node
+
   nodeFromId: (id) ->
     nodes = @graph.nodes((node) -> node.id == id)
     if nodes.length then nodes[0] else null
 
   nodes: -> @graph.nodes()
+
+  edges: (args...) -> @graph.edges(args...)
 
   connect: (from, to, type="normal") ->
     if @graph.edgeExists from, to, type
@@ -261,6 +259,7 @@ class gg.wf.Flow extends events.EventEmitter
 
   parents: (node) -> @graph.parents node, "normal"
   bridgedParents: (node) -> @graph.parents node, "bridge"
+
 
   # Get node's input ports that are mapped to parent's outputs
   inputPorts: (parent, node) ->
@@ -286,6 +285,21 @@ class gg.wf.Flow extends events.EventEmitter
 
   sources: -> @graph.sources()
   sinks: -> @graph.sinks()
+
+  findPath: (from, to) ->
+    search = (node, path=[]) =>
+      path.push node
+      if node.id == to.id
+        return path
+
+      for child in @children(node)
+        result = search child, path
+        return result if result?
+      path.pop()
+      null
+    path = search from
+    path
+
 
 
   #
