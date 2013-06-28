@@ -4,7 +4,9 @@ gg
 Javascript DSL for Grammar of Graphics extended to support interactivity and
 backend data-processing support.  Written in coffeescript
 
-See [notes](https://github.com/sirrice/gg/blob/master/docs/notes.md) for details
+See [notes](https://github.com/sirrice/gg/blob/master/docs/notes.md) for implementation/commit notes.
+
+See [the website](http://sirrice.github.io/gg) for some more examples.
 
 Setup
 ------
@@ -31,7 +33,7 @@ Current Implementation
 
 Screenshot!
 
-[<img src="https://raw.github.com/sirrice/gg/new-model/docs/imgs/screenshot.png"/> ](http://bl.ocks.org/sirrice/5653573)
+[<img src="https://raw.github.com/sirrice/gg/master/docs/imgs/screenshot.png"/> ](http://bl.ocks.org/sirrice/5653573)
 
 
 
