@@ -32,6 +32,7 @@ class gg.scale.Config
   constructor: (@defaults, @layerDefaults, @specs={})  ->
     @specs.spec = {} unless @specs.spec
     @specs.layerSpecs = {} unless @specs.layerSpecs
+    @log = gg.util.Log.logger @constructor.ggpackage, "scaleConfig"
 
   @fromSpec: (spec, layerSpecs={}) ->
 
@@ -80,7 +81,7 @@ class gg.scale.Config
     layerConfig = gg.scale.Config.loadSpec scalesSpec
     @layerDefaults[layerIdx] = layerConfig
     @specs.layerSpecs[layerIdx] = layerSpec
-    gg.scale.Config.log "addLayer: #{layerConfig}"
+    @log "addLayer: #{layerConfig}"
 
 
 

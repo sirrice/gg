@@ -14,9 +14,6 @@
 #   @scales(facetX, facetY, layerIdx) --> scales
 #   @scales() --> scales
 #
-#
-# A Scale defines an invertable mapping from a Domain -> Range.
-#
 # Scales transform, train and map at multiple places in workflow
 #
 #   transform: apply scale transformation

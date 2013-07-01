@@ -15,7 +15,8 @@ class gg.core.Options
     @yaxis = _.findGood [@spec.yaxis, @spec.y, "yaxis"]
 
     # Hide all facets, titles and axes?
-    @minimal = _.findGood [@spec.minimal, false]
+    @minimal = _.findGood [@spec.minimal, no]
+    @optimize = _.findGood [@spec.optimize, yes]
 
   clone: ->
     new gg.core.Options _.clone(@spec)

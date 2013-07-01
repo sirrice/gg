@@ -335,6 +335,12 @@ class gg.wf.Flow extends events.EventEmitter
     @add node
     this
 
+  # add a parent to every existing source
+  prepend: (node) ->
+    _.each @sources(), (source) =>
+      @connect tablesource, source
+      @connectBridge tablesource, source
+
 
   # Execute this flow on the client side
   run: (table) ->
@@ -342,9 +348,7 @@ class gg.wf.Flow extends events.EventEmitter
       tablesource = new gg.wf.TableSource
         params:
           table: table
-      _.each @sources(), (source) =>
-        @connect tablesource, source
-        @connectBridge tablesource, source
+      @prepend tablesource
 
     unless @sources().length == 1
       throw Error()

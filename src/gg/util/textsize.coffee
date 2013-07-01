@@ -72,7 +72,6 @@ class gg.util.Textsize
       defaults = gg.util.Textsize.exDefault fontsize
       log = gg.util.Textsize.log
       log.warn "default textsz: #{text}\t#{defaults.w} x #{defaults.h}.  err: #{error}"
-      throw error
       defaults.width = defaults.w = defaults.width * text.length
       defaults
 

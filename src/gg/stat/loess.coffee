@@ -1,5 +1,6 @@
 #<< gg/stat/stat
 
+science = require 'science'
 
 class gg.stat.LoessStat extends gg.stat.Stat
   @ggpackage = "gg.stat.LoessStat"

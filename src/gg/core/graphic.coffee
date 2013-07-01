@@ -1,4 +1,5 @@
 #<< gg/core/options
+#<< gg/core/data
 #<< gg/wf/*
 #<< gg/data/*
 #<< gg/facet/base/facet
@@ -33,10 +34,12 @@ class gg.core.Graphic
     @facets = gg.facet.base.Facets.fromSpec @, @facetspec
     @layers = new gg.layer.Layers @, @layerspec
     @scales = new gg.scale.Scales @, @scalespec
+    @datas = gg.core.Data.fromSpec @spec.data
 
     # connect layer specs with scales config
     _.each @layers.layers, (layer) =>
       @scales.scalesConfig.addLayerDefaults layer
+      @datas.addLayerDefaults layer
 
 
     @svg = @options.svg or @svg
@@ -44,13 +47,6 @@ class gg.core.Graphic
     @params = new gg.util.Params
       container: new gg.core.Bound 0, 0, @options.w, @options.h
       options: @options
-
-    @layoutNode = new gg.core.Layout(
-      name: 'core-layout'
-      params: @params).compile()
-    @renderNode = new gg.core.Render(
-      name: 'core-render'
-      params: @params).compile()
 
 
 
@@ -64,11 +60,21 @@ class gg.core.Graphic
     @workflow = new gg.wf.Flow
     wf = @workflow
 
+    # create shared nodes
+    @layoutNode = new gg.core.Layout(
+      name: 'core-layout'
+      params: @params).compile()
+    @renderNode = new gg.core.Render(
+      name: 'core-render'
+      params: @params).compile()
+
+
     #
     # pre-filter transformations??
     #
 
     preMulticastNodes = []
+    preMulticastNodes.push @datas.data()
     preMulticastNodes.push @setupEnvNode()
     preMulticastNodes = preMulticastNodes.concat @facets.splitter
 
@@ -79,6 +85,7 @@ class gg.core.Graphic
       prev = node
 
 
+    # XXX: Only multicast to layers that use the default data
     # XXX: why does this need to be on the client? not clear
     #      multicast exports data clones to the same output port (facet)
     multicast = new gg.wf.Multicast
@@ -128,14 +135,20 @@ class gg.core.Graphic
 
 
   render: (@svg, input) ->
-    @inputToTable input, (table) =>
-      $(svg[0]).empty()
-      @svg = @svg.append('svg')
-      @compile()
+    $(@svg[0]).empty()
+    @svg = @svg.append('svg')
+    @compile()
 
+    if input
+      @datas.setDefault input
+      dataNode = @datas.data()
+      @workflow.prepend dataNode
+
+    if opts.optimize
       optimizer = new gg.wf.Optimizer [new gg.wf.rule.RPCify]
       @workflow = optimizer.run @workflow
-      @workflow.run table
+
+    @workflow.run()
 
 
 

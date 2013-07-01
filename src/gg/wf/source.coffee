@@ -25,6 +25,10 @@ class gg.wf.Source extends gg.wf.Node
 class gg.wf.TableSource extends gg.wf.Source
   @ggpackage = "gg.wf.TableSource"
 
+  constructor: ->
+    super
+    @name = @spec.name or "tablesource"
+
   parseSpec: ->
     super
 
@@ -33,6 +37,24 @@ class gg.wf.TableSource extends gg.wf.Source
 
   compute: (table, env, params) ->
     params.get 'table'
+
+class gg.wf.RowSource extends gg.wf.Source
+  @ggpackage = "gg.wf.RowSource"
+
+  constructor: ->
+    super
+    @name = @spec.name or "rowsource"
+
+  parseSpec: ->
+    super
+
+    @params.ensure "rows", ["array", "row"], null
+    unless @params.get('rows')?
+      throw Error("RowSource needs a table as parameter")
+
+  compute: (table, env, params) ->
+    params.get 'table'
+
 
 
 class gg.wf.CsvSource extends gg.wf.Source
@@ -58,13 +80,35 @@ class gg.wf.CsvSource extends gg.wf.Source
 
 
 class gg.wf.SQLSource extends gg.wf.Source
+  @ggpackage = "gg.wf.SQLSource"
+
+  constructor: (@spec) ->
+    super
+    @name = "SQLSource"
+
   parseSpec: ->
     super
     @params.put "location", "server"
+    @params.ensure "uri", ["conn", "connection", "url"], null
+    @params.ensure "query", ["q"], null
+
+    unless @params.get("uri")?
+      throw Error "SQLSource needs a connection URI: params.put 'uri', <URI>"
+    unless @params.get("query")?
+      throw Error "SQLSource needs a query string"
 
   compute: (table, env, params) ->
-    throw Error()
+    pg = require "pg"
+    pg.Client params.get("uri"), (err, result) =>
+      if err?
+        throw Error err
 
-# CSVSource
-# JDBC/SQLSource
+      table = gg.data.RowTable.fromArray result.rows
+      env = new gg.wf.Env
+      data = new gg.wf.Data table, env
+      outputs = [data]
+      @output 0, outputs
+      client.end()
+
+
 # MapSource
