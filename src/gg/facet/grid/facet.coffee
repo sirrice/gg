@@ -11,11 +11,7 @@ class gg.facet.grid.Facets extends gg.facet.base.Facets
     @layout2 = new gg.facet.grid.Layout(
       name: 'facet-layout2'
       params: @layoutParams).compile()
+    @renderpanes = new gg.facet.pane.Svg(
+        name: 'render-panes').compile()
 
-
-
-  renderPanes: ->
-    new gg.facet.pane.Svg(
-      name: 'render-panes'
-      params:
-        clientonly: yes).compile()
+  renderPanes: -> @renderpanes

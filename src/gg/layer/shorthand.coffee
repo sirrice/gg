@@ -234,7 +234,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
     # render: render geometries
     nodes.push makeStdOut "pre-render"
-      clientonly: yes
+      location: "client"
     nodes.push @geom.render
 
 

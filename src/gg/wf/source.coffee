@@ -25,7 +25,7 @@ class gg.wf.Source extends gg.wf.Node
 class gg.wf.TableSource extends gg.wf.Source
   @ggpackage = "gg.wf.TableSource"
 
-  constructor: (@spec) ->
+  parseSpec: ->
     super
 
     unless @params.contains 'table'
@@ -41,12 +41,30 @@ class gg.wf.CsvSource extends gg.wf.Source
 
   constructor: (@spec) ->
     super
+    @name = "CSVSource"
 
+  parseSpec: ->
+    super
     unless @params.contains 'url'
       throw Error("CsvSource needs a URL")
 
-  compute: ->
-    throw Error("not implemented")
+  compute: (table, env, params) ->
+    url = params.get("url")
+    d3.csv url, (arr) =>
+      table = gg.data.RowTable.fromArray arr
+      env = new gg.wf.Env
+      data = new gg.wf.Data table, env
+      outputs = [ data ]
+      @output 0, outputs
+
+
+class gg.wf.SQLSource extends gg.wf.Source
+  parseSpec: ->
+    super
+    @params.put "location", "server"
+
+  compute: (table, env, params) ->
+    throw Error()
 
 # CSVSource
 # JDBC/SQLSource

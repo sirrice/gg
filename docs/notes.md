@@ -10,6 +10,20 @@ Desired Features
   * ggplot2-like interface
 1. Node-failure tolerance.  If a node throws an exception, dont block workflow on the next barrier, keep going.
 
+July 1, 2013
+----------------
+
+Added hooks in logger so that debugging levels can be specified through the `debug` components of gg spec.  Each key/val pair specifies a class path prefix and the debugging level:
+    
+    {
+        debug: {
+            "gg":        gg.util.Log.ERROR   // by default, only show errors
+            "gg.wf":     gg.util.Log.DEBUG   // show all log msgs in gg.wf package
+            "gg.wf.rpc": gg.util.log.ERROR   // but only errors in rpc package
+        }
+    }      
+
+Added node->[list of nodes] optimizer rule.
 
 June 27, 2013
 ----------------

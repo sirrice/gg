@@ -16,7 +16,7 @@ class gg.geom.Render extends gg.core.XForm
 
   parseSpec: ->
     super
-    @params.put "clientonly", yes
+    @params.put "location", "client"
 
   svg: (table, env, node) -> env.get('svg').pane
 

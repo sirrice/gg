@@ -80,8 +80,6 @@ class gg.core.Graphic
 
 
     multicast = new gg.wf.Multicast
-      params:
-        clientonly: yes
     wf.node multicast
     wf.connectBridge prev, multicast if prev?
 
@@ -108,18 +106,21 @@ class gg.core.Graphic
           svg:
             base: @svg
           options: @options
-        clientonly: yes
+        location: 'client'
 
   renderGuides: -> null
 
   inputToTable: (input, cb) ->
     if _.isArray input
       table = gg.data.RowTable.fromArray input
+      cb table
     else if _.isSubclass input, gg.data.Table
       table = input
+      cb table
     else if _.isString input
-      null
-    cb table
+      d3.csv input, (arr) ->
+        table = gg.data.RowTable arr
+        cb(table)
 
 
   render: (@svg, input) ->
@@ -129,7 +130,7 @@ class gg.core.Graphic
       @compile()
 
       optimizer = new gg.wf.Optimizer [new gg.wf.rule.RPCify]
-      @workflow = optimizer.run @workflow
+      #@workflow = optimizer.run @workflow
       @workflow.run table
 
 

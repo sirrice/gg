@@ -65,7 +65,7 @@ build = (callback) ->
     #  commands.push 'cp src/manifest.json build/'
     commands.push 'cp -r src/html build/'
     commands.push 'cp -r src/js build/'
-    #commands.push 'cp -r src/data build/'
+    commands.push 'cp -r src/data build/'
     # TODO: consider optipng
     #commands.push 'cp -r src/images build/'
 

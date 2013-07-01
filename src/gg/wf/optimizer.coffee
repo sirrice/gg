@@ -74,7 +74,7 @@ class gg.wf.Optimizer
 
   @rpcify: (node) ->
     return node if /RPC/.test node.constructor.name
-    return node if node.params.get('clientonly')
+    return node if node.params.get('location') is "client"
 
     klass = if node.type == 'barrier'
       gg.wf.RPCBarrier

@@ -5,7 +5,7 @@ class gg.core.Render extends gg.core.BForm
 
   parseSpec: ->
     super
-    @params.put "clientonly", yes
+    @params.put "location", 'client'
 
   compute: (tables, envs, params) ->
     env = _.first envs

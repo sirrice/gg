@@ -5,7 +5,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
 
   parseSpec: ->
     super
-    @params.put "clientonly", yes
+    @params.put "location", "client"
 
   # Create SVG elements for all facets, axes, and panes
   # Does not render the geometries, simply allocates them

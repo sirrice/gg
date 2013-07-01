@@ -6,7 +6,7 @@ class gg.wf.rule.RPCify extends gg.wf.rule.Node
     canRpcify = (node) ->
       not _.any [
         /RPC/.test node.constructor.name
-        node.params.get('clientonly')
+        node.params.get('location') is "client"
       ]
 
     if canRpcify node

@@ -88,7 +88,7 @@ class gg.facet.base.Facets
       showXTicks: _.findGood [@spec.showXTicks, true]
       showYTicks: _.findGood [@spec.showYTicks, true]
       options: @g.options
-      clientonly: yes
+      location: "client"
     }
 
 
