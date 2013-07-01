@@ -32,7 +32,6 @@ class gg.wf.TableSource extends gg.wf.Source
       throw Error("TableSource needs a table as parameter")
 
   compute: (table, env, params) ->
-    console.log params
     params.get 'table'
 
 

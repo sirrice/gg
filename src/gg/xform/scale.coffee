@@ -11,10 +11,6 @@ class gg.xform.ScalesSchema extends gg.core.XForm
     scaleset = @scales table, env, params
     posMapping = env.get 'posMapping'
     log = @log
-    log.level = gg.util.Log.DEBUG
-
-    log scaleset
-    log env
 
     _.each table.colNames(), (attr) ->
       tabletype = table.schema.type attr

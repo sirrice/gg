@@ -48,7 +48,7 @@ class gg.stat.Stat extends gg.core.XForm
 
     klass = klasses[type] or gg.stat.IdentityStat
     ret = new klass spec
-    console.log "klass #{klass.name} from type: #{type}"
+    @log "klass #{klass.name} from type: #{type}"
     ret
 
 

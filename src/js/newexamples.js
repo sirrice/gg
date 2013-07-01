@@ -232,8 +232,8 @@ var geoms = {
 };
 
 var selected_geoms = {
-  point: false,
-  interval: true,
+  point: true,
+  interval: false,
   boxplot:false,
   line: false,
   jitter:false,
@@ -279,9 +279,11 @@ var selected_geoms = {
       specs = _.flatten([specs]);
       specs = {layers: specs};
     }
+    var Log = gg.util.Log;
     specs.debug = {
-      "": gg.util.Log.ERROR,
-      "gg.wf": gg.util.Log.DEBUG
+      "": Log.ERROR,
+      "gg.util.text": Log.ERROR,
+      "gg.facet.grid": Log.ERROR
 
     }
     render(specs);
@@ -377,7 +379,7 @@ var selected_geoms = {
     //
     // Generate random data with float attributes: d, r, g, f, t
     //
-    var npts = 1000;
+    var npts = 500;
     bigdata = _.map(_.range(0, npts), function(d) {
       g = Math.floor(Math.random() * 3) + 1;
       f = Math.floor(Math.random() * 3);

@@ -2,6 +2,8 @@
 
 
 class gg.facet.grid.Facets extends gg.facet.base.Facets
+  @ggpackage = "gg.facet.grid.Facets"
+
   constructor: ->
     super
 

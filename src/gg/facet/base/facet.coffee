@@ -92,7 +92,6 @@ class gg.facet.base.Facets
     }
 
 
-    @log @renderParams
 
 
 

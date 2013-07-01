@@ -14,6 +14,7 @@ class gg.core.Layout extends gg.core.BForm
     facetC = new gg.core.Bound 0, 0, w, h
 
 
+    @log options
     unless options.minimal
       title = options.title
       if title?

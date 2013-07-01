@@ -111,7 +111,7 @@ class gg.facet.base.Layout extends gg.core.BForm
 
       yAxisLabelC = container.yAxisC()
       yAxisLabelC = new Bound yAxisLabelC.y0, -yAxisLabelC.x0
-      yAxisLabelC.d em/2, (h-2*titleH)/2
+      yAxisLabelC.d -em/2, (h-2*titleH)/2
 
       plotC = container.drawC()
 

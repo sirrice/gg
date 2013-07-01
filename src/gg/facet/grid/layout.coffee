@@ -11,7 +11,6 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
   layoutPanes: (tables, envs, params, lc) ->
     # Setup Variables
     log = @log
-    log.level = 0
     container = lc.plotC
     [w,h] = [container.w(), container.h()]
     paddingPane = params.get('paddingPane')

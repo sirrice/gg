@@ -66,6 +66,7 @@
 #
 class gg.scale.Scale
   @ggpackage = 'gg.scale.Scale'
+  @log = gg.util.Log.logger @ggpackage, "scale"
   @aliases = "scale"
   _id: 0
 
@@ -188,7 +189,7 @@ class gg.scale.Scale
         if type is gg.data.Schema.ordinal
           klass = gg.scale.Ordinal
 
-    gg.util.Log.log "Scale: defaultFor(#{aes}, #{type}) -> #{klass.name}"
+    @log "Scale: defaultFor(#{aes}, #{type}) -> #{klass.name}"
 
     s = new klass {aes: aes, type: type}
     s

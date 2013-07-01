@@ -3,6 +3,7 @@ _ = require "underscore"
 
 class gg.util.Textsize
   @log = gg.util.Log.logger "gg.util.Textsize", "Textsize"
+
   @_exSizeCache = {}
   @_defaultWidths = (->
     defaultWidths = {}
@@ -30,6 +31,7 @@ class gg.util.Textsize
   # @param opts css attributes
   # @return {width: [pixels], height: [pixels]}
   @textSize: (text, opts={}) ->
+    log = gg.util.Textsize.log
     try
       body = document.getElementsByTagName("body")[0]
       div = document.createElement("span")
@@ -41,7 +43,6 @@ class gg.util.Textsize
         position: "absolute"
         left: -10000000
       _.extend css, opts
-      #div.style = css
       $(div).css css
       $(div).attr css
 
@@ -49,8 +50,9 @@ class gg.util.Textsize
       width = $(div).width()
       height = $(div).height()
       #body.removeChild div
-      console.log "textsize"
-      console.log div
+
+      log "textsize of #{text} with #{JSON.stringify opts}"
+      log div
 
       if _.any [width, height], ((v) -> _.isNaN(v) or v is 0)
         throw Error("exSize: width(#{width}), height(#{height})")
@@ -62,14 +64,15 @@ class gg.util.Textsize
         h: height
       ret
     catch error
-      log = gg.util.Textsize.log
       fontsize =
         if 'font-size' of opts
           opts['font-size']
         else
           '12pt'
       defaults = gg.util.Textsize.exDefault fontsize
-      log.warn "textSize defaults: #{text}\t#{defaults.w} x #{defaults.h}.  error: #{error}"
+      log = gg.util.Textsize.log
+      log.warn "default textsz: #{text}\t#{defaults.w} x #{defaults.h}.  err: #{error}"
+      throw error
       defaults.width = defaults.w = defaults.width * text.length
       defaults
 

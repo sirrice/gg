@@ -79,7 +79,11 @@ class gg.core.Graphic
       prev = node
 
 
+    # XXX: why does this need to be on the client? not clear
+    #      multicast exports data clones to the same output port (facet)
     multicast = new gg.wf.Multicast
+      params:
+        location: "client"
     wf.node multicast
     wf.connectBridge prev, multicast if prev?
 
@@ -130,7 +134,7 @@ class gg.core.Graphic
       @compile()
 
       optimizer = new gg.wf.Optimizer [new gg.wf.rule.RPCify]
-      #@workflow = optimizer.run @workflow
+      @workflow = optimizer.run @workflow
       @workflow.run table
 
 

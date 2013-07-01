@@ -3,7 +3,7 @@ Desired Features
 
 1. SQL source operator.  Server only
 1. Compile a server-side source + map/group operator into a SQL statement
-1. IMplement a generalized Group-by aggregate operator
+1. Implement a generalized Group-by aggregate operator
 1. Schema based provenance.  Use to do between-operator schema mapping
 1. Data provenance to map from dom element to data and back
 1. Better JS interface
@@ -25,6 +25,8 @@ Added hooks in logger so that debugging levels can be specified through the `deb
 
 Added node->[list of nodes] optimizer rule.
 
+Switched node location from "clientonly" flag to "location = client/server" key/val pair.
+
 June 27, 2013
 ----------------
 
@@ -40,8 +42,8 @@ Sucessfully switched to simpler model.  Currently
 
 Next step -- operator to SQL mapping
 
-1. set server-side only operator
-1. node->node rule
+1. <strike>set server-side only operator</strike>
+1. <strike>node->node rule</strike>
 
 Misc
 

@@ -22,7 +22,6 @@ class gg.geom.reparam.Rect extends gg.core.XForm
 
       # XXX: assume xs is numerical!!
       xs = _.uniq(subtable.getColumn("x")).sort (a,b)->a-b
-      console.log xs
       diffs = _.map _.range(xs.length-1), (idx) ->
         xs[idx+1]-xs[idx]
       mindiff = _.mmin diffs or 1
@@ -34,7 +33,7 @@ class gg.geom.reparam.Rect extends gg.core.XForm
     minY = yscale.minDomain()
     minY = 0
     getHeight = (row) -> yscale.scale(Math.abs(yscale.invert(row.get('y')) - minY))
-    console.log "mindiff: #{mindiff}\twidth: #{width}"
+    @log "mindiff: #{mindiff}\twidth: #{width}"
 
 
     mapping =

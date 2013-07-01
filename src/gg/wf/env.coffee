@@ -20,8 +20,8 @@ class gg.wf.EnvPut extends gg.wf.Exec
     @params.ensure 'pairs', [], {}
 
   compute: (table, env, params) ->
-    _.each params.get('pairs'), (val, key) ->
-      console.log "envput: #{key} -> #{val}"
+    _.each params.get('pairs'), (val, key) =>
+      @log "envput: #{key} -> #{val}"
       env.put key, val
     table
 

@@ -29,8 +29,6 @@ class gg.scale.train.Pixel extends gg.core.BForm
     # 3) merge bounds with existing scales
     # 4) map tables once to invert using old scales + apply new scales
 
-    @log.level = gg.util.Log.DEBUG
-
     fOldScaleSet = ([t, e, info]) =>
       #scaleset = @scales info.facetX, info.facetY, info.layer
       scaleset = e.get 'scales'
@@ -102,7 +100,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
         @log "rescale: new: #{scale.toString()}"
 
       scaleset.useScales t, posMapping, rescale
-      console.log scaleset.toString()
+      @log scaleset.toString()
       t.map mappingFuncs
       t
 

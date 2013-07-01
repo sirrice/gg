@@ -174,7 +174,7 @@ class gg.scale.Set
         scale = @scale aes, gg.data.Schema.unknown, posMapping
       else
         tabletype = table.schema.type aes
-        console.log "scaleset doesn't contain #{aes} creating using type #{tabletype}"
+        @log "scaleset doesn't contain #{aes} creating using type #{tabletype}"
         scale = @scale aes, tabletype, posMapping
 
       f table, scale, aes
