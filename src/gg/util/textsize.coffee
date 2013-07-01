@@ -2,7 +2,7 @@ _ = require "underscore"
 
 
 class gg.util.Textsize
-  @log = gg.util.Log.logger "Textsize"
+  @log = gg.util.Log.logger "gg.util.Textsize", "Textsize"
   @_exSizeCache = {}
   @_defaultWidths = (->
     defaultWidths = {}

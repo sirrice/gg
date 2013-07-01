@@ -115,7 +115,7 @@ class gg.scale.Scale
     @domainUpdated = _.findGood [@spec.domainUpdated, false]
     @rangeUpdated = _.findGood [@spec.rangeUpdated, false]
 
-    @log = gg.util.Log.logger "Scale #{@aes}.#{@id} (#{@type},#{@constructor.name})", gg.util.Log.WARN
+    @log = gg.util.Log.logger @ggpackage, "Scale #{@aes}.#{@id} (#{@type},#{@constructor.name})"
 
     # copy over other spec key-val pairs?
     # for key, val of spec

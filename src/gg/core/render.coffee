@@ -8,8 +8,6 @@ class gg.core.Render extends gg.core.BForm
     @params.put "clientonly", yes
 
   compute: (tables, envs, params) ->
-    console.log params
-    console.log @location
     env = _.first envs
     svg = env.get('svg').base
     lc = env.get 'lc'

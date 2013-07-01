@@ -2,7 +2,8 @@
 #<< gg/data/schema
 
 class gg.data.Row
-  @log = gg.util.Log.logger "Row"
+  @ggpackage = "gg.data.Row"
+  @log = gg.util.Log.logger @ggpackage, "row"
   @isNested = (o) -> _.isObject(o) and not _.isArray(o)
 
   constructor: (@data, @schema) ->

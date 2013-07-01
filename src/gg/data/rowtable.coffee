@@ -120,7 +120,7 @@ class gg.data.RowTable extends gg.data.Table
     _.each groups, (rows, jsonKey) ->
       _.each rows, (row) -> row.rmColumns cols
       partition = new gg.data.RowTable schema, rows
-      gg.wf.Stdout partition, null, 5, gg.util.Log.logger('partition')
+      gg.wf.Stdout partition, null, 5, @log
       ret.push {key: keys[jsonKey], table: partition}
     ret
 

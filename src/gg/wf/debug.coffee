@@ -11,7 +11,7 @@ class gg.wf.Stdout extends gg.wf.Exec
     @params.ensureAll
       n: [ [], null ]
       aess: [ [], null ]
-    @log = gg.util.Log.logger "StdOut: #{@name}-#{@id}"
+    @log = gg.util.Log.logger @constructor.ggpackage, "StdOut: #{@name}-#{@id}"
 
   compute: (table, env, params) ->
     @log "facetX: #{env.get("facetX")}\tfacetY: #{env.get("facetY")}"
@@ -22,7 +22,7 @@ class gg.wf.Stdout extends gg.wf.Exec
     if _.isArray table
       _.each table, (t) -> gg.wf.Stdout.print t, aess, n, log
 
-    log = gg.util.Log.logger("stdout") unless log?
+    log = gg.util.Log.logger(@ggpackage, "stdout") unless log?
     n = if n? then n else table.nrows()
     blockSize = Math.max(Math.floor(table.nrows() / n), 1)
     idx = 0

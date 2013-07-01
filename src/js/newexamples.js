@@ -279,6 +279,11 @@ var selected_geoms = {
       specs = _.flatten([specs]);
       specs = {layers: specs};
     }
+    specs.debug = {
+      "": gg.util.Log.ERROR,
+      "gg.wf": gg.util.Log.DEBUG
+
+    }
     render(specs);
   }
 

@@ -44,6 +44,7 @@
 
 
 class gg.scale.Scales
+  @ggpackage = "gg.scale.Scales"
 
   constructor: (@g, @spec) ->
     @scalesConfig = null
@@ -69,7 +70,7 @@ class gg.scale.Scales
         config: @scalesConfig).compile()
 
 
-    @log = gg.util.Log.logger("scales")
+    @log = gg.util.Log.logger @ggpackage, "scales"
     @log.level = gg.util.Log.DEBUG
 
 

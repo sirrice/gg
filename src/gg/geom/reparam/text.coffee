@@ -4,6 +4,7 @@
 class gg.geom.reparam.Text extends gg.core.XForm
   @ggpackage = "gg.geom.reparam.Text"
 
+
   defaults: ->
     group: "1"
 
@@ -27,7 +28,6 @@ class gg.geom.reparam.Text extends gg.core.XForm
       text: gg.data.Schema.ordinal
 
   compute: (table, env, params) ->
-    gg.wf.Stdout.print table, null, 5, gg.util.Log.logger("text")
     attrs = ['x', 'y', 'text']
     inArr = _.map attrs, ((attr)->table.schema.inArray attr)
     unless _.all(inArr) or not (_.any inArr)

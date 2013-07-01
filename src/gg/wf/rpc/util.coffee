@@ -24,16 +24,13 @@ class gg.wf.rpc.Util
 
     mergeREs = (arr, res) ->
       unless _.isArray res
-        console.log arr
         gg.wf.Inputs.mapLeaves arr, (data) ->
-          console.log data
           data.env.merge res
         return
 
       if arr.length != res.length
-        console.log "arrlength: #{arr.length}"
-        console.log "reslength: #{res.length}"
-        throw Error("lengths don't match between daat and removedEls")
+        throw Error("rpc.deserialize: data len (#{arr.length}) !=
+          removedEls len (#{res.length})")
 
       for idx in _.range(arr.length)
         mergeREs arr[idx], res[idx]

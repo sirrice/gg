@@ -25,7 +25,7 @@
 
 class gg.scale.Config
   @ggpackage = 'gg.scale.Config'
-  @log = gg.util.Log.logger "scaleConfig", gg.util.Log.ERROR
+  @log = gg.util.Log.logger @ggpackage, "scaleConfig"
 
   # @param defaults:        aes -> scale
   # @param layerDefaults:   layer -> {aes -> scale}
@@ -63,10 +63,10 @@ class gg.scale.Config
   @loadSpec: (spec) ->
     ret = {}
     if spec?
-      _.each spec, (scaleSpec, aes) ->
+      _.each spec, (scaleSpec, aes) =>
         scaleSpec = {type: scaleSpec} if _.isString scaleSpec
         scaleSpec = _.clone scaleSpec
-        console.log "resolve: #{aes} -> #{gg.core.Aes.resolve aes}"
+        @log "resolve: #{aes} -> #{gg.core.Aes.resolve aes}"
         _.each gg.core.Aes.resolve(aes), (trueaes) ->
           scaleSpec.aes = trueaes
           scale = gg.scale.Scale.fromSpec scaleSpec

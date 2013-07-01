@@ -21,7 +21,6 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
       total: gg.data.Schema.numeric
 
   compute: (table, env, params) ->
-    @log.level = gg.util.Log.DEBUG
     scales = @scales table, env, params
     xType = table.schema.type 'x'
     xScale = scales.scale 'x', xType

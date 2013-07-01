@@ -12,7 +12,7 @@ class gg.util.Graph
     @id2node = {}
     @pid2cid = {}     # parent id -> child ids
     @cid2pid = {}     # child id -> parent ids
-    @log = gg.util.Log.logger "graph", gg.util.Log.WARN
+    @log = gg.util.Log.logger "gg.util.Graph", "graph"
 
   id: (@idFunc) ->
 

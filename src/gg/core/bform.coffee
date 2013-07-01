@@ -4,6 +4,7 @@
 #
 class gg.core.BForm extends gg.wf.Barrier
   @ggpackage = "gg.core.BForm"
+  @log = gg.util.Log.logger @ggpackage, @ggpackage.substr(@ggpackage.lastIndexOf(".")+1)
 
   parseSpec: ->
     @log "XForm spec: #{JSON.stringify @spec}"

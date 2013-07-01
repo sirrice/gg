@@ -9,8 +9,11 @@ class gg.wf.Optimizer
   run: (flow) ->
     for rule in @rules
       flow = rule.run flow
-    console.log flow
     flow
+
+  ###
+  # Deprecated code below
+  ###
 
   @findSplit: (flow) ->
     isSame = (n1, n2) ->

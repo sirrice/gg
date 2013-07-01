@@ -4,40 +4,42 @@
 #<< gg/layer/array
 
 class gg.layer.Layers
-    constructor: (@g, @spec) ->
-      @layers = []
-      @log = gg.util.Log.logger "Layers", gg.util.Log.WARN
-      @parseSpec()
+  @ggpackage = "gg.layer.Layers"
 
-    parseSpec: ->
-      _.each @spec, (layerspec) => @addLayer layerspec
+  constructor: (@g, @spec) ->
+    @layers = []
+    @log = gg.util.Log.logger @constructor.ggpackage, "Layers"
+    @parseSpec()
 
-    # @return [ [node,...], ...] a list of nodes for each layer
-    compile: ->
-      _.map @layers, (l) =>
-        nodes = l.compile()
-        nodes
+  parseSpec: ->
+    _.each @spec, (layerspec) => @addLayer layerspec
 
-    getLayer: (layerIdx) ->
-      if layerIdx >= @layers.length
-        throw Error("Layer with idx #{layerIdx} does not exist.
-          Max layer is #{@layers.length}")
-      @layers[layerIdx]
+  # @return [ [node,...], ...] a list of nodes for each layer
+  compile: ->
+    _.map @layers, (l) =>
+      nodes = l.compile()
+      nodes
 
-    get: (layerIdx) -> @getLayer layerIdx
+  getLayer: (layerIdx) ->
+    if layerIdx >= @layers.length
+      throw Error("Layer with idx #{layerIdx} does not exist.
+        Max layer is #{@layers.length}")
+    @layers[layerIdx]
 
-    addLayer: (layerOrSpec) ->
-      layerIdx = @layers.length
+  get: (layerIdx) -> @getLayer layerIdx
 
-      if _.isSubclass layerOrSpec, gg.layer.Layer
-        layer = layerOrSpec
-      else
-        spec = _.clone layerOrSpec
-        spec.layerIdx = layerIdx
-        layer = gg.layer.Layer.fromSpec @g, spec
+  addLayer: (layerOrSpec) ->
+    layerIdx = @layers.length
 
-      layer.layerIdx = layerIdx
-      @layers.push layer
+    if _.isSubclass layerOrSpec, gg.layer.Layer
+      layer = layerOrSpec
+    else
+      spec = _.clone layerOrSpec
+      spec.layerIdx = layerIdx
+      layer = gg.layer.Layer.fromSpec @g, spec
+
+    layer.layerIdx = layerIdx
+    @layers.push layer
 
 
 

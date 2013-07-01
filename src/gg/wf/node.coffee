@@ -46,7 +46,7 @@ class gg.wf.Node extends events.EventEmitter
     @params = new gg.util.Params @spec.params
     @params.ensure "klassname", [], @constructor.ggpackage
     logname = "#{@name}-#{@id}\t#{@constructor.name}"
-    @log = gg.util.Log.logger logname, gg.util.Log.WARN
+    @log = gg.util.Log.logger @constructor.ggpackage, logname
 
     @parseSpec()
 

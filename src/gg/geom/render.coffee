@@ -5,11 +5,13 @@
 # group attribute
 #
 class gg.geom.Render extends gg.core.XForm
+  @ggpackage = "gg.geom.Render"
+
   constructor: (@spec={}) ->
     @spec.name = _.findGoodAttr @spec, ['name'], @constructor.name
     super
     @parseSpec()
-    @log = gg.util.Log.logger @spec.name
+    @log = gg.util.Log.logger @constructor.ggpackage, @spec.name
 
 
   parseSpec: ->
@@ -72,7 +74,7 @@ class gg.geom.Render extends gg.core.XForm
       type = _.findGoodAttr spec, ['geom', 'type', 'shape'], 'point'
 
     klass = klasses[type] or gg.geom.svg.Point
-    gg.util.Log.logger("geom.Render") "Render klass #{type} -> #{klass.name}"
+    gg.util.Log.logger(@ggpackage, "Render") "Render klass #{type} -> #{klass.name}"
     new klass spec
 
 

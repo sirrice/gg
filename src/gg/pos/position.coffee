@@ -1,7 +1,7 @@
 #<< gg/core/xform
 
 class gg.pos.Position extends gg.core.XForm
-  @log = gg.util.Log.logger "Position", gg.util.Log.ERROR
+  @ggpackage = "gg.pos.Position"
 
   constructor: (@spec={}) ->
     super

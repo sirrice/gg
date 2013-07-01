@@ -1,7 +1,7 @@
 #<< gg/data/table
 
 class gg.util.Aesmap
-  @log = gg.util.Log.logger "Aesmap"
+  @log = gg.util.Log.logger "gg.util.Aesmap", "Aesmap"
 
   @mappingToFunctions: (table, mapping) ->
     ret = {}

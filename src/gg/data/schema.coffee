@@ -2,7 +2,7 @@
 
 class gg.data.Schema
   @ggpackage = "gg.data.Schema"
-  @log = gg.util.Log.logger "Schema", gg.util.Log.ERROR
+  @log = gg.util.Log.logger @ggpackage, "Schema"
 
   @ordinal = 0
   @numeric = 2

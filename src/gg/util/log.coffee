@@ -2,30 +2,52 @@ _ = require("underscore")
 
 class gg.util.Log
   @DEBUG = 0
-  @WARN = 1
-  @ERROR = 2
+  @INFO = 1
+  @WARN = 2
+  @ERROR = 3
   @loggers = {}
+  @defaults = {}
 
   # static verisons for...
   @logLevel: (level, args...) ->
     @logger().logLevel level, args...
   @log: (args...) -> @logger().log args...
   @debug: (args...) -> @logLevel @DEBUG, args...
+  @info: (args...) -> @logLevel @INFO, args...
   @warn: (args...) -> @logLevel @WARN, args...
   @err: (args...) -> @logLevel @ERROR, args...
   @error: (args...) -> @logLevel @ERROR, args...
 
-  @logger: (logname="", level=gg.util.Log.DEBUG) ->
+  @setDefaults: (defaults) ->
+    @defaults = defaults
+    _.each @loggers, (log, name) =>
+      log.level = @lookupLevel name, log.level
+
+  @lookupLevel: (logname, level=@ERROR) ->
+    logname = logname.toLowerCase()
+    prefixlen = -1
+    _.each @defaults, (defaultLevel, nameprefix) ->
+      nameprefix = nameprefix.toLowerCase()
+      if (nameprefix.length > prefixlen and
+          logname.search("^"+nameprefix) >= 0)
+        level = defaultLevel
+        prefixlen = nameprefix.length
+
+    level
+
+
+  @logger: (logname="", prefix, level=gg.util.Log.ERROR) ->
+    prefix = logname unless prefix?
     loggers = gg.util.Log.loggers
+    level = @lookupLevel logname, level
     unless logname of loggers
-      loggers[logname] = new gg.util.Log logname, level
+      loggers[logname] = new gg.util.Log logname, prefix, level
     return loggers[logname]
 
-  constructor: (@logname, @level=gg.util.Log.DEBUG) ->
+  constructor: (@logname, @prefix, @level=gg.util.Log.ERROR) ->
+    @prefix = @logname unless @prefix?
     callable = (args...) -> callable.debug args...
     _.extend callable, @
-    #for key, val of @
-    #  callable[key] = val
     return callable
 
   # pass through
@@ -39,12 +61,13 @@ class gg.util.Log
         when gg.util.Log.WARN then "W"
         when gg.util.Log.ERROR then "E"
       prefix = "#{prefix} "
-      if @logname != ""
-        prefix = "#{prefix}[#{@logname}]:\t"
+      if @prefix != ""
+        prefix = "#{prefix}[#{@prefix}]:\t"
       args.unshift prefix
       console.log args...
 
   debug: (args...) -> @logLevel gg.util.Log.DEBUG, args...
+  info: (args...) -> @logLevel gg.util.Log.INFO, args...
   warn: (args...) -> @logLevel gg.util.Log.WARN, args...
   err: (args...) -> @logLevel gg.util.Log.ERROR, args...
   error: (args...) -> @logLevel gg.util.Log.ERROR, args...

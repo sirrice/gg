@@ -18,7 +18,7 @@ class gg.scale.Set
     @id = gg.scale.Set::_id
     gg.scale.Set::_id += 1
 
-    @log = gg.util.Log.logger "ScaleSet-#{@id}", gg.util.Log.WARN
+    @log = gg.util.Log.logger @constructor.ggpackage, "ScaleSet-#{@id}"
   _id: 0
 
   clone: () ->

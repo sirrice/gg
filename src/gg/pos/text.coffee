@@ -3,7 +3,6 @@
 class gg.pos.Text extends gg.pos.Position
   @ggpackage = "gg.pos.Text"
   @aliases = ["text"]
-  @log = gg.util.Log.logger("text")
 
   parseSpec: ->
     super

@@ -2,13 +2,11 @@
 
 class gg.coord.Coordinate extends gg.core.XForm
   @ggpackage = "gg.coord.Coordinate"
-
-  @log = gg.util.Log.logger "Coord"
+  @log = gg.util.Log.logger @ggpackage
 
   constructor: (@spec={}) ->
     super
     @parseSpec()
-    @log = gg.util.Log.logger @constructor.name, gg.util.Log.WARN
 
   compute: (table, env, params) -> @map table, env, params
 

@@ -17,6 +17,11 @@ class gg.core.Graphic
 
 
   constructor: (@spec={}) ->
+    # setup debugging
+    @debugspec = @spec.debug or { "": gg.util.Log.WARN }
+    gg.util.Log.setDefaults @debugspec
+
+    # extract specs
     @aesspec = _.findGoodAttr @spec, ["aes", "aesthetic", "mapping"], {}
     @layerspec = @spec.layers or []
     @facetspec = @spec.facets or @spec.facet or {}

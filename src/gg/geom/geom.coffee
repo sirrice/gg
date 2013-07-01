@@ -35,7 +35,8 @@
 # type:   specifies what high level geometry to render
 #
 class gg.geom.Geom
-  @log = gg.util.Log.logger "Geom", gg.util.Log.DEBUG
+  @ggpackage = "gg.geom.Geom"
+  @log = gg.util.Log.logger @ggpackage,  "Geom"
 
   constructor: (@layer, @spec) ->
     @g = @layer.g

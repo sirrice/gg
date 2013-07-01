@@ -31,11 +31,12 @@
 #   }
 #
 class gg.facet.base.Facets
+  @ggpackage = "gg.facet.base.Facets"
   @facetXKey = "facetX"
   @facetYKey = "facetY"
 
   constructor: (@g, @spec={}) ->
-    @log = gg.util.Log.logger "Facets", gg.util.Log.DEBUG
+    @log = gg.util.Log.logger @ggpackage, "Facets"
 
     @parseSpec()
 

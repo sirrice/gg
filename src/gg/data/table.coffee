@@ -18,11 +18,12 @@
 
 
 class gg.data.Table
+  @ggpackage = "gg.data.Table"
 
   @reEvalJS = /^{.*}$/
   @reVariable = /^[a-zA-Z]\w*$/
   @reNestedAttr = /^[a-zA-Z]+\.[a-zA-Z]+$/
-  @log = gg.util.Log.logger "Table", gg.util.Log.ERROR
+  @log = gg.util.Log.logger @ggpackage, "Table"
 
   type: (colname) ->
       val = @get(0, colname)

@@ -34,6 +34,7 @@
 #
 class gg.core.XForm extends gg.wf.Exec
   @ggpackage = 'gg.core.XForm'
+  @log = gg.util.Log.logger @ggpackage, @ggpackage.substr(@ggpackage.lastIndexOf(".")+1)
 
   parseSpec: ->
     @log "XForm spec: #{JSON.stringify @spec}"
@@ -97,13 +98,12 @@ class gg.core.XForm extends gg.wf.Exec
     iSchema = params.get "inputSchema", table, env
     missing = _.reject iSchema, (attr) -> table.contains attr
     if missing.length > 0
-      gg.wf.Stdout.print table, null, 5, gg.util.Log.logger("err")
+      gg.wf.Stdout.print table, null, 5, @log
       throw Error("#{params.get 'name'}: input schema did not contain #{missing.join(",")}")
 
   @addDefaults: (table, env, params, log) ->
     defaults = params.get "defaults", table, env
-    unless log?
-      log = gg.util.Log.logger(params.get 'name')
+    log = @log unless log?
     log "table schema: #{table.schema.toSimpleString()}"
     log "expected:     #{JSON.stringify defaults}"
     _.each defaults, (val, col) =>
