@@ -94,12 +94,18 @@ class gg.wf.Data
   clone: -> new gg.wf.Data @table, @env.clone()
 
   toJSON: ->
-    table: @table.toJSON()
+    tableJson = null
+    if @table?
+      tableJson = @table.toJSON()
+    table: tableJson
     env: @env.toJSON()
 
   @fromJSON: (json) ->
+    table = null
+    if json.table?
+      table = gg.data.RowTable.fromJSON json.table
     new gg.wf.Data(
-      gg.data.RowTable.fromJSON json.table
+      table
       gg.wf.Env.fromJSON json.env
     )
 

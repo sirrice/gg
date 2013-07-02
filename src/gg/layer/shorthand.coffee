@@ -208,7 +208,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeStdOut "post-reparam"
 
 
-    if true or @pos?
+    if @pos?
       nodes.push @pos
       nodes.push makeStdOut "post-position"
 

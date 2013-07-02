@@ -1,8 +1,8 @@
 express = require 'express'
 io = require 'socket.io'
 http = require 'http'
-globals = require '../../globals'
-gg = require '../../ggplotjs2'
+globals = require '../../test/globals'
+gg = require '../../lib/gg-server'
 us = require 'underscore'
 _ = require 'underscore'
 app = express()
@@ -77,6 +77,7 @@ socket.on 'connection', (client) ->
       unless nonce?
         console.log "#{nodeid}:port#{outport}
         Couldn't find a nonce!!"
+      console.log outputs
       console.log "emit to client nonce: #{nonce}"
       client.emit "runflow",
         nodeid: nodeid

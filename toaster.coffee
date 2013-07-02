@@ -5,7 +5,10 @@ toast
       'src/gg': 'gg'
 
   # EXCLUDED FOLDERS (optional)
-  exclude: ['src/gg/old']
+  exclude: [
+    'src/gg/old'
+    "src/gg/server"
+  ]
   # exclude: ['folder/to/exclude', 'another/folder/to/exclude', ... ]
 
 

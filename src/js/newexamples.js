@@ -281,10 +281,7 @@ var selected_geoms = {
     }
     var Log = gg.util.Log;
     specs.debug = {
-      "": Log.ERROR,
-      "gg.util.text": Log.ERROR,
-      "gg.facet.grid": Log.ERROR
-
+      "": Log.ERROR
     }
     render(specs);
   }
@@ -347,8 +344,9 @@ var selected_geoms = {
       $("#examples").empty();
       return d3.select('#examples').append('span');
     };
+    specs.data = bigdata
     var plot = gg(specs);
-    plot.render(ex(), bigdata);
+    plot.render(ex());
 
     return;
 

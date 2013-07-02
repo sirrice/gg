@@ -144,7 +144,7 @@ class gg.core.Graphic
       dataNode = @datas.data()
       @workflow.prepend dataNode
 
-    if opts.optimize
+    if @options.optimize
       optimizer = new gg.wf.Optimizer [new gg.wf.rule.RPCify]
       @workflow = optimizer.run @workflow
 

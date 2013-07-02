@@ -61,8 +61,8 @@ class gg.facet.base.Facets
 
   parseSpec: ->
     @splitParams = new gg.util.Params {
-      x: _.findGood [@spec.x, () -> null]
-      y: _.findGood [@spec.y, () -> null]
+      x: _.findGood [@spec.x, null]
+      y: _.findGood [@spec.y, null]
       scales: _.findGood [@spec.scales, "fixed"]
       type: _.findGood [@spec.type, "grid"]
       sizing: _.findGood [@spec.sizing, @spec.size, "fixed"]
@@ -104,8 +104,8 @@ class gg.facet.base.Facets
     # when using "wrap" (we expect the cross product!)
     facetXKey = gg.facet.base.Facets.facetXKey
     facetYKey = gg.facet.base.Facets.facetYKey
-    x = @splitParams.get('x')
-    y = @splitParams.get('y')
+    x = _.flatten [@splitParams.get('x')]
+    y = _.flatten [@splitParams.get('y')]
     facetXNode = new gg.wf.PartitionCols
       name: 'facet-x'
       params:

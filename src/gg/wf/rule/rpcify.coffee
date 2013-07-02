@@ -16,7 +16,8 @@ class gg.wf.rule.RPCify extends gg.wf.rule.Node
       if mustRpcify node
         node.location = "server"
       else if canRpcify node
-        node.location = "server"
+        #node.location = "server"
+        null
     node
 
 

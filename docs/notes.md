@@ -1,7 +1,8 @@
 Desired Features
 ----------
 
-1. SQL source operator.  Server only
+1. Keep workflow from breaking (not rendering facets) when table contains null values
+1. <strike>SQL source operator.  Server only</strike>
 1. Compile a server-side source + map/group operator into a SQL statement
 1. Implement a generalized Group-by aggregate operator
 1. Schema based provenance.  Use to do between-operator schema mapping
@@ -26,6 +27,33 @@ Added hooks in logger so that debugging levels can be specified through the `deb
 Added node->[list of nodes] optimizer rule.
 
 Switched node location from "clientonly" flag to "location = client/server" key/val pair.
+
+Wrote first version of postgres-source node.  Works unless there are null values in query result:
+
+      {
+        layers: [{ geom: "rect"}],
+        aes: {
+          x: "crime",
+          y: "num"
+        },
+        facets: { y: "day" },
+        data: {
+          type: "jdbc",
+          conn: "postgres://sirrice@localhost:5432/test",
+          q: "select day_week as day, computedcrimecode as crime, count(*) as num 
+              from crime 
+              where computedcrimecode is not null and day_week is not null 
+              group by day, crime;"
+        },
+        opts: {
+          width: 1000,
+          height: 500
+        }
+      };
+
+    
+
+
 
 June 27, 2013
 ----------------

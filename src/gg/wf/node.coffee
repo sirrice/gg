@@ -65,7 +65,15 @@ class gg.wf.Node extends events.EventEmitter
   output: (outidx, data) ->
     listeners = @listeners outidx
     n = listeners.length
-    @log.warn "output: port(#{outidx}) "
+    flat = gg.wf.Inputs.flatten(data)[0]
+    noutputs = flat.length
+    tablesizes = _.map flat, (data) ->
+      if data? and data.table?
+        data.table.nrows()
+      else
+        -1
+    @log.warn "output: port(#{outidx}) ntables: #{noutputs}"
+    @log "tablesizes: #{tablesizes}"
     @emit outidx, @id, outidx, data
     @emit "output", @id, outidx, data
 

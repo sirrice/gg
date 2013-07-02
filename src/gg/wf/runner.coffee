@@ -1,4 +1,5 @@
 #<< gg/util/log
+#<< gg/wf/clearinghouse
 
 
 
@@ -25,8 +26,10 @@
 #   queue.length = 0
 #
 class gg.wf.Runner extends events.EventEmitter
+  @ggpackage = "gg.wf.Runner"
+
   constructor: (@flow, xferControl) ->
-    @log = gg.util.Log.logger "Runner", gg.util.Log.WARN
+    @log = gg.util.Log.logger @constructor.ggpackage, "Runner"
     @done = {}
     @seen = {}
     @setupQueue()
@@ -62,7 +65,7 @@ class gg.wf.Runner extends events.EventEmitter
     @queue.drain = ondrain
 
   runNode: (node) ->
-    @log "#{node.name} in(#{node.inputs.length})
+    @log "runNode: #{node.name} in(#{node.inputs.length})
           out(#{node.nChildren}) running"
     node.run()
 
@@ -79,85 +82,20 @@ class gg.wf.Runner extends events.EventEmitter
 
     yes
 
+  # mark node id as completed
+  setDone: (nodeid) ->
+    if nodeid?
+      @done[nodeid] = yes
+
+  # add node to the queue and see if it will run.
+  tryRun: (node) ->
+    @queue.push node
+
+
   run: () ->
     _.each @flow.sources(), (source) =>
       @log "adding source #{source.name}"
       @queue.push source
-
-
-class gg.wf.ClearingHouse extends events.EventEmitter
-  constructor: (@runner, @xferControl) ->
-    @flow = @runner.flow
-    @log = gg.util.Log.logger "clearinghouse"
-
-
-  push: (nodeid, outport, outputs) ->
-    if @isSink(nodeid)
-      @log "sink node: #{@flow.nodeFromId(nodeid).name} #{nodeid}"
-      @emit "output", nodeid, outport, outputs
-    else if @clientToServer nodeid, outport
-      @xferControl nodeid, outport, outputs
-    else if @serverToClient nodeid, outport
-      @xferControl nodeid, outport, outputs
-    else
-      @runner.done[nodeid] = yes
-      @routeNodeResult nodeid, outport, outputs
-
-
-  clientToServer: (nodeid, outport) ->
-    node = @flow.nodeFromId nodeid
-    @log "clienttoserver: #{[node.name, nodeid, outport, node.location]}"
-    return no unless node.location is "client"
-    children = @flow.portGraph.children
-      n: node
-      p: outport
-    o = children[0]
-    child = o.n
-    inport = o.p
-
-    @log "clienttoserver: child: #{child.name} #{child.location}"
-    child.location is "server"
-
-
-  serverToClient: (nodeid, outport) ->
-    node = @flow.nodeFromId nodeid
-    @log "servertoclient: #{[node.name, nodeid, outport, node.location]}"
-    return no unless node.location is "server"
-    children = @flow.portGraph.children({n: node, p: outport})
-    o = children[0]
-    child = o.n
-    inport = o.p
-
-    @log "servertoclient: #{[node.name, nodeid, outport, node.location]}"
-    @log "servertoclient: child: #{child.name} #{child.location}"
-    child.location is "client"
-
-  isSink: (nodeid) ->
-    nodeid in _.map(@flow.sinks(), (sink) -> sink.id)
-
-  routeNodeResult: (nodeid, outport, input) ->
-    node = @flow.nodeFromId nodeid
-    children = @flow.portGraph.children
-      n: node
-      p: outport
-    if children.length != 1
-      throw Error("children should only be 1")
-
-    o = children[0]
-    child = o.n
-    inport = o.p
-
-    @log "setInput #{node.name}:#{outport} ->
-          #{child.name}:#{inport} #{child.location}"
-
-    child.setInput inport, input
-
-    if child.ready()
-      @log "\t#{child.name} adding"
-      @runner.queue.push child
-    else
-      @log "\t#{child.name} not ready
-        #{child.nReady()} of #{child.nParents} ready"
 
 
 

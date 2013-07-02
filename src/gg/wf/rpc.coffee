@@ -81,7 +81,7 @@ class gg.wf.RPC extends events.EventEmitter
       cb respData.status if _.isFunction cb
       @emit "register", respData.status
 
-  dregister: (flowid, cb) ->
+  deregister: (flow, cb) ->
     payload =
       flowid: flow.id
 

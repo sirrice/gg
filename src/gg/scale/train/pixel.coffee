@@ -87,7 +87,6 @@ class gg.scale.train.Pixel extends gg.core.BForm
 
     fRescale = ([t, e, info, oldScales]) =>
       @log "fRescale called layer: #{e.get "layer"}"
-      @log t.getColumn("x")[0...10]
       scaleset = e.get 'scales'
       posMapping = e.get 'posMapping'
       mappingFuncs = {}

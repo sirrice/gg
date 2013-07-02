@@ -1,6 +1,7 @@
 #<< gg/wf/node
 
-class gg.wf.Source extends gg.wf.Node
+
+class gg.wf.Source extends gg.wf.Exec
   @ggpackage = "gg.wf.Source"
 
   constructor: (@spec={}) ->
@@ -9,18 +10,9 @@ class gg.wf.Source extends gg.wf.Node
     @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
 
 
-  compute: ->
+  compute: (table, env, params) ->
     throw Error("Source not setup to generate tables")
 
-  ready: -> yes
-
-  run: ->
-    env = new gg.wf.Env
-    table = @compute null, env, @params
-
-    outputs = [ new gg.wf.Data(table, env) ]
-    @output 0, outputs
-    outputs
 
 class gg.wf.TableSource extends gg.wf.Source
   @ggpackage = "gg.wf.TableSource"
@@ -36,7 +28,7 @@ class gg.wf.TableSource extends gg.wf.Source
       throw Error("TableSource needs a table as parameter")
 
   compute: (table, env, params) ->
-    params.get 'table'
+    params.get('table')
 
 class gg.wf.RowSource extends gg.wf.Source
   @ggpackage = "gg.wf.RowSource"
@@ -53,7 +45,7 @@ class gg.wf.RowSource extends gg.wf.Source
       throw Error("RowSource needs a table as parameter")
 
   compute: (table, env, params) ->
-    params.get 'table'
+    gg.data.RowTable.fromArray params.get('rows')
 
 
 
@@ -69,13 +61,14 @@ class gg.wf.CsvSource extends gg.wf.Source
     unless @params.contains 'url'
       throw Error("CsvSource needs a URL")
 
-  compute: (table, env, params) ->
-    url = params.get("url")
+  run: ->
+    url = @params.get("url")
     d3.csv url, (arr) =>
       table = gg.data.RowTable.fromArray arr
-      env = new gg.wf.Env
-      data = new gg.wf.Data table, env
-      outputs = [ data ]
+
+      f = (data) =>
+        new gg.wf.Data table, data.env
+      outputs = gg.wf.Inputs.mapLeaves @inputs[0], f
       @output 0, outputs
 
 
@@ -97,18 +90,32 @@ class gg.wf.SQLSource extends gg.wf.Source
     unless @params.get("query")?
       throw Error "SQLSource needs a query string"
 
-  compute: (table, env, params) ->
-    pg = require "pg"
-    pg.Client params.get("uri"), (err, result) =>
-      if err?
-        throw Error err
+  run: ->
+    unless pg?
+      throw Error("pg is not allowed on the client side")
 
-      table = gg.data.RowTable.fromArray result.rows
-      env = new gg.wf.Env
-      data = new gg.wf.Data table, env
-      outputs = [data]
-      @output 0, outputs
-      client.end()
+    uri = @params.get "uri"
+    query = @params.get "q"
+    @log.level = 0
+    @log pg
+    @log "uri: #{uri}"
+    @log "query: #{query}"
+    client = new pg.Client uri
+    client.connect (err) =>
+      throw Error(err) if err?
+
+      client.query query, (err, result) =>
+        throw Error err if err?
+
+        rows = result.rows
+        table = gg.data.RowTable.fromArray rows
+        client.end()
+
+        f = (data) =>
+          new gg.wf.Data table, data.env
+        outputs = gg.wf.Inputs.mapLeaves @inputs[0], f
+        @log outputs
+        @output 0, outputs
 
 
 # MapSource

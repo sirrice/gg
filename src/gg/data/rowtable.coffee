@@ -270,6 +270,8 @@ class gg.data.RowTable extends gg.data.Table
         _.flatten _.times @nrows(), (idx) => @get(idx, col)
       else
         _.times @nrows(), (idx) => @get(idx, col)
+    else if @nrows() == 0 and @schema.contains col
+      []
     else
       if @schema.contains col and @schema.isArray col
         []

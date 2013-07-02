@@ -80,7 +80,6 @@ class gg.core.Data
 
 
   setDefault: (spec) ->
-    console.log gg.core.Data
     @defaults = gg.core.Data.loadSpec spec
 
   addLayerDefaults: (layer) ->
@@ -101,9 +100,12 @@ class gg.core.Data
     @log spec
 
     unless spec?
-      throw Error "no data defined"
+      @log.warn "no data defined"
+      return null
+
     unless spec.type?
-      throw Error "spec.type not defined"
+      @log.warn "spec.type not defined"
+      return null
 
     # to gg.wf.Source object
     node = switch spec.type
@@ -127,7 +129,10 @@ class gg.core.Data
           params: spec
 
       when "function"
-        throw Error "not implemented"
+        null
+
+      else
+        null
 
     node
 

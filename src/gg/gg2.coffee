@@ -6,6 +6,13 @@ _ = require 'underscore'
 io = require 'socket.io-client'
 async = require 'async'
 
+# Wrap all the server side node-module includes here
+try
+  pg = require "pg"
+catch err
+  pg = null
+  # silently eat the error
+
 # Need to do this because underscore is an asshole and sets the
 # exports variable if we don't
 exports = module.exports = @

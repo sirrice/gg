@@ -73,13 +73,15 @@ build = (callback) ->
     copy_vendor commands
 
     #commands.push "#{coffeebin} --output build/js --compile src/gg/*.coffee"
-    commands.push 'cp build/js/ggplotjs2.js .'
     commands.push "#{coffeebin} --output test/js --compile  test/gg/*.coffee"
-    commands.push "./node_modules/browserify/bin/cmd.js -e ggplotjs2.js >  build/js/gg.js"
+    commands.push 'cp build/js/ggplotjs2.js lib/'
+    commands.push "./node_modules/browserify/bin/cmd.js -e lib/ggplotjs2.js >  build/js/gg.js"
 
 
     # copy final sources into lib/
-    commands.push "cp build/js/gg.js lib/"
+    commands.push "cp build/js/gg.js lib/gg-client.js"
+    commands.push "cp build/js/gg.js lib/gg.js"
+    commands.push "cp build/js/ggplotjs2.js lib/gg-server.js"
     commands.push "cp build/css/gg.css lib/"
 
 

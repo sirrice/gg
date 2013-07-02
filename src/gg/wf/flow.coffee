@@ -33,7 +33,7 @@ class gg.wf.Flow extends events.EventEmitter
   constructor: (@spec={}) ->
     @id = gg.wf.Flow.id()
     @graph = new gg.util.Graph (node)->node.id
-    @log = gg.util.Log.logger "flow ", gg.util.Log.DEBUG
+    @log = gg.util.Log.logger @constructor.ggpackage, "flow"
 
     # dynamically instantiated
     # nodes are {n: nodeid, p: port}
@@ -338,17 +338,15 @@ class gg.wf.Flow extends events.EventEmitter
   # add a parent to every existing source
   prepend: (node) ->
     _.each @sources(), (source) =>
-      @connect tablesource, source
-      @connectBridge tablesource, source
+      @connect node, source
+      @connectBridge node, source
 
 
   # Execute this flow on the client side
-  run: (table) ->
-    if table?
-      tablesource = new gg.wf.TableSource
-        params:
-          table: table
-      @prepend tablesource
+  run: ->
+    unless _.all(@sources(), (s) -> s.type == 'start')
+      start = new gg.wf.Start
+      @prepend start
 
     unless @sources().length == 1
       throw Error()
@@ -362,22 +360,26 @@ class gg.wf.Flow extends events.EventEmitter
       params:
         uri: "http://localhost:8000"
 
-    rpc.on "register", (status) ->
-      console.log "registered! #{status}"
+    rpc.on "register", (status) =>
+      @log "flow registered!"
+      runner.run()
+
     rpc.on "runflow", (nodeid, outport, outputs) =>
       node = @nodeFromId nodeid
       @log.warn "runflow result: #{[node.name, nodeid, outport, node.location]}"
+      @log outputs
       runner.ch.routeNodeResult nodeid, outport, outputs
 
-    rpc.register @
 
     runner.ch.xferControl = (nodeid, outport, outputs) =>
       rpc.run @id, nodeid, outport, outputs
 
     runner.on "output", (idx, data) =>
       @emit "output", idx, data
+
     runner.on "done", () =>
-      rpc.deregister @id
+      rpc.deregister @
       @emit "done", yes
-    runner.run()
+
+    rpc.register @
 

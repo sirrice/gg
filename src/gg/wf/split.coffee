@@ -34,6 +34,8 @@ class gg.wf.Split extends gg.wf.Node
 
     gbkeyName = params.get 'gbkeyName'
 
+    @log "#{groups.length} partitions"
+
     datas = _.map groups, (group, idx) =>
       subtable = group.table
       key = group.key
@@ -92,17 +94,28 @@ class gg.wf.PartitionCols extends gg.wf.Split
 
   compute: (table, env, params) ->
     cols = params.get 'cols'
-    f = (row) -> _.first _.map cols, ((col) -> row.get(col))
-    groups = table.split f
     gbkeyName = params.get 'gbkeyName'
-    datas = _.map groups, (group, idx) =>
-      subtable = group.table
-      key = group.key
-      newData = new gg.wf.Data subtable, env.clone()
-      newData.env.put gbkeyName, key
-      newData
+    @log "split on cols: #{cols}"
 
-    datas
+    if not(cols? and cols[0]?)
+      @log "no cols, using original table"
+      data = new gg.wf.Data table, env.clone()
+      data.env.put gbkeyName, null
+      datas = [ data ]
+      datas
+    else
+      f = (row) -> _.first _.map cols, ((col) -> row.get(col))
+      groups = table.split f
+
+      @log "#{groups.length} partitions"
+      datas = _.map groups, (group, idx) =>
+        subtable = group.table
+        key = group.key
+        newData = new gg.wf.Data subtable, env.clone()
+        newData.env.put gbkeyName, key
+        newData
+
+      datas
 
 
 
