@@ -22,7 +22,7 @@ class gg.wf.Stdout extends gg.wf.Exec
     if _.isArray table
       _.each table, (t) -> gg.wf.Stdout.print t, aess, n, log
 
-    log = gg.util.Log.logger(@ggpackage, "stdout") unless log?
+    log = gg.util.Log.logger(gg.wf.Stdout.ggpackage, "stdout") unless log?
     n = if n? then n else table.nrows()
     blockSize = Math.max(Math.floor(table.nrows() / n), 1)
     idx = 0

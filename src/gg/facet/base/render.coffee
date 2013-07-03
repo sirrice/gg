@@ -27,21 +27,26 @@ class gg.facet.base.Render extends gg.core.BForm
     plotC = lc.plotC
     b2translate = (b) -> "transform(#{b.x0},#{b.y0})"
 
+    @log "yalC #{yalC.toString()}"
+    @log "xalC #{xalC.toString()}"
+
     _.subSvg svg, {
       class: 'plot-background'
       width: bgC.w()
       height: bgC.h()
     }, 'rect'
 
-    if xflC?
+    # X Facet
+    if xflC? and xflC.v()
       _.subSvg(svg, {
         transform: "translate(#{xflC.x0}, #{xflC.y0})"
         class: 'facet-title x-facet-title'
       }).append('text')
         .text(fXLabel)
+        .attr("dy", ".5em")
         .attr('text-anchor', 'middle')
 
-    if yflC?
+    if yflC? and yflC.v()
       c = _.subSvg svg, {
         transform: "translate(#{yflC.x0}, #{yflC.y0})"
         class: 'facet-title y-facet-title'
@@ -50,12 +55,11 @@ class gg.facet.base.Render extends gg.core.BForm
       _.subSvg(c, {
         "text-anchor": "middle"
         transform: "rotate(90)"
-        dx: ".5em"
         y: 0
-        #y: yflC.h()/2
+        dy: ".5em"
       }, 'text').text(fYLabel)
 
-    if xalC?
+    if xalC? and xalC.v()
       _.subSvg(svg, {
         transform: "translate(#{xalC.x0},#{xalC.y0})"
         class: "x-axis-container"
@@ -63,7 +67,7 @@ class gg.facet.base.Render extends gg.core.BForm
         .text(options.xaxis)
         .attr('text-anchor', 'middle')
 
-    if yalC?
+    if yalC? and yalC.v()
       yalSvg = _.subSvg(svg, {
         transform: "translate(#{yalC.x0},#{yalC.y0})"
         class: "y-axis-container"
@@ -73,6 +77,8 @@ class gg.facet.base.Render extends gg.core.BForm
       _.subSvg(yalSvg, {
         transform: "rotate(-90)"
         'text-anchor': 'middle'
+        y: 0
+        dy: "1em"
       }, 'text').text(options.yaxis)
 
 
@@ -89,6 +95,27 @@ class gg.facet.base.Render extends gg.core.BForm
     # update environment
     _.each envs, (env) ->
       env.get('svg').plot = plotSvg
+
+    # render the pane container
+    ###
+    draw = (c, fill) ->
+      _.subSvg svg, {
+        fill: fill
+        x: c.x0
+        y: c.y0
+        width: c.w()
+        height: c.h()
+        opacity: 0.1
+      }, "rect"
+    _.each {
+      "blue": bgC.drawC()
+      "red": bgC.xFacetC()
+      "green": bgC.yFacetC()
+      "pink": bgC.xAxisC()
+      "orange": bgC.yAxisC()
+    }, draw
+    ###
+
 
 
 

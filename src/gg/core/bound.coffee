@@ -10,8 +10,10 @@ class gg.core.Bound
 
   width: -> @x1 - @x0
   height: -> @y1 - @y0
+  volume: -> @w() * @h()
   w: -> @width()
   h: -> @height()
+  v: -> @volume()
 
   clone: -> new gg.core.Bound @x0, @y0, @x1, @y1
 

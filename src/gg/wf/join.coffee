@@ -24,6 +24,10 @@ class gg.wf.Merge extends gg.wf.Node
     defaultVal = params.get 'default'
     attr = params.get 'attr'
 
+    @log "Merge node tables and envs"
+    @log tables
+    @log envs
+
     _.times tables.length, (idx) ->
       table = tables[idx]
       env = envs[idx]

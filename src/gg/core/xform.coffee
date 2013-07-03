@@ -49,7 +49,7 @@ class gg.core.XForm extends gg.wf.Exec
     compute = @spec.f or @compute.bind(@)
     @compute = (table, env, params) =>
       gg.core.XForm.addDefaults table, env, params, @log
-      gg.core.XForm.validateInput table, env, params
+      gg.core.XForm.validateInput table, env, params, @log
       compute table, env, params
 
   extractAttr: (attr, spec=null) ->
@@ -94,11 +94,13 @@ class gg.core.XForm extends gg.wf.Exec
   outputSchema: (table, env, params) -> table.schema
 
   # throws exception if inputs don't validate with schema
-  @validateInput: (table, env, params) ->
+  @validateInput: (table, env, params, log) ->
+    return yes unless table.nrows() > 0
     iSchema = params.get "inputSchema", table, env
     missing = _.reject iSchema, (attr) -> table.contains attr
     if missing.length > 0
-      gg.wf.Stdout.print table, null, 5, @log
+      log log.logname
+      gg.wf.Stdout.print table, null, 5, log
       throw Error("#{params.get 'name'}: input schema did not contain #{missing.join(",")}")
 
   @addDefaults: (table, env, params, log) ->

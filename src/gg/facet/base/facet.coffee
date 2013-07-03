@@ -121,21 +121,7 @@ class gg.facet.base.Facets
   # This executes on a per-facet-layer basis
   # Not a barrier
   labelerNodes: ->
-    xjoin = new gg.wf.EnvGet
-      name: 'facetx-envget'
-      params:
-        key: gg.facet.base.Facets.facetXKey
-        default: " "
-
-    yjoin = new gg.wf.EnvGet
-      name: 'facety-envget'
-      params:
-        key: gg.facet.base.Facets.facetYKey
-        default: " "
-
-    [xjoin, yjoin]
-
-
+    throw Error("labeler not implemented")
 
   @fromSpec: (g, spec) ->
     spec.type = spec.type or "grid"

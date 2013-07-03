@@ -19,7 +19,6 @@ class gg.wf.Barrier extends gg.wf.Node
   run: ->
     throw Error("Node not ready") unless @ready()
 
-
     # prepare inputs for compute function
     [flat, md] = gg.wf.Inputs.flatten @inputs
     tables = _.map flat, (d) -> d.table

@@ -100,22 +100,27 @@ class gg.facet.base.Layout extends gg.core.BForm
         0
 
       xFacetLabelC = container.xFacetC()
-      xFacetLabelC.d (w-2*titleH)/2, em
+      xFacetLabelC.d (w-2*titleH)/2, 0
 
       yFacetLabelC = container.yFacetC()
-      yFacetLabelC = new Bound yFacetLabelC.x0, (plotH/2 + (paddingPane+titleH))
+      yFacetLabelC = new Bound yFacetLabelC.x0,
+        (plotH/2 + (paddingPane+titleH)),
+        yFacetLabelC.x0 + yFacetLabelC.w(),
+        (plotH/2 + (paddingPane+titleH)) + yFacetLabelC.h()
       yFacetLabelC.d -em/2, 0
-      #yFacetLabelC.d (w-2*titleH)/2, (h-2*titleH)/2
 
       xAxisLabelC = container.xAxisC()
       xAxisLabelC.d (w-2*titleH)/2, em
 
       yAxisLabelC = container.yAxisC()
-      yAxisLabelC = new Bound yAxisLabelC.y0, -yAxisLabelC.x0
-      yAxisLabelC.d 0, (h-2*titleH)/2
-      #yAxisLabelC.d -em/2, (h-2*titleH)/2
+      yAxisLabelC = new Bound yAxisLabelC.x0,
+        (plotH/2 + (paddingPane+titleH)),
+        yAxisLabelC.x0+yAxisLabelC.w(),
+        (plotH/2 + (paddingPane+titleH)) + yAxisLabelC.h()
+      @log "yAxisLabelC: #{yAxisLabelC.toString()}"
 
       plotC = container.drawC()
+
 
 
 

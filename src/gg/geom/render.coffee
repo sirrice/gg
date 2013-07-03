@@ -41,6 +41,18 @@ class gg.geom.Render extends gg.core.XForm
   compute: (table, env, node) ->
     @log "rendering #{table.nrows()} rows"
     gg.wf.Stdout.print table, null, 2, @log
+
+    # Render some info
+    paneSvg = @svg table, env, node
+    write = (text, opts={}) ->
+      _.subSvg(paneSvg, opts, "text").text(text)
+    Facets = gg.facet.base.Facets
+    write env.get(Facets.facetXKey), {dy: "1em"}
+    write env.get(Facets.facetYKey), {dy: "2em"}
+    write env.get(table.nrows()), {dy: "3em"}
+
+
+
     @render table, env, node
     table
 

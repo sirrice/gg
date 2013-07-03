@@ -54,7 +54,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
         params:
           key: "group"
           cols: ['group']
-      @groupbylabel = new gg.wf.Merge#EnvGet
+      @groupbymerge = new gg.wf.Merge
         name: "groupbylabel-#{@layerIdx}"
         params:
           key: "group"
@@ -116,7 +116,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
       new gg.wf.Stdout
         name: "#{name}-#{@layerIdx}"
         params: params
-      null
 
     makeScalesOut = (name, scales=@g.scales) =>
       new gg.wf.Scales
@@ -141,12 +140,13 @@ class gg.layer.Shorthand extends gg.layer.Layer
       name: "scales-schema-#{@layerIdx}"
       params:
         config: @g.scales.scalesConfig
-    nodes.push makeStdOut "pre-gb"
+
+
+    #
+    # Statistics transforms
+    #
     nodes.push @groupby
     nodes.push makeStdOut "post-gb"
-
-
-    # Statistics transforms
     nodes.push @g.scales.prestats
     nodes.push makeStdOut "post-train"
     nodes.push new gg.xform.ScalesFilter
@@ -156,15 +156,17 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeScalesOut "pre-stat-#{@layerIdx}"
     nodes.push @stat
     nodes.push makeStdOut "post-stat-#{@layerIdx}"
+    nodes.push @groupbymerge
+    nodes.push makeStdOut "post-groupby-#{@layerIdx}"
 
 
     # facet join -- add facetX/Y columns to table
     nodes.push @g.facets.labelerNodes()
     nodes.push makeStdOut "post-facetLabel-#{@layerIdx}"
-    nodes.push @groupbylabel
-    nodes.push makeStdOut "post-groupby-#{@layerIdx}"
 
+    #
     # Geometry Part of Workflow #
+    #
 
     # geom: map attributes to aesthetic names
     # scales: train scales after the final aesthetic mapping (inputs are data values)
@@ -178,18 +180,15 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push makeStdOut "post-geommaptrain"
     nodes.push makeScalesOut "post-geommaptrain"
 
+    nodes.push new gg.xform.ScalesValidate
+      name: 'scales-validate'
+
 
     # layout the overall graphic, allocate space for facets
     # facets: allocate containers and compute ranges for the scales
     nodes.push @g.layoutNode
     nodes.push @g.facets.layout1
     #nodes.push @g.facets.layout1rpc
-
-
-
-    nodes.push new gg.xform.ScalesValidate
-      name: 'scales-validate'
-
 
 
     # geom: facets have set the ranges so transform data values to pixel values

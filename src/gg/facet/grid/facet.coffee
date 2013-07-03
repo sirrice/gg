@@ -17,3 +17,18 @@ class gg.facet.grid.Facets extends gg.facet.base.Facets
         name: 'render-panes').compile()
 
   renderPanes: -> @renderpanes
+
+  labelerNodes: ->
+    f = (table, env, param) ->
+      Facets = gg.facet.base.Facets
+      x = env.get Facets.facetXKey
+      y = env.get Facets.facetYKey
+      table.addConstColumn Facets.facetXKey, x
+      table.addConstColumn Facets.facetYKey, y
+      table
+
+    new gg.wf.Exec
+      name: "labeler"
+      params:
+        f: f
+    new gg.facet.grid.Labeler

@@ -66,6 +66,17 @@ class gg.core.BForm extends gg.wf.Barrier
     yKey = gg.facet.base.Facets.facetYKey
     _.filter envs, (env) -> env.get(xKey) is xFacet and env.get(yKey) is yFacet
 
+  @facetTables: (tables, envs, xFacet, yFacet) ->
+    Facets = gg.facet.base.Facets
+    idxs = _.compact _.map envs, (env, idx) ->
+      if _.all [
+        env.get(Facets.facetXKey) is xFacet
+        env.get(Facets.facetYKey) is yFacet]
+        idx
+    _.map idxs, (idx) -> tables[idx]
+
+
+
   # pick "key" from list of env objects.
   @pick: (envs, key, defaultVal=null) ->
     vals = []

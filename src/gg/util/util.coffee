@@ -142,6 +142,13 @@ class gg.util.Util
       _.isNaN(v) or _.isNull(v) or _.isUndefined(v)
     _.max arr, f, ctx
 
+  @cross: (xs, ys) ->
+    pairs = []
+    for x in xs
+      for y in ys
+        pairs.push [x, y]
+    pairs
+
 
 
 
@@ -170,6 +177,7 @@ _.mixin
   repeat: gg.util.Util.repeat
   mapToFunction: gg.util.Aesmap.mapToFunction
   mappingToFunctions: gg.util.Aesmap.mappingToFunctions
+  cross: gg.util.Util.cross
 
 
 

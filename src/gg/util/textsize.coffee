@@ -47,12 +47,11 @@ class gg.util.Textsize
       $(div).attr css
 
       body.appendChild div
-      width = $(div).width()
-      height = $(div).height()
+      width = div.clientWidth# $(div).width()
+      height = div.clientHeight# $(div).height()
       #body.removeChild div
 
-      log "textsize of #{text} with #{JSON.stringify opts}"
-      log div
+      log "textsize of #{text}: #{width}x#{height} with #{JSON.stringify opts}"
 
       if _.any [width, height], ((v) -> _.isNaN(v) or v is 0)
         throw Error("exSize: width(#{width}), height(#{height})")
@@ -89,10 +88,16 @@ class gg.util.Textsize
       gg.util.Textsize._exSizeCache[optsJson] = ret
       ret
 
-  @larger: (div, size) ->
-    div.style["font-size"] = "#{size}pt"
-    [sw, sh] = [div[0].scrollWidth, div[0].scrollHeight]
-    sw > div.clientWidth or sh > div.clientHeight
+  # Checks if div size is greater than bounding box
+  # @param div a dom element selection
+  # @param size font-size
+  # @param dms bounding box
+  @larger: (div, size, dims) ->
+    div.style['font-size'] = "#{size}pt"
+    [sw, sh] = [div.scrollWidth, div.scrollHeight]
+    @log "larger: #{size}pt: #{[sw, sh]} vs #{dims.w}, #{dims.h}"
+    sw > dims.w or sh > dims.h
+    #sw > div[0].clientWidth or sh > div[0].clientHeight
 
 
   # Search for the largest font size (pt) for text to be contained
@@ -102,41 +107,72 @@ class gg.util.Textsize
   # @param width pixel width of the bounding box
   # @param height pixel height of bounding box
   # @param opts css attributes applied to text
-  # @return number
+  # @return integer of font point size
   @fontSize: (text, width, height, opts) ->
     body = document.getElementsByTagName("body")[0]
     div = document.createElement("div")
-    css = {
-       width: width
-       height: height
-       position: "absolute"
+    css =
        color: "white"
-       opacity: 0
-       top: 0
-       left: 0
        "font-family": "arial"
-    }
     _.extend css, opts
-    _.extend div.style, css
+    _.extend css,
+       left: -100000
+       position: "absolute"
 
-    div.textContent = text
-    body.appendChild(div)
+    $(div)
+      .css(css)
+      .attr(
+        width: width
+        height: height)
+      .text(text)
 
+    body.appendChild div
+
+
+    dim = {w: width, h: height}
     size = 100
     n = 0
     while n < 100
       n += 1
-      if gg.util.Textsize.larger div, size
+      if gg.util.Textsize.larger div, size, dim
          if size > 50
            size /= 2
          else
            size -= 1
       else
-         if gg.util.Textsize.larger div, size + 1
+         if gg.util.Textsize.larger div, size + 1, dim
            break
          size += 5
 
-    body.removeChild(div)
+    div.remove()
     size
+
+  # allow chopping up the string
+  # @
+  @fit: (text="", width, height, minfont, opts={}) ->
+    optsize = @fontSize text, width, height, opts
+    @log "optsize:   #{optsize}"
+    @log "minfont:   #{minfont}"
+    @log "container: #{width} x #{height}"
+    @log "text:      #{text}"
+    if optsize < minfont
+      opts["font-size"] = "#{minfont}pt"
+      dim = @textSize text, opts
+      @log "dim:    #{dim.w}"
+      nchar = Math.floor(text.length * width / dim.w)
+      text = text.substr 0, nchar
+      optsize = minfont
+
+    opts["font-size"] = "#{optsize}pt"
+    dim = @textSize text, opts
+
+    {
+      text: text
+      font: optsize
+      size: optsize
+      w: dim.w
+      h: dim.h
+    }
+
 
 
