@@ -1,0 +1,173 @@
+<html>
+<head>
+<meta charset="utf-8">
+<title>The Grammar of Graphics</title>
+<link rel="stylesheet" type="text/css" href="http://www.mit.edu/~eugenewu/include/style.css"/>
+<link rel="stylesheet" type="text/css" href="./css/gg.css"/>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="./vendor/js/underscore.min.js"></script>
+<script src="./js/gg.js"></script>
+<script src="./js/prettify.js"></script>
+<style>
+  #plot {
+    width: 900px;
+    height: 500px;
+    float: left;
+  }
+  #spec {
+    float: left;
+    padding-left: 2em;
+  }
+  #spec pre {
+    font-family: consolas, arial, monospace;
+    font-size: 10pt;
+    border: none;
+    width: 20em;
+    height: auto;
+  }
+  .clear {
+    clear: both;
+  }
+</style>
+</head>
+<body style="width:100%">
+    <div class="header">
+    <div class="nav">
+      <a href="http://www.mit.edu/~eugenewu/index.html" style="font-weight: bold; margin-right: 10px">
+      Eugene Wu
+      </a>
+    <a href="/gg">gg</a>
+    <a href="http://github.com/sirrice/gg">Github</a>
+    </div>
+    </div>
+
+
+  <div id="plot"></div>
+  <div id="spec">
+    <h4>Specification</h4>
+    <pre>
+  {
+    layers: [
+    // Histogram with 10 bins, rendering sum / 100
+    // "{XXX}" is a shortcut to execute XXX in a
+    // js environment with a row's values
+    // bound to variables with the corresponding attribute names.
+    {
+      geom:{
+        type: "rect",
+        aes: {
+          y: "{total/10}"
+        }
+      },
+      stat: "bin"
+    },
+    // Boxplot collected into 4 bins
+    {
+      geom: "boxplot",
+      aes: {
+        x: floor500,
+        group: { color: floor500, opacity: 0.5 }
+      },
+      stat: "boxplot"
+    },
+    // Smoothed line, grouped and colored by "g" attribute
+    // Lines are custom colored and thick
+    {
+      geom: "line",
+      aes: {
+        group: {color: "g", "stroke-width": 2}
+      },
+      stat: {
+        type:"loess", bandwidth: 0.3
+      },
+      scales: {
+        stroke: {
+          type: "color",
+          range: ["black", "red", "green"]
+        }
+      }
+    },
+
+    // Render the raw data as a stacked line graph
+    {
+      geom: "line",
+      aes: {
+        group: {
+          color: "g",
+          "stroke-opacity": 0.2
+        }
+      },
+      pos: "stack"
+    }
+
+    ] ,
+    // place the common aesthetic mappings here
+    aes: {
+      x: "d",
+      y: "e"
+    },
+    scales: {"stroke-opacity": "identity", "fill-opacity": "identity"},
+    opts: {
+      width: 900,
+      height: 500,
+      title: "Multi-layer faceted example"
+    },
+    facets: {x: "f"}
+
+  };
+
+    </pre>
+  </div>
+  <div class="clear"></div>
+
+<div class="main">
+  <section>
+  <h1>Description</h1>
+  <p>
+  </p>
+  </section>
+</div>
+</body>
+</html>
+
+<script>
+  var npts = 100;
+  var block = Math.max(1, Math.floor(npts / 3 / 5));
+
+  var floor500 = function(row) {
+    return Math.floor(row.get('d') / block) * block;
+  };
+
+
+
+  $(document).ready(function() {
+    Math.seedrandom("zero");
+    var ex   = function () {
+      $("#plot").empty();
+      return d3.select('#plot').append('span');
+    };
+    var gauss = science.stats.distribution.gaussian();
+
+
+    bigdata = _.map(_.range(0, npts), function(d) {
+      g = Math.floor(Math.random() * 3) + 1;
+      f = Math.floor(Math.random() * 3);
+      t = Math.floor(Math.random() * 2);
+      gauss.variance(d * 30.0 / npts);
+
+      return {d: Math.floor(d/3), e: ((d + gauss())*(2+Math.sin(d/50))) * (g) - (d),  g: g, f:f, t:t};
+    });
+
+
+
+    eval("var spec = " + $("#spec pre").text())
+    var plot = gg(spec);
+    plot.render(ex(), bigdata);
+
+  });
+
+
+
+</script>
+
+

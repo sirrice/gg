@@ -1,0 +1,203 @@
+<html>
+<head>
+<meta charset="utf-8">
+<title>The Grammar of Graphics</title>
+<link rel="stylesheet" type="text/css" href="http://www.mit.edu/~eugenewu/include/style.css"/>
+<link rel="stylesheet" type="text/css" href="./css/gg.css"/>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="./vendor/js/underscore.min.js"></script>
+<script src="./js/gg.js"></script>
+<script src="./js/prettify.js"></script>
+<style>
+  #spec {
+    font-family: consolas, arial, monospace;
+    margin-left: 2em;
+    font-size: 10pt;
+    width: 100%;
+    height: auto;
+    border: none;
+    background: inherit;
+  }
+  #toggle {
+    text-decoration: underline;
+    color: steelblue;
+    font-size: 12pt;
+    cursor: pointer;
+  }
+  #toggle:hover {
+    color: blue;
+  }
+  button {
+    font-size: 25pt; font-family:Gill Sans;
+  }
+</style>
+
+</head>
+<body style="width:100%">
+    <div class="header">
+    <div class="nav">
+      <a href="http://www.mit.edu/~eugenewu/index.html" style="font-weight: bold; margin-right: 10px">
+      Eugene Wu
+      </a>
+    <a href="/gg">gg</a>
+    <a href="http://github.com/sirrice/gg">Github</a>
+    </div>
+    </div>
+
+<div style="width: 900px; float: left;">
+  <div id="ex"></div>
+  <div style="width: 900px">
+    <button style="width: 450px; float: left;" id="btn">
+     Generate new data
+    </button>
+    <button style="width: 450px; float:right;" id="newlayout">
+     Rerun Annealing
+    </button>
+    <div style="clear:both"></div>
+  </div>
+
+</div>
+<div style="width: 20em; height: auto; float: left; margin-left: 2em;">
+  <h3>Specification <span id="toggle">toggle final layout</span></h3>
+  <pre id="spec"></pre>
+</div>
+<div style="clear: both"></div>
+
+
+<div class="body">
+<div class="main">
+  <section>
+  <h1>Description</h1>
+  <p>
+  This shows the label layout algorithm using simulated annealing described by Christensen, J. et al.
+  The high opacity rectangles are labels' final locations, whereas the semi-transparent rectangles were the original locations.
+  The points are the lower left corners of the original rectangle locations and represent points that rectangles are labelling.
+  </p>
+  <p>
+  Simulated annealing is a random algorithm, so it's not guaranteed to generate perfect labels.  As you may see, a few of the final
+  rectangles are still overlapping.  I think the number of overlaps can be reduced using the same compute time by focusing the randomization
+  on regions of high overlap.
+  </p>
+  <p>
+  The specification to generate this visualization is shown on the right
+  </p>
+
+  <h1>References</h1>
+  <p>
+  Christensen, J., Marks, J., and Shieber, S. (1995). An empirical study of algorithms for point-feature label placement. ACM Transactions on Graphics (TOG), 14, 203-232.
+  </p>
+
+  </section>
+
+</div>
+</div>
+
+<script>
+  var finalRects = {
+    "geom": "rect",
+    "aes": { "opacity": 0.8 },
+    "pos": {type: "text", fast:true, innerLoop: 15}
+  };
+
+  var base_spec = {
+    "layers": [
+      {
+        "geom": "rect",
+        "aes": { "fill-opacity": 0.15, }
+      },
+      finalRects,
+      {
+        "geom": "point",
+        "aes": { "r": 5, "fill-opacity": 1 }
+      },
+      {
+        "geom": "text",
+        "aes": { color: "black" },
+        "scales": { color: "identity" }
+      }
+    ],
+    aes: {
+      x: "x0",
+      y: "y0",
+      text: "id",
+      color: "id",
+      'stroke-width': 0
+    },
+    "scales": {
+      "color": "color",
+      'stroke-width': 'identity',
+      "opacity": "identity",
+    },
+    "options": {
+      "w": 900,
+      "h": 800
+    }
+  };
+
+
+  var genboxes = function(n) {
+    var pw = 550,
+        ph = 500,
+        lw = 30,
+        lh = 15,
+        genpt = function() {
+          return [
+            Math.floor(Math.random()*(pw-lw)),
+            Math.floor(Math.random()*(ph-lh))
+          ]
+        };
+    return _.times(n, function(i) {
+      var pt = genpt();
+      return {
+        id: i,
+        x0: pt[0],
+        x1: pt[0]+lw,
+        y0: pt[1],
+        y1: pt[1]+lh
+      };
+    });
+  };
+
+  var render = function(data) {
+    var ex   = function () {
+      $("#ex").empty();
+      return d3.select('#ex').append('span');
+    };
+
+    $("#spec").text(JSON.prettify(spec));
+    var plot = gg(JSON.parse(JSON.stringify(spec)));
+    plot.render(ex(), data);
+  }
+
+  var toggle = (function(){
+    var show = false;
+    function _toggle() { $(".layer-1").toggle(); };
+    return _toggle;
+  })();
+
+
+  Math.seedrandom(0);
+  var nboxes = 150;
+  var data = genboxes(nboxes);
+  var spec = base_spec;
+
+  $(document).ready(function() {
+    $("#btn").click(function() {
+      data = genboxes(nboxes);
+      render(data);
+    });
+    $("#newlayout").click(function() {
+      render(data);
+    });
+
+    $("#toggle").click(toggle);
+    render(data);
+  });
+
+
+
+</script>
+
+
+</body>
+</html>
