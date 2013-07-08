@@ -12,6 +12,7 @@ glob = require 'glob'
 log = console.log
 path = require 'path'
 remove = require 'remove'
+  
 
 
 coffeebin = "coffee" #"node_modules/coffee-script/bin/coffee"
