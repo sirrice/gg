@@ -13,6 +13,10 @@
   "engines": {
     "chrome": ">= 24"
   },
+  "devDependencies": {
+    "coffee-script": ">=1.6.x",
+    "coffee-toaster": ">=0.6.13"
+  },
   "dependencies": {
     "requirejs": ">= 2.1.3",
     "d3": ">= 3.0.1",
