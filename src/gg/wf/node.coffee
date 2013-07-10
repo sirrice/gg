@@ -23,7 +23,7 @@ catch error
 #
 #   (inputs, params) -> table(s)
 #
-# The inputs data structured is a nested array of gg.wf.Data objects.
+# The inputs data structure is a nested array of gg.wf.Data objects.
 #
 class gg.wf.Node extends events.EventEmitter
   @ggpackage = "gg.wf.Node"
@@ -34,6 +34,7 @@ class gg.wf.Node extends events.EventEmitter
   constructor: (@spec={}) ->
     @inputs = []
     @type = "node"
+    @inputs = []
     @id = gg.wf.Node.id()
     @nChildren = @spec.nChildren or 0
     @nParents = @spec.nParents or 0
@@ -47,6 +48,7 @@ class gg.wf.Node extends events.EventEmitter
     @params.ensure "klassname", [], @constructor.ggpackage
     logname = "#{@name}-#{@id}\t#{@constructor.name}"
     @log = gg.util.Log.logger @constructor.ggpackage, logname
+
 
     @parseSpec()
 
@@ -62,7 +64,11 @@ class gg.wf.Node extends events.EventEmitter
 
   setInput: (idx, input) -> @inputs[idx] = input
 
+  # Output a result and call the appropriate handlers using @emit
+  # @param outidx output port
+  # @param data nested array of gg.wf.Data objects
   output: (outidx, data) ->
+    # this block is all debugging code
     listeners = @listeners outidx
     n = listeners.length
     flat = gg.wf.Inputs.flatten(data)[0]
@@ -74,10 +80,9 @@ class gg.wf.Node extends events.EventEmitter
         -1
     @log.warn "output: port(#{outidx}) ntables: #{noutputs}"
     @log "tablesizes: #{tablesizes}"
+
     @emit outidx, @id, outidx, data
     @emit "output", @id, outidx, data
-
-    listeners = _.map(listeners, (l)->l.portidx)
 
 
   #
@@ -87,6 +92,15 @@ class gg.wf.Node extends events.EventEmitter
   run: -> throw Error("gg.wf.Node.run not implemented")
 
   compile: -> [@]
+
+
+
+
+  ###############
+  #
+  # The following are serialization and deserialization methods
+  #
+  ###############
 
   @fromJSON: (json) ->
     klassname = json.klassname

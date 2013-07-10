@@ -11,6 +11,101 @@ Desired Features
   * ggplot2-like interface
 1. Node-failure tolerance.  If a node throws an exception, dont block workflow on the next barrier, keep going.
 
+
+July 9, 2013
+----------------
+
+### Provenance Store is a graph store
+
+Fundamentally, the following operations
+
+1. put(output(s), input(s), metadata?)
+2. join(left, dataset, direction=(back/forw))
+
+Lots of opportunities for optimizations based on the query logs
+
+* Index the outputs/inputs
+* Encodings
+* Collapse provenance across operations
+* Materialize source provenance in output provenance records
+
+
+### Operator Provenance.  
+
+At a high level, we want to comprehensively track the provenance of operators:
+
+1. operator <--> operator
+2. operator --> parameters
+
+Operators are hierarchicaly, so tracking operators means tracking all sub-structures:
+
+    Operator
+    -> params
+    -> inputs
+       -> gg.wf.Data
+          -> Env
+          -> Table
+             -> Schema
+                -> Attr
+             -> Row
+
+By default, assume that sub-structures are mapped (somehow), and allow overrides
+
+Need:
+
+1. Way to id each sub-structure
+2. Map input output ids
+
+Need to track within `addDefaults()` and `compute()`
+
+Params provenance
+
+1. Params --> Operator
+
+
+Schema provenance
+
+1. input schema <--> output schema
+
+Operator provennace
+
+1. Input <--> output port
+2. Parent output port <--> child input port
+
+Dataset provenance
+
+1. index into @inputs <--> index into outputs 
+2. input data object <--> output data object
+
+Env provenance
+
+1. Operator <--> env key
+    * What input(s) did key depend on?
+
+Tuple provenance
+
+1. input rowid <--> output rowid.  
+
+#### Representation
+
+Conceptually, these can be stored as triples of:
+
+    ((input value, type), (output value, type), relationship)
+    
+but this is pretty inefficient e.g.,
+
+    ((wf.Data object, "dataset"), (wf.Data object, "dataset"), "")
+    (("a", "attribute"), ("x", "attribute"), "")
+    (("a", "attribute"), (wf.Data object, "dataset"), "schema")
+
+    
+### Transforming between schemas
+
+1. given input table, output schema and a mapping object, return an output table
+
+
+
+
 July 1, 2013
 ----------------
 
