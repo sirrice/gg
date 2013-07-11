@@ -50,6 +50,7 @@ class gg.wf.Flow extends events.EventEmitter
         @edgeWeight node, child
       nParents = _.sum parentWeights
       nChildren = _.sum childWeights
+      node.flow = @
       node.setup nParents, nChildren
 
     @graph.bfs f
@@ -61,6 +62,7 @@ class gg.wf.Flow extends events.EventEmitter
     inportsMap = _.o2map @nodes(), (node) -> [node.id, 0]
     outportsMap =_.o2map @nodes(), (node) -> [node.id, 0]
     @portGraph = new gg.util.Graph (o) -> "#{o.n.id}-#{o.p}"
+    pstore = gg.prov.PStore.get @
     connectPath = (path) =>
       from = null
       for to in path
@@ -71,6 +73,7 @@ class gg.wf.Flow extends events.EventEmitter
           f = {n: from, p: outport}
           t = {n: to, p: inport}
           @portGraph.connect f, t
+          pstore.connect f, t
 
           outportsMap[from.id] += 1
           inportsMap[to.id] += 1
@@ -376,6 +379,7 @@ class gg.wf.Flow extends events.EventEmitter
 
     runner.on "output", (idx, data) =>
       @emit "output", idx, data
+      @log gg.prov.PStore.get @id
 
     runner.on "done", () =>
       rpc.deregister @

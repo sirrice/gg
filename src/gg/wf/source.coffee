@@ -3,11 +3,7 @@
 
 class gg.wf.Source extends gg.wf.Exec
   @ggpackage = "gg.wf.Source"
-
-  constructor: (@spec={}) ->
-    super
-    @type = "source"
-    @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
+  @type = "source"
 
 
   compute: (table, env, params) ->

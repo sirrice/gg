@@ -2,12 +2,9 @@
 
 class gg.wf.Stdout extends gg.wf.Exec
   @ggpackage = "gg.wf.Stdout"
+  @type = "stdout"
 
-  constructor: (@spec={}) ->
-    super
-    @type = "stdout"
-    @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
-
+  parseSpec: ->
     @params.ensureAll
       n: [ [], null ]
       aess: [ [], null ]
@@ -47,16 +44,11 @@ class gg.wf.Stdout extends gg.wf.Exec
 
 class gg.wf.Scales extends gg.wf.Exec
   @ggpackage = "gg.wf.Scales"
-  constructor: (@spec={}) ->
-    super
-    @type = "scaleout"
-    @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
-
-    @dlog = gg.util.Log.logger "ScaleOut: #{@name}", gg.util.Log.DEBUG
+  @type = "scaleout"
 
   compute: (table, env, params) ->
     layerIdx = env.get 'layer'
-    gg.wf.Scales.print env.get('scales'), layerIdx,  @dlog
+    gg.wf.Scales.print env.get('scales'), layerIdx,  @log
     table
 
   # @param scales set

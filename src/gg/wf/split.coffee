@@ -7,12 +7,9 @@
 # @spec.f {Function} splitting function with signature: (table) -> [ {key:, table:}, ...]
 class gg.wf.Split extends gg.wf.Node
   @ggpackage = "gg.wf.Split"
+  @type = "split"
 
-  constructor: (@spec={}) ->
-    super
-    @type = "split"
-    @name = @spec.name or "split-#{@id}"
-
+  parseSpec: ->
     # TODO: support groupby functions that return an
     # array of keys.
     @params.ensureAll
@@ -51,10 +48,21 @@ class gg.wf.Split extends gg.wf.Node
       str = "Split not ready, expects #{@inputs.length} inputs"
       throw Error str
 
-    f = (data) =>
-      @compute data.table, data.env, @params
-    outputs = gg.wf.Inputs.mapLeaves @inputs[0], f
-    @output 0, outputs
+    pstore = @pstore()
+    f = (data, inpath) =>
+      res = @compute data.table, data.env, @params
+      
+      # write provenance
+      _.times res.length, (lastIdx) =>
+        outpath = _.clone inpath
+        outpath.push lastIdx
+        pstore.writeData outpath, inpath
+
+      res
+
+    outputs = gg.wf.Inputs.mapLeaves @inputs, f
+    for output, idx in outputs
+      @output idx, output
 
     outputs
 

@@ -31,4 +31,8 @@ class gg.facet.grid.Facets extends gg.facet.base.Facets
       name: "labeler"
       params:
         f: f
-    new gg.facet.grid.Labeler
+    
+    [
+      new gg.facet.grid.Labeler
+      new gg.facet.grid.FillFacets
+    ]

@@ -12,8 +12,46 @@ Desired Features
 1. Node-failure tolerance.  If a node throws an exception, dont block workflow on the next barrier, keep going.
 
 
+July 10, 2013
+----------------
+
+Ideal syntax
+
+    // comment
+    geom: point
+    stat: loess
+    aes:
+        x: a
+        y: a*b            // interpreted
+        stroke: 10        //
+        text: "string"    //
+        color: {js a*b}   // explicitly javascript
+    coord: flip
+    facet: x: a, y: b
+    debug: gg: INT, gg.wf: INT
+    opts: key: val, key: val
+        
+
+
 July 9, 2013
 ----------------
+
+## Operator hierarchy
+
+    node
+      barrier
+        bform
+      exec
+        xform
+      split
+      merge
+    
+* flow stores op dependencies    
+* node stores param dependencies
+* barrier/exec/split/merge/source stores wf.Data dependencies
+* xform/bform stores Schema dependencies 
+* compute() stores row and env dependencies
+ 
 
 ### Provenance Store is a graph store
 

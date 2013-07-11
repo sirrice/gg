@@ -15,6 +15,8 @@ class gg.util.Graph
     @log = gg.util.Log.logger "gg.util.Graph", "graph"
 
   id: (@idFunc) ->
+    @log "set id function to: #{@idFunc.toString()}"
+    @idFunc
 
   add: (node) ->
     unless node?
@@ -24,7 +26,7 @@ class gg.util.Graph
     @id2node[id] = node
     @pid2cid[id] = {}  # store it as an associative map
     @cid2pid[id] = {}
-    @log "add\t#{node}"
+    @log "add\t#{node} with id #{id}"
     @
 
   rm: (node) ->
@@ -39,16 +41,17 @@ class gg.util.Graph
     delete @pid2cid[id]
     delete @cid2pid[id]
     delete @id2node[id]
-    @log "rm\t#{node}"
+    @log "rm\t#{node} with id #{id}"
     @
 
 
   # add an edge
   # subsequent calls will OVERWRITE existing metadata
   connect: (from, to, type, metadata=null) ->
-    if _.isArray from
-      _.each from, (args) => @connect args...
-      return @
+    # XXX: this really screws up graphs that use arrays as nodes
+    #if _.isArray from
+    #  _.each from, (args) => @connect args...
+    #  return @
 
     @add from
     @add to

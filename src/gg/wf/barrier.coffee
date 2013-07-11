@@ -7,11 +7,7 @@
 #
 class gg.wf.Barrier extends gg.wf.Node
   @ggpackage = "gg.wf.Barrier"
-
-  constructor: (@spec={}) ->
-    super
-    @type = "barrier"
-    @name = _.findGood [@spec.name, "barrier-#{@id}"]
+  @type = "barrier"
 
 
   compute: (tables, env, params) -> tables
@@ -25,7 +21,13 @@ class gg.wf.Barrier extends gg.wf.Node
     envs = _.map flat, (d) -> d.env
 
     # Execute compute function
+    # XXX: it's the @compute() job to call @pstore().writeData
     tables = @compute tables, envs, @params
+
+    # XXX: assume it's exact mapping
+    pstore = @pstore()
+    gg.wf.Inputs.mapLeaves @inputs, (data, path) ->
+      pstore.writeData path, path
 
     # reconstruct original inputs structure
     datas = _.times tables.length, (idx) ->

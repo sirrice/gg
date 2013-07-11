@@ -32,8 +32,9 @@
 #
 class gg.facet.base.Facets
   @ggpackage = "gg.facet.base.Facets"
-  @facetXKey = "facetX"
-  @facetYKey = "facetY"
+  @facetXKey = "facet-x"
+  @facetYKey = "facet-y"
+  @facetXYKeys = "facet-xy"
 
   constructor: (@g, @spec={}) ->
     @log = gg.util.Log.logger @ggpackage, "Facets"

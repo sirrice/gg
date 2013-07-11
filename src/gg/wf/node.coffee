@@ -27,14 +27,15 @@ catch error
 #
 class gg.wf.Node extends events.EventEmitter
   @ggpackage = "gg.wf.Node"
+  @type = "node"
   @id: -> gg.wf.Node::_id += 1
   _id: 0
 
 
   constructor: (@spec={}) ->
+    @flow = @spec.flow or null
     @inputs = []
-    @type = "node"
-    @inputs = []
+    @type = @constructor.type
     @id = gg.wf.Node.id()
     @nChildren = @spec.nChildren or 0
     @nParents = @spec.nParents or 0
@@ -84,6 +85,7 @@ class gg.wf.Node extends events.EventEmitter
     @emit outidx, @id, outidx, data
     @emit "output", @id, outidx, data
 
+  pstore: -> gg.prov.PStore.get @flow, @
 
   #
   # The calling function is responsible for calling ready
@@ -138,6 +140,7 @@ class gg.wf.Node extends events.EventEmitter
       nParents: @nParents
       location: @location
       params: @params.clone()
+      flow: @flow
     o = new @constructor spec
     o.id = @id if keepid
     o

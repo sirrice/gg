@@ -2,14 +2,10 @@
 
 class gg.wf.EnvPut extends gg.wf.Exec
   @ggpackage = "gg.wf.EnvPut"
-
-  constructor: ->
-    super
-    @type = "label"
-    @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
-    @log = gg.util.Log.logger @name
+  @type = "envput"
 
 
+  parseSpec: ->
     # data is a mapping of key -> val where
     # key:  label name in environment
     # val:  label value or a function with signature
@@ -41,12 +37,9 @@ class gg.wf.EnvPut extends gg.wf.Exec
 #
 class gg.wf.EnvGet extends gg.wf.Exec
   @ggpackage = "gg.wf.EnvGet"
+  @type = "envget"
 
-  constructor: (@spec={}) ->
-    super @spec
-    @type = "envget"
-    @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
-
+  parseSpec: ->
     @params.ensureAll
       envkey: [ ['key', 'envkey'] ]
       attr: ['attr', 'key', 'envkey']

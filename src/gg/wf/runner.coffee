@@ -54,12 +54,11 @@ class gg.wf.Runner extends events.EventEmitter
       @runNode(node)
       cb()
 
-    ondrain =  ()=>
+    ondrain =  () =>
       sources = @flow.sources()
       unless _.all(sources, (s) => @done[s.id])
         @log "done! can you believe it?"
         @emit 'done', yes
-
 
     @queue = new async.queue qworker, 1
     @queue.drain = ondrain

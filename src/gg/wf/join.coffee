@@ -8,12 +8,9 @@
 # Does not compute anything
 class gg.wf.Merge extends gg.wf.Node
   @ggpackage = "gg.wf.Merge"
+  @type = "merge"
 
-  constructor: (@spec={}) ->
-    super @spec
-    @type = "Merge"
-    @name = _.findGood [@spec.name, "#{@type}-#{@id}"]
-
+  parseSpec: ->
     @params.ensureAll
       envkey: ['key', 'envkey']
       attr: ['attr', 'key', 'envkey']
@@ -54,15 +51,23 @@ class gg.wf.Merge extends gg.wf.Node
 
     params = @params
     compute = @params.get 'compute'
-    f = (datas) =>
+    pstore = @pstore()
+    f = (datas, outpath) =>
+      # write provenance
+      for data, lastIdx in datas
+        inpath = _.clone inpath
+        inpath.push lastIdx
+        pstore.writeData outpath, inpath
+
       tables = _.map datas, (d) -> d.table
       envs = _.map datas, (d) -> d.env
       table = @compute tables, envs, params
       new gg.wf.Data table, _.first(envs)
 
-    outputs = gg.wf.Inputs.mapLeafArrays @inputs[0], f
+    outputs = gg.wf.Inputs.mapLeafArrays @inputs, f
 
-    @output 0, outputs
+    for output, idx in outputs
+      @output idx, output
     outputs
 
 

@@ -4,6 +4,14 @@ class gg.wf.Inputs
   @isLeafArray: (arr) ->
     arr? and (arr.length == 0 or not _.isArray(arr[0]))
 
+  @pick: (inputs, path) ->
+    cur = inputs
+    for idx in path
+      return null if idx >= cur.length or not _.isArray(cur)
+      cur = cur[idx]
+    cur
+
+
   # @param f function that takes a list of data objects as input
   #         ([data...]) -> data or [data...]
   # split -> split -> barrier -> join -> join
@@ -12,30 +20,36 @@ class gg.wf.Inputs
   # [ [ [a, b, c], [x, y] ] ]
   # [ [ abc, xy ] ]
   # [ abcxy ]
-  @mapLeafArrays: (inputs, f) ->
+  @mapLeafArrays: (inputs, f, path=[]) ->
     return unless inputs?
     return inputs if inputs.length == 0
     _.map inputs, (subinput, idx) ->
-      if gg.wf.Inputs.isLeafArray subinput
-        f subinput
+      path.push idx
+      res = if gg.wf.Inputs.isLeafArray subinput
+        f subinput, _.clone(path)
       else
-        gg.wf.Inputs.mapLeafArrays subinput, f
+        gg.wf.Inputs.mapLeafArrays subinput, f, path
+      path.pop()
+      res
 
 
   # @param f function that takes a single data object as input
   #          (data) -> data or [data...]
   # @return transformed datas with the same hirearchical structure
-  @mapLeaves: (inputs, f) ->
+  @mapLeaves: (inputs, f, path=[]) ->
     return unless inputs?
 
     if _.isArray inputs
       _.map inputs, (input, idx) ->
-        if _.isArray input
-          gg.wf.Inputs.mapLeaves input, f
+        path.push idx
+        res = if _.isArray input
+          gg.wf.Inputs.mapLeaves input, f, path
         else
-          f input
+          f input, _.clone(path)
+        path.pop()
+        res
     else
-      f inputs
+      f inputs, path
 
   # Flatten the input array but compute metadata for the nested structure
   # @return [array, metadata]

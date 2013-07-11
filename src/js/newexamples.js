@@ -279,10 +279,6 @@ var selected_geoms = {
       specs = _.flatten([specs]);
       specs = {layers: specs};
     }
-    var Log = gg.util.Log;
-    specs.debug = {
-      "": Log.ERROR
-    }
     render(specs);
   }
 

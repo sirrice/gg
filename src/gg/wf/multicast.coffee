@@ -7,24 +7,32 @@
 #
 class gg.wf.Multicast extends gg.wf.Node
   @ggpackage = "gg.wf.Multicast"
-
-  constructor: (@spec={}) ->
-    super @spec
-
-    @type = "multicast"
-    @name = _.findGood [@spec.name, "multicast-#{@id}"]
+  @type = "multicast"
 
 
   run: ->
     throw Error("Node not ready") unless @ready()
 
     inputs = @inputs[0]
+    pstore = @pstore()
     outputs  = _.times @nChildren, (idx) =>
-      if idx < @nChildren
-        gg.wf.Inputs.mapLeaves(inputs, (data) -> data.clone())
-      else
-        gg.wf.Inputs.mapLeaves inputs, (data) -> data
+      f = 
+        if idx < @nChildren
+          (data) -> data.clone()
+        else
+          (data) -> data
 
-    _.each outputs, (output, idx) => @output idx, output
+      cb = (data, inpath) ->
+        # write provenance
+        outpath = _.clone inpath
+        outpath.unshift idx
+        inpath.unshift 0
+        pstore.writeData outpath, inpath
+
+        f data
+      gg.wf.Inputs.mapLeaves inputs, cb
+
+    for output, idx in outputs
+      @output idx, output
     outputs
 

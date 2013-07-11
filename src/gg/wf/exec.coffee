@@ -7,12 +7,9 @@
 #
 class gg.wf.Exec extends gg.wf.Node
   @ggpackage = "gg.wf.Exec"
+  @type = "exec"
 
-  constructor: (@spec={}) ->
-    super
-    @type = "exec"
-    @name = _.findGood [@spec.name, "exec-#{@id}"]
-
+  parseSpec: ->
     @params.ensure 'compute', ['f'], null
 
   compute: (table, env, params) -> table
@@ -22,13 +19,18 @@ class gg.wf.Exec extends gg.wf.Node
     throw Error("node not ready") unless @ready()
 
     params = @params
-    f = (data) =>
+    pstore = @pstore()
+    f = (data, path) =>
       table = @compute data.table, data.env, params
       data = new gg.wf.Data table, data.env
-      data
-    outputs = gg.wf.Inputs.mapLeaves @inputs[0], f
 
-    @output 0, outputs
+      pstore.writeData path, path
+
+      data
+
+    outputs = gg.wf.Inputs.mapLeaves @inputs, f
+    for output, idx in outputs
+      @output idx, output
     outputs
 
   @create: (params, compute) ->
