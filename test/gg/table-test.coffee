@@ -5,6 +5,7 @@ assert = require "assert"
 
 
 suite = vows.describe "table.js"
+Schema = gg.data.Schema
 
 suite.addBatch
   "nested row table":
@@ -79,6 +80,32 @@ suite.addBatch
         assert.equal table.get(idx, 'a'), table2.get(idx, 'a'), "a's should be equal"
         assert.deepEqual table.get(idx, 'f'), table2.get(idx, 'f'), "arrays should be equal"
 
+    "transforms to first schema correctly": (table) ->
+      targetSchema = Schema.fromSpec
+        a: Schema.numeric
+        f: Schema.numeric
+        d: Schema.numeric
+        nest:
+          type: Schema.nested
+          schema:
+            b: Schema.numeric
+        arr:
+          type: Schema.array
+          schema:
+            c: Schema.numeric
+
+      console.log JSON.stringify table.raw()
+      newtable = gg.data.SchemaMap.transform table, targetSchema
+      console.log JSON.stringify newtable.raw()
+      newtable.each (row, idx) ->
+        assert _.isNumber(row.get("a")), "a should be numeric"
+        assert _.isNumber(row.get("f")), "f should be numeric"
+        assert _.isNumber(row.get('d')), "d should be numeric"
+        assert _.isObject(row.get("nest")), "nest should be an object"
+        assert _.isNumber(row.get("b")), "b should be numeric"
+        assert _.isArray(row.get("arr")), "arr should be array"
+        for v in row.get("c")
+          assert _.isNumber(v), "c be array"
 
     "when f is set":
       topic: (table) ->
