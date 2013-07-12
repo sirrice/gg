@@ -15,10 +15,12 @@ class gg.stat.SortStat extends gg.stat.Stat
       attrs: attrs
       reverse: reverse
 
-  inputSchema: (table, env, params) -> params.get 'attrs'
+  inputSchema: (data, params) -> params.get 'attrs'
 
 
-  compute: (table, env, params) ->
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
     f = (attr) ->
       table.contains(attr) and not table.schema.inArray(attr)
     attrs = params.get 'attrs'
@@ -35,7 +37,6 @@ class gg.stat.SortStat extends gg.stat.Stat
         0
       table.sort cmp
 
-    table
-
+    data
 
 

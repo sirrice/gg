@@ -3,7 +3,9 @@ class gg.core.Layout extends gg.core.BForm
   @ggpackage = "gg.core.Layout"
 
 
-  compute: (tables, envs, params) ->
+  compute: (datas, params) ->
+    tables = _.map datas, (d) -> d.table
+    envs = _.map datas, (d) -> d.env
     options = params.get 'options'
     c = new gg.core.Bound 0, 0, options.w, options.h
     [w,h] = [c.w(), c.h()]
@@ -36,6 +38,6 @@ class gg.core.Layout extends gg.core.BForm
     _.each envs, (env) -> env.put('lc', lc)
 
 
-    tables
+    datas
 
 

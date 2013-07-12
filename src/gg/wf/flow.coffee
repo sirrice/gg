@@ -345,23 +345,10 @@ class gg.wf.Flow extends events.EventEmitter
       @connectBridge node, source
 
 
-  # Execute this flow on the client side
-  run: ->
-    unless _.all(@sources(), (s) -> s.type == 'start')
-      start = new gg.wf.Start
-      @prepend start
-
-    unless @sources().length == 1
-      throw Error()
-
-    @instantiate()
-    @log @toString()
-
-    runner = new gg.wf.Runner @, null
-
+  setupRPC: (runner, uri) ->
     rpc = new gg.wf.RPC
       params:
-        uri: "http://localhost:8000"
+        uri: uri
 
     rpc.on "register", (status) =>
       @log "flow registered!"
@@ -377,13 +364,40 @@ class gg.wf.Flow extends events.EventEmitter
     runner.ch.xferControl = (nodeid, outport, outputs) =>
       rpc.run @id, nodeid, outport, outputs
 
-    runner.on "output", (idx, data) =>
-      @emit "output", idx, data
-      @log gg.prov.PStore.get @id
-
     runner.on "done", () =>
       rpc.deregister @
-      @emit "done", yes
 
     rpc.register @
+
+  # Execute this flow on the client side
+  run: (graphicOpts) ->
+
+    unless _.all(@sources(), (s) -> s.type == 'start')
+      start = new gg.wf.Start
+      @prepend start
+
+    unless @sources().length == 1
+      throw Error()
+
+    @instantiate()
+    @log @toString()
+
+    runner = new gg.wf.Runner @, null
+    runner.on "output", (idx, data) =>
+      @emit "output", idx, data
+
+    runner.on "done", () =>
+      @emit "done", yes
+
+    # if can access server
+    uri = graphicOpts.serverURI
+    onConnect = () => 
+      console.log "connected"
+      @setupRPC runner, uri
+    onErr = () -> 
+      console.log "error"
+      runner.run()
+    gg.wf.RPC.checkConnection uri, onConnect, onErr
+
+
 

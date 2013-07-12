@@ -9,9 +9,10 @@ class gg.scale.train.Data extends gg.core.BForm
   # these training methods assume that the tables's attribute names
   # have been mapped to the aesthetic attributes that the scales
   # expect
-  compute: (tables, envs, params) ->
-    fTrain = ([t,e]) =>
-      info = @paneInfo t, e
+  compute: (datas, params) ->
+    fTrain = (data) =>
+      [t, e] = [data.table, data.env]
+      info = @paneInfo data
       posMapping = e.get 'posMapping'
       config = e.get 'scalesconfig'
       scaleset = config.scales info.layer
@@ -24,8 +25,8 @@ class gg.scale.train.Data extends gg.core.BForm
       scaleset.train t, null, posMapping
       e.put 'scales', scaleset
 
-    _.each _.zip(tables, envs), fTrain
-    gg.scale.train.Master.train tables, envs, params
-    tables
+    _.each datas, fTrain
+    gg.scale.train.Master.train datas, params
+    datas
 
 

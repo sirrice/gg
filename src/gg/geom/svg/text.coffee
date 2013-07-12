@@ -5,24 +5,23 @@ class gg.geom.svg.Text extends gg.geom.Render
   @ggpackage = "gg.geom.svg.Text"
   @aliases = ["text", "label"]
 
-  defaults: (table, env) ->
+  defaults: ->
     "fill-opacity": "0.5"
     fill: "steelblue"
     dx: 10
     dy: 10
     group: 1
 
-  inputSchema: (table, env) ->
+  inputSchema: ->
     ['x0', 'y0', 'text']
 
-  render: (table, env, node) ->
+  render: (table, svg) ->
     gg.wf.Stdout.print table, null, 5, @log
+    rows = table.asArray()
 
-    data = table.asArray()
-    svg = @svg table, env
-    texts = @agroup(svg, "text geoms", data)
+    texts = @agroup(svg, "text geoms", rows)
       .selectAll("text")
-      .data(data)
+      .data(rows)
     enter = texts.enter()
     exit = texts.exit()
     enterTexts = enter.append("text")

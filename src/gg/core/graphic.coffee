@@ -148,7 +148,7 @@ class gg.core.Graphic
       optimizer = new gg.wf.Optimizer [new gg.wf.rule.RPCify]
       @workflow = optimizer.run @workflow
 
-    @workflow.run()
+    @workflow.run @options
 
 
 

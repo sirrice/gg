@@ -5,18 +5,17 @@ class gg.geom.svg.Area extends gg.geom.Render
   @aliases = ["area"]
 
 
-  defaults: (table, env) ->
+  defaults:  ->
     "stroke-width": 1
     stroke: "steelblue"
     fill: "grey"
     "fill-opacity": 0.7
     group: 1
 
-  inputSchema: (table, env) -> ['pts']
+  inputSchema: -> ['pts']
 
-  render: (table, env, node) ->
-    svg = @svg table, env
-    data = table.asArray()
+  render: (table, svg)  ->
+    rows = table.asArray()
 
     area = d3.svg.area()
         .x((d) -> d.x)
@@ -26,7 +25,7 @@ class gg.geom.svg.Area extends gg.geom.Render
 
     # attributes should be imported in bulk using
     # .attr( {} ) where {} is @attrs
-    areas = @groups(svg, 'areas', data).selectAll('path')
+    areas = @groups(svg, 'areas', rows).selectAll('path')
         .data((d) -> [d])
     enter = areas.enter()
     enterAreas = enter.append("path")

@@ -10,7 +10,8 @@ class gg.geom.reparam.Text extends gg.core.XForm
 
   inputSchema: -> ['x', 'y', 'text']
 
-  outputSchema: (table, env, params) ->
+  outputSchema: (data, params) ->
+    table = data.table
     schema = table.schema.clone()
     _.each ["x0", "x1", "y0", "y1"], (attr) ->
       unless schema.contains attr
@@ -27,13 +28,14 @@ class gg.geom.reparam.Text extends gg.core.XForm
       y1: numeric
       text: gg.data.Schema.ordinal
 
-  compute: (table, env, params) ->
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
+
     attrs = ['x', 'y', 'text']
     inArr = _.map attrs, ((attr)->table.schema.inArray attr)
     unless _.all(inArr) or not (_.any inArr)
       throw Error("attributes must all be in arrays or all not")
-
-    table = table.clone()
 
     if table.schema.inArray 'x'
       throw Error("don't support labels for within arrays")
@@ -58,8 +60,8 @@ class gg.geom.reparam.Text extends gg.core.XForm
       row.set "y0", y
       row.set "y1", y+size.h
 
-    table.schema = params.get('outputSchema') table, env, params
+    table.schema = params.get('outputSchema') data, params
 
-    table
+    data
 
 

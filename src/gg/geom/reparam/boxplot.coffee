@@ -18,7 +18,9 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
       'outliers', 'min', 'max']
 
   # outliers is an array with schema {outlier:}
-  outputSchema: (table, env) ->
+  outputSchema: (data) ->
+    table = data.table
+    env = data.env
     gg.data.Schema.fromSpec
       group: table.schema.typeObj 'group'
       #x: gg.data.Schema.ordinal
@@ -41,8 +43,9 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
       max: gg.data.Schema.numeric
 
 
-  compute: (table, env, params) ->
-    scales = @scales table, env
+  compute: (data, params) ->
+    [table, env] = [data.table, data.env]
+    scales = @scales data
     yscale = scales.scale 'y', gg.data.Schema.numeric
 
     # XXX: currently assumes xs is numerical!!
@@ -66,7 +69,7 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
 
     mapping = _.mappingToFunctions table, mapping
     table.transform mapping, yes
-    table.schema = params.get('outputSchema') table, env, params
-    table
+    table.schema = params.get('outputSchema') data, params
+    data
 
 

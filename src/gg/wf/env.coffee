@@ -9,17 +9,17 @@ class gg.wf.EnvPut extends gg.wf.Exec
     # data is a mapping of key -> val where
     # key:  label name in environment
     # val:  label value or a function with signature
-    #       (table, env) -> value
+    #       (data) -> value
     #
     # note: if function, it will be evaluated when the key
     #       is accessed
     @params.ensure 'pairs', [], {}
 
-  compute: (table, env, params) ->
+  compute: (data, params) ->
     _.each params.get('pairs'), (val, key) =>
       @log "envput: #{key} -> #{val}"
-      env.put key, val
-    table
+      data.env.put key, val
+    data
 
 
 #
@@ -48,16 +48,16 @@ class gg.wf.EnvGet extends gg.wf.Exec
     unless @params.get('envkey')?
       throw Error("#{@name}: Need label key and value/value function)")
 
-  compute: (table, env, params) ->
+  compute: (data, params) ->
     envkey = params.get 'envkey'
     defaultVal = params.get 'default'
     attr = params.get 'attr'
 
-    if envkey? and env.contains envkey
+    if envkey? and data.env.contains envkey
       val = defaultVal
-      val = env.get(envkey) if env.contains(envkey)
-      table.addConstColumn attr, val
+      val = data.env.get(envkey) if data.env.contains(envkey)
+      data.table.addConstColumn attr, val
 
-    table
+    data
 
 

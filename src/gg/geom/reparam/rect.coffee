@@ -9,7 +9,9 @@ class gg.geom.reparam.Rect extends gg.core.XForm
 
   inputSchema: -> ['x', 'y']
 
-  compute: (table, env, params) ->
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
     scales = env.get "scales"
     yscale = scales.scale 'y', gg.data.Schema.numeric
     padding = 1.0 - params.get("padding")
@@ -47,6 +49,6 @@ class gg.geom.reparam.Rect extends gg.core.XForm
 
     mapping = _.mappingToFunctions table, mapping
     table.transform mapping, yes
-    table
+    data
 
 

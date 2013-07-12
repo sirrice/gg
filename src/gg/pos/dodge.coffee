@@ -7,15 +7,14 @@ class gg.pos.Dodge extends gg.pos.Position
 
   parseSpec: ->
     super
-
     @params.put "padding", _.findGoodAttr @spec, ['pad', 'padding'], 0.05
 
-  addDefaults: (table, env) ->
-
-  inputSchema: -> ['x', 'x0', 'x1', 'y', 'y0', 'y1', 'group']
+  inputSchema: -> ['x', 'x0', 'x1', 'group']#, 'y', 'y0', 'y1', 'group']
 
 
-  compute: (table, env, params) ->
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
     groups = table.split (row) -> [row.get('x0'),row.get('x1')]
     maxGroup = _.mmax groups, (group) -> group.table.nrows()
     keys = _.uniq _.flatten _.map(groups, (group) -> _.uniq(group.table.getColumn "group"))
@@ -46,5 +45,5 @@ class gg.pos.Dodge extends gg.pos.Position
       log "#{key}\tidx: #{idx}\told: #{x},#{width}\tnew: #{newx},#{newWidth}"
 
 
-    table
+    data
 

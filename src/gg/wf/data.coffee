@@ -54,7 +54,11 @@ class gg.wf.Inputs
   # Flatten the input array but compute metadata for the nested structure
   # @return [array, metadata]
   #         array:    flattened array of gg.wf.Data objects
-  #         metadata: metadata that tracks each object in array to originial structure
+  #         metadata: metadata that tracks each object in array 
+  #           to originial structure -- the path to the object
+    #         e.g., [ [a, [b]] ]: 
+    #               a has path [0, 0]
+    #               b has path [0, 1, 0]
   @flatten: (inputs, md=[], arr=[], path=[]) ->
     # md: array idx -> original indices
 

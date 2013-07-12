@@ -7,30 +7,23 @@
 class gg.geom.Render extends gg.core.XForm
   @ggpackage = "gg.geom.Render"
 
-  constructor: (@spec={}) ->
-    @spec.name = _.findGoodAttr @spec, ['name'], @constructor.name
-    super
-    @parseSpec()
-    @log = gg.util.Log.logger @constructor.ggpackage, @spec.name
-
-
   parseSpec: ->
     super
     @params.put "location", "client"
 
-  svg: (table, env, node) -> env.get('svg').pane
+  svg: (data) -> data.env.get('svg').pane
 
-  groups: (g, klass, data) ->
+  groups: (g, klass, rows) ->
     g.selectAll("g.#{klass}")
-      .data(data)
+      .data(rows)
       .enter()
       .append('g')
       .classed(klass, true)
 
-  agroup: (g, klass, data) ->
+  agroup: (g, klass, rows) ->
     g.append("g")
       .classed(klass, true)
-      .data(data)
+      .data(rows)
 
 
   # given a dictionary of attributes, add them to the dom element
@@ -38,26 +31,25 @@ class gg.geom.Render extends gg.core.XForm
     _.each attrs, (val, attr) -> domEl.attr attr, val
     domEl
 
-  compute: (table, env, node) ->
-    @log "rendering #{table.nrows()} rows"
+  compute: (data, params) ->
+    [table, env] = [data.table, data.env]
+    svg = @svg data
     gg.wf.Stdout.print table, null, 2, @log
+    @render table, svg
 
-    # Render some info
-    paneSvg = @svg table, env, node
-    write = (text, opts={}) ->
-      _.subSvg(paneSvg, opts, "text").text(text)
-    Facets = gg.facet.base.Facets
-    write env.get(Facets.facetXKey), {dy: "1em"}
-    write env.get(Facets.facetYKey), {dy: "2em"}
-    write env.get(table.nrows()), {dy: "3em"}
+    # Render some debugging info
+    if @log.level == gg.util.Log.DEBUG
+      write = (text, opts={}) ->
+        _.subSvg(svg, opts, "text").text(text)
+      Facets = gg.facet.base.Facets
+      write env.get(Facets.facetXKey), {dy: "1em"}
+      write env.get(Facets.facetYKey), {dy: "2em"}
+      write env.get(table.nrows()), {dy: "3em"}
 
-
-
-    @render table, env, node
-    table
+    data
 
   # @override this
-  render: (table) -> throw Error("#{@name}.render() not implemented")
+  render: (table, rows) -> throw Error("#{@name}.render() not implemented")
 
   @klasses: ->
     klasses = [

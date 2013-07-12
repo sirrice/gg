@@ -7,7 +7,9 @@ class gg.core.Render extends gg.core.BForm
     super
     @params.put "location", 'client'
 
-  compute: (tables, envs, params) ->
+  compute: (datas, params) ->
+    tables = _.map datas, (d) -> d.table
+    envs = _.map datas, (d) -> d.env
     env = _.first envs
     svg = env.get('svg').base
     lc = env.get 'lc'
@@ -53,5 +55,5 @@ class gg.core.Render extends gg.core.BForm
     _.each envs, (env) ->
       env.get('svg').facets = facetsSvg
 
-    tables
 
+    datas

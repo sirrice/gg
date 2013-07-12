@@ -2,10 +2,7 @@
 class gg.stat.Stat extends gg.core.XForm
   constructor: (@spec={}) ->
     super
-
     @map = null
-
-    @parseSpec()
 
   parseSpec: ->
     super

@@ -10,23 +10,24 @@ class gg.scale.train.Master extends gg.core.BForm
   parseSpec: ->
     @params.ensure 'scalesTrain', [], 'fixed'
 
-  compute: (tables, envs, params) ->
-    gg.scale.train.Master.train tables, envs, params
-    tables
+  compute: (datas, params) ->
+    gg.scale.train.Master.train datas, params
+    datas
 
-  @train: (tables, envs, params) ->
+  @train: (datas, params) ->
     scalesTrain = params.get('scalesTrain') or 'fixed'
-    scaleSetList = @scalesList tables, envs
+    scaleSetList = gg.core.FormUtil.scalesList datas
     masterScaleSet = gg.scale.Set.merge scaleSetList
-    #@expandDomains masterScaleSet
+    # @expandDomains masterScaleSet
+    envs = _.map datas, (d) -> d.env
 
     if scalesTrain is 'fixed'
       _.each envs, (env) ->
         scaleSet = env.get 'scales'
         scaleSet.merge masterScaleSet, no
     else
-      xs = @pick envs, 'x'
-      ys = @pick envs, 'y'
+      xs = gg.core.FormUtil.pick datas, 'x'
+      ys = gg.core.FormUtil.pick datas, 'y'
       @trainFreeScales envs, xs, ys
 
 

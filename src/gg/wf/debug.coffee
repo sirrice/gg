@@ -10,10 +10,11 @@ class gg.wf.Stdout extends gg.wf.Exec
       aess: [ [], null ]
     @log = gg.util.Log.logger @constructor.ggpackage, "StdOut: #{@name}-#{@id}"
 
-  compute: (table, env, params) ->
+  compute: (data, params) ->
+    env = data.env
     @log "facetX: #{env.get("facetX")}\tfacetY: #{env.get("facetY")}"
-    gg.wf.Stdout.print table, params.get('aess'), params.get('n'), @log
-    table
+    gg.wf.Stdout.print data.table, params.get('aess'), params.get('n'), @log
+    data
 
   @print: (table, aess, n, log=null) ->
     if _.isArray table
@@ -46,10 +47,10 @@ class gg.wf.Scales extends gg.wf.Exec
   @ggpackage = "gg.wf.Scales"
   @type = "scaleout"
 
-  compute: (table, env, params) ->
-    layerIdx = env.get 'layer'
-    gg.wf.Scales.print env.get('scales'), layerIdx,  @log
-    table
+  compute: (data, params) ->
+    layerIdx = data.env.get 'layer'
+    gg.wf.Scales.print data.env.get('scales'), layerIdx,  @log
+    data
 
   # @param scales set
   @print: (scaleset, layerIdx, log=null) ->

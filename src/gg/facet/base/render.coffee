@@ -14,7 +14,9 @@ class gg.facet.base.Render extends gg.core.BForm
     @params.put "location", "client"
 
 
-  renderLabels: (tables, envs, params, lc) ->
+  renderLabels: (datas, params, lc) ->
+    tables = _.map datas, (d) -> d.table
+    envs = _.map datas, (d) -> d.env
     options = params.get 'options'
     fXLabel = params.get 'fXLabel'
     fYLabel = params.get 'fYLabel'
@@ -43,9 +45,10 @@ class gg.facet.base.Render extends gg.core.BForm
         class: 'facet-title x-facet-title'
       }).append('text')
         .text(fXLabel)
-        .attr("dy", ".5em")
+        .attr("dy", "1em")
         .attr('text-anchor', 'middle')
 
+    # Y Facet
     if yflC? and yflC.v()
       c = _.subSvg svg, {
         transform: "translate(#{yflC.x0}, #{yflC.y0})"
@@ -59,6 +62,7 @@ class gg.facet.base.Render extends gg.core.BForm
         dy: ".5em"
       }, 'text').text(fYLabel)
 
+    # X Axis
     if xalC? and xalC.v()
       _.subSvg(svg, {
         transform: "translate(#{xalC.x0},#{xalC.y0})"
@@ -66,6 +70,7 @@ class gg.facet.base.Render extends gg.core.BForm
       }).append('text')
         .text(options.xaxis)
         .attr('text-anchor', 'middle')
+        .attr("dy", "-1em")
 
     if yalC? and yalC.v()
       yalSvg = _.subSvg(svg, {
@@ -121,14 +126,11 @@ class gg.facet.base.Render extends gg.core.BForm
 
 
 
-  compute: (tables, envs, params) ->
-    lc = _.first(envs).get 'lc'
-
-    @renderLabels tables, envs, params, lc
-
-    _.each envs, (env) -> env.put 'lc', lc
-
-    tables
+  compute: (datas, params) ->
+    lc = _.first(datas).env.get 'lc'
+    @renderLabels datas, params, lc
+    _.each datas, (data) -> data.env.put 'lc', lc
+    datas
 
   @fromSpec: (spec) ->
     new gg.facet.grid.Render spec

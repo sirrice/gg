@@ -4,12 +4,14 @@
 class gg.geom.reparam.Line extends gg.core.XForm
   @ggpackage = "gg.geom.reparam.Line"
 
-  defaults: (table, env, node) ->
+  defaults: ->
     { group: '1' }
 
-  inputSchema: (table, env) -> ['x', 'y']
+  inputSchema: (data) -> ['x', 'y']
 
-  outputSchema: (table, env) ->
+  outputSchema: (data) ->
+    table = data.table
+    env = data.env
     numeric = gg.data.Schema.numeric
     gg.data.Schema.fromSpec
       group: table.schema.typeObj 'group'
@@ -22,8 +24,9 @@ class gg.geom.reparam.Line extends gg.core.XForm
           y1: numeric
 
 
-  compute: (table, env, params) ->
-    scales = @scales table, env, params
+  compute: (data, params) ->
+    [table, env] = [data.table, data.env]
+    scales = @scales data, params
     y0 = scales.scale('y', gg.data.Schema.numeric).minRange()
     @log "compute: y0 set to #{y0}"
     table.each (row) ->
@@ -40,6 +43,7 @@ class gg.geom.reparam.Line extends gg.core.XForm
       @log.warn "group #{JSON.stringify groupKey} has #{groupTable.nrows()} pts"
       rowData
 
-    schema = params.get('outputSchema') table, env, params
-    new gg.data.RowTable schema, rows
+    schema = params.get('outputSchema') data, params
+    table = new gg.data.RowTable schema, rows
+    new gg.wf.Data table, env
 

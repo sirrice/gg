@@ -5,22 +5,21 @@ class gg.geom.svg.Line extends gg.geom.Render
   @ggpackage = "gg.geom.svg.Line"
   @aliases = "line"
 
-  defaults: (table) ->
+  defaults: ->
     "stroke-width": 1.5
     "stroke-opacity": 0.7
     stroke: "black"
     fill: "none"
     group: '1'
 
-  inputSchema: (table, env) -> ['pts', 'group']
+  inputSchema:  -> ['pts', 'group']
 
-  render: (table, env) ->
-    svg = @svg table, env
-    data = table.asArray()
+  render: (table, svg) ->
+    rows = table.asArray()
 
     # attributes should be imported in bulk using
     # .attr( {} ) where {} is @attrs
-    lines = @groups(svg, 'line', data).selectAll('path')
+    lines = @groups(svg, 'line', rows).selectAll('path')
         .data((d) -> [d])
     enter = lines.enter()
     enterLines = enter.append("path")

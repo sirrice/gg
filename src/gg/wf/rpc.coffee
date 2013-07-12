@@ -17,6 +17,30 @@ class gg.wf.RPC extends events.EventEmitter
   @id: -> gg.wf.RPC::_id += 1
   _id: 0
 
+  @checkConnection: (uri, cb, errcb) ->
+    responded = no
+
+    socket = io.connect uri
+    connected = socket.socket.connected
+   
+    onConnect = () ->
+      unless responded
+        responded = yes
+        cb()
+      socket.removeListener "connect", onConnect
+
+    onFail = () ->
+      unless responded
+        responded = yes
+        errcb()
+      socket.removeListener "error", onFail
+ 
+    socket.on "connect", onConnect
+    socket.on "error", onFail
+
+    if connected
+      onConnect()
+ 
   constructor: (@spec) ->
     @id = gg.wf.RPC.id()
     @callid = 0
@@ -35,7 +59,7 @@ class gg.wf.RPC extends events.EventEmitter
 
     @socket.on "connect", () =>
       @ready = yes
-      @sendBuffer()
+      @flushBuffer()
 
     @socket.on "disconnect", () =>
       @ready = no
@@ -53,7 +77,7 @@ class gg.wf.RPC extends events.EventEmitter
     @socket.on "deregister", callback
     @socket.on "runflow", callback
 
-  sendBuffer: ->
+  flushBuffer: ->
     # XXX: This is not thread safe
     while @buffer.length > 0
       break unless @ready
@@ -68,7 +92,7 @@ class gg.wf.RPC extends events.EventEmitter
 
   send: (command, payload, cb) ->
     @buffer.push [command, payload, cb]
-    @sendBuffer()
+    @flushBuffer()
 
   register: (flow, cb) ->
     payload =

@@ -12,7 +12,7 @@ class gg.wf.Exec extends gg.wf.Node
   parseSpec: ->
     @params.ensure 'compute', ['f'], null
 
-  compute: (table, env, params) -> table
+  compute: (data, params) -> data
 
   # @return emits to single child node
   run: ->
@@ -21,12 +21,8 @@ class gg.wf.Exec extends gg.wf.Node
     params = @params
     pstore = @pstore()
     f = (data, path) =>
-      table = @compute data.table, data.env, params
-      data = new gg.wf.Data table, data.env
-
       pstore.writeData path, path
-
-      data
+      @compute data, params
 
     outputs = gg.wf.Inputs.mapLeaves @inputs, f
     for output, idx in outputs

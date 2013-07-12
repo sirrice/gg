@@ -35,8 +35,11 @@ class gg.wf.Runner extends events.EventEmitter
     @setupQueue()
 
     @ch = new gg.wf.ClearingHouse(
-      @, xferControl)
+      @, null)
     @ch.on "output", (args...) => @emit "output", args...
+    unless xferControl?
+      xferControl = @ch.routeNodeResult.bind(@ch)
+    @ch.xferControl = xferControl
 
     # every node's output goes through the clearing house
     @flow.graph.bfs (node) =>

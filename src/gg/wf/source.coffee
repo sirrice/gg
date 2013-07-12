@@ -6,7 +6,7 @@ class gg.wf.Source extends gg.wf.Exec
   @type = "source"
 
 
-  compute: (table, env, params) ->
+  compute: (data, params) ->
     throw Error("Source not setup to generate tables")
 
 
@@ -23,8 +23,9 @@ class gg.wf.TableSource extends gg.wf.Source
     unless @params.contains 'table'
       throw Error("TableSource needs a table as parameter")
 
-  compute: (table, env, params) ->
-    params.get('table')
+  compute: (data, params) ->
+    data.table = params.get('table')
+    data
 
 class gg.wf.RowSource extends gg.wf.Source
   @ggpackage = "gg.wf.RowSource"
@@ -40,8 +41,9 @@ class gg.wf.RowSource extends gg.wf.Source
     unless @params.get('rows')?
       throw Error("RowSource needs a table as parameter")
 
-  compute: (table, env, params) ->
-    gg.data.RowTable.fromArray params.get('rows')
+  compute: (data, params) ->
+    data.table = gg.data.RowTable.fromArray params.get('rows')
+    data
 
 
 

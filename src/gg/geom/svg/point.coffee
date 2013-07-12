@@ -5,8 +5,8 @@ class gg.geom.svg.Point extends gg.geom.Render
   @ggpackage = "gg.geom.svg.Point"
   @aliases = ["point", "pt"]
 
-  defaults: (table, env) ->
-    r: 5
+  defaults: ->
+    r: 2
     "fill-opacity": "0.5"
     fill: "steelblue"
     stroke: "steelblue"
@@ -14,17 +14,16 @@ class gg.geom.svg.Point extends gg.geom.Render
     "stroke-opacity": 0.5
     group: 1
 
-  inputSchema: (table, env) ->
+  inputSchema: ->
     ['x', 'y']
 
-  render: (table, env, node) ->
+  render: (table, svg) ->
     gg.wf.Stdout.print table, ['x', 'fill'], 5, @log
 
-    data = table.asArray()
-    svg = @svg table, env
-    circles = @agroup(svg, "circles geoms", data)
+    rows = table.asArray()
+    circles = @agroup(svg, "circles geoms", rows)
       .selectAll("circle")
-      .data(data)
+      .data(rows)
     enter = circles.enter()
     exit = circles.exit()
     enterCircles = enter.append("circle")

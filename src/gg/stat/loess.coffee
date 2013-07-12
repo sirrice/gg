@@ -14,9 +14,9 @@ class gg.stat.LoessStat extends gg.stat.Stat
       bandwidth: [["band", "bw"], .3]
       acc: [["accuracy", "ac"], 1e-12]
 
-  inputSchema: (table, env) -> ['x', 'y']
+  inputSchema: -> ['x', 'y']
 
-  outputSchema: (table, env) ->
+  outputSchema: (data) ->
     gg.data.Schema.fromSpec
       x: gg.data.Schema.numeric
       y: gg.data.Schema.numeric
@@ -24,9 +24,11 @@ class gg.stat.LoessStat extends gg.stat.Stat
   # The loess function expects an xs and ys array where
   # 1) every value is a finite number
   # 2) xs is monotonically increasing
-  compute: (table, env, params) ->
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
     if table.nrows() <= 1
-      return table
+      return data
     @log "nrows: #{table.nrows()}"
     @log "contains x,y: #{table.contains 'x'}, #{table.contains 'y'}"
     xs = table.getColumn('x')
@@ -66,5 +68,6 @@ class gg.stat.LoessStat extends gg.stat.Stat
     @log "compute: ys: #{JSON.stringify ys.slice(0,6)}"
     @log "compute: smoothys: #{JSON.stringify smoothys.slice(0,6)}"
 
-    schema = params.get('outputSchema') table, env, params
-    new gg.data.RowTable schema, rows
+    schema = params.get('outputSchema') data, params
+    data.table = new gg.data.RowTable schema, rows
+    data

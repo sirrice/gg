@@ -10,9 +10,10 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
     super
     @params.put 'nbins', _.findGoodAttr @spec, ["n", "bins", "bins"], 30
 
-  inputSchema: (table, env, params) -> ['x']
+  inputSchema: (data, params) -> ['x']
 
-  outputSchema: (table, env, params) ->
+  outputSchema: (data, params) ->
+    table = data.table
     gg.data.Schema.fromSpec
       x: table.schema.type 'x'
       bin: table.schema.type 'x'
@@ -20,8 +21,10 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
       count: gg.data.Schema.numeric
       total: gg.data.Schema.numeric
 
-  compute: (table, env, params) ->
-    scales = @scales table, env, params
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
+    scales = @scales data, params
     xType = table.schema.type 'x'
     xScale = scales.scale 'x', xType
     domain = xScale.domain()
@@ -67,8 +70,9 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
       stat.x = stat.bin
       stat.y = stat.total
 
-    schema = params.get('outputSchema') table, env, params
+    schema = params.get('outputSchema') data, params
     @log _.map(stats, (s) -> s.x)
-    new gg.data.RowTable schema, stats
+    data.table = new gg.data.RowTable schema, stats
+    data
 
 

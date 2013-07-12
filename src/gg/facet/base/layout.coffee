@@ -21,9 +21,6 @@
 #
 class gg.facet.base.Layout extends gg.core.BForm
   @ggpackage = "gg.facet.base.Layout"
-  constructor: (@g, @spec) ->
-    super
-
 
   parseSpec: ->
     super
@@ -35,11 +32,11 @@ class gg.facet.base.Layout extends gg.core.BForm
       margin: [[], 1]
 
 
-  xFacetVals: (tables, envs) ->
-    gg.core.BForm.pick envs, gg.facet.base.Facets.facetXKey
+  xFacetVals: (datas) ->
+    @pick datas, gg.facet.base.Facets.facetXKey
 
-  yFacetVals: (tables, envs) ->
-    gg.core.BForm.pick envs, gg.facet.base.Facets.facetYKey
+  yFacetVals: (datas) ->
+    @pick datas, gg.facet.base.Facets.facetYKey
 
 
   # layout facets
@@ -54,14 +51,16 @@ class gg.facet.base.Layout extends gg.core.BForm
   # facet panes
   # Positions everything _relative_ to parent container
   #
-  layoutLabels: (tables, envs, params, lc) ->
+  layoutLabels: (datas, params, lc) ->
+    tables = _.map datas, (d) -> d.table
+    envs = _.map datas, (d) -> d.env
     options = params.get 'options'
     container = lc.facetC
     [w, h] = [container.w(), container.h()]
     Bound = gg.core.Bound
 
-    xs = @xFacetVals tables, envs
-    ys = @yFacetVals tables, envs
+    xs = @xFacetVals datas
+    ys = @yFacetVals datas
     nxs = xs.length
     nys = ys.length
     showXFacet = not(xs.length is 1 and not xs[0]?)
@@ -167,7 +166,7 @@ class gg.facet.base.Layout extends gg.core.BForm
   # containers.
   #
   # Also augments envs with paneC (pane container)
-  compute: (tables, envs, params) ->
+  compute: (datas, params) ->
     # Layout Containers: string -> Bound
     # will end up containing:
     #  background
@@ -175,13 +174,15 @@ class gg.facet.base.Layout extends gg.core.BForm
     #  x and yaxisLabelC
     #  plotC
     #
-    lc = _.first(envs).get 'lc'
+    lc = _.first(datas).env.get 'lc'
+    tables = _.map datas, (data) -> data.table
+    envs = _.map datas, (data) -> data.env
 
-    @layoutLabels tables, envs, params, lc
-    @layoutPanes tables, envs, params, lc
+    @layoutLabels datas, params, lc
+    @layoutPanes datas, params, lc
 
     _.each envs, (env) -> env.put 'lc', lc
-    tables
+    datas
 
 
 

@@ -18,7 +18,9 @@ class gg.pos.Text extends gg.pos.Position
     ['x', 'y', 'text']
 
 
-  compute: (table, env, params) ->
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
     attrs = ['x', 'y', 'text']
     inArr = _.map attrs, ((attr)->table.schema.inArray attr)
     unless _.all(inArr) or not (_.any inArr)
@@ -47,7 +49,7 @@ class gg.pos.Text extends gg.pos.Position
       row.set 'y0', box[1][0]
       row.set 'y1', box[1][1]
 
-    table
+    data
 
 
 
@@ -195,8 +197,8 @@ class gg.pos.Text extends gg.pos.Position
 
 
   # @return [function, positions]
-  # positions: list of [position id, cost] pairs
   # function:  (box, position id) -> new box
+  # positions: list of [position id, cost] pairs
   @genPositions: ->
     posCosts =
       0: 1

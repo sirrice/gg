@@ -5,26 +5,24 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
   @aliases: ["schema", "boxplot"]
 
 
-  defaults: (table, env) ->
+  defaults: ->
     "stroke-width": 1
     stroke: "steelblue"
     fill: d3.rgb("steelblue").brighter(2)
     "fill-opacity": 0.5
 
-  inputSchema: (table, env) ->
+  inputSchema: ->
     ['x','q1', 'median', 'q3', 'lower', 'upper',
       'outliers', 'min', 'max']
 
-  render: (table, env, node) ->
-
-    svg = @svg table, env
-    data = table.asArray()
+  render: (table, svg) ->
+    rows = table.asArray()
 
     # attributes should be imported in bulk using
     # .attr( {} ) where {} is @attrs
-    boxes = @agroup(svg, "boxes geoms", data)
+    boxes = @agroup(svg, "boxes geoms", rows)
       .selectAll("circle")
-      .data(data)
+      .data(rows)
 
     enter = boxes.enter()
       .append("g")

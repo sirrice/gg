@@ -10,30 +10,24 @@ class gg.wf.Barrier extends gg.wf.Node
   @type = "barrier"
 
 
-  compute: (tables, env, params) -> tables
+  compute: (datas, params) -> datas
 
   run: ->
     throw Error("Node not ready") unless @ready()
 
-    # prepare inputs for compute function
     [flat, md] = gg.wf.Inputs.flatten @inputs
-    tables = _.map flat, (d) -> d.table
-    envs = _.map flat, (d) -> d.env
+    datas = @compute flat, @params
+    outputs = gg.wf.Inputs.unflatten datas, md
 
-    # Execute compute function
-    # XXX: it's the @compute() job to call @pstore().writeData
-    tables = @compute tables, envs, @params
-
-    # XXX: assume it's exact mapping
+    # XXX: Write provenance.  assume input and output datas 
+    #      1) are the same (number and ids)
+    #      2) retain the same path
+    # XXX: Alternative -- @compute writes provenance
     pstore = @pstore()
     gg.wf.Inputs.mapLeaves @inputs, (data, path) ->
       pstore.writeData path, path
 
-    # reconstruct original inputs structure
-    datas = _.times tables.length, (idx) ->
-      new gg.wf.Data tables[idx], envs[idx]
-    outputs = gg.wf.Inputs.unflatten datas, md
-
-    _.each outputs, (output, idx) => @output idx, output
+    for output, idx in outputs
+      @output idx, output
     outputs
 

@@ -8,9 +8,11 @@ class gg.stat.BoxplotStat extends gg.stat.Stat
   defaults: ->
     x: 0
 
-  inputSchema: (table, env) -> ['x', 'y']#'group']
+  inputSchema: -> ['x', 'y']#'group']
 
-  outputSchema: (table, env) ->
+  outputSchema: (data) ->
+    table = data.table
+    env = data.env
     gg.data.Schema.fromSpec
       #group: gg.data.Schema.ordinal
       #x: gg.data.Schema.ordinal
@@ -56,7 +58,9 @@ class gg.stat.BoxplotStat extends gg.stat.Stat
     }
 
 
-  compute: (table, env, params) ->
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
     #groups = table.split "group"
     groups = table.split "x"
     rows = _.map groups, (groupPair) =>
@@ -67,9 +71,9 @@ class gg.stat.BoxplotStat extends gg.stat.Stat
       row.x = gKey
       row
 
-    schema = params.get('outputSchema') table, env, params
-    table = new gg.data.RowTable schema, rows
-    table
+    schema = params.get('outputSchema') data, params
+    data.table = new gg.data.RowTable schema, rows
+    data
 
 
 

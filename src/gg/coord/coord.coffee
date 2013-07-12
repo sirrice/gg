@@ -8,9 +8,9 @@ class gg.coord.Coordinate extends gg.core.XForm
     super
     @parseSpec()
 
-  compute: (table, env, params) -> @map table, env, params
+  compute: (data, params) -> @map data, params
 
-  map: (table, env, params) -> throw Error("#{@name}.map() not implemented")
+  map: (data, params) -> throw Error("#{@name}.map() not implemented")
 
   @klasses: ->
     klasses = [

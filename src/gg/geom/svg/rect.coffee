@@ -4,7 +4,7 @@ class gg.geom.svg.Rect extends gg.geom.Render
   @ggpackage = "gg.geom.svg.Rect"
   @aliases = "rect"
 
-  defaults: (table, env) ->
+  defaults: ->
     "fill-opacity": 0.5
     fill: "steelblue"
     stroke: "steelblue"
@@ -12,15 +12,15 @@ class gg.geom.svg.Rect extends gg.geom.Render
     "stroke-opacity": 0.5
     group: 1
 
-  inputSchema: (table, env) ->
+  inputSchema: ->
     ['x0', 'x1', 'y0', 'y1']
 
-  render: (table, env, node) ->
+  render: (table, svg) ->
+    rows = table.asArray()
 
-    data = table.asArray()
-    rects = @agroup(@svg(table, env), "intervals geoms", data)
+    rects = @agroup(svg, "intervals geoms", rows)
       .selectAll("rect")
-      .data(data)
+      .data(rows)
     enter = rects.enter()
     exit = rects.exit()
     enterRects = enter.append("rect")

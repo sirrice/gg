@@ -9,15 +9,17 @@ class gg.facet.pane.Svg extends gg.core.XForm
 
   # Create SVG elements for all facets, axes, and panes
   # Does not render the geometries, simply allocates them
-  compute: (table, env, params) ->
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
     svg = env.get('svg').plot
     b2translate = (b) -> "translate(#{b.x0},#{b.y0})"
     paneC = env.get 'paneC'
     return table unless paneC?
 
-    info = @paneInfo table, env, params
+    info = @paneInfo data, params
     layerIdx = info.layer
-    scaleSet = @scales table, env, params
+    scaleSet = @scales data, params
     dc = paneC.drawC()
     xfc = paneC.xFacetC()
     yfc = paneC.yFacetC()
@@ -39,6 +41,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
       container: paneC.bound().toString()
     }
 
+    # Render the background for the first layer
     if layerIdx is 0
       _.subSvg el, {
         width: dc.w()
@@ -145,6 +148,7 @@ class gg.facet.pane.Svg extends gg.core.XForm
       yael.call axis
 
 
+    # Create and add pane SVG to env
     paneSvg = _.subSvg el, {
       class: 'layer-pane facet-grid'
       transform: b2translate(dc)
@@ -152,13 +156,9 @@ class gg.facet.pane.Svg extends gg.core.XForm
       height: dc.h()
       id: "facet-grid-#{paneC.xidx}-#{paneC.yidx}-#{layerIdx}"
     }
-
-
-    # Update env
     env.get('svg').pane = paneSvg
 
-
-    table
+    data
 
 
 

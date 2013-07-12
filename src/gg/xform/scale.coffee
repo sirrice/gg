@@ -7,8 +7,10 @@
 class gg.xform.ScalesSchema extends gg.core.XForm
   @ggpackage = "gg.xform.ScalesSchema"
 
-  compute: (table, env, params) ->
-    scaleset = @scales table, env, params
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
+    scaleset = @scales data, params
     posMapping = env.get 'posMapping'
     log = @log
 
@@ -35,7 +37,7 @@ class gg.xform.ScalesSchema extends gg.core.XForm
         throw Error("#{attr} has >1 types in scaleset: #{types}")
 
 
-    table
+    data
 
 
 # transforms data -> pixel/aesthetic values
@@ -47,11 +49,13 @@ class gg.xform.ScalesApply extends gg.core.XForm
     @params.putAll
       aess: @spec.aess or []
 
-  compute: (table, env, params) ->
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
     @log "table has #{table.nrows()} rows"
-    scales = @scales table, env, params
-    table = scales.apply table, env.get('posMapping')
-    table
+    scales = @scales data, params
+    data.table = scales.apply table, env.get('posMapping')
+    data
 
 
 # transforms pixel -> data
@@ -63,10 +67,12 @@ class gg.xform.ScalesInvert extends gg.core.XForm
     @params.putAll
       aess: @spec.aess or []
 
-  compute: (table, env, params) ->
-    scales = @scales table, env, params
-    table = scales.invert table, env.get('posMapping')
-    table
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
+    scales = @scales data, params
+    data.table = scales.invert table, env.get('posMapping')
+    data
 
 
 
@@ -79,14 +85,16 @@ class gg.xform.ScalesFilter extends gg.core.XForm
     @params.putAll
       aess: @spec.aess or []
 
-  compute: (table, env, params) ->
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
     @log "table has #{table.nrows()} rows"
     nrows = table.nrows()
-    scales = @scales table, env, params
+    scales = @scales data, params
     @log scales.toString()
-    table = scales.filter table, env.get('posMapping')
+    data.table = scales.filter table, env.get('posMapping')
     @log "filtered #{nrows - table.nrows()} rows"
-    table
+    data
 
 
 # Ensure that each layer+pane's scale set only has a single scale for a given
@@ -94,14 +102,16 @@ class gg.xform.ScalesFilter extends gg.core.XForm
 class gg.xform.ScalesValidate extends gg.core.XForm
   @ggpackage = "gg.xform.ScalesValidate"
 
-  compute: (table, env, params) ->
-    scaleset = @scales table, env, params
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
+    scaleset = @scales data, params
 
     _.each scaleset.aesthetics(), (aes) ->
       stypes = scaleset.types(aes)
       if stypes.length > 1
         throw Error("Layer scaleset #{aes} has >1 types: #{stypes}")
 
-    table
+    data
 
 

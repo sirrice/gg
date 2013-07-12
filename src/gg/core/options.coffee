@@ -18,5 +18,8 @@ class gg.core.Options
     @minimal = _.findGood [@spec.minimal, no]
     @optimize = _.findGood [@spec.optimize, yes]
 
+    # RPC options
+    @serverURI = _.findGood [@spec.server, @spec.uri, "http://localhost:8000"]
+
   clone: ->
     new gg.core.Options _.clone(@spec)

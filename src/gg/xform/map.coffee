@@ -18,10 +18,27 @@
 class gg.xform.Mapper extends gg.core.XForm
   @ggpackage = "gg.xform.Mapper"
 
-  constructor: (@spec) ->
+  parseSpec: ->
     super
 
+    @params.ensureAll
+      mapping: [[], @spec.aes]
+      inverse: [[], @spec.inverse or {}]
+    @log "spec: #{@params}"
 
+
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
+    @log "transform: #{JSON.stringify params.get 'mapping'}"
+    @log "table:     #{JSON.stringify table.colNames()}"
+    table = table.clone()
+
+    # resolve aesthetic aliases in mapping
+    functions = _.mappingToFunctions table, params.get('mapping')
+    table = table.transform functions, yes
+    data.table = table
+    data
 
   @fromSpec: (spec) ->
     spec = _.clone spec
@@ -39,25 +56,5 @@ class gg.xform.Mapper extends gg.core.XForm
 
     new gg.xform.Mapper spec
 
-
-  parseSpec: ->
-    super
-
-    mapping = @spec.aes
-    @params.ensureAll
-      mapping: [[], mapping]
-      inverse: [[], @spec.inverse or {}]
-    @log "spec: #{@params}"
-
-
-  compute: (table, env, params) ->
-    @log "transform: #{JSON.stringify params.get 'mapping'}"
-    @log "table:     #{JSON.stringify table.colNames()}"
-    table = table.clone()
-
-    # resolve aesthetic aliases in mapping
-    functions = _.mappingToFunctions table, params.get('mapping')
-    table = table.transform functions, yes
-    table
 
 

@@ -79,7 +79,7 @@ class gg.wf.Node extends events.EventEmitter
         data.table.nrows()
       else
         -1
-    @log.warn "output: port(#{outidx}) ntables: #{noutputs}"
+    @log.info "output: port(#{outidx}) ntables: #{noutputs}"
     @log "tablesizes: #{tablesizes}"
 
     @emit outidx, @id, outidx, data

@@ -16,18 +16,17 @@ class gg.wf.Merge extends gg.wf.Node
       attr: ['attr', 'key', 'envkey']
       default: ['default']
 
-  compute: (tables, envs, params) ->
+  compute: (datas, params) ->
+    return datas if datas.length <= 1
     envkey = params.get 'envkey'
     defaultVal = params.get 'default'
     attr = params.get 'attr'
 
     @log "Merge node tables and envs"
-    @log tables
-    @log envs
 
-    _.times tables.length, (idx) ->
-      table = tables[idx]
-      env = envs[idx]
+    _.each datas, (data) ->
+      table = data.table
+      env = data.env
       val =
         if env.contains(envkey)
           env.get(envkey)
@@ -42,7 +41,9 @@ class gg.wf.Merge extends gg.wf.Node
       else
         table.addConstColumn attr, val
 
-    gg.data.Table.merge tables
+    tables = _.map datas, (d) -> d.table
+    table = gg.data.Table.merge tables
+    new gg.wf.Data table, _.first(datas).env
 
 
   run: ->
@@ -55,14 +56,11 @@ class gg.wf.Merge extends gg.wf.Node
     f = (datas, outpath) =>
       # write provenance
       for data, lastIdx in datas
-        inpath = _.clone inpath
+        inpath = _.clone outpath
         inpath.push lastIdx
         pstore.writeData outpath, inpath
 
-      tables = _.map datas, (d) -> d.table
-      envs = _.map datas, (d) -> d.env
-      table = @compute tables, envs, params
-      new gg.wf.Data table, _.first(envs)
+      @compute datas, params
 
     outputs = gg.wf.Inputs.mapLeafArrays @inputs, f
 

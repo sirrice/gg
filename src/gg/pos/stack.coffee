@@ -34,7 +34,8 @@ class gg.pos.Stack extends gg.pos.Position
   # y0: position of layer's base
   # y1: position of layer's ceiling
   # group: layer's group key
-  outputSchema: (table, env) ->
+  outputSchema: (data) ->
+    table = data.table
     gg.data.Schema.fromSpec
       group: table.schema.typeObj "group"
       x: table.schema.type 'x'
@@ -59,7 +60,8 @@ class gg.pos.Stack extends gg.pos.Position
     @log "nxs: #{xs.length}"
     [baselines, xs]
 
-  computeInArray: (table, env, params) ->
+  computeInArray: (data, params) ->
+    [table, env] = [data.table, data.env]
     arrKey = table.schema.attrToKeys['x']
     [baselines, xs] = @baselines table
     groups = table.split "group"
@@ -85,7 +87,7 @@ class gg.pos.Stack extends gg.pos.Position
     stack = d3.layout.stack()
     stackedLayers = stack(layers)
 
-    schema = params.get('outputSchema') table, env, params
+    schema = params.get('outputSchema') data, params
     rettable = new gg.data.RowTable schema
 
     _.times groups.length, (idx) =>
@@ -121,7 +123,8 @@ class gg.pos.Stack extends gg.pos.Position
 
     rettable
 
-  computeNormal: (table, env, params) ->
+  computeNormal: (data, params) ->
+    [table, env] = [data.table, data.env]
     [baselines, xs] = @baselines table
 
     groups = table.split "group"
@@ -145,7 +148,7 @@ class gg.pos.Stack extends gg.pos.Position
     stack = d3.layout.stack()
     stackedLayers = stack(layers)
 
-    schema = params.get('outputSchema') table, env, params
+    schema = params.get('outputSchema') data, params
     rettable = new gg.data.RowTable schema
 
     # XXX: rewrite so don't need to clone
@@ -170,20 +173,23 @@ class gg.pos.Stack extends gg.pos.Position
   # steps
   # 1) compute all X values
   # 2) compute y0 baseline for the layers,
-  compute: (table, env, params) ->
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
     @log.warn "nrows: #{table.nrows()}\tschema: #{table.colNames()}"
     @log table.get(0).raw()
 
     inArray = table.schema.inArray 'x'
     if inArray
-      rettable = @computeInArray table, env, params
+      rettable = @computeInArray data, params
     else
-      rettable = @computeNormal table, env, params
+      rettable = @computeNormal data, params
 
     @log "input rows:   #{table.nrows()}"
     @log "output rows:  #{rettable.nrows()}"
 
     gg.wf.Stdout.print rettable, null, 5, @log
-    rettable
+    data.table = rettable
+    data
 
 

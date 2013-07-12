@@ -6,16 +6,18 @@ class gg.coord.YFlip extends gg.coord.Coordinate
   @ggpackage = "gg.coord.YFlip"
   @aliases = ["yflip"]
 
-  map: (table, env) ->
+  map: (data) ->
     @log "map: noop"
-    table
+    data
 
 class gg.coord.XFlip extends gg.coord.Coordinate
   @ggpackage = "gg.coord.XFlip"
   @aliases = ["xflip"]
 
-  map: (table, env, params) ->
-    scales = @scales table, env, params
+  map: (data, params) ->
+    table = data.table
+    env = data.env
+    scales = @scales data, params
 
     inverted = scales.invert table, gg.scale.Scale.xys
     xtype = ytype = gg.data.Schema.unknown
@@ -45,7 +47,8 @@ class gg.coord.XFlip extends gg.coord.Coordinate
         row.set('x0', Math.min(x0, x1))
         row.set('x1', Math.max(x0, x1))
 
-    table
+    data.table = table
+    data
 
 
 
@@ -53,14 +56,16 @@ class gg.coord.Flip extends gg.coord.Coordinate
   @ggpackage = "gg.coord.Flip"
   @aliases = ["flip", 'xyflip']
 
-  map: (table, env, params) ->
-    scales = @scales table, env, params
+  map: (data, params) ->
+    table = data.table
+    env = data.env
+    scales = @scales data, params
     inverted = scales.invert table, gg.scale.Scale.xs
     type = table.schema.type 'x'
     xscale = scales.scale 'x', type
 
-    xrange = xscale.range()
-    xscale.range [xrange[1], xrange[0]]
+    xRange = xscale.range()
+    xscale.range [xRange[1], xRange[0]]
 
     @log "map: xrange: #{xRange}"
 
@@ -73,7 +78,8 @@ class gg.coord.Flip extends gg.coord.Coordinate
         row.set('x0', Math.min(x0, x1))
         row.set('x1', Math.max(x0, x1))
 
-    table
+    data.table = table
+    data
 
 
 

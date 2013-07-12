@@ -6,9 +6,10 @@ class gg.coord.Identity extends gg.coord.Coordinate
   @ggpackage = "gg.coord.Identity"
   @aliases = ["identity"]
 
-  map: (table, env, params) ->
+  map: (data, params) ->
+    [table, env] = [data.table, data.env]
     schema = table.schema
-    scales = @scales table, env, params
+    scales = @scales data, params
     ytype = gg.data.Schema.unknown
     ytype = table.schema.type('y') if table.contains 'y'
     yscale = scales.get 'y', ytype
@@ -35,5 +36,6 @@ class gg.coord.Identity extends gg.coord.Coordinate
           row.set aes, transform(vals)
 
     gg.wf.Stdout.print table, ['x', 'y'], 5, @log
-    return table
+    data.table = table
+    data
 

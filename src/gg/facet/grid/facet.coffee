@@ -19,7 +19,9 @@ class gg.facet.grid.Facets extends gg.facet.base.Facets
   renderPanes: -> @renderpanes
 
   labelerNodes: ->
-    f = (table, env, param) ->
+    f = (data, param) ->
+      table = data.table
+      env = data.env
       Facets = gg.facet.base.Facets
       x = env.get Facets.facetXKey
       y = env.get Facets.facetYKey

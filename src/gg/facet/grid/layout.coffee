@@ -8,16 +8,18 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
   #
   # compute layout information for each pane in the grid view
   #
-  layoutPanes: (tables, envs, params, lc) ->
+  layoutPanes: (datas, params, lc) ->
     # Setup Variables
+    tables = _.map datas, (d) -> d.table
+    envs = _.map datas, (d) -> d.env
     log = @log
     container = lc.plotC
     [w,h] = [container.w(), container.h()]
     paddingPane = params.get('paddingPane')
     showXAxis = params.get('showXAxis')
     showYAxis = params.get('showYAxis')
-    xs = @xFacetVals tables, envs
-    ys = @yFacetVals tables, envs
+    xs = @xFacetVals datas
+    ys = @yFacetVals datas
     nxs = xs.length
     nys = ys.length
 
@@ -29,7 +31,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     log ys
     for x, xidx in xs
       for y, yidx in ys
-        ts = gg.core.BForm.facetTables tables, envs, x, y
+        ts = gg.core.FormUtil.facetTables datas, x, y
         log ts
         log "facet #{x} #{y} has #{_.map ts,
           (t)->t.nrows()} rows"
@@ -37,7 +39,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
 
     # Compute derived values
     css = { 'font-size': '10pt' }
-    dims = _.textSize @getMaxYText(envs), css
+    dims = _.textSize @getMaxYText(datas), css
     yAxisW = dims.w + paddingPane
     labelHeight = _.exSize().h + paddingPane
     showXFacet = not(xs.length is 1 and not xs[0]?)
@@ -112,8 +114,9 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
         paneC = grid[xidx][yidx]
         map[[x,y]] = paneC
 
-        fenvs = gg.core.BForm.facetEnvs tables, envs, x, y
-        for env in fenvs
+        fdatas = gg.core.FormUtil.facetDatas datas, x, y
+        for fdata in fdatas
+          env = fdata.env
           env.put 'paneC', paneC
 
           # add in padding to compute actual ranges
@@ -122,7 +125,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
           yrange = [paddingPane, drawC.h()-2*paddingPane]
 
           # update the scales
-          scaleSet = gg.core.XForm.scales null, env
+          scaleSet = gg.core.FormUtil.scales fdata
           for aes in gg.scale.Scale.xs
             for type in scaleSet.types(aes)
               scaleSet.scale(aes, type).range xrange
@@ -131,7 +134,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
             for type in scaleSet.types(aes)
               scaleSet.scale(aes, type).range yrange
 
-    set = _.first gg.core.BForm.scalesList(tables, envs)
+    set = _.first gg.core.FormUtil.scalesList datas
     @log "grid layout scale set"
     @log set.toString()
 
@@ -167,9 +170,9 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
         xfont = xfonts[xidx]
         yfont = yfonts[yidx]
 
-        fenv = gg.core.BForm.facetEnvs tables, envs, x, y
+        fenvs = gg.core.FormUtil.facetEnvs datas, x, y
         @log "fenvs for #{x} - #{y}"
-        for env in fenv
+        for env in fenvs
           env.put "xfacet-text", xfont.text
           env.put "xfacet-size", xfont.size
           env.put "yfacet-text", yfont.text
@@ -183,8 +186,9 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     yidx = _.indexOf ys, y
     xidx + yidx * xs.length
 
-  getMaxYText: (envs) ->
-    scalesList = gg.core.BForm.scalesList null, envs
+  getMaxYText: (datas) ->
+    envs = _.map datas, (d) -> d.env
+    scalesList = gg.core.FormUtil.scalesList datas
     text = "100"
     formatter = d3.format(",.0f")
 

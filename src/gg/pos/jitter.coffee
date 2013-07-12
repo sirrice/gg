@@ -22,8 +22,10 @@ class gg.pos.Jitter extends gg.pos.Position
       xScale: xScale
       yScale: yScale
 
-  compute: (table, env, params) ->
-    scales = @scales table, env
+  compute: (data, params) ->
+    table = data.table
+    env = data.env
+    scales = @scales data
     schema = table.schema
     map = {}
     Schema = gg.data.Schema
@@ -39,6 +41,6 @@ class gg.pos.Jitter extends gg.pos.Position
       map['y'] = (v) -> v + (0.5 - Math.random()) * yScale
 
     table.map map
-    table
+    data
 
 

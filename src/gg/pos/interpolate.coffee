@@ -27,7 +27,8 @@ class gg.pos.Interpolate extends gg.pos.Position
   # y0: position of layer's base
   # y1: position of layer's ceiling
   # group: layer's group key
-  outputSchema: (table, env) ->
+  outputSchema: (data, env) ->
+    table = data.table
     gg.data.Schema.fromSpec
       group: table.schema.typeObj "group"
       x: table.schema.type 'x'

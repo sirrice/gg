@@ -47,10 +47,10 @@ class gg.core.XForm extends gg.wf.Exec
 
     # wrap compute in a verification method
     compute = @spec.f or @compute.bind(@)
-    @compute = (table, env, params) =>
-      gg.core.XForm.addDefaults table, env, params, @log
-      gg.core.XForm.validateInput table, env, params, @log
-      compute table, env, params
+    @compute = (data, params) =>
+      gg.core.FormUtil.addDefaults data, params, @log
+      gg.core.FormUtil.validateInput data, params, @log
+      compute data, params
 
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?
@@ -60,62 +60,21 @@ class gg.core.XForm extends gg.wf.Exec
       val.constructorname = @constructor.ggpackage
     val
 
-  #
-  # Convenience functions during workflow execution
-  #
-  @paneInfo: (table, env) ->
-    ret =
-      facetX: env.get(gg.facet.base.Facets.facetXKey)
-      facetY: env.get(gg.facet.base.Facets.facetYKey)
-      layer: env.get "layer"
-    ret
-
-  @scales: (table, env) ->
-    layer = env.get "layer"
-    unless env.contains "scales"
-      config = env.get "scalesconfig"
-      scaleset = config.scales layer
-      env.put "scales", scaleset
-    env.get "scales"
-
-  paneInfo: (args...) -> gg.core.XForm.paneInfo args...
-  scales: (args...) -> gg.core.XForm.scales args...
 
   #
   # Schema verification functions that subclasses can override
   #
 
   # Defaults for optional attributes
-  defaults: (table, env, params) -> {}
+  defaults: (data, params) -> {}
 
   # Required input schema
-  inputSchema: (table, env, params) -> []
+  inputSchema: (data, params) -> []
 
-  outputSchema: (table, env, params) -> table.schema
-
-  # throws exception if inputs don't validate with schema
-  @validateInput: (table, env, params, log) ->
-    return yes unless table.nrows() > 0
-    iSchema = params.get "inputSchema", table, env
-    missing = _.reject iSchema, (attr) -> table.contains attr
-    if missing.length > 0
-      log log.logname
-      gg.wf.Stdout.print table, null, 5, log
-      throw Error("#{params.get 'name'}: input schema did not contain #{missing.join(",")}")
-
-  @addDefaults: (table, env, params, log) ->
-    defaults = params.get "defaults", table, env
-    log = @log unless log?
-    log "table schema: #{table.schema.toSimpleString()}"
-    log "expected:     #{JSON.stringify defaults}"
-    _.each defaults, (val, col) =>
-      unless table.contains col
-        log "adding:      #{col} -> #{val}"
-        table.addConstColumn col, val
+  # Expected output schema
+  outputSchema: (data, params) -> data.table.schema
 
 
-  compute: (table, env, params) -> table
-
-
-
+  paneInfo: (args...) -> gg.core.FormUtil.paneInfo args...
+  scales: (args...) -> gg.core.FormUtil.scales args...
 
