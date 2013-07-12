@@ -93,14 +93,24 @@ class gg.data.Schema
     schema
 
   clone: -> gg.data.Schema.fromSpec @toJSON()
+
   attrs: -> _.keys @attrToKeys
+
+  # return attributes that contain data (e.g., not containers)
+  leafAttrs: -> 
+    _.filter @attrs(), (attr) =>
+      @isRaw(attr) or @inArray(attr) or @inNested(attr)
+
   contains: (attr, type=null) ->
     if attr in @attrs()
       (type is null) or @isType(attr, type)
     else
       false
+
   nkeys: -> _.size @lookup
+
   toString: -> JSON.stringify @toJSON()
+
   toSimpleString: ->
     arr = _.map @attrs(), (attr) => "#{attr}(#{@type(attr)})"
     arr.join " "
@@ -169,6 +179,7 @@ class gg.data.Schema
     key = @attrToKeys[attr]
     return false if key == attr
     @type(key) == gg.data.Schema.nested
+
 
 
 

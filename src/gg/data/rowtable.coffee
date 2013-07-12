@@ -78,7 +78,8 @@ class gg.data.RowTable extends gg.data.Table
   # (preserves all existing columns)
   split: (gbfunc) ->
     if _.isString gbfunc
-      gbfunc = ((key) -> (tuple) -> tuple.get(key))(gbfunc)
+      attr = gbfunc
+      gbfunc = ((key) -> (row) -> row.get(key))(attr)
 
     keys = {}
     groups = {}
