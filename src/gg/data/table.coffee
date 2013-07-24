@@ -67,7 +67,7 @@ class gg.data.Table
   @inferSchemaFromObjs: (rows) ->
     schema = new gg.data.Schema
     row = if rows.length > 0 then rows[0] else {}
-    row = row.raw() if _.isSubclass row, gg.data.Row
+    row = row.raw() if _.isType row, gg.data.Row
     _.each row, (v,k) =>
       typeObj = gg.data.Schema.type v
 

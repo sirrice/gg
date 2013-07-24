@@ -12,6 +12,39 @@ Desired Features
 1. Node-failure tolerance.  If a node throws an exception, dont block workflow on the next barrier, keep going.
 
 
+
+July 22, 2013
+---------------
+Braindump of provenance model
+
+hierarchical model (e.g., protobuf-style) of a complete "provenance object".  
+Developer specifies this model using some language
+
+    flow > op* > env > key/val
+              > table > schema > attr
+                      > data > row
+
+
+Provenance store provides the following:
+
+1) models parent/child relationships between provenance objects
+   add/alter model
+2) provides INSERT api
+   new dataset/execution
+   updated data (insert/delete)
+3) provides SELECT api
+   every node has a prev/next semantics to the prev/next object
+
+Some Details
+
+1) Every element has an ID which is the path in this model
+   How does dev construct this path?  Want to cache parent path/define a context.
+2) Materialization, Storage, and Indexing schemes
+3) Needs access to gg runtime for re-execution.
+
+
+
+
 July 10, 2013
 ----------------
 
@@ -30,13 +63,34 @@ Ideal syntax
     facet: x: a, y: b
     debug: gg: INT, gg.wf: INT
     opts: key: val, key: val
+          (key, val) (key, val)
         
+
 
 
 July 9, 2013
 ----------------
 
-## Operator hierarchy
+## Query types
+
+Some query attributes
+
+1. Path length
+1. Target/final node in query path
+1. Fetch data or just relationship? 
+1. Mid-query Cardinality
+1. Provenance size e.g., data provenance or config/static prov
+1. Result cardinality
+  * similar to boolean result
+  * top k
+  * random sample
+  * sample
+1. Boolean result? e.g., points share source data?
+1. Granularity e.g., partition/dataset/user/row/column
+
+## Provenance
+
+### Operator type hierarchy
 
     node
       barrier
@@ -75,10 +129,10 @@ At a high level, we want to comprehensively track the provenance of operators:
 1. operator <--> operator
 2. operator --> parameters
 
-Operators are hierarchicaly, so tracking operators means tracking all sub-structures:
+Operators are hierarchical, so tracking operators means tracking all sub-structures:
 
     Operator
-    -> params
+    -> params 
     -> inputs
        -> gg.wf.Data
           -> Env

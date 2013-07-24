@@ -19,7 +19,7 @@ class gg.data.RowTable extends gg.data.Table
 
 
   @toRow: (data, schema) ->
-    if _.isSubclass data, gg.data.Row
+    if _.isType data, gg.data.Row
       if data.schema != schema
         row = data.clone()
         row.schema = schema
@@ -29,9 +29,14 @@ class gg.data.RowTable extends gg.data.Table
     else
       new gg.data.Row data, schema
 
+  setSchema: (schema) ->
+    @each (row) -> row.schema = schema
+    @schema = schema
+    @
+
   reloadSchema: ->
     rows = _.map(@rows, (row) -> row.raw())
-    @schema = gg.data.Table.inferSchemaFromObjs rows
+    @setSchema gg.data.Table.inferSchemaFromObjs rows
     @
 
   nrows: -> @rows.length
@@ -116,7 +121,7 @@ class gg.data.RowTable extends gg.data.Table
 
     ret = []
     schema = @schema.clone()
-    console.log "removing #{cols}"
+    @log "removing #{cols}"
     _.each cols, (col) -> schema.rmColumn col
     _.each groups, (rows, jsonKey) ->
       _.each rows, (row) -> row.rmColumns cols
@@ -158,7 +163,7 @@ class gg.data.RowTable extends gg.data.Table
       @
     else
       newrows = @each (row) => @transformRow row, mapping
-      new gg.data.RowTable newrows
+      gg.data.RowTable.fromArray newrows
 
   # constructs a new object and populates it using mapping specs
   transformRow: (row, mapping) ->
@@ -184,7 +189,7 @@ class gg.data.RowTable extends gg.data.Table
           throw Error("mapping arrays need to be nested")
       else
         ret[newattr] = newvalue
-    new gg.data.Row ret
+    ret
 
 
   # create new table containing the (exactly same)
@@ -246,7 +251,9 @@ class gg.data.RowTable extends gg.data.Table
         @log.warn "column #{name} already exists in table"
 
     @schema.addColumn name, type.type, type.schema
-    @rows.forEach (row, idx) => row.addColumn(name, vals[idx])
+    @rows.forEach (row, idx) => 
+      row.addColumn(name, vals[idx])
+      row.schema = @schema
     @
 
   addRow: (row) ->

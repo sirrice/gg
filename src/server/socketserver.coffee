@@ -28,7 +28,7 @@ socket.configure 'development', () ->
   socket.set('log level', 3)
 ###
 
-server.listen(8000)
+server.listen(8881)
 
 socket.on 'connection', (client) ->
   flows = {}

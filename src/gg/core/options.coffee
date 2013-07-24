@@ -1,7 +1,7 @@
 
 class gg.core.Options
 
-  constructor: (@spec) ->
+  constructor: (@spec={}) ->
     @width = _.findGood [@spec.width, @spec.w, 800]
     @height = _.findGood [@spec.height, @spec.h, 600]
     @w = @width
@@ -19,7 +19,7 @@ class gg.core.Options
     @optimize = _.findGood [@spec.optimize, yes]
 
     # RPC options
-    @serverURI = _.findGood [@spec.server, @spec.uri, "http://localhost:8000"]
+    @serverURI = _.findGood [@spec.server, @spec.uri, "http://localhost:8001"]
 
   clone: ->
     new gg.core.Options _.clone(@spec)

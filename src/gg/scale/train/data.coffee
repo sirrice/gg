@@ -24,6 +24,7 @@ class gg.scale.train.Data extends gg.core.BForm
 
       scaleset.train t, null, posMapping
       e.put 'scales', scaleset
+      @log scaleset.toString()
 
     _.each datas, fTrain
     gg.scale.train.Master.train datas, params

@@ -22,7 +22,7 @@ class gg.xform.Mapper extends gg.core.XForm
     super
 
     @params.ensureAll
-      mapping: [[], @spec.aes]
+      mapping: [["map", "aes", "aesthetics"], @spec.aes or {}]
       inverse: [[], @spec.inverse or {}]
     @log "spec: #{@params}"
 
@@ -32,7 +32,7 @@ class gg.xform.Mapper extends gg.core.XForm
     env = data.env
     @log "transform: #{JSON.stringify params.get 'mapping'}"
     @log "table:     #{JSON.stringify table.colNames()}"
-    table = table.clone()
+    @log table.clone()
 
     # resolve aesthetic aliases in mapping
     functions = _.mappingToFunctions table, params.get('mapping')
@@ -42,17 +42,27 @@ class gg.xform.Mapper extends gg.core.XForm
 
   @fromSpec: (spec) ->
     spec = _.clone spec
-    attrs = ["mapping", "map", "aes", "aesthetic", "aesthetics"]
+    attrs = [
+      "mapping", "map", "aes", 
+      "aesthetic", "aesthetics"
+    ]
     mapping = _.findGoodAttr spec, attrs, null
-    gg.util.Log.logger("Mapper") "fromSpec: #{JSON.stringify mapping}"
-    return null unless mapping? and _.size(mapping) > 0
+    @log "fromSpec: #{JSON.stringify mapping}"
 
-    aesthetics = _.keys mapping
+    unless mapping? and _.size(mapping) > 0
+      return null 
+
 
     # aes should be the mapping
-    spec.aes = mapping
-    inverse = {}
-    _.each mapping, (val, key) -> inverse[val] = key
+    inverse = spec.inverse
+    unless spec.inverse?
+      inverse = {}
+      _.each mapping, (val, key) -> 
+        inverse[val] = key
+    spec.params = 
+      aes: mapping
+      inverse: inverse
+
 
     new gg.xform.Mapper spec
 

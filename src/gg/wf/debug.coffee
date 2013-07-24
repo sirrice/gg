@@ -4,11 +4,15 @@ class gg.wf.Stdout extends gg.wf.Exec
   @ggpackage = "gg.wf.Stdout"
   @type = "stdout"
 
+  constructor: (@spec) ->
+    super
+
+    @log = gg.util.Log.logger @constructor.ggpackage, "StdOut: #{@name}-#{@id}"
+
   parseSpec: ->
     @params.ensureAll
       n: [ [], null ]
       aess: [ [], null ]
-    @log = gg.util.Log.logger @constructor.ggpackage, "StdOut: #{@name}-#{@id}"
 
   compute: (data, params) ->
     env = data.env
@@ -25,16 +29,14 @@ class gg.wf.Stdout extends gg.wf.Exec
     blockSize = Math.max(Math.floor(table.nrows() / n), 1)
     idx = 0
     schema = table.schema
+    if aess?
+      aess = aess.filter (aes) -> schema.contains aes
     log "# rows: #{table.nrows()}"
     log "Schema: #{schema.toSimpleString()}"
     while idx < table.nrows()
       row = table.get(idx)
       row = row.project aess if aess?
-      raw = row.clone().raw()
-      _.each raw, (v, k) ->
-        raw[k] = v[0..4] if _.isArray v
-
-      log JSON.stringify raw
+      log row.toString()
       idx += blockSize
 
   @printTables: (args...) -> @print args...

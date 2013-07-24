@@ -13,15 +13,21 @@ class gg.geom.reparam.Line extends gg.core.XForm
     table = data.table
     env = data.env
     numeric = gg.data.Schema.numeric
+    xtype = table.schema.type 'x'
+    ytype = table.schema.type 'y'
     gg.data.Schema.fromSpec
       group: table.schema.typeObj 'group'
       pts:
         type: gg.data.Schema.array
         schema:
-          x: numeric
-          y: numeric
-          y0: numeric
-          y1: numeric
+          x: xtype
+          y: ytype
+          y0: ytype
+          y1: ytype
+
+  schemaMapping: (data) ->
+    y0: 'y'
+    y1: 'y'
 
 
   compute: (data, params) ->

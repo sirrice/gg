@@ -34,12 +34,9 @@ class gg.wf.Runner extends events.EventEmitter
     @seen = {}
     @setupQueue()
 
-    @ch = new gg.wf.ClearingHouse(
-      @, null)
+    @ch = new gg.wf.ClearingHouse @, null
     @ch.on "output", (args...) => @emit "output", args...
-    unless xferControl?
-      xferControl = @ch.routeNodeResult.bind(@ch)
-    @ch.xferControl = xferControl
+    @ch.xferControl = xferControl if xferControl?
 
     # every node's output goes through the clearing house
     @flow.graph.bfs (node) =>
@@ -58,8 +55,7 @@ class gg.wf.Runner extends events.EventEmitter
       cb()
 
     ondrain =  () =>
-      sources = @flow.sources()
-      unless _.all(sources, (s) => @done[s.id])
+      unless _.all(@flow.sinks(), (s) => @done[s.id])
         @log "done! can you believe it?"
         @emit 'done', yes
 

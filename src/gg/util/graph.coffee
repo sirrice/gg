@@ -62,8 +62,23 @@ class gg.util.Graph
     @cid2pid[tid][fid] = {} unless @cid2pid[tid][fid]?
     @pid2cid[fid][tid][type] = metadata
     @cid2pid[tid][fid][type] = metadata
-    @log "connect: #{from.name}! -> #{to.name}\t#{type}\t#{JSON.stringify metadata}"
+    @log "connect: #{from.name} (#{type})-> #{to.name}\t#{JSON.stringify metadata}"
     @
+
+  # Delete an edge
+  #
+  # @return the metadata of the removed edge, or null if it didn't exist
+  disconnect: (from, to, type) ->
+    fid = @idFunc from
+    tid = @idFunc to
+    metadata = @metadata from, to, type
+    if fid of @pid2cid and tid of @pid2cid[fid]
+      delete @pid2cid[fid][tid][type]
+    if tid of @cid2pid and fid of @cid2pid[tid]
+      delete @cid2pid[tid][fid][type]
+    @log "disconnect: #{from.name} (#{type})-> #{to.name}"
+    metadata
+
 
 
   # @param type null to match all edges, or set to a value to check if edge type exists
@@ -164,15 +179,21 @@ class gg.util.Graph
   #       (node) -> json
   # @param edge2json function mapping an edge to a JSON object
   #       (from, to, edge type, metadata) -> json
+  # @return a json object of
+  #   nodes: 
+  #   links:
+  #   idFunc: JSON encoded id function
   toJSON: (node2json, edge2json) ->
-    nodes = _.map @id2node, node2json
+    nodes = []
+    nodes = _.map @id2node, node2json if node2json
 
     links = []
     _.each @id2node, (node) =>
       _.each @children(node), (child) =>
         _.each @edgedatas(node, child), (data) =>
-          link = edge2json node, child, data.type, data.md
-          links.push link
+          if edge2json?
+            link = edge2json node, child, data.type, data.md
+            links.push link
 
     json =
       nodes: nodes

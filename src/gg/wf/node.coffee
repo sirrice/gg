@@ -81,11 +81,15 @@ class gg.wf.Node extends events.EventEmitter
         -1
     @log.info "output: port(#{outidx}) ntables: #{noutputs}"
     @log "tablesizes: #{tablesizes}"
+    @log data
 
     @emit outidx, @id, outidx, data
     @emit "output", @id, outidx, data
 
   pstore: -> gg.prov.PStore.get @flow, @
+
+  # Convenienc method to check if this is a barrier
+  isBarrier: -> @type is "barrier"
 
   #
   # The calling function is responsible for calling ready

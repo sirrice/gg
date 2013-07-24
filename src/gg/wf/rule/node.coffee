@@ -5,7 +5,8 @@
 #
 class gg.wf.rule.Node extends gg.wf.rule.Rule
 
-  constructor: () ->
+  constructor: (spec={}) ->
+    super
 
   # Subclasses override this method
   # @return node or array of nodes to replace this node in the workflow

@@ -5,6 +5,8 @@
 _ = require 'underscore'
 
 
+
+
 class gg.util.Util
   @toJSON: (o, reject=(()->no), path=[]) ->
     if path.length >= 25
@@ -35,6 +37,8 @@ class gg.util.Util
         path.push k
         ret.props[k] = gg.util.Util.toJSON(o[k], reject, path)
         path.pop()
+    else if _.isDate o
+      ret = { type: "date", val: JSON.stringify o }
     else if _.isObject o
       ret = { type: "object", val: {} }
       _.each o, (v,k) ->
@@ -58,6 +62,8 @@ class gg.util.Util
         _.each json.props, (vjson, k) ->
           ret[k] = gg.util.Util.fromJSON(vjson)
         ret
+      when 'date'
+        ret = Date.parse json.val
       when 'object'
         ret = {}
         _.each json.val, (v, k) ->
@@ -149,6 +155,28 @@ class gg.util.Util
         pairs.push [x, y]
     pairs
 
+  @dateFromISOString: (string) ->
+    regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?"
+    d = string.match new RegExp(regexp)
+
+    offset = 0
+    date = new Date d[1], 0, 1
+
+    date.setMonth d[3]-1 if d[3]
+    date.setDate d[5] if d[5]
+    date.setHours d[7] if d[7]
+    date.setMinutes d[8] if d[8]
+    date.setSeconds d[10] if d[10]
+    if d[12]
+      date.setMilliseconds(Number("0."+d[12])*1000) 
+    if d[14]
+      offset = Number(d[16]) * 60 + Number(d[17])
+      offset *= if d[15] == '-' then 1 else -1
+
+    offset -= date.getTimezoneOffset()
+    time = Number(date) + offset * 60 * 1000
+    date.setTime Number(time)
+    date
 
 
 
@@ -178,6 +206,10 @@ _.mixin
   mapToFunction: gg.util.Aesmap.mapToFunction
   mappingToFunctions: gg.util.Aesmap.mappingToFunctions
   cross: gg.util.Util.cross
+  dateFromISOString: gg.util.Util.dateFromISOString
+
+Date.prototype.fromISOString = gg.util.Util.dateFromISOString
+Date.fromISOString = gg.util.Util.dateFromISOString
 
 
 

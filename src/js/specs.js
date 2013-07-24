@@ -119,7 +119,6 @@ var geom_interval = {
     geom: { type:"interval", aes: {y: '{total/(1+count)}'} }
    ,aes: {x: 'd', y: 'e', 'fill': 'f',  "fill-opacity": 0.9}
    ,stat: "bin"
-   //,coord: "yflip"
   }],
   facets: {y: 't', x: 'g'}
 };
@@ -127,8 +126,8 @@ var geom_interval = {
 var geom_point_1 = {layers:[{
   geom: "point"
  ,aes: {x: 'd', y: 'e'}
-}], facets: {x: 'f', y: 't', ylabel: "T", xlabel: "F"},
-  opts: {title: "hi"}
+}]//, facets: {x: 'f', y: 't', ylabel: "T", xlabel: "F"},
+ // opts: {title: "hi"}
   }
 
 var geom_point_sum = {

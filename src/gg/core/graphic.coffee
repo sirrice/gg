@@ -109,7 +109,7 @@ class gg.core.Graphic
     wf
 
   setupEnvNode: ->
-    new gg.wf.EnvPut
+    new gg.xform.EnvPut
       name: "graphic-setupenv"
       params:
         pairs:
@@ -145,7 +145,10 @@ class gg.core.Graphic
       @workflow.prepend dataNode
 
     if @options.optimize
-      optimizer = new gg.wf.Optimizer [new gg.wf.rule.RPCify]
+      optimizer = new gg.wf.Optimizer [
+        new gg.wf.rule.EnvPut
+        new gg.wf.rule.RPCify
+      ]
       @workflow = optimizer.run @workflow
 
     @workflow.run @options

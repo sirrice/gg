@@ -69,7 +69,7 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
 
     mapping = _.mappingToFunctions table, mapping
     table.transform mapping, yes
-    table.schema = params.get('outputSchema') data, params
+    table.setSchema params.get('outputSchema') data, params
     data
 
 

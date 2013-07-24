@@ -176,6 +176,7 @@ class gg.scale.Set
         tabletype = table.schema.type aes
         @log "scaleset doesn't contain #{aes} creating using type #{tabletype}"
         scale = @scale aes, tabletype, posMapping
+      @log scale
 
       f table, scale, aes
 
@@ -265,8 +266,6 @@ class gg.scale.Set
     table = table.filter g
     @log "filter: removed #{nRejected}.  #{table.nrows()} rows left"
     table
-
-
 
 
   # @param posMapping maps aesthetic names to the scale

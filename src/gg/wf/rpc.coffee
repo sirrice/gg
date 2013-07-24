@@ -14,6 +14,7 @@ Send
 
 class gg.wf.RPC extends events.EventEmitter
   @ggpackage = "gg.wf.Flow"
+  @log = gg.util.Log.logger @ggpackage, "rpc"
   @id: -> gg.wf.RPC::_id += 1
   _id: 0
 
@@ -23,16 +24,20 @@ class gg.wf.RPC extends events.EventEmitter
     socket = io.connect uri
     connected = socket.socket.connected
    
-    onConnect = () ->
+    onConnect = () =>
       unless responded
         responded = yes
         cb()
+      @log "onConnect triggered: removing listeners"
       socket.removeListener "connect", onConnect
+      socket.removeListener "error", onFail
 
-    onFail = () ->
+    onFail = () =>
       unless responded
         responded = yes
         errcb()
+      @log "onFail triggered: removing listeners"
+      socket.removeListener "connect", onConnect
       socket.removeListener "error", onFail
  
     socket.on "connect", onConnect
@@ -48,7 +53,7 @@ class gg.wf.RPC extends events.EventEmitter
     @nonce2cb = {}
     @buffer = []
     @params = new gg.util.Params @spec.params
-    @log = gg.util.Log.logger "rpc"
+    @log = gg.util.Log.logger @constructor.ggpackage, "rpc"
 
     @setup()
 

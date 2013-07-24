@@ -6,8 +6,9 @@
 # serially applied
 #
 class gg.wf.rule.Rule
-  constructor: (spec) ->
+  constructor: (spec={}) ->
     @params = spec.params or new gg.util.Params
+    @log = gg.util.Log.logger @constructor.ggpackage, "rule"
 
   run: (flow) -> flow
 

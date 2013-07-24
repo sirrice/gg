@@ -5,8 +5,8 @@ class gg.util.Aesmap
 
   @mappingToFunctions: (table, mapping) ->
     ret = {}
-    _.each mapping, (val, key) ->
-      _.each gg.core.Aes.resolve(key), (newkey) ->
+    for key, val of mapping
+      for newkey in gg.core.Aes.resolve(key)
         ret[newkey] = _.mapToFunction table, newkey, val
     ret
 

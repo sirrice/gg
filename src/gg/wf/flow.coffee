@@ -56,13 +56,16 @@ class gg.wf.Flow extends events.EventEmitter
     @graph.bfs f
 
     #
-    # Explicitly allocate outport to inport mappings between
-    # nodes.  Ensure that bridges are correctly connected
+    # Create a graph of (node, outport) -> (node, inport) mappings
+    # Uses bridge edges to connect across barriers
     #
+
     inportsMap = _.o2map @nodes(), (node) -> [node.id, 0]
     outportsMap =_.o2map @nodes(), (node) -> [node.id, 0]
     @portGraph = new gg.util.Graph (o) -> "#{o.n.id}-#{o.p}"
     pstore = gg.prov.PStore.get @
+
+    # add a nonbarrier -> barrier* -> nonbarrier path to the port graph
     connectPath = (path) =>
       from = null
       for to in path
@@ -229,8 +232,105 @@ class gg.wf.Flow extends events.EventEmitter
     node.wf = @
     @graph.add node
 
+  # Remove a node and fix up the bridges
   rm: (node) ->
-    @graph.rm node
+    ps = @parents node
+    cs = @children node
+    if @parents(node).length > 1 or @children(node).length > 1
+      throw Error("don't support removing multi-parent/child node")
+
+    c = p = null
+    if ps.length > 0 
+      p = ps[0] 
+      md = @edgeWeight p, node, "normal"
+    if cs.length > 0
+      c = cs[0]
+      md = @edgeWeight node, c, "normal"
+
+    if node.isBarrier()
+      @graph.rm node
+      @connect p, c if p? and c?
+    else
+      unless p? and c?
+        @graph.rm node
+      else
+        bps = @bridgedParents node
+        bcs = @bridgedChildren node
+        if bps.length > 1 or bcs.length > 1
+          throw Error()
+
+        bmd = bp = bc = null
+        if bps.length > 0
+          bp = bps[0] 
+          bmd = @edgeWeight bp, node, "bridge"
+        if bcs.length > 0
+          bc = bcs[0]
+          bmd = @edgeWeight node, bc, "bridge"
+
+        @graph.rm node
+        @connect p, c, "normal", md if p? and c?
+        @connect bp, bc, "bridge", bmd if bp? and bc?
+
+
+  # Insert node between adjacent nodes parent -- child
+  insert: (node, parent, child) ->
+
+    unless _.any @children(parent), ((pc) -> pc.id is child.id)
+      throw Error("parent not parent of child: #{parent.toString()}\t#{child.toString()}")
+
+    if parent.isBarrier() and child.isBarrier()
+      if node.isBarrier()
+        md = @disconnect parent, child, "normal"
+        @connect parent, node, "normal", md
+        @connect node, child, "normal", md
+      else
+        throw Error("Can't insert a nonbarrier between two barriers")
+
+    if parent.isBarrier() and not child.isBarrier()
+      if node.isBarrier()
+        totalWeight = _.sum @children(parent), (c) => @edgeWeight parent, c
+        for bc in @children parent
+          md = @disconnect parent, node, "normal"
+          @connect node, bc, "normal", md
+        @connect parent, node, "normal", totalWeight
+      else
+        md = @disconnect parent, child, "normal"
+        @connect parent, node, "normal", md
+        @connect node, child, "normal", md
+
+        for bp in @bridgedParents child
+          md = @disconnect bp, child, "bridge"
+          @connect bp, node, "bridge"
+
+
+    if not parent.isBarrier() and child.isBarrier()
+      if node.isBarrier()
+        totalWeight = _.sum @parents(child), (p) => @edgeWeight p, child
+        for bp in @parents child
+          md = @disconnect bp, child, "normal"
+          @connect bp, node, "normal", md
+        @connect node, child, "normal", totalWeight
+      else
+        md = @graph.disconnect parent, child, "normal"
+        @connect node, child, "normal", md
+        @connect parent, node, "normal", md
+        
+        for bc in @bridgedChildren parent
+          md = @disconnect parent, bc, "bridge"
+          @connect node, bc, "bridge", md
+
+    if not parent.isBarrier() and not child.isBarrier()
+      if node.isBarrier()
+        throw Error("Can't insert a barrier between two non-barriers")
+      else
+        md = @disconnect parent, child, "normal"
+        @connect parent, node, "normal", md
+        @connect node, child, "normal", md
+        md = @disconnect parent, child, "bridge"
+        @connect parent, node, "bridge", md
+        @connect node, child, "bridge", md
+
+
 
   nodeFromId: (id) ->
     nodes = @graph.nodes((node) -> node.id == id)
@@ -240,12 +340,14 @@ class gg.wf.Flow extends events.EventEmitter
 
   edges: (args...) -> @graph.edges(args...)
 
-  connect: (from, to, type="normal") ->
-    if @graph.edgeExists from, to, type
-      weight = 1 + @graph.metadata from, to, type
-    else
-      weight = 1
+  connect: (from, to, type="normal", weight=null) ->
+    unless weight?
+      if @graph.edgeExists from, to, type
+        weight = 1 + @graph.metadata from, to, type
+      else
+        weight = 1
     @graph.connect from, to, type, weight
+    @log "connected #{from.name} -> #{to.name} type #{type}"
     @
 
   connectBridge: (from, to) ->
@@ -253,6 +355,9 @@ class gg.wf.Flow extends events.EventEmitter
     throw Error() if from.type == 'barrier'
     @connect from, to, "bridge"
     @
+
+  disconnect: (from, to, type="normal") ->
+    @graph.disconnect from, to, type
 
   edgeWeight: (from, to, type="normal") ->
     @graph.metadata(from, to, type) or 0
@@ -330,11 +435,22 @@ class gg.wf.Flow extends events.EventEmitter
     else
       node = new klass specOrNode
 
+    @log "setChild: #{node.name} #{node.id}"
+
     sinks = @sinks()
-    throw Error("setChild only works for non-forking flows") if sinks.length > 1
-    prevNode = null
-    prevNode = sinks[0] if sinks.length > 0
-    @connect prevNode, node if prevNode?
+    if sinks.length > 1
+      throw Error("setChild only works for non-forking flows") 
+
+    prevNode = prevNonBarrierNode = sinks[0] if sinks.length > 0
+    if prevNode?
+      while prevNonBarrierNode.isBarrier()
+        parents = @parents prevNonBarrierNode
+        if parents.length != 1
+          throw Error("")
+        prevNonBarrierNode = parents[0]
+      @connect prevNode, node 
+      @connectBridge prevNonBarrierNode, node
+
     @add node
     this
 
@@ -371,6 +487,7 @@ class gg.wf.Flow extends events.EventEmitter
 
   # Execute this flow on the client side
   run: (graphicOpts) ->
+    graphicOpts = new gg.core.Options unless graphicOpts?
 
     unless _.all(@sources(), (s) -> s.type == 'start')
       start = new gg.wf.Start
@@ -380,11 +497,19 @@ class gg.wf.Flow extends events.EventEmitter
       throw Error()
 
     @instantiate()
-    @log @toString()
+
+    if @log.level <= gg.util.Log.DEBUG
+      json = @portGraph.toJSON null, (fr, to, type, md) ->
+        "\t#{fr.n.name}(#{fr.p}) -> #{to.n.name}(#{to.p})"
+        
+      @log "Flow Graph:"
+      @log @toString()
+      @log "Port Graph:"
+      @log json.links.join("\n")
 
     runner = new gg.wf.Runner @, null
-    runner.on "output", (idx, data) =>
-      @emit "output", idx, data
+    runner.on "output", (nodeid, outport, data) =>
+      @emit "output", outport, data
 
     runner.on "done", () =>
       @emit "done", yes
@@ -392,10 +517,10 @@ class gg.wf.Flow extends events.EventEmitter
     # if can access server
     uri = graphicOpts.serverURI
     onConnect = () => 
-      console.log "connected"
+      @log.warn "connected to server at #{uri}"
       @setupRPC runner, uri
-    onErr = () -> 
-      console.log "error"
+    onErr = () => 
+      @log.warn "error connecting to server at #{uri}"
       runner.run()
     gg.wf.RPC.checkConnection uri, onConnect, onErr
 

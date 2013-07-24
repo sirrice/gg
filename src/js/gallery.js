@@ -1,6 +1,5 @@
 var all_specs = [
   geom_area
-  ,geom_boxplot
   ,geom_interval
   ,geom_point_1
   ,geom_point_sum
@@ -10,6 +9,7 @@ var all_specs = [
   ,geom_point_4
   ,colored_lines
   ,colored_lines_multi
+  ,geom_boxplot
   ,geom_boxplot2
 ];
 
@@ -25,7 +25,7 @@ var all_specs = [
     var ex = function () {
       return d3.select("#gallery").append("span");
     };
-    specs.data = genData(50);
+    specs.data = genData(500);
     if (!specs.opts)  specs.opts = {};
     specs.opts.w = 400;
     specs.opts.h = 300;

@@ -12,4 +12,10 @@ class gg.geom.Point extends gg.geom.Geom
     )
     @render = new gg.geom.svg.Point {}
 
+  posMapping: ->
+    y0: 'y'
+    y1: 'y'
+    x0: 'x'
+    x1: 'x'
+
 

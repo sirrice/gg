@@ -60,7 +60,7 @@ class gg.geom.reparam.Text extends gg.core.XForm
       row.set "y0", y
       row.set "y1", y+size.h
 
-    table.schema = params.get('outputSchema') data, params
+    table.setSchema params.get('outputSchema') data, params
 
     data
 

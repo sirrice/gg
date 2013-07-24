@@ -40,9 +40,11 @@ class gg.util.Log
     prefix = logname unless prefix?
     loggers = gg.util.Log.loggers
     level = @lookupLevel logname, level
-    unless logname of loggers
-      loggers[logname] = new gg.util.Log logname, prefix, level
-    return loggers[logname]
+    loggers[logname] = {} unless logname of loggers
+    unless prefix of loggers[logname]
+      logger = new gg.util.Log logname, prefix, level
+      loggers[logname][prefix] = logger
+    return loggers[logname][prefix]
 
   constructor: (@logname, @prefix, @level=gg.util.Log.ERROR) ->
     @prefix = @logname unless @prefix?

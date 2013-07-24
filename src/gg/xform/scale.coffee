@@ -22,7 +22,7 @@ class gg.xform.ScalesSchema extends gg.core.XForm
         log "settype: #{attr}:#{tabletype} unknown.  create: #{scale.toString()}"
         types = [scale.type]
 
-      if types.length is 1
+      else if types.length is 1
         # XXX: type checking and downcast rules here
         stype = types[0]
         unless stype is gg.data.Schema.unknown

@@ -4,7 +4,7 @@
 
 
 #
-# Scales define a scaling and aesthetic mapping for a given aesthetic:
+# Scales define scaling and aesthetic mapping for an aesthetic:
 #
 #   original domain -> transformed domain -> aesthetic range
 #
@@ -188,6 +188,9 @@ class gg.scale.Scale
       else if klass == gg.scale.Linear
         if type is gg.data.Schema.ordinal
           klass = gg.scale.Ordinal
+        else if type is gg.data.Schema.date
+          klass = gg.scale.Time
+      
 
     @log "Scale: defaultFor(#{aes}, #{type}) -> #{klass.name}"
 

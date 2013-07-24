@@ -1,6 +1,6 @@
 #<< gg/wf/node
 
-class gg.wf.EnvPut extends gg.core.XForm
+class gg.xform.EnvPut extends gg.core.XForm
   @ggpackage = "gg.xform.EnvPut"
   @type = "envput"
 
@@ -35,7 +35,7 @@ class gg.wf.EnvPut extends gg.core.XForm
 # spec.default value if envkey not found.
 #              set to null if don't add if envkey not found.
 #
-class gg.wf.EnvGet extends gg.core.XForm
+class gg.xform.EnvGet extends gg.core.XForm
   @ggpackage = "gg.xform.EnvGet"
   @type = "envget"
 

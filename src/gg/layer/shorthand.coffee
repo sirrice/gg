@@ -125,7 +125,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes = []
 
     # add environment variables
-    nodes.push new gg.wf.EnvPut
+    nodes.push new gg.xform.EnvPut
       name: "layer-envput-#{@layerIdx}"
       params:
         pairs:
@@ -140,6 +140,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
       name: "scales-schema-#{@layerIdx}"
       params:
         config: @g.scales.scalesConfig
+    nodes.push makeStdOut "post-scaleschema"
 
 
     #
@@ -153,6 +154,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
       name: "scalesfilter-#{@layerIdx}"
       params:
         posMapping: @geom.posMapping()
+    nodes.push makeStdOut "post-scalefilter-#{@layerIdx}"
     nodes.push makeScalesOut "pre-stat-#{@layerIdx}"
     nodes.push @stat
     nodes.push makeStdOut "post-stat-#{@layerIdx}"
@@ -204,7 +206,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
 
     nodes.push @geom.reparam
-    nodes.push makeStdOut "post-reparam"
+    nodes.push makeStdOut "post-reparam",
+      aess: ['x', 'x0', 'x1']
 
 
     if @pos?
@@ -212,6 +215,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
       nodes.push makeStdOut "post-position"
 
       nodes.push @g.scales.pixel
+      nodes.push makeStdOut "post-pixeltrain"
 
       # reconfigure the layout after positioning
       nodes.push @g.facets.layout2

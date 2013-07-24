@@ -1,7 +1,9 @@
 
 class gg.data.SchemaMap
 
-  @inferMapping: () ->
+  @inferMapping: (source) ->
+
+
 
   # map from source table to new schema
   # The naive implementation:

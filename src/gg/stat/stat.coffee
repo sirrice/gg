@@ -12,6 +12,14 @@ class gg.stat.Stat extends gg.core.XForm
       mapSpec.name = "stat-map" unless mapSpec.name?
       @map = gg.xform.Mapper.fromSpec mapSpec
 
+  compile: ->
+    node = super
+    ret = []
+    ret.push @map.compile() if @map?
+    ret.push node
+    _.compact _.flatten ret
+
+
   @klasses = []
 
   @addKlass: (klass) ->
@@ -47,18 +55,6 @@ class gg.stat.Stat extends gg.core.XForm
     ret = new klass spec
     @log "klass #{klass.name} from type: #{type}"
     ret
-
-
-  compile: ->
-    node = super
-    ret = []
-    ret.push @map.compile() if @map?
-    ret.push node
-    _.compact _.flatten ret
-
-
-
-
 
 
 

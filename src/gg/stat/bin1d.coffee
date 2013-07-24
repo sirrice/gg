@@ -21,6 +21,13 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
       count: gg.data.Schema.numeric
       total: gg.data.Schema.numeric
 
+  schemaMapping: (data, params) ->
+    x: 'x'
+    bin: 'x'
+    y: 'y'
+    count: 'y'
+    total: 'y'
+
   compute: (data, params) ->
     table = data.table
     env = data.env
@@ -29,7 +36,7 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
     xScale = scales.scale 'x', xType
     domain = xScale.domain()
 
-    switch table.schema.type 'x'
+    switch xType
       when gg.data.Schema.ordinal
         xtoidx = _.o2map domain, (x, idx) -> [x, idx]
         toBinidx = (x) -> xtoidx[x]
@@ -42,12 +49,31 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
         nBins = Math.ceil(binRange / binSize) + 1
         @log "nbins: #{nbins}\tscaleid: #{xScale.id}\tscaledomain: #{xScale.domain()}\tdomain: #{domain}\tbinSize: #{binSize}"
         toBinidx = (x) -> Math.floor((x-domain[0]) / binSize)
-        stats = _.map _.range(nBins), (binidx) ->
+        stats = _.times nBins, (binidx) ->
           {
             bin: (binidx * binSize) + domain[0] + binSize/2
             count: 0
             total: 0
           }
+      when gg.data.Schema.date
+        domain = [domain[0].getTime(), domain[1].getTime()]
+        binRange = domain[1] - domain[0]
+        nbins = params.get 'nbins'
+        binSize = Math.ceil(binRange / nbins)
+        nBins = Math.ceil(binRange/binSize) + 1
+        @log "nbins: #{nbins}\tscaleid: #{xScale.id}\tscaledomain: #{xScale.domain()}\tdomain: #{domain}\tbinSize: #{binSize}"
+        toBinidx = (x) -> Math.floor((x.getTime()-domain[0]) / binSize)
+        stats = _.times nBins, (binidx) ->
+          date = (binidx * binSize) + domain[0] + binSize/2
+          date = new Date date
+          {
+            bin: date
+            count: 0
+            total: 0
+          }
+
+      else
+        throw Error("I don't support binning on col type: #{xType}")
 
     table.each (row) =>
       x = row.get('x')

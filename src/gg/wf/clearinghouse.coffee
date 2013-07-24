@@ -1,21 +1,26 @@
 #<< gg/util/log
 
 class gg.wf.ClearingHouse extends events.EventEmitter
+  @ggpackage = "gg.wf.ClearingHouse"
+
   constructor: (@runner, @xferControl) ->
     @flow = @runner.flow
-    @log = gg.util.Log.logger "clearinghouse"
+    @log = gg.util.Log.logger @constructor.ggpackage, "clearhouse"
+    @xferControl = @routeNodeResult.bind(@) unless @xferControl?
 
 
   push: (nodeid, outport, outputs) ->
+    @runner.setDone nodeid
+    node = @flow.nodeFromId nodeid
+    @log "push: #{node.name} #{nodeid}(#{outport})"
     if @isSink(nodeid)
-      @log "sink node: #{@flow.nodeFromId(nodeid).name} #{nodeid}"
+      @log "sink node: #{node.name} #{nodeid}"
       @emit "output", nodeid, outport, outputs
     else if @clientToServer nodeid, outport
       @xferControl nodeid, outport, outputs
     else if @serverToClient nodeid, outport
       @xferControl nodeid, outport, outputs
     else
-      @runner.setDone nodeid
       @routeNodeResult nodeid, outport, outputs
 
 
@@ -26,6 +31,9 @@ class gg.wf.ClearingHouse extends events.EventEmitter
     children = @flow.portGraph.children
       n: node
       p: outport
+
+    if children.length is 0
+      throw Error("node #{nodeid} with port #{outport} has no children in Port Graph")
     o = children[0]
     child = o.n
     inport = o.p

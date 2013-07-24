@@ -29,6 +29,17 @@ class gg.stat.BoxplotStat extends gg.stat.Stat
       min: gg.data.Schema.numeric
       max: gg.data.Schema.numeric
 
+  schemaMapping: (data, params) ->
+    x: 'x'
+    q1: 'y'
+    q3: 'y'
+    median: 'y'
+    lower: 'y'
+    upper: 'y'
+    outlier: 'y'
+    min: 'y'
+    max: 'y'
+
   computeStatistics: (vals) ->
     vals.sort d3.ascending
 

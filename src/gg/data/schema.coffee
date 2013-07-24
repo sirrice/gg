@@ -232,7 +232,9 @@ class gg.data.Schema
 
 
   @type: (v) ->
-    if _.isObject v
+    if _.isDate v
+      { type: gg.data.Schema.date }
+    else if _.isObject v
       ret = { }
       if _.isArray v
         els = v[0...20]
@@ -254,8 +256,6 @@ class gg.data.Schema
       ret
     else if _.isNumber v
       { type: gg.data.Schema.numeric }
-    else if _.isDate v
-      { type: gg.data.Schema.date }
     else
       { type: gg.data.Schema.ordinal }
 

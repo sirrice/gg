@@ -6,10 +6,8 @@ class gg.stat.LoessStat extends gg.stat.Stat
   @ggpackage = "gg.stat.LoessStat"
   @aliases = ['loess', 'smooth']
 
-
   parseSpec: ->
     super
-
     @params.ensureAll
       bandwidth: [["band", "bw"], .3]
       acc: [["accuracy", "ac"], 1e-12]
@@ -20,6 +18,10 @@ class gg.stat.LoessStat extends gg.stat.Stat
     gg.data.Schema.fromSpec
       x: gg.data.Schema.numeric
       y: gg.data.Schema.numeric
+
+  schemaMapping: (data) ->
+    x: 'x'
+    y: 'y'
 
   # The loess function expects an xs and ys array where
   # 1) every value is a finite number

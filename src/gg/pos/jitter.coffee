@@ -40,6 +40,7 @@ class gg.pos.Jitter extends gg.pos.Position
       yScale = (yRange[1] - yRange[0]) * params.get('yScale')
       map['y'] = (v) -> v + (0.5 - Math.random()) * yScale
 
+    # XXX: Why doesn't this use table.transform instead?
     table.map map
     data
 

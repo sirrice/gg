@@ -8,6 +8,8 @@ class gg.data.Row
 
   constructor: (@data, @schema) ->
     @log = gg.data.Row.log
+    unless @schema?
+      throw Error
 
   rawKeys: ->
     @schema.attrs().filter (attr) => @schema.isRaw(attr)
@@ -92,8 +94,17 @@ class gg.data.Row
   #
   # Really only used for debugging purposes in gg.wf.debug
   project: (attrs) ->
+    schema = new gg.data.Schema
+
     copy = {}
     _.each attrs, (attr) =>
+      typeObj = @schema.typeObj attr
+      unless typeObj?
+        console.log attrs
+        console.log attr
+        console.log @
+        throw Error("couldn't find type for #{attr}")
+      schema.addColumn attr, typeObj.type, typeObj.schema
       if @schema.isRaw attr
         copy[attr] = @data[attr]
       else if @schema.inNested attr
@@ -110,7 +121,7 @@ class gg.data.Row
             copy[key][idx][attr] = v[attr] if v?
       else if attr of @data
         copy[attr] = @data[attr]
-    new gg.data.Row copy
+    new gg.data.Row copy, schema
 
   rmColumns: (attrs) ->
     _.each attrs, (attr) =>
@@ -128,8 +139,12 @@ class gg.data.Row
   rmColumn: (attr) ->
     @rmColumns _.flatten([attr])
 
+  # XXX: doesn't merge schemas.  Does a blind merge
   merge: (row) ->
-    _.extend @data, row.data
+    if _.isType row, gg.data.Row
+      _.extend @data, row.data
+    else
+      _.extend @data, row
     @
 
   # uses Zip semantics for flattening multiple arrays
@@ -195,15 +210,38 @@ class gg.data.Row
   clone: ->
     copy = {}
     _.each @data, (v, k) ->
-      copy[k] = if _.isArray v
+      copy[k] = if _.isNull v
+        null
+      else if _.isNaN v
+        NaN
+      else if _.isArray v
         _.map v, (o) -> _.clone o
+      else if _.isDate v
+        new Date v
+      else if v? and v.clone? and _.isFunction v.clone
+        v.clone()
       else if _.isObject v
         _.clone v
       else
         v
 
-    new gg.data.Row copy
+    new gg.data.Row copy, @schema
 
   raw: -> @data
+
+  toString: ->
+    unless @schema?
+      @log.err "row has no schema"
+      @log.err @
+      throw Error("row has no schema")
+    o = _.o2map @schema.leafAttrs(), (attr) =>
+      val = @get attr
+      if _.isArray val
+        val = _.map val[0..4], JSON.stringify
+        val = val.join "\t"
+      val = val.toString() if val?
+      [attr, val]
+    JSON.stringify o
+    
 
 
