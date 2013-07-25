@@ -119,34 +119,6 @@ class gg.facet.base.Layout extends gg.core.BForm
       @log "yAxisLabelC: #{yAxisLabelC.toString()}"
 
       plotC = container.drawC()
-
-
-
-
-      ###
-      # figure out top and left side containers
-      # main labels
-      xFacetLabelC = new gg.core.Bound titleH, paddingPane/2
-      xFacetLabelC.d (w-2*titleH)/2, em
-
-      # to compensate for rotation later
-      yFacetLabelC = new gg.core.Bound titleH+(h-2*titleH)/2,
-        -(w-titleH-paddingPane)
-
-      xAxisLabelC = new gg.core.Bound titleH, h-titleH-paddingPane
-      xAxisLabelC.d (w-2*titleH)/2, em
-
-      # compensate for rotation later
-      yAxisLabelC = new gg.core.Bound -(titleH+(h-2*titleH)/2),
-        titleH
-      yAxisLabelC = new gg.core.Bound titleH, (titleH+(h-2*titleH)/2)
-
-      plotC = new gg.core.Bound titleH+paddingPane,
-        titleH+paddingPane,
-        w-2*(titleH-paddingPane)+titleH,
-        h-2*(titleH-paddingPane)+titleH
-      ###
-
     else
       xFacetLabelC = null
       yFacetLabelC = null

@@ -7,6 +7,12 @@ class gg.wf.rule.EnvPut extends gg.wf.rule.Rule
     super
 
   run: (flow) -> 
+    # currently incorrectly implemented
+    return flow
+
+
+
+
     # find all the envput nodes
     # push them to the very beginning
 
@@ -26,6 +32,7 @@ class gg.wf.rule.EnvPut extends gg.wf.rule.Rule
       params:
         pairs: pairs
 
+    # can't go past barriers!
     sources = flow.sources()
     for source in sources
       children = flow.children source

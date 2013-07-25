@@ -146,7 +146,6 @@ class gg.core.Graphic
 
     if @options.optimize
       optimizer = new gg.wf.Optimizer [
-        new gg.wf.rule.EnvPut
         new gg.wf.rule.RPCify
       ]
       @workflow = optimizer.run @workflow

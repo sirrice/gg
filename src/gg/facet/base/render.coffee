@@ -29,8 +29,8 @@ class gg.facet.base.Render extends gg.core.BForm
     plotC = lc.plotC
     b2translate = (b) -> "transform(#{b.x0},#{b.y0})"
 
-    @log "yalC #{yalC.toString()}"
-    @log "xalC #{xalC.toString()}"
+    @log "yalC #{yalC.toString()}" if yalC?
+    @log "xalC #{xalC.toString()}" if xalC?
 
     _.subSvg svg, {
       class: 'plot-background'

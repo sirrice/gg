@@ -31,8 +31,9 @@ class gg.facet.pane.Svg extends gg.core.XForm
     @log "bound: #{paneC.bound().toString()}"
     @log "drawC: #{paneC.drawC().toString()}"
     @log "xaxis: #{paneC.xAxisC().toString()}"
-    @log "yFacet:#{yfc.toString()}"
+    @log "yFacet:#{yfc.toString()}" if yfc?
     @log "em: #{em}"
+    @log "layer: #{layerIdx}"
 
     el = _.subSvg svg, {
       class: "pane-container layer-#{layerIdx}"
