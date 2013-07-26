@@ -237,10 +237,12 @@ class gg.data.Row
     o = _.o2map @schema.leafAttrs(), (attr) =>
       val = @get attr
       if _.isArray val
-        val = _.map val[0..4], JSON.stringify
-        val = val.join "\t"
-      val = val.toString() if val?
+        val = val[0..4]
+        #val = _.map val[0..4], JSON.stringify
+        #val = val.join "\t"
+      #val = val.toString() if val?
       [attr, val]
+    o
     JSON.stringify o
     
 

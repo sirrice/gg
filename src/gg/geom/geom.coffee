@@ -55,6 +55,23 @@ class gg.geom.Geom
   # @return mapping of attribute -> aesthetic
   posMapping: -> {}
 
+
+  @fromSpec: (layer, spec) ->
+    spec = _.clone spec
+
+    klasses = @getKlasses()
+
+    klass = klasses[spec.type] or gg.geom.Point
+    @log "fromSpec\t#{JSON.stringify spec}"
+    @log "fromSpec: klass: #{spec.type} -> #{klass.name}"
+
+    spec.name = klass.name unless spec.name?
+    geom = new klass layer, spec
+
+    geom
+
+
+
   @klasses = []
 
   @addKlass: (klass) ->
@@ -81,20 +98,6 @@ class gg.geom.Geom
       else
         ret[klass.aliases] = klass
     ret
-
-  @fromSpec: (layer, spec) ->
-    spec = _.clone spec
-
-    klasses = @getKlasses()
-
-    klass = klasses[spec.type] or gg.geom.Point
-    @log "fromSpec\t#{JSON.stringify spec}"
-    @log "fromSpec: klass: #{spec.type} -> #{klass.name}"
-
-    spec.name = klass.name unless spec.name?
-    geom = new klass layer, spec
-
-    geom
 
 
 

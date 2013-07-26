@@ -18,7 +18,9 @@ class gg.wf.Multicast extends gg.wf.Node
     outputs  = _.times @nChildren, (idx) =>
       f = 
         if idx < @nChildren
-          (data) -> data.clone()
+          (data) => 
+            @log "cloning data #{data}"
+            data.clone()
         else
           (data) -> data
 

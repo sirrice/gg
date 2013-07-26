@@ -60,8 +60,10 @@ class gg.util.Log
     if level >= @level
       prefix = switch level
         when gg.util.Log.DEBUG then "D"
+        when gg.util.Log.DEBUG then "I"
         when gg.util.Log.WARN then "W"
         when gg.util.Log.ERROR then "E"
+        else "?"
       prefix = "#{prefix} "
       if @prefix != ""
         prefix = "#{prefix}[#{@prefix}]:\t"

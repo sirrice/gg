@@ -36,6 +36,7 @@ class gg.xform.Mapper extends gg.core.XForm
 
     # resolve aesthetic aliases in mapping
     functions = _.mappingToFunctions table, params.get('mapping')
+    @log "functions: #{JSON.stringify functions}"
     table = table.transform functions, yes
     data.table = table
     data

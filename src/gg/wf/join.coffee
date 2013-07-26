@@ -17,21 +17,21 @@ class gg.wf.Merge extends gg.wf.Node
       default: ['default']
 
   compute: (datas, params) ->
-    return datas if datas.length <= 1
     envkey = params.get 'envkey'
     defaultVal = params.get 'default'
     attr = params.get 'attr'
 
     @log "Merge node tables and envs"
 
-    _.each datas, (data) ->
-      table = data.table
-      env = data.env
+    for data in datas
+      [table, env] = [data.table, data.env]
       val =
         if env.contains(envkey)
           env.get(envkey)
         else
           defaultVal
+
+      @log "Merge adds attributes: #{attr} -> #{val}"
 
       if table.contains attr
         if table.schema.isArray attr
@@ -40,6 +40,8 @@ class gg.wf.Merge extends gg.wf.Node
         table.each (row) -> row.set attr, val
       else
         table.addConstColumn attr, val
+
+    return datas if datas.length <= 1
 
     tables = _.map datas, (d) -> d.table
     table = gg.data.Table.merge tables

@@ -109,7 +109,7 @@ class gg.wf.Data
   constructor: (@table, @env=null) ->
     @env = new gg.wf.Env unless @env?
 
-  clone: -> new gg.wf.Data @table, @env.clone()
+  clone: -> new gg.wf.Data @table.clone(), @env.clone()
 
   toJSON: ->
     tableJson = null

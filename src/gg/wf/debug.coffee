@@ -49,6 +49,11 @@ class gg.wf.Scales extends gg.wf.Exec
   @ggpackage = "gg.wf.Scales"
   @type = "scaleout"
 
+  constructor: (@spec) ->
+    super
+
+    @log = gg.util.Log.logger @constructor.ggpackage, "Scales: #{@name}-#{@id}"
+
   compute: (data, params) ->
     layerIdx = data.env.get 'layer'
     gg.wf.Scales.print data.env.get('scales'), layerIdx,  @log
@@ -58,10 +63,10 @@ class gg.wf.Scales extends gg.wf.Exec
   @print: (scaleset, layerIdx, log=null) ->
     log = gg.util.Log.logger("scaleout") unless log?
 
-    log "Out: scaleset #{scaleset.id}, #{scaleset.scales}"
+    log "scaleset #{scaleset.id}, #{scaleset.scales}"
     _.each scaleset.scalesList(), (scale) =>
       str = scale.toString()
-      log "Out: layer #{layerIdx}, #{str}"
+      log "layer #{layerIdx}, #{str}"
 
 
 

@@ -1,9 +1,13 @@
 #<< gg/layer/layer
 
 class gg.layer.Shorthand extends gg.layer.Layer
+  @ggpackage = "gg.layer.Shorthand"
+
   constructor: (@g, @spec={}) ->
-    @type = "layershort"
     super
+
+    @type = "layershort"
+    @log = gg.util.Log.logger @constructor.ggpackage, "Layer-#{@layerIdx}"
 
 
   #
@@ -41,7 +45,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @coordSpec = @extractSpec "coord"
     @coordSpec.name = "coord-#{@layerIdx}"
     @groupSpec = "group" if "group" of @mapSpec.aes
-
 
     @geom = gg.geom.Geom.fromSpec @, @geomSpec
     @stat = gg.stat.Stat.fromSpec @statSpec
@@ -206,8 +209,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
 
     nodes.push @geom.reparam
-    nodes.push makeStdOut "post-reparam",
-      aess: ['x', 'x0', 'x1']
+    nodes.push makeStdOut "post-reparam"
 
 
     if @pos?

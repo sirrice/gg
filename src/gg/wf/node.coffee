@@ -47,7 +47,7 @@ class gg.wf.Node extends events.EventEmitter
     @name = @spec.name or "#{@type}-#{@id}"
     @params = new gg.util.Params @spec.params
     @params.ensure "klassname", [], @constructor.ggpackage
-    logname = "#{@name}-#{@id}\t#{@constructor.name}"
+    logname = "#{@constructor.name}: #{@name}-#{@id}"
     @log = gg.util.Log.logger @constructor.ggpackage, logname
 
 

@@ -30,9 +30,10 @@ class gg.wf.Exec extends gg.wf.Node
     outputs
 
   @create: (params, compute) ->
-    new gg.wf.Exec
+    class ExecKlass extends gg.wf.Exec
+      compute: compute
+    new ExecKlass
       params: params
-      f: compute
 
 
 

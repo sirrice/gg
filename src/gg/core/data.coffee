@@ -24,7 +24,7 @@ class gg.core.Data
   constructor: (@defaults, @layerDefaults, @specs={}) ->
     @log = gg.util.Log.logger gg.core.Data.ggpackage, "dataspec"
 
-  @fromSpec: (spec, layerSpecs={}) ->
+  @fromSpec: (spec={}, layerSpecs={}) ->
     defaults = @loadSpec spec
 
     lDefaults = _.o2map layerSpecs, (lSpec, layerIdx) =>
