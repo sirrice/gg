@@ -161,6 +161,7 @@
 
 
     eval("var spec = " + $("#spec pre").text())
+    spec.data = bigdata;
     var plot = gg(spec);
     plot.render(ex(), bigdata);
 

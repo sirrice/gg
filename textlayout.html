@@ -101,15 +101,7 @@
 
   var base_spec = {
     "layers": [
-      {
-        "geom": "rect",
-        "aes": { "fill-opacity": 0.15, }
-      },
       finalRects,
-      {
-        "geom": "point",
-        "aes": { "r": 5, "fill-opacity": 1 }
-      },
       {
         "geom": "text",
         "aes": { color: "black" },
@@ -127,6 +119,9 @@
       "color": "color",
       'stroke-width': 'identity',
       "opacity": "identity",
+    },
+    debug: {
+      "gg.wf.stdout": 0
     },
     "options": {
       "w": 900,
@@ -165,7 +160,9 @@
     };
 
     $("#spec").text(JSON.prettify(spec));
-    var plot = gg(JSON.parse(JSON.stringify(spec)));
+    spec = JSON.parse(JSON.stringify(spec))
+    spec.data = data;
+    var plot = gg(spec);
     plot.render(ex(), data);
   }
 

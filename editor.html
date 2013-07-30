@@ -1,0 +1,157 @@
+<html>
+<head>
+<meta charset="utf-8">
+<title>The Grammar of Graphics</title>
+<link rel="stylesheet" type="text/css" href="./css/style.css"/>
+<link rel="stylesheet" type="text/css" href="./css/gg.css"/>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="./vendor/js/underscore.min.js"></script>
+<script src="./js/prettify.js"></script>
+<script src="./js/gg.js"></script>
+<script src="./js/editor.js"></script>
+<style>
+  #plot {
+    width: 900px;
+    height: 1500px;
+    float: left;
+  }
+  #spec {
+    float: left;
+    padding-left: 2em;
+  }
+  #spec div.code {
+    padding-left: 2em;
+  }
+  #spec textarea {
+    padding: 10px;
+    font-family: consolas, arial, monospace;
+    font-size: 10pt;
+    border: none;
+    min-width: 40em;
+    width: 100%;
+    height: 500px;
+  }
+  #spec button {
+    font-family: garamond, georgia;
+    font-size: 12pt;
+    width: 48%;
+    display: inline;
+  }
+  .clear {
+    clear: both;
+  }
+</style>
+</head>
+<body style="width:100%">
+    <div class="header">
+    <div class="nav">
+      <a href="http://www.mit.edu/~eugenewu/index.html" style="font-weight: bold; margin-right: 10px">
+      Eugene Wu
+      </a>
+    <a href="/gg">gg</a>
+    <a href="http://github.com/sirrice/gg">Github</a>
+    </div>
+    </div>
+
+
+  <div id="spec">
+    <h4>Specification</h4>
+    <p>
+    The following is an example of a visualization driven by a SQL query. This won't work
+    for you, so try changing the "data" specification to:
+
+    <div class="code">
+      <code><pre>
+data: _.times(10, function(i) {
+  return {
+    x: "9-"+(i+1)+"-2010",
+    y: i*10,
+    name: "sample name"
+  }
+});
+      </pre></code>
+    </div>
+    </p>
+    <textarea>
+  {
+    layers: [
+    { geom: {type: "rect", aes: {y: "total"}}, stat: "bin", aes: {group: {opacity: 0.5, color: "name"}} },
+    { geom: "line", aes: {group: {color: "white"}}, scales: {color: "identity"}}
+    ] ,
+    // place the common aesthetic mappings here
+    aes: { x: "{new Date(x)}", y: "{+y}" },
+    facets: { y: "name" },
+    scales: { y: "log", opacity: "identity" },
+    debug: {
+      "gg.facet.pane": 0
+    },
+    data: {
+
+      type: "jdbc",
+      uri: "postgresql://sirrice@localhost:5432/fec12",
+      q: "select disb_dt as x, count(*) as y, cand_nm as name from expenses where disb_dt >= '1-10-2010' and disb_dt <= '12-1-2013' group by disb_dt, cand_nm order by disb_dt, cand_nm;"
+    },
+    opts: {
+      width: 900,
+      height: 1500,
+      title: "Custom plot",
+      uri: "http://localhost:8881",
+      minimal: true
+    } 
+  };
+    </textarea>
+    <button id="btn">Render!</button>
+    <button id="load">Load Previous</button>
+  </div>
+  <div class="clear"></div>
+
+<div class="main">
+
+  <div id="plot"></div>
+  <section> <p> </p> </section>
+</div>
+</body>
+</html>
+
+
+<script>
+  var render = function(cache) {
+    var spectext = $("#spec textarea").val();
+    if (cache) {
+      localStorage.setItem("query", spectext); 
+    }
+    eval("var spec = " + spectext);
+
+    var ex = function () {
+      $("#plot").empty();
+      return d3.select('#plot').append('span');
+    };
+
+    var plot = gg(spec);
+    var height = plot.options.h;
+    $("#plot").height(height);
+    plot.render(ex());
+  };
+
+  var loadPrev = function() {
+    var spectext = localStorage.getItem("query");
+    if (spectext) {
+      $("#spec textarea").val(spectext);
+      render(false);
+    }
+
+  };
+
+
+  $(document).ready(function() {
+    Math.seedrandom("zero");
+    $("#btn").click(function(){render(true);});
+    $("#load").click(loadPrev);
+    render(false)
+  });
+
+
+
+</script>
+
+
