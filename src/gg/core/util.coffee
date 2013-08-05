@@ -78,11 +78,10 @@ class gg.core.FormUtil
     _.map @facetDatas(datas, xFacet, yFacet), (data) -> data.table
 
   # pick "key" from list of env objects.
-  @pick: (datas, key, defaultVal=null) ->
+  @pick: (datas, key) ->
     vals = []
     for data in datas 
-      if data.env.contains key
-        vals.push data.env.get(key)
+      vals.push data.env.get(key)
     vals = _.uniq vals
     vals.sort()
     vals

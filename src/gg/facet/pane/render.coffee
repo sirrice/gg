@@ -25,14 +25,12 @@ class gg.facet.pane.Svg extends gg.core.XForm
     yfc = paneC.yFacetC()
     xac = paneC.xAxisC()
     yac = paneC.yAxisC()
-    em = _.textSize("m", {padding: 2})
 
     @log "panec: #{paneC.toString()}"
     @log "bound: #{paneC.bound().toString()}"
     @log "drawC: #{paneC.drawC().toString()}"
     @log "xaxis: #{paneC.xAxisC().toString()}"
     @log "yFacet:#{yfc.toString()}" if yfc?
-    @log "em: #{em}"
     @log "layer: #{layerIdx}"
 
     el = _.subSvg svg, {
@@ -118,8 +116,31 @@ class gg.facet.pane.Svg extends gg.core.XForm
       axis.tickFormat('') unless paneC.bXAxis
 
       # TODO: figure out how many ticks to render
-      if xscale.type is gg.data.Schema.numeric
-        axis.ticks(5)
+      if xscale.type is gg.data.Schema.numeric or xscale.type is gg.data.Schema.date
+        d3scale = xscale.d3()
+        nticks = 5
+        fmtr = axis.tickFormat() or d3scale.tickFormat() or String
+        @log "autotuning x axis ticks"
+        @log d3scale.ticks
+        @log "tickFormat is function: #{_.isFunction fmtr}"
+        if d3scale.ticks? and _.isFunction fmtr
+          nticks = 2
+          for n in _.range(1, 10)
+            ticks = _.map d3scale.ticks(n), fmtr
+            ticksizes = _.map ticks, (tick) ->
+              gg.util.Textsize.textSize(tick,
+                { class: "axis x"},
+                xael[0][0]).width
+            widthAtTick = _.sum ticksizes
+            @log "ticks: #{JSON.stringify ticks}"
+            @log "sizes: #{JSON.stringify ticksizes}"
+            @log "width: #{widthAtTick}"
+            if widthAtTick < dc.w()
+              nticks = n
+            else
+              break
+
+        axis.ticks nticks
 
       xael.call axis
 
@@ -141,8 +162,11 @@ class gg.facet.pane.Svg extends gg.core.XForm
       @log "yaxis type: #{yscale.type}"
       @log yscale.toString()
 
+      # compute number of ticks to show
+
       if yscale.type is gg.data.Schema.numeric
-        nticks = Math.min(5, Math.ceil(dc.h() / (1.1*em.h)))
+        em = _.textSize("m", {padding: 2, class: "axis y"}, yael[0][0])
+        nticks = Math.min(5, Math.ceil(dc.h() / em.h))
         axis.ticks(nticks, d3.format(',.0f'), 5)
         @log "yaxis nticks #{nticks}"
 

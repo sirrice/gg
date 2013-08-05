@@ -72,9 +72,13 @@ class gg.facet.base.Facets
 
     xattrs = ['showx', 'showX', 'showXAxis']
     yattrs = ['showy', 'showY', 'showYAxis']
+    ncol = ["ncols", "ncol", "nys", "ny"]
+    nrow = ["nrows", "nrow", "nxs", "nx"]
     @layoutParams = new gg.util.Params {
       showXAxis: _.findGoodAttr @spec, xattrs, yes
       showYAxis: _.findGoodAttr @spec, yattrs, yes
+      ncol: _.findGoodAttr @spec, ncol, null
+      nrow: _.findGoodAttr @spec, nrow, null
       paddingPane: @spec.padding or @spec.paddingPane or 5
       margin: @spec.margin or 1
       options: @g.options

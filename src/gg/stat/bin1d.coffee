@@ -42,6 +42,7 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
         toBinidx = (x) -> xtoidx[x]
         stats = _.map domain, (x) ->
           {bin: x, count: 0, total: 0}
+
       when gg.data.Schema.numeric
         binRange = domain[1] - domain[0]
         nbins = params.get 'nbins'
@@ -55,6 +56,7 @@ class gg.stat.Bin1DStat extends gg.stat.Stat
             count: 0
             total: 0
           }
+
       when gg.data.Schema.date
         domain = [domain[0].getTime(), domain[1].getTime()]
         binRange = domain[1] - domain[0]

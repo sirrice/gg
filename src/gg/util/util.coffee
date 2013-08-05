@@ -101,7 +101,10 @@ class gg.util.Util
 
   @list2map: (args...) -> @o2map args...
 
-  @sum: (arr) -> _.reduce arr, ((a,b) -> a+b), 0
+  @sum: (arr, f, ctx) -> 
+    if f? and _.isFunction f
+      arr = _.map arr, f, ctx
+    _.reduce arr, ((a,b) -> a+b), 0
 
   @findGood: (list) ->
     ret = _.find list, (v)->v != null and v?

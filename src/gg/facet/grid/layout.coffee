@@ -59,6 +59,8 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
           gg.core.Bound.empty(),
           xidx,
           yidx,
+          x,
+          y,
           bXFacet,
           bYFacet,
           bXAxis,
@@ -179,27 +181,6 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
           env.put "yfacet-size", yfont.size
 
 
-
-
-  xy2paneId: (x, y, xs, ys) ->
-    xidx = _.indexOf xs, x
-    yidx = _.indexOf ys, y
-    xidx + yidx * xs.length
-
-  getMaxYText: (datas) ->
-    envs = _.map datas, (d) -> d.env
-    scalesList = gg.core.FormUtil.scalesList datas
-    text = "100"
-    formatter = d3.format(",.0f")
-
-    _.each scalesList, (scaleSet) ->
-      yscale = scaleSet.scale 'y', gg.data.Schema.unknown
-      y = yscale.maxDomain()
-      if _.isNumber
-        _text = formatter(y)
-        text = _text if _text? and  _text.length > text.length
-
-    return text
 
 
 

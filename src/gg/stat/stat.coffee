@@ -20,12 +20,15 @@ class gg.stat.Stat extends gg.core.XForm
     _.compact _.flatten ret
 
 
+  # list of dynamically registered stat classes
   @klasses = []
 
+  # dynamically add a new class definition
   @addKlass: (klass) ->
     # TODO: check for overlapping aliases and warn/throw error
     @klasses.push klass
 
+  # @return mapping from alias -> stat class object
   @getKlasses: ->
     klasses = @klasses.concat [
       gg.stat.IdentityStat
@@ -33,6 +36,7 @@ class gg.stat.Stat extends gg.core.XForm
       gg.stat.BoxplotStat
       gg.stat.LoessStat
       gg.stat.SortStat
+      gg.stat.CDF
     ]
 
     ret = {}

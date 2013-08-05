@@ -21,6 +21,8 @@ class gg.facet.pane.Container
   #        @bound()
   constructor: (
     @c, # container for the inner pane, not the container
+    @xidx,
+    @yidx,
     @x,
     @y,
     @bXFacet,
@@ -41,6 +43,8 @@ class gg.facet.pane.Container
 
   toJSON: ->
     c: _.toJSON @c
+    xidx: _.toJSON @xidx
+    yidx: _.toJSON @yidx
     x: _.toJSON @x
     y: _.toJSON @y
     bXFacet: @bXFacet
@@ -53,6 +57,8 @@ class gg.facet.pane.Container
   @fromJSON: (json) ->
     new gg.facet.pane.Container(
       _.fromJSON json.c
+      _.fromJSON json.xidx
+      _.fromJSON json.yidx
       _.fromJSON json.x
       _.fromJSON json.y
       json.bXFacet

@@ -4,6 +4,7 @@ _ = require "underscore"
 class gg.util.Textsize
   @log = gg.util.Log.logger "gg.util.Textsize", "Textsize"
 
+  @_fontSizeCache = {}
   @_exSizeCache = {}
   @_defaultWidths = (->
     defaultWidths = {}
@@ -30,7 +31,7 @@ class gg.util.Textsize
   # @param text the string to compute size of
   # @param opts css attributes
   # @return {width: [pixels], height: [pixels]}
-  @textSize: (text, opts={}) ->
+  @textSize: (text, opts={}, el) ->
     log = gg.util.Textsize.log
     try
       body = document.getElementsByTagName("body")[0]
@@ -46,10 +47,11 @@ class gg.util.Textsize
       $(div).css css
       $(div).attr css
 
-      body.appendChild div
+      el = body unless el?
+      el.appendChild div
       width = div.clientWidth# $(div).width()
       height = div.clientHeight# $(div).height()
-      #body.removeChild div
+      el.removeChild div
 
       log "textsize of #{text}: #{width}x#{height} with #{JSON.stringify opts}"
 
@@ -76,13 +78,13 @@ class gg.util.Textsize
 
   # @param opts css attributes
   # @return {width: [pixels], height: [pixels]}
-  @exSize: (opts) ->
+  @exSize: (opts, el) ->
     optsJson = JSON.stringify opts
     if optsJson of gg.util.Textsize._exSizeCache
       gg.util.Textsize._exSizeCache[optsJson]
     else
       alphas = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      ret = gg.util.Textsize.textSize alphas, opts
+      ret = gg.util.Textsize.textSize alphas, opts, el
 
       ret.width = ret.w = ret.w / alphas.length
       gg.util.Textsize._exSizeCache[optsJson] = ret
@@ -108,9 +110,7 @@ class gg.util.Textsize
   # @param height pixel height of bounding box
   # @param opts css attributes applied to text
   # @return integer of font point size
-  @fontSize: (text, width, height, opts) ->
-    body = document.getElementsByTagName("body")[0]
-    div = document.createElement("div")
+  @fontSize: (text, width, height, opts, el) ->
     css =
        color: "white"
        "font-family": "arial"
@@ -119,6 +119,14 @@ class gg.util.Textsize
        left: -100000
        position: "absolute"
 
+    # check the cache
+    key = "#{text.length}--#{width}--#{height}--#{JSON.stringify(css)}"
+    if key of @_fontSizeCache
+      return @_fontSizeCache[key]
+    
+
+    body = document.getElementsByTagName("body")[0]
+    div = document.createElement("div")
     $(div)
       .css(css)
       .attr(
@@ -126,7 +134,8 @@ class gg.util.Textsize
         height: height)
       .text(text)
 
-    body.appendChild div
+    el = body unless el?
+    el.appendChild div
 
 
     dim = {w: width, h: height}
@@ -144,27 +153,29 @@ class gg.util.Textsize
            break
          size += 5
 
-    div.remove()
+    el.removeChild div
+    @_fontSizeCache[key] = size
     size
 
   # allow chopping up the string
-  # @
-  @fit: (text="", width, height, minfont, opts={}) ->
+  @fit: (text="", width, height, minfont, opts={}, el) ->
     optsize = @fontSize text, width, height, opts
     @log "optsize:   #{optsize}"
     @log "minfont:   #{minfont}"
     @log "container: #{width} x #{height}"
     @log "text:      #{text}"
+    
+    # truncate the string so it fits the width
     if optsize < minfont
       opts["font-size"] = "#{minfont}pt"
-      dim = @textSize text, opts
+      dim = @textSize text, opts, el
       @log "dim:    #{dim.w}"
       nchar = Math.floor(text.length * width / dim.w)
       text = text.substr 0, nchar
       optsize = minfont
 
     opts["font-size"] = "#{optsize}pt"
-    dim = @textSize text, opts
+    dim = @textSize text, opts, el
 
     {
       text: text
