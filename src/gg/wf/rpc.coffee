@@ -45,6 +45,8 @@ class gg.wf.RPC extends events.EventEmitter
 
     if connected
       onConnect()
+    else
+      socket.socket.connect()
  
   constructor: (@spec) ->
     @id = gg.wf.RPC.id()

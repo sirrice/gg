@@ -21,8 +21,8 @@ hierarchical model (e.g., protobuf-style) of a complete "provenance object".
 Developer specifies this model using some language
 
     flow > op* > env > key/val
-              > table > schema > attr
-                      > data > row
+               > table > schema > attr
+                       > data > row
 
 
 Provenance store provides the following:

@@ -9,6 +9,7 @@
 #<< gg/geom/geom
 
 class gg.core.Graphic
+  @ggpackage = "gg.core.Graphic"
   @envKeys = [
     'layer'
     'scales'
@@ -20,6 +21,7 @@ class gg.core.Graphic
   constructor: (@spec={}) ->
     # setup debugging
     @debugspec = @spec.debug or { "": gg.util.Log.WARN }
+    gg.util.Log.loggers = {}
     gg.util.Log.setDefaults @debugspec
 
     # extract specs
@@ -48,12 +50,9 @@ class gg.core.Graphic
       container: new gg.core.Bound 0, 0, @options.w, @options.h
       options: @options
 
+    @log = gg.util.Log.logger @constructor.ggpackage, "core"
 
 
-  # XXX: graphic object responsible for
-  #
-  #   1. getting scales
-  #   2. getting svg containers (+ width/height layout constraints)
 
 
   compile: ->
@@ -135,11 +134,14 @@ class gg.core.Graphic
 
 
   render: (@svg, input) ->
+    @log "running graphic.render"
+    @log input
     $(@svg[0]).empty()
     @svg = @svg.append('svg')
     @compile()
 
     if input
+      @log "prepending data node"
       @datas.setDefault input
       dataNode = @datas.data()
       @workflow.prepend dataNode
@@ -150,6 +152,7 @@ class gg.core.Graphic
       ]
       @workflow = optimizer.run @workflow
 
+    @log "running workflow"
     @workflow.run @options
 
 

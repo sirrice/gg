@@ -513,6 +513,7 @@ class gg.wf.Flow extends events.EventEmitter
 
     runner.on "done", () =>
       @emit "done", yes
+    @log "created runner"
 
     # if can access server
     uri = graphicOpts.serverURI
@@ -522,6 +523,7 @@ class gg.wf.Flow extends events.EventEmitter
     onErr = () => 
       @log.warn "error connecting to server at #{uri}"
       runner.run()
+    @log "checking rpc connection"
     gg.wf.RPC.checkConnection uri, onConnect, onErr
 
 
