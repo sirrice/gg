@@ -57,43 +57,38 @@
   <div id="spec">
     <h4>Specification</h4>
     <p>
-    The following is an example of a visualization driven by a SQL query. This won't work
-    for you, so try changing the "data" specification to:
+    The following is an example of a visualization driven by a generated dataset.
+    Feel free to edit the spec and generate your own visualizations.  For example, you can change "line" to "point".
 
     <div class="code">
       <code><pre>
-data: _.times(10, function(i) {
-  return {
-    x: "9-"+(i+1)+"-2010",
-    y: i*10,
-    name: "sample name"
-  }
-});
       </pre></code>
     </div>
     </p>
     <textarea>
   {
     layers: [
-    { geom: {type: "rect", aes: {y: "total"}}, stat: "bin", aes: {group: {opacity: 0.5, color: "name"}} },
-    { geom: "line", aes: {group: {color: "white"}}, scales: {color: "identity"}}
+    { geom: "rect", stat: "bin", aes: {group: {opacity: 0.5, color: "name"}} },
+    { geom: "line", aes: {group: {color: "black"}}, stat: "loess", scales: {color: "identity"}}
     ] ,
     // place the common aesthetic mappings here
     aes: { x: "{new Date(x)}", y: "{+y}" },
-    facets: { y: "name" },
+    facets: { y: "name", type: "wrap" },
     scales: { y: "log", opacity: "identity" },
     debug: {
-      "gg.facet.pane": 0
+    "gg.facet.wrap.layout": 0,
+    "gg.facet.pane.svg": 0
     },
-    data: {
-
-      type: "jdbc",
-      uri: "postgresql://sirrice@localhost:5432/fec12",
-      q: "select disb_dt as x, count(*) as y, cand_nm as name from expenses where disb_dt >= '1-10-2010' and disb_dt <= '12-1-2013' group by disb_dt, cand_nm order by disb_dt, cand_nm;"
-    },
+    data: _.times(10, function(i) {
+      return {
+        x: "9-"+(i+1)+"-2010",
+        y: i*10,
+        name: "sample name"
+      }
+    }),
     opts: {
       width: 900,
-      height: 1500,
+      height: 700,
       title: "Custom plot",
       uri: "http://localhost:8881",
       minimal: true
@@ -130,7 +125,8 @@ data: _.times(10, function(i) {
     var plot = gg(spec);
     var height = plot.options.h;
     $("#plot").height(height);
-    plot.render(ex());
+    console.log("calling render")
+    plot.render(d3.select("#plot"));
   };
 
   var loadPrev = function() {
