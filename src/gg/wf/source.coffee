@@ -21,7 +21,10 @@ class gg.wf.TableSource extends gg.wf.Source
     super
 
     unless @params.contains 'table'
-      throw Error("TableSource needs a table as parameter")
+      if 'table' of @spec
+        @params.put 'table', @spec.table
+      else
+        throw Error("TableSource needs a table as parameter")
 
   compute: (data, params) ->
     data.table = params.get('table')

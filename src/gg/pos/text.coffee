@@ -39,8 +39,8 @@ class gg.pos.Text extends gg.pos.Position
     innerLoop = params.get 'innerLoop'
     temperature = params.get 'temperature'
     boxes = gg.pos.Text.anneal boxes, bFast, innerLoop, temperature
-    console.log "got #{boxes.length} boxes from annealing"
-    console.log "took #{Date.now()-start} ms"
+    @log.debug "got #{boxes.length} boxes from annealing"
+    @log.debug "took #{Date.now()-start} ms"
 
     _.each boxes, (box, idx) ->
       row = table.get(idx)

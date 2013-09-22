@@ -5,7 +5,7 @@ class gg.scale.Factory
   @ggpackage = 'gg.scale.Factory'
 
 
-  constructor: (@defaults) ->
+  constructor: (@defaults={}) ->
 
   @fromSpec: (defaults) ->
     sf = new gg.scale.Factory defaults

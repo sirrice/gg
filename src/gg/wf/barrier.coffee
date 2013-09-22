@@ -1,6 +1,9 @@
 #<< gg/wf/node
 
 #
+# The nested structure of the data objects is preserved, but 
+# temporarily flattens the @inputs for the @compute function
+#
 # @compute(tables) -> tables
 # The compute function takes a list of N tables and outputs N tables
 # such that the positions of the input and output tables match up

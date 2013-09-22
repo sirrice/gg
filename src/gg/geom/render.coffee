@@ -34,17 +34,32 @@ class gg.geom.Render extends gg.core.XForm
   compute: (data, params) ->
     [table, env] = [data.table, data.env]
     svg = @svg data
+    Facets = gg.facet.base.Facets
     gg.wf.Stdout.print table, null, 2, @log
+
     @render table, svg
 
     # Render some debugging info
     if @log.level == gg.util.Log.DEBUG
       write = (text, opts={}) ->
         _.subSvg(svg, opts, "text").text(text)
-      Facets = gg.facet.base.Facets
       write env.get(Facets.facetXKey), {dy: "1em"}
       write env.get(Facets.facetYKey), {dy: "2em"}
       write env.get(table.nrows()), {dy: "3em"}
+
+
+    geoms = svg.selectAll(".geom")
+
+    # Connect events
+    if false
+      geoms
+        .on("mouseover", () -> )
+        .on("mouseout", () -> )
+
+    if @constructor.brush?
+      brushEventName = "brush-#{env.get Facets.facetId}"
+      event = env.get "event"
+      event.on brushEventName, @constructor.brush(geoms)
 
     data
 

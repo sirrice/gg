@@ -158,12 +158,15 @@ var selected_geoms = {
     //
     var npts = 500;
     bigdata = _.map(_.range(0, npts), function(d) {
-      g = Math.floor(Math.random() * 3) + 1;
+      g = d % 3//Math.floor(Math.random() * 3) + 1;
       f = Math.floor(Math.random() * 3);
       t = Math.floor(Math.random() * 2);
       gauss.variance(d * 30.0 / npts);
+      d = Math.floor(d/3)
+      e = ((d + gauss())*(2+Math.sin(d/50))) * (g) - (d)
+      //e = d
 
-      return {d: Math.floor(d/3), e: ((d + gauss())*(2+Math.sin(d/50))) * (g) - (d),  g: g, f:f, t:t};
+      return {d: d, e: e,  g: g, f:f, t:t};
     });
 
     setup_sample_data(bigdata);

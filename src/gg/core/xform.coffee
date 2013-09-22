@@ -36,8 +36,21 @@ class gg.core.XForm extends gg.wf.Exec
   @ggpackage = 'gg.core.XForm'
   @log = gg.util.Log.logger @ggpackage, @ggpackage.substr(@ggpackage.lastIndexOf(".")+1)
 
+  constructor: (@spec={}) ->
+    @premap = @postmap = null
+    super
+
   parseSpec: ->
     @log "XForm spec: #{JSON.stringify @spec}"
+
+    # pre-xform aesthetic mapping
+    if _.findGoodAttr(@spec, gg.xform.Mapper.attrs, null)?
+      mapSpec = _.clone @spec
+      @premap = gg.xform.Mapper.fromSpec mapSpec
+
+    if @spec.postmap?
+      postmapSpec = {aes: @spec.postmap}
+      @postmap = gg.xform.Mapper.fromSpec @spec.postmap
 
     @params.putAll
       inputSchema: @extractAttr "inputSchema"
@@ -78,3 +91,9 @@ class gg.core.XForm extends gg.wf.Exec
   paneInfo: (args...) -> gg.core.FormUtil.paneInfo args...
   scales: (args...) -> gg.core.FormUtil.scales args...
 
+  compile: ->
+    nodes = []
+    nodes.push @premap.compile() if @premap?
+    nodes.push super
+    nodes.push @postmap.compile() if @postmap?
+    _.compact _.flatten nodes

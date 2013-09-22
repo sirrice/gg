@@ -68,11 +68,13 @@ class gg.wf.Node extends events.EventEmitter
   # Output a result and call the appropriate handlers using @emit
   # @param outidx output port
   # @param data nested array of gg.wf.Data objects
-  output: (outidx, data) ->
+  output: (outidx, datas) ->
+    #
     # this block is all debugging code
+    #
     listeners = @listeners outidx
     n = listeners.length
-    flat = gg.wf.Inputs.flatten(data)[0]
+    flat = gg.wf.Inputs.flatten(datas)[0]
     noutputs = flat.length
     tablesizes = _.map flat, (data) ->
       if data? and data.table?
@@ -81,10 +83,11 @@ class gg.wf.Node extends events.EventEmitter
         -1
     @log.info "output: port(#{outidx}) ntables: #{noutputs}"
     @log "tablesizes: #{tablesizes}"
-    @log data
+    @log datas
 
-    @emit outidx, @id, outidx, data
-    @emit "output", @id, outidx, data
+    # actuall output the data
+    @emit outidx, @id, outidx, datas
+    @emit "output", @id, outidx, datas
 
   pstore: -> gg.prov.PStore.get @flow, @
 
@@ -117,9 +120,7 @@ class gg.wf.Node extends events.EventEmitter
       nParents: json.nParents
       location: json.location
       params: gg.util.Params.fromJSON json.params
-    console.log spec
     o = new klass spec
-    console.log json
     o.id = json.id if json.id?
     o
 

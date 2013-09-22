@@ -57,7 +57,11 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
   setupPos: ->
     @posSpec  = @extractSpec "pos"
-    @pos = gg.pos.Position.fromSpec @posSpec
+    if _.isArray @posSpec
+      @pos = _.map @posSpec, (@subSpec) ->
+        gg.pos.Position.fromSpec @subSpec
+    else
+      @pos = [gg.pos.Position.fromSpec @posSpec]
 
   setupMap: ->
     mapSpec  = _.findGoodAttr @spec, ['aes', 'aesthetic', 'mapping'], {}
@@ -264,7 +268,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
   compileGeomPos: ->
     nodes = []
 
-    if @pos?
+    if @pos? and @pos.length > 0
       nodes.push @pos
       nodes.push @makeStdOut "post-position"
 

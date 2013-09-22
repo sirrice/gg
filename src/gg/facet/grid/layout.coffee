@@ -141,7 +141,9 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     @log set.toString()
 
 
+    #
     # Compute font sizes and add to envs
+    #
     fit = (args...) -> gg.util.Textsize.fit args...
     xfonts = []
     yfonts = []
@@ -179,6 +181,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
           env.put "xfacet-size", xfont.size
           env.put "yfacet-text", yfont.text
           env.put "yfacet-size", yfont.size
+
 
 
 

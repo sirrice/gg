@@ -1,30 +1,64 @@
 #<< gg/wf/node
 
+# This class is a gg.core.XForm in signature only (ala duck typing) --
+# any XForm can have mappers but not the other way around.
 #
-# A 1-to-1 mapping XForm.  A mapping is defined with a dictionary of
+# gg.xform.Mapper performs a schema transformation.  It's spec is:
 #
-#   target-col-name: map-spec
+# {
+#   name: STRING
+#   aes: {
+#     target-col-name: MAPSPEC
+#   }
+# }
 #
-# where map-spec is one of:
+# or 
+# 
+# { 
+#   name: STRING
+#   params:
+#     aes: 
+#       target-col-name: MAPSPEC
+#  }
 #
-# 1) "attribute"
-# 2) object
-# 3) function: (tuple) -> object
-# 4) ecmascript expression: will use eval() to transform into function
+# MAPSPEC is:
 #
-# under the covers, the map-specs are compiled into functions.
+# 1) attribute name
+# 2) object of [target-col-name: MAPSPEC] pairs
+# 3) function: (row) -> object
+# 4) annotated function: 
+#    {
+#     f: (args...) ->
+#     args: ["attr", ...., "attr"]
+#    }
+#    args is a list of table columns passed as arguments to f
+# 5) "{ ECMAPSCRIPT }" will use eval() to transform into function
 #
+# 
+# Provenance mappings can be automatically extracted from MAPSPECs 
+# 1-4 and must be foresaken for 5
 #
-class gg.xform.Mapper extends gg.core.XForm
+class gg.xform.Mapper extends gg.wf.Exec
   @ggpackage = "gg.xform.Mapper"
+  @log = gg.util.Log.logger @ggpackage, 'map'
+  @attrs = [
+    "mapping", "map", "aes", 
+    "aesthetic", "aesthetics"
+  ]
 
-  parseSpec: ->
+  constructor: ->
     super
 
+  parseSpec: ->
     @params.ensureAll
-      mapping: [["map", "aes", "aesthetics"], @spec.aes or {}]
+      mapping: [gg.xform.Mapper.attrs, {}]
       inverse: [[], @spec.inverse or {}]
-    @log "spec: #{@params}"
+
+    @params.putAll
+      inputSchema: @inputSchema
+      outputSchema: @outputSchema
+    @params.ensure 'klassname', [], @constructor.ggpackage
+    super
 
 
   compute: (data, params) ->
@@ -43,11 +77,7 @@ class gg.xform.Mapper extends gg.core.XForm
 
   @fromSpec: (spec) ->
     spec = _.clone spec
-    attrs = [
-      "mapping", "map", "aes", 
-      "aesthetic", "aesthetics"
-    ]
-    mapping = _.findGoodAttr spec, attrs, null
+    mapping = _.findGoodAttr spec, gg.xform.Mapper.attrs, null
     @log "fromSpec: #{JSON.stringify mapping}"
 
     unless mapping? and _.size(mapping) > 0

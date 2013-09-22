@@ -3,10 +3,6 @@
 class gg.pos.Position extends gg.core.XForm
   @ggpackage = "gg.pos.Position"
 
-  constructor: (@spec={}) ->
-    super
-    @parseSpec()
-
   @klasses: ->
     klasses = [
       gg.pos.Identity
@@ -15,6 +11,7 @@ class gg.pos.Position extends gg.core.XForm
       gg.pos.Stack
       gg.pos.Dodge
       gg.pos.Text
+      gg.pos.Bin2D
     ]
     ret = {}
     _.each klasses, (klass) ->

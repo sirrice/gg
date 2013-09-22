@@ -81,7 +81,9 @@ class gg.util.Params
     # compute all the non-JSONable elements
     removedEls =
       svg: @rm 'svg'
+      event: @rm 'event'
       pairs: _.clone(@rm 'pairs')
+
     _.each _.keys(@data), (key) =>
       if _.isFunction @data[key]
         removedEls[key] = @rm key

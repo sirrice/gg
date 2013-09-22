@@ -1,6 +1,11 @@
 #<< gg/core/xform
 
 #
+# Ensures that each facet has a data table (albeit empty)
+#
+# Implemented as a gg.wf.Block because we're lazy and at
+# this point inthe workflow, the nested structure does'nt 
+# matter
 #
 class gg.facet.grid.FillFacets extends gg.wf.Block
   @ggpackage = "gg.facet.grid.FillFacets"
@@ -37,10 +42,13 @@ class gg.facet.grid.FillFacets extends gg.wf.Block
         input #{inputidx}"
       data
 
-    filledDatas = _.map xys, ([x,y]) =>
+    filledDatas = _.map xys, ([x,y], idx) =>
       key = JSON.stringify [x,y]
       data = xy2data[key]
       data = newData x,y unless data?
+
+      data.env.put Facets.facetXYKeys, xys
+      data.env.put Facets.facetId, "facet-#{idx}"
 
       data.table.addConstColumn Facets.facetXKey, x
       data.table.addConstColumn Facets.facetYKey, y

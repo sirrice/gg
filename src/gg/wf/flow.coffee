@@ -472,7 +472,8 @@ class gg.wf.Flow extends events.EventEmitter
 
     rpc.on "runflow", (nodeid, outport, outputs) =>
       node = @nodeFromId nodeid
-      @log.warn "runflow result: #{[node.name, nodeid, outport, node.location]}"
+      if node?
+        @log.warn "runflow result: #{[node.name, nodeid, outport, node.location]}"
       @log outputs
       runner.ch.routeNodeResult nodeid, outport, outputs
 

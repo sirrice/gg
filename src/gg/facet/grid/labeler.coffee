@@ -1,5 +1,10 @@
 #<< gg/core/bform
 
+# @deprecated  Functionality merged into gg.facet.grid.FillFacets
+#
+# * Adds facetid to the environment for the data element
+# * Collects all of the xy values and adds to each env
+#
 # This needs to be a barrier because some layers may not have
 # facet data that other layers have because different layers _could_
 # have different data sources!
@@ -19,8 +24,9 @@ class gg.facet.grid.Labeler extends gg.core.BForm
     @log "xs: #{JSON.stringify xs}"
     @log "ys: #{JSON.stringify ys}"
 
-    for data in datas
+    _.each datas, (data, idx) ->
       data.env.put Facets.facetXYKeys, xys
+      data.env.put Facets.facetId, "facet-#{idx}"
     datas
 
 

@@ -9,14 +9,14 @@ suite.addBatch
   "simple graph":
     topic: ()->
       graph = new gg.util.Graph (node) -> node
-      graph.connect [
+      _.each [
         ["A", "B"]
         ["A", "D"]
         ["A", "C"]
         ["B", "C"]
         ["C", "B"]
         ["D", "B"]
-      ]
+      ], ([f, t]) -> graph.connect f, t
       graph
 
     "has no sinks": (graph) ->
@@ -66,14 +66,15 @@ suite.addBatch
   "graph with typed edges":
     topic: () ->
       graph = new gg.util.Graph (node)->node
-      graph.connect [
+      _.each [
         [1, 2, "a", 1]
         [1, 3, "a", 1]
         [1, 4, "b", 1]
         [2, 3, "a", 1]
         [2, 4, "b", 1]
         [3, 2, "a", 2]
-      ]
+      ], ([f, t, type, md]) -> graph.connect f, t, type, md
+      graph
 
     "1 has 3 children": (graph) ->
       assert.equal graph.children(1).length, 3

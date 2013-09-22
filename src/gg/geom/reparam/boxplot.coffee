@@ -58,18 +58,15 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
     width = mindiff * 0.8
     width = Math.min width, 40
 
-    mapping = {
-        y0: 'min'
-        y1: 'max'
-        x0: (row) -> row.get('x') - width/2.0
-        x1: (row) -> row.get('x') + width/2.0
-        #width: width
-    }
-
+    mapping = 
+      y0: 'min'
+      y1: 'max'
+      x0: (row) -> row.get('x') - width/2.0
+      x1: (row) -> row.get('x') + width/2.0
+      #width: width
 
     mapping = _.mappingToFunctions table, mapping
     table.transform mapping, yes
     table.setSchema params.get('outputSchema') data, params
     data
-
 

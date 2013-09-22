@@ -36,6 +36,7 @@ class gg.util.Log
     level
 
 
+
   @logger: (logname="", prefix, level=gg.util.Log.ERROR) ->
     prefix = logname unless prefix?
     loggers = gg.util.Log.loggers

@@ -17,6 +17,28 @@ class gg.geom.svg.Point extends gg.geom.Render
   inputSchema: ->
     ['x', 'y']
 
+  @brush: (geoms) ->
+    (extent) ->
+      # extent is in pixels
+      [[minx, miny], [maxx, maxy]] = extent
+      geoms.attr 'fill', (d, i) ->
+        c = d3.select @
+        row = c.datum()
+        fill = row.get 'fill'
+        x = row.get 'x'
+        y = row.get 'y'
+        
+        valid = (
+          minx <= x and
+          maxx >= x and
+          miny <= y and
+          maxy >= y
+        )
+
+        if valid then 'black' else row.get 'fill'
+
+
+
   render: (table, svg) ->
     gg.wf.Stdout.print table, ['x', 'fill'], 5, @log
 
@@ -50,6 +72,7 @@ class gg.geom.svg.Point extends gg.geom.Render
     circles
       .on("mouseover", (d, idx) -> _this.applyAttrs d3.select(@), cssOver)
       .on("mouseout", (d, idx) ->  _this.applyAttrs d3.select(@), cssOut)
+      #.on("brush", @constructor.brush circles)
 
 
     exit.transition()

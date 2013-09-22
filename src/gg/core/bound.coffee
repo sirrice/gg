@@ -89,7 +89,7 @@ class gg.core.Bound
     y1: @y1
 
   toString: ->
-    JSON.stringify [@x0, @y0, @x1, @y1]
+    "d: #{@x0}, #{@y0}.  #{@w()}x#{@h()}"
 
 
 

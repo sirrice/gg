@@ -35,7 +35,7 @@ class gg.facet.pane.Container
       @lpad = @rpad = @upad = @bpad = 0
       @lpad = @padding unless @bYAxis
       @rpad = @padding unless @bYFacet
-      @bpad = @padding unless @bXAxis
+      #@bpad = @padding unless @bXAxis
       @upad = @padding unless @bXFacet
 
   clone: ->

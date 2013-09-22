@@ -4,13 +4,11 @@ class gg.coord.Coordinate extends gg.core.XForm
   @ggpackage = "gg.coord.Coordinate"
   @log = gg.util.Log.logger @ggpackage
 
-  constructor: (@spec={}) ->
-    super
-    @parseSpec()
+  compute: (data, params) -> 
+    @map data, params
 
-  compute: (data, params) -> @map data, params
-
-  map: (data, params) -> throw Error("#{@name}.map() not implemented")
+  map: (data, params) -> 
+    throw Error("#{@name}.map() not implemented")
 
   @klasses: ->
     klasses = [

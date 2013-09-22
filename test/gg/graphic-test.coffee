@@ -135,6 +135,11 @@ spec =
   ]
   facets:
     x: "t"
+  debug:
+    "gg": 5
+  options:
+    w: 500
+    h: 500
 
 
 
@@ -145,10 +150,10 @@ suite.addBatch
       graphic
 
     "dot": (graphic) ->
-      console.log graphic.compile().toDot()
+      #console.log graphic.compile().toDot()
 
     "can run": (graphic) ->
       svg = d3.select("body").append("svg")
-      graphic.render 500, 500, svg, makeTable(100)
+      graphic.render svg, makeTable(100)
 
 suite.export module

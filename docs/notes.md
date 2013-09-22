@@ -12,6 +12,22 @@ Desired Features
 1. Node-failure tolerance.  If a node throws an exception, dont block workflow on the next barrier, keep going.
 
 
+Aug 19, 2013
+---------------
+
+Refactored pane.render
+
+Added initial brushing to gg
+
+* pane.render adds and creates brush for the pane
+* On brush, finds all ".geom" objects and calls their 
+  brush handler
+* Each geom implements and adds brush handler to renderd objects
+* <strike>**needs to be a single svg element that contains all geoms 
+  within a facet panel**: need to refactor pane+layer rendering 
+  so there is a master pane svg at level of facet/axis labels.</strike>
+* Above issue handled by adding a global event handler.  Brush object 
+  triggers per-facet brush events, geoms listen for those.
 
 July 22, 2013
 ---------------

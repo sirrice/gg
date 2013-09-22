@@ -38,6 +38,7 @@ renderArray = (array, domEl, userSpec={}) ->
   rows = _.map array, (v, idx) ->
     { x: idx, y: v }
   console.log rows[0..15]
+  console.log spec
   plot = new gg.core.Graphic spec
   plot.render domEl, rows
 

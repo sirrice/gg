@@ -29,8 +29,8 @@ class gg.util.SpatialIndex
   #             to detect duplicates
   #
   constructor: (@keyf=null, @valf=null) ->
-    @keyf = ((box) -> box) unless @keyf?
-    @valf = ((box) -> box) unless @valf?
+    @keyf ?= ((box) -> box) 
+    @valf ?= ((box) -> box)
     @gbounds = null
     @gboundsFixed = false
     @cells = null
@@ -98,8 +98,8 @@ class gg.util.SpatialIndex
     globalh = maxy - miny
     cellw = Math.max(globalw / 30.0, sumboxw/n)
     cellh = Math.max(globalh / 30.0, sumboxh/n)
-    @gbounds = [[minx, maxx], [miny, maxy]] unless @gbounds?
-    @cellsize = [cellw, cellh] unless @cellsize?
+    @gbounds ?= [[minx, maxx], [miny, maxy]]
+    @cellsize ?= [cellw, cellh] 
 
     nxcells = Math.ceil(globalw / @cellsize[0])
     nycells = Math.ceil(globalh / @cellsize[1])
@@ -128,7 +128,7 @@ class gg.util.SpatialIndex
   # @param boxidx add box to index if null, otherwise assume that
   #        it is the correct index into @boxes
   add: (box, boxidx=null) ->
-    boxidx = @boxes.add box unless boxidx?
+    boxidx ?= @boxes.add box
     cellbound = @box2cellbound box
     @eachCell cellbound, (cell, pos) =>
       cell.add boxidx

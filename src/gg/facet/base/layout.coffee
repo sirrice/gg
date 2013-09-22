@@ -203,14 +203,17 @@ class gg.facet.base.Layout extends gg.core.BForm
     _.each grid, (paneCol, xidx) =>
       _.each paneCol, (pane, yidx) =>
         return unless pane?
+        c = pane.c
         pane.c.x1 = paneW
         pane.c.y1 = paneH
         dx = _.sum _.times xidx, (pxidx) -> grid[pxidx][yidx].w()
         dy = _.sum _.times yidx, (pyidx) -> grid[xidx][pyidx].h()
         @log "pane at #{pane.xidx}x#{pane.yidx} has dx,dy #{dx}, #{dy}"
-        @log "pane(#{pane.x},#{pane.y}) before: #{pane.c.toString()}"
+        @log "pane(#{pane.x},#{pane.y}) before: #{c.w()} x #{c.h()}"
         pane.c.d dx, dy
-        @log "pane(#{pane.x},#{pane.y}) after:  #{pane.c.toString()}"
+        c = pane.drawC()
+        @log "pane(#{pane.x},#{pane.y}) after: #{c.w()} x #{c.h()}"
+        @log pane
         pane.c.d pane.yAxisC().w(), pane.xFacetC().h()
 
 

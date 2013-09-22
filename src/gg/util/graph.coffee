@@ -19,8 +19,8 @@ class gg.util.Graph
     @idFunc
 
   add: (node) ->
-    unless node?
-      console.log node
+    # console.log node unless node?
+      
     id = @idFunc node
     return @ if id of @id2node
     @id2node[id] = node
@@ -58,8 +58,8 @@ class gg.util.Graph
     fid = @idFunc from
     tid = @idFunc to
 
-    @pid2cid[fid][tid] = {} unless @pid2cid[fid][tid]?
-    @cid2pid[tid][fid] = {} unless @cid2pid[tid][fid]?
+    @pid2cid[fid][tid] ?= {}
+    @cid2pid[tid][fid] ?= {}
     @pid2cid[fid][tid][type] = metadata
     @cid2pid[tid][fid][type] = metadata
     @log "connect: #{from.name} (#{type})-> #{to.name}\t#{JSON.stringify metadata}"
@@ -258,7 +258,7 @@ class gg.util.Graph
   # @params node the node to start searching from
   #
   dfs: (f, node=null, seen=null, depth=0) ->
-    seen = {} unless seen?
+    seen ?= {} 
 
     if node?
       id = @idFunc node

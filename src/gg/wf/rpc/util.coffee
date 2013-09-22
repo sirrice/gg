@@ -6,7 +6,10 @@ class gg.wf.rpc.Util
     # 2. reject environments/params that contain functions
     #    or do something smarter?
     removedEls = gg.wf.Inputs.mapLeaves inputs, (data) ->
-      {svg: data.env.rm('svg')}
+      {
+        svg: data.env.rm('svg')
+        event: daat.env.rm('event')
+      }
 
     inputsJSONs = _.toJSON inputs
     paramsJSON = if params? then params.toJSON() else null

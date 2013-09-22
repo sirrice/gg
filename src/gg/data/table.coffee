@@ -25,6 +25,11 @@ class gg.data.Table
   @reNestedAttr = /^[a-zA-Z]+\.[a-zA-Z]+$/
   @log = gg.util.Log.logger @ggpackage, "Table"
 
+  @isEvalJS: (s) ->@reEvalJS.test s
+  @isVariable: (s) -> @reVariable.test s
+  @isNestedAttr: (s) -> @reNestedAttr.test s
+
+
   type: (colname) ->
       val = @get(0, colname)
       if val? then typeof val else 'unknown'
@@ -63,6 +68,34 @@ class gg.data.Table
   get: (row, col=null)-> throw "not implemented"
   # because we may have column stores
   asArray: -> throw "not implemented"
+
+  # Partition table on a set of table columns
+  # Removes those columns from each partition's tuples
+  partition: (cols) ->
+    cols = _.flatten [cols]
+    cols = _.filter cols, (col) => @schema.contains col
+
+    keys = {}
+    groups = {}
+    @each (row) ->
+      key = _.map cols, (col) -> row.get col
+      jsonKey = JSON.stringify key
+      groups[jsonKey] = [] unless jsonKey of groups
+      groups[jsonKey].push row
+      keys[jsonKey] = key
+
+    ret = []
+    schema = @schema.clone()
+    _.each cols, (col) -> schema.rmColumn col
+    _.each groups, (rows, jsonKey) ->
+      _.each rows, (row) -> row.rmColumns cols
+      partition = new gg.data.RowTable schema, rows
+      ret.push {key: keys[jsonKey], table: partition}
+    ret
+
+
+
+
 
   @inferSchemaFromObjs: (rows) ->
     schema = new gg.data.Schema

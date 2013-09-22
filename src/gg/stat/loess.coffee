@@ -43,7 +43,6 @@ class gg.stat.LoessStat extends gg.stat.Stat
     ys = xys.map (xy) -> xy[1]
 
     @log params
-    console.log params
     @log "precompute: ys: #{JSON.stringify ys.slice(0,6)}"
 
 

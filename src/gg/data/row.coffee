@@ -9,7 +9,7 @@ class gg.data.Row
   constructor: (@data, @schema) ->
     @log = gg.data.Row.log
     unless @schema?
-      throw Error
+      throw Error "Row needs a schema"
 
   rawKeys: ->
     @schema.attrs().filter (attr) => @schema.isRaw(attr)

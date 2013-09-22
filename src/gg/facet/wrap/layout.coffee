@@ -99,7 +99,7 @@ class gg.facet.wrap.Layout extends gg.facet.base.Layout
 
       bXFacet = showXFacet
       bYFacet = showYFacet
-      bXAxis = showXAxis and yidx == nys-1
+      bXAxis = showXAxis and (idx >= xys.length-nxs)
       bYAxis = showYAxis and xidx is 0
       pane = new gg.facet.pane.Container(
         gg.core.Bound.empty(),

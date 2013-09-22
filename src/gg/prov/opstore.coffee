@@ -8,6 +8,11 @@ class gg.prov.OPStore extends gg.util.Graph
     @id (o) -> JSON.stringify op
 
   
-  writeSchema: ->
+  writeSchema: (outAttrs, inAttrs) ->
+    for outAttr in outAttrs
+      for inAttr in inAttrs
+        @connect outAttr, inAttr, "schema"
+
+
   writeData: (outpath, inpath) ->
     @connect inpath, outpath, "data"

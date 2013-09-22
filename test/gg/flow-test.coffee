@@ -189,7 +189,6 @@ suite.addBatch
       flow
 
     "can be instantiated": (flow) ->
-      console.log flow.toDot()
       #foo = flow.instantiate()
 
 

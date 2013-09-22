@@ -12,17 +12,18 @@ makeTable = (nrows=100) ->
       d: d%5
       e: d%10
     }
-  gg.RowTable.fromArray rows
+  gg.data.RowTable.fromArray rows
 
+Schema = gg.data.Schema
 
 
 suite.addBatch
   "color scale":
-    topic: -> new gg.ColorScale {aes: "fill"}
+    topic: -> new gg.scale.Color {aes: "fill"}
 
     "is ordinal and not domain": (s) ->
       assert.arrayEqual [], s.domain()
-      assert.equal gg.Schema.ordinal, s.type
+      assert.equal Schema.ordinal, s.type
 
     "after merging as discrete":
       topic: (s) ->
@@ -32,7 +33,7 @@ suite.addBatch
 
       "scale is ordinal": (s) ->
         assert.arrayEqual s.domain(), _.range(5)
-        assert.equal s.type, gg.Schema.ordinal
+        assert.equal s.type, Schema.ordinal
 
     "after merging 100 vals":
       topic: (s) ->
@@ -41,14 +42,14 @@ suite.addBatch
         s
 
       "scale is still ordinal": (s) ->
-        assert.equal s.type, gg.Schema.ordinal
+        assert.equal s.type, Schema.ordinal
       "scale has discrete domain": (s) ->
         assert.arrayEqual  s.domain(), _.range(100)
 
 
   "default scales":
     topic: ->
-      scale = gg.Scale.defaultFor "x"
+      scale = gg.scale.Scale.defaultFor "x"
       scale.mergeDomain [0, 100]
       scale
     "has correct domain": (scale) ->
@@ -64,7 +65,7 @@ suite.addBatch
 
   "scales factory":
     topic:
-      gg.ScaleConfig.fromSpec
+      gg.scale.Config.fromSpec
         a:
           type: "linear"
         b:
@@ -74,8 +75,8 @@ suite.addBatch
     "creates scales":
       topic: (factory) ->
         scales = factory.scales(['a', 'b'])
-        scales.scale('a', gg.Schema.unknown).range([0, 100])
-        scales.scale('b', gg.Schema.unknown).range([2,5])
+        scales.scale('a', Schema.unknown).range([0, 100])
+        scales.scale('b', Schema.unknown).range([2,5])
         scales
 
 
@@ -85,46 +86,46 @@ suite.addBatch
           scales
 
         "has correct domain and range": (scales) ->
-          assert.arrayEqual scales.scale('a', gg.Schema.unknown).domain(), [0,99]
-          assert.arrayEqual scales.scale('a', gg.Schema.unknown).range(), [0, 100]
-          assert.arrayEqual scales.scale('b', gg.Schema.unknown).domain(), [0, 49.5]
-          assert.arrayEqual scales.scale('b', gg.Schema.unknown).range(), [2,5]
+          assert.arrayEqual scales.scale('a', Schema.unknown).domain(), [0,99]
+          assert.arrayEqual scales.scale('a', Schema.unknown).range(), [0, 100]
+          assert.arrayEqual scales.scale('b', Schema.unknown).domain(), [0, 49.5]
+          assert.arrayEqual scales.scale('b', Schema.unknown).range(), [2,5]
 
         "when cloned":
           topic: (scales) -> scales.clone()
 
           "has correct domain and range": (scales) ->
-            assert.arrayEqual scales.scale('a', gg.Schema.unknown).domain(), [0,99]
-            assert.arrayEqual scales.scale('a', gg.Schema.unknown).range(), [0, 100]
-            assert.arrayEqual scales.scale('b', gg.Schema.unknown).domain(), [0, 49.5]
-            assert.arrayEqual scales.scale('b', gg.Schema.unknown).range(), [2,5]
+            assert.arrayEqual scales.scale('a', Schema.unknown).domain(), [0,99]
+            assert.arrayEqual scales.scale('a', Schema.unknown).range(), [0, 100]
+            assert.arrayEqual scales.scale('b', Schema.unknown).domain(), [0, 49.5]
+            assert.arrayEqual scales.scale('b', Schema.unknown).range(), [2,5]
 
         "when range is reversed":
           topic: (scales) ->
-            scales.scale('a', gg.Schema.unknown).range([100, 0])
-            scales.scale('b', gg.Schema.unknown).range([50, 0])
+            scales.scale('a', Schema.unknown).range([100, 0])
+            scales.scale('b', Schema.unknown).range([50, 0])
             scales
 
 
           "has correct domain and range": (scales) ->
             scales = scales.clone()
-            assert.arrayEqual scales.scale('a', gg.Schema.unknown).domain(), [0,99]
-            assert.arrayEqual scales.scale('a', gg.Schema.unknown).range(), [100, 0]
-            assert.arrayEqual scales.scale('b', gg.Schema.unknown).domain(), [0, 49.5]
-            assert.arrayEqual scales.scale('b', gg.Schema.unknown).range(), [50, 0]
+            assert.arrayEqual scales.scale('a', Schema.unknown).domain(), [0,99]
+            assert.arrayEqual scales.scale('a', Schema.unknown).range(), [100, 0]
+            assert.arrayEqual scales.scale('b', Schema.unknown).domain(), [0, 49.5]
+            assert.arrayEqual scales.scale('b', Schema.unknown).range(), [50, 0]
 
           "supports setting 'a''s scale": (scales) ->
-            copy = scales.scale('a', gg.Schema.unknown).clone()
+            copy = scales.scale('a', Schema.unknown).clone()
             scales.scale(copy)
-            assert.arrayEqual scales.scale('a', gg.Schema.unknown).domain(), [0,99]
-            assert.arrayEqual scales.scale('a', gg.Schema.unknown).range(), [100, 0]
-            assert.arrayEqual scales.scale('b', gg.Schema.unknown).domain(), [0, 49.5]
-            assert.arrayEqual scales.scale('b', gg.Schema.unknown).range(), [50, 0]
+            assert.arrayEqual scales.scale('a', Schema.unknown).domain(), [0,99]
+            assert.arrayEqual scales.scale('a', Schema.unknown).range(), [100, 0]
+            assert.arrayEqual scales.scale('b', Schema.unknown).domain(), [0, 49.5]
+            assert.arrayEqual scales.scale('b', Schema.unknown).range(), [50, 0]
 
 
   "linear scales factory with set range":
     topic:
-      gg.ScaleConfig.fromSpec
+      gg.scale.Config.fromSpec
         a:
           type: "linear"
           range: [40, 1000]
@@ -138,15 +139,15 @@ suite.addBatch
           scales
 
         "has original range": (scales) ->
-          assert.arrayEqual scales.scale('a', gg.Schema.unknown).range(), [40, 1000]
-          assert.arrayEqual scales.scale('a', gg.Schema.unknown).clone().range(), [40, 1000]
-          assert.arrayEqual scales.clone().scale('a', gg.Schema.unknown).range(), [40, 1000]
+          assert.arrayEqual scales.scale('a', Schema.unknown).range(), [40, 1000]
+          assert.arrayEqual scales.scale('a', Schema.unknown).clone().range(), [40, 1000]
+          assert.arrayEqual scales.clone().scale('a', Schema.unknown).range(), [40, 1000]
 
 
         "has trained domain": (scales) ->
-          assert.arrayEqual scales.scale('a', gg.Schema.unknown).domain(), [0, 99]
-          assert.arrayEqual scales.scale('a', gg.Schema.unknown).clone().domain(), [0, 99]
-          assert.arrayEqual scales.clone().scale('a', gg.Schema.unknown).domain(), [0, 99]
+          assert.arrayEqual scales.scale('a', Schema.unknown).domain(), [0, 99]
+          assert.arrayEqual scales.scale('a', Schema.unknown).clone().domain(), [0, 99]
+          assert.arrayEqual scales.clone().scale('a', Schema.unknown).domain(), [0, 99]
 
     "creates 2 scales":
       topic: (factory) ->
@@ -159,80 +160,76 @@ suite.addBatch
           [ss1, ss2]
 
         "have different domains": ([ss1, ss2]) ->
-          assert.arrayEqual ss1.scale('a', gg.Schema.unknown).domain(), [0, 99]
-          assert.arrayEqual ss2.scale('a', gg.Schema.unknown).domain(), [0, 499]
+          assert.arrayEqual ss1.scale('a', Schema.unknown).domain(), [0, 99]
+          assert.arrayEqual ss2.scale('a', Schema.unknown).domain(), [0, 499]
 
         "when merged":
           topic: ([ss1, ss2]) ->
-            gg.ScalesSet.merge [ss1, ss2]
+            gg.scale.Set.merge [ss1, ss2]
 
           "has domain [0, 499]": (scales) ->
-            assert.arrayEqual scales.scale('a', gg.Schema.unknown).domain(), [0, 499]
+            assert.arrayEqual scales.scale('a', Schema.unknown).domain(), [0, 499]
 
 
   "color scales factory":
     topic:
-      gg.ScaleConfig.fromSpec
+      gg.scale.Config.fromSpec
         a:
           type: "color"
 
     "creates scales":
       topic: (factory) ->
-        console.log factory.scales(['a'])
         factory.scales ['a']
 
       "that are color scales": (scales) ->
-        assert.equal scales.scale('a', gg.Schema.unknown).type, gg.Schema.ordinal
-        assert.equal scales.scale('a', gg.Schema.unknown).constructor.name, 'ColorScale'
+        assert.equal scales.scale('a', Schema.unknown).type, Schema.ordinal
+        assert.equal scales.scale('a', Schema.unknown).constructor.name, 'Color'
 
       "when trained on small table":
         topic: (scales) ->
           scales = scales.clone()
-          table = gg.RowTable.fromArray _.map(_.range(10), (i) -> {a:i})
+          table = gg.data.RowTable.fromArray _.map(_.range(10), (i) -> {a:i})
           scales.train table
-          console.log "post aess: #{scales.aesthetics()}"
           scales
 
         "should be discrete": (scales) ->
-          assert.arrayEqual scales.scale('a', gg.Schema.unknown).domain(), _.range(10)
+          assert.arrayEqual scales.scale('a', Schema.unknown).domain(), _.range(10)
           #assert.equal scales.scale('a').isDiscrete, yes
 
       "when trained on big numeric table":
         topic: (scales) ->
           scales = scales.clone()
-          table = gg.RowTable.fromArray _.map(_.range(50), (i) -> {a:i})
+          table = gg.data.RowTable.fromArray _.map(_.range(50), (i) -> {a:i})
           scales.train table
           scales
 
         "should not be discrete": (scales) ->
-          assert.arrayEqual scales.scale('a', gg.Schema.unknown).domain(), _.range(50)# [0, 49]
+          assert.arrayEqual scales.scale('a', Schema.unknown).domain(), _.range(50)# [0, 49]
 
       "when trained on small string table":
         topic: (scales) ->
           scales = scales.clone()
-          table = gg.RowTable.fromArray _.map(_.range(5), (v) -> {a: ""+v})
+          table = gg.data.RowTable.fromArray _.map(_.range(5), (v) -> {a: ""+v})
           scales.train table
           scales
 
         "should be discrete": (scales) ->
-          assert.arrayEqual scales.scale('a', gg.Schema.unknown).domain(), _.map(_.range(5), String)
+          assert.arrayEqual scales.scale('a', Schema.unknown).domain(), _.map(_.range(5), String)
           #assert.equal scales.scale('a').isDiscrete,  yes
 
   "scales inverse":
-    topic: gg.ScaleConfig.fromSpec
+    topic: gg.scale.Config.fromSpec
       a:
         type: "linear"
         domain: [0, 100]
         range: [10, 0]
 
     "inverse works": (sf) ->
-      table = gg.RowTable.fromArray _.map(_.range(10), (i)->{a:i*10})
+      table = gg.data.RowTable.fromArray _.map(_.range(10), (i)->{a:i*10})
       scales = sf.scales(['a'])
       scales.train table
       newTable = scales.invert table
-      console.log newTable.raw()
       origTable = scales.apply newTable
-      console.log origTable.raw()
 
 
 

@@ -94,9 +94,7 @@ suite.addBatch
           schema:
             c: Schema.numeric
 
-      console.log JSON.stringify table.raw()
       newtable = gg.data.SchemaMap.transform table, targetSchema
-      console.log JSON.stringify newtable.raw()
       newtable.each (row, idx) ->
         assert _.isNumber(row.get("a")), "a should be numeric"
         assert _.isNumber(row.get("f")), "f should be numeric"
@@ -157,60 +155,63 @@ suite.addBatch
     "transformations on b":
 
       "using function":
-          topic: (table) ->
-            table.transform 'b', ((v) -> -v.get('b')), no
+        topic: (table) ->
+          table.transform 'b', ((v) -> -v.get('b')), no
 
-          "is negative": (table) ->
-              table.each (row) -> assert.lte row.get('b'), 0
+        "is negative": (table) ->
+          table.each (row) -> assert.lte row.get('b'), 0
 
 
       "using single key object":
-          topic: (table) -> table.transform {b: ((v)->-v.get('b'))}, no
-          "is negative": (table) ->
-              table.each (row) -> assert.lte row.get('b'), 0
+        topic: (table) -> table.transform {b: ((v)->-v.get('b'))}, no
+        "is negative": (table) ->
+          table.each (row) -> assert.lte row.get('b'), 0
 
       "using two key object":
-          topic: (table) ->
-            table.transform {
-              b: ((v)->-v.get('b')),
-              c: (v) -> v.get('a')
-            }, no
-          "is correct": (table) ->
-              table.each (row) ->
-                  assert.lte row.get('b'), 0
-                  assert.equal row.get('a'), row.get('c')
+        topic: (table) ->
+          table.transform {
+            a: (v) -> v.get 'a'
+            b: (v) -> -v.get 'b'
+            c: (v) -> v.get 'a'
+          }, no
+
+        "is correct": (table) ->
+          table.each (row) ->
+            assert.lte row.get('b'), 0
+            assert.equal row.get('a'), row.get('c')
 
 
     "adding unequal column should fail": (table) ->
-        f = () -> table.addColumn "foo", []
-        assert.throws f, Error
+      f = () -> table.addColumn "foo", []
+      assert.throws f, Error
 
     "can add valid column": (table) ->
-        table.addColumn "d", _.range(table.nrows())
-        assert.equal table.ncols(), 5
+      table.addColumn "d", _.range(table.nrows())
+      assert.equal table.ncols(), 5
 
     "with function column":
-        topic: ->
-            v = 1
-            f = () ->
-                v += 2
-                v
-            rows = _.map _.range(100), (i) ->
-              a:i%10
-              b: f
-              id:i
-              c: []
-              d: { e: f}
-              f: [{g:f}]
-            gg.data.RowTable.fromArray rows
-        "has correct data": (table) ->
-            valid = _.range(10)
-            table.each (row) ->
-                assert.equal (row.get('b') % 2), 1
-                assert.lt 0, row.get('b')
-                assert.lt 0, row.get('e')
-                _.each row.get('g'), (v) -> assert.lt 0, v
-                assert.include valid, row.get('a')
+      topic: ->
+        v = 1
+        f = () ->
+            v += 2
+            v
+        rows = _.map _.range(100), (i) ->
+          a:i%10
+          b: f
+          id:i
+          c: []
+          d: { e: f}
+          f: [{g:f}]
+        gg.data.RowTable.fromArray rows
+
+      "has correct data": (table) ->
+        valid = _.range(10)
+        table.each (row) ->
+          assert.equal (row.get('b') % 2), 1
+          assert.lt 0, row.get('b')
+          assert.lt 0, row.get('e')
+          _.each row.get('g'), (v) -> assert.lt 0, v
+          assert.include valid, row.get('a')
 
 
 suite.export module

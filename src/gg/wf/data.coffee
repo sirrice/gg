@@ -107,7 +107,7 @@ class gg.wf.Inputs
 class gg.wf.Data
   @ggpackage = "gg.wf.Data"
   constructor: (@table, @env=null) ->
-    @env = new gg.wf.Env unless @env?
+    @env ?= new gg.wf.Env 
 
   clone: -> new gg.wf.Data @table.clone(), @env.clone()
 
@@ -129,7 +129,7 @@ class gg.wf.Data
 
 
 #
-# Data structure to implement a pseuda-monad
+# Data structure containing all the non-data table information
 #
 class gg.wf.Env extends gg.util.Params
   @ggpackage = "gg.wf.Env"
@@ -137,6 +137,7 @@ class gg.wf.Env extends gg.util.Params
     # compute all the non-JSONable elements
     removedEls =
       svg: _.clone(@rm 'svg')
+      event: @rm 'event'
 
     _.each _.keys(@data), (key) =>
       if _.isFunction @data[key]

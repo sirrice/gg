@@ -11,17 +11,31 @@ class gg.util.Aesmap
     ret
 
   @mapToFunction: (table, key, val) ->
+    opstore = {}
+    opstore.writeSchema = () ->
+
     if _.isFunction val
-      val
+      (row) -> 
+        row = new gg.util.RowWrapper row
+        ret = val row
+        opstore.writeSchema [key], row.accessed
+        ret
     else if table.contains val
+      opstore.writeSchema key, val
       (row) -> row.get val
     else if _.isObject val
-      funcs = _.mappingToFunctions table, val
-      (row) ->
-        ret = {}
-        _.each funcs, (f, subkey) ->
-          ret[subkey] = f row
-        return ret
+      if 'f' of val and 'args' of val
+        args = val.args
+        f = val.f
+        unless f.length == args.length
+          throw Error()
+      else
+        funcs = _.mappingToFunctions table, val
+        (row) ->
+          ret = {}
+          _.each funcs, (f, subkey) ->
+            ret[subkey] = f row
+          return ret
     else if key isnt 'text' and gg.data.Table.reEvalJS.test val
       userCode = val[1...val.length-1]
       varFunc = (k) ->
@@ -32,13 +46,17 @@ class gg.util.Aesmap
       cmds.push "return #{userCode};"
       cmd = cmds.join ''
       Function("row", cmd)
-      #fcmd = "var __func__ = function(row) {#{cmd}}"
-      #gg.util.Aesmap.log fcmd
-      #eval fcmd
-      #__func__
     else
       # for constants (e.g., date, number)
       gg.util.Aesmap.log "mapToFunction: const:  f(#{key})->#{val}"
       (row) -> val
 
+
+class gg.util.RowWrapper
+  constructor: (@row) ->
+    @accessed = {}
+
+  get: (attr) ->
+    @accessed[attr] = yes
+    @row.get attr
 

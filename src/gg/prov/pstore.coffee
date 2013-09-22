@@ -7,7 +7,8 @@ class gg.prov.PStore extends gg.util.Graph
   # @param opid id of operator specific provstore.  
   #             null to fetch workflow level port->port pstore
   @get: (flow, op=null) ->
-    flowid = flow.id
+    flowid = null
+    flowid = flow.id if flow?
     @pstores[flowid] = new gg.prov.PStore flow unless flowid of @pstores
 
     if op?

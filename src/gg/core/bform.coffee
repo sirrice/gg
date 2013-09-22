@@ -9,6 +9,11 @@ class gg.core.BForm extends gg.wf.Barrier
   parseSpec: ->
     @log "XForm spec: #{JSON.stringify @spec}"
 
+    if _.findGoodAttr(@spec, ['aes', 'aesthetic', 'mapping', 'map'], null)?
+      mapSpec = _.clone @spec
+      mapSpec.name = "stat-map" unless mapSpec.name?
+      @map = gg.xform.Mapper.fromSpec mapSpec
+
     @params.putAll
       inputSchema: @extractAttr "inputSchema"
       outputSchema: @extractAttr "outputSchema"

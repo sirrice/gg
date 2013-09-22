@@ -34,8 +34,8 @@ class gg.stat.CDF extends gg.stat.Stat
     table.each (row, idx) =>
       x = row.get 'x'
       y = row.get('y') or 0
-      if y < 0
-        throw Error("y values for CDF should not be negative")
+      #if y < 0
+      #  throw Error("y values for CDF should not be negative")
 
       cum += y
       yp = cum

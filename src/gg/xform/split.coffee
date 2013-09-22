@@ -5,9 +5,11 @@
 #
 # @deprecated
 class gg.xform.Split
+  @ggpackage = "gg.xform.Split"
+  @log = gg.util.Log.logger @ggpackage, "Split"
 
   @createNode: (name, gbspec) ->
-    console.log [name, gbspec]
+    @log [name, gbspec]
     node = if _.isString gbspec
       @byColumns name, [gbspec]
     else if _.isFunction gbspec

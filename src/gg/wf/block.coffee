@@ -1,6 +1,6 @@
+#<< gg/wf/node
 
-
-# Flattens and processes all wf.Data objects for a layer
+# Flattens (irreversibly) and processes all wf.Data objects for a layer
 # Expect that wf.Data objects are mutated in place or added, but 
 # not replaced -- ids for the same "logical" Data don't change.
 class gg.wf.Block extends gg.wf.Node

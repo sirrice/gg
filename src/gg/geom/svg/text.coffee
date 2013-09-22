@@ -48,6 +48,7 @@ class gg.geom.svg.Text extends gg.geom.Render
     texts
       .on("mouseover", (d, idx) -> _this.applyAttrs d3.select(@), cssOver)
       .on("mouseout", (d, idx) ->  _this.applyAttrs d3.select(@), cssOut)
+      .on("brush", gg.geom.svg.Rect.brush(texts))
 
     exit.transition()
       .duration(500)

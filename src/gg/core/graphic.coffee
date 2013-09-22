@@ -8,6 +8,11 @@
 #<< gg/stat/stat
 #<< gg/geom/geom
 
+try
+  events = require 'events'
+catch error
+  console.log error
+
 class gg.core.Graphic
   @ggpackage = "gg.core.Graphic"
   @envKeys = [
@@ -50,6 +55,8 @@ class gg.core.Graphic
       container: new gg.core.Bound 0, 0, @options.w, @options.h
       options: @options
 
+    @eventCoordinator = new events.EventEmitter
+
     @log = gg.util.Log.logger @constructor.ggpackage, "core"
 
 
@@ -76,6 +83,7 @@ class gg.core.Graphic
     preMulticastNodes.push @datas.data()
     preMulticastNodes.push @setupEnvNode()
     preMulticastNodes = preMulticastNodes.concat @facets.splitter
+    preMulticastNodes = _.compact preMulticastNodes
 
     prev = null
     for node in preMulticastNodes
@@ -115,6 +123,7 @@ class gg.core.Graphic
           scalesconfig: @scales.scalesConfig
           svg:
             base: @svg
+          event: @eventCoordinator
           options: @options
         location: 'client'
 
@@ -153,6 +162,7 @@ class gg.core.Graphic
       @workflow = optimizer.run @workflow
 
     @log "running workflow"
+    #@workflow.on "done", () => parentSvg.append @svg
     @workflow.run @options
 
 

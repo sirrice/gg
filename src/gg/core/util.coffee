@@ -19,6 +19,8 @@ class gg.core.FormUtil
         gg.wf.Stdout.print table, null, 5, log
       throw Error("#{params.get 'name'}: input schema did not contain #{missing.join(",")}")
 
+  # adds default values for non-existent attributes in
+  # data table.
   @addDefaults: (data, params, log) ->
     table = data.table
     env = data.env

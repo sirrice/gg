@@ -13,7 +13,7 @@ class gg.pos.Stack extends gg.pos.Position
 
   constructor: ->
     super
-    @log.level = gg.util.Log.DEBUG
+    #@log.level = gg.util.Log.DEBUG
 
 
   addDefaults: ->
@@ -54,9 +54,9 @@ class gg.pos.Stack extends gg.pos.Position
     if table.contains "y0"
       y0s = table.getColumn "y0"
       _.times xs.length, (idx) -> baselines[xs[idx]] = y0s[idx]
+      @log "y0s: #{y0s[0..10]}"
     xs = _.uniq _.compact xs
-    xs.sort((a,b)->a-b)
-    @log "y0s: #{y0s[0..10]}"
+    xs.sort (a,b) -> a-b
     @log "nxs: #{xs.length}"
     [baselines, xs]
 
@@ -99,7 +99,6 @@ class gg.pos.Stack extends gg.pos.Position
         for raw, idx in row.get(arrKey)
           x2row[raw.x] = raw
 
-      console.log layer
       rows = layer.map (pos) ->
         x = pos.x
         if x of x2row
@@ -173,6 +172,15 @@ class gg.pos.Stack extends gg.pos.Position
   # steps
   # 1) compute all X values
   # 2) compute y0 baseline for the layers,
+  #
+  # Unfortunately the data model isn't very good so we need to special case
+  # when the x,y values are nested in arrays, or in the top level of the table
+  #
+  # e.g., if the schema is:
+  #
+  # 1) { x, y } or
+  # 2) { points: { x, y } }
+  #
   compute: (data, params) ->
     table = data.table
     env = data.env

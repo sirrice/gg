@@ -35,7 +35,6 @@ class gg.wf.Optimizer
           if prev?
             prevflow.connectBridge prevNonBarrier, cur
       else
-        console.log "not same: #{prev.name}\t#{cur.name}"
         prevflow = new gg.wf.Flow flow.spec
         flows.push prevflow
         prevflow.add cur
@@ -48,10 +47,6 @@ class gg.wf.Optimizer
     for source in flow.sources()
       search null, null, source, flows[0]
 
-    _.each flows, (flow, idx) ->
-      console.log "flow #{idx}"
-      console.log flow.toString()
-      console.log
 
 
     flows
@@ -116,7 +111,6 @@ class gg.wf.Optimizer
         child = node.children[outport]
         childCb = child.getAddInputCB(childport)
 
-        console.log "addoutput #{outport}\t#{child.name}.port(#{childCb.port})"
         rpc.addChild child, childCb
         rpc.connectPorts inport, outport, childport
 
@@ -125,10 +119,6 @@ class gg.wf.Optimizer
 
     # 6. existing inputs
     rpc.inputs = _.clone node.inputs
-
-    console.log "rpcified node"
-    console.log node
-    console.log rpc
 
     return rpc
 

@@ -104,32 +104,6 @@ class gg.data.RowTable extends gg.data.Table
 
 
 
-  # Partition table on a set of table columns
-  # Removes those columns from each partition's tuples
-  partition: (cols) ->
-    cols = _.flatten [cols]
-    cols = _.filter cols, (col) => @schema.contains col
-
-    keys = {}
-    groups = {}
-    _.each @rows, (row) ->
-      key = _.map cols, (col) -> row.get col
-      jsonKey = JSON.stringify key
-      groups[jsonKey] = [] unless jsonKey of groups
-      groups[jsonKey].push row
-      keys[jsonKey] = key
-
-    ret = []
-    schema = @schema.clone()
-    @log "removing #{cols}"
-    _.each cols, (col) -> schema.rmColumn col
-    _.each groups, (rows, jsonKey) ->
-      _.each rows, (row) -> row.rmColumns cols
-      partition = new gg.data.RowTable schema, rows
-      gg.wf.Stdout partition, null, 5, @log
-      ret.push {key: keys[jsonKey], table: partition}
-    ret
-
 
   flatten: (cols=null, recursive=false) ->
     table = new gg.data.RowTable @schema.flatten(cols, recursive)
@@ -178,13 +152,13 @@ class gg.data.RowTable extends gg.data.Table
         throw error
 
       if _.isArray newvalue
-        if gg.data.Table.reNestedAttr.test newattr
+        if gg.data.Table.isNestedAttr newattr
           [attr1, attr2] = newattr.split(".")
-          ret[attr1] = {} unless attr1 of ret
-          _.each newvalue, (el, idx) ->
-            if idx >= ret[attr1].length
+          ret[attr1] = [] unless attr1 of ret
+          for el, idx in newvalue
+            while idx >= ret[attr1].length
               ret[attr1].push {}
-            ret[attr1][attr2] = el
+            ret[attr1][idx][attr2] = el
         else
           throw Error("mapping arrays need to be nested")
       else

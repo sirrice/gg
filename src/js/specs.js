@@ -123,12 +123,12 @@ var geom_interval = {
   facets: {y: 't', x: 'g'}
 };
 
-var geom_point_1 = {layers:[{
-  geom: "point"
- ,aes: {x: 'd', y: 'e'}
-}]//, facets: {x: 'f', y: 't', ylabel: "T", xlabel: "F"},
- // opts: {title: "hi"}
-  }
+var geom_point_1 = {
+  layers:[{ geom: "point"}],
+  aes: {x: 'd', y: 'e'}
+  // ,facets: {x: 'f', y: 't', ylabel: "T", xlabel: "F"}
+  // ,opts: {title: "hi"}
+}
 
 var geom_point_sum = {
   geom: "point"
