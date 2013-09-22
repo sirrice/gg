@@ -55,24 +55,23 @@ class gg.xform.GroupBy extends gg.core.XForm
     gg.data.Schema.fromSpec spec
 
   compute: (data, params) ->
-    gg.xform.GroupBy.compute data, params
-
-  @compute: (data, params) ->
     table = data.table
     env = data.env
-    schema = table.schema
+    origSchema = table.schema
     scales = env.get "scales"
     gbAttrs = params.get "gbAttrs"
     aggFuncs = params.get "aggFuncs"
     nBins = params.get "nBins"
-    @log scales.toString()
 
-    grouper = @getGrouper gbAttrs, schema, scales, nBins
+    grouper = @constructor.getGrouper gbAttrs, origSchema, scales, nBins
     bins = new gg.xform.Bins grouper.nBins, aggFuncs
 
-    data.table = @groupBy table, bins, grouper, schema
-    @log data.table
+    schema = @outputSchema data, params
+    data.table = @constructor.groupBy table, bins, grouper, schema
+    gg.wf.Stdout.print data.table, null, 5, @log
     data
+
+
 
   @getGrouper: (gbAttrs, schema, scales, nBins) ->
     groupers = _.map gbAttrs, (gbAttr, idx) ->

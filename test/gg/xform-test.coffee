@@ -136,7 +136,7 @@ suite.addBatch
 
 
         data = new gg.wf.Data table, env
-        data = gg.xform.GroupBy.compute data, node.params
+        data = node.compute data, node.params
         data
 
       "has 10 rows": (data) ->
@@ -147,6 +147,10 @@ suite.addBatch
           assert.equal row.get('customname'), -row.get('customarg')
           assert.equal row.get('avg'), 10
 
+      "schema is correct": (data) ->
+        schema = data.table.schema
+        for attr in ['x', 'z', 'avg', 'customname', 'customarg', 'count']
+          assert schema.contains(attr), "should contain #{attr}"
 
 
 

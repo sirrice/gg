@@ -19,14 +19,14 @@ class gg.wf.Exec extends gg.wf.Node
     throw Error("node not ready") unless @ready()
 
     params = @params
-    compute = @params.get('compute') or @compute
-    compute.bind @
+    compute = @params.get('compute') or @compute.bind(@)
     pstore = @pstore()
     f = (data, path) =>
       pstore.writeData path, path
       compute data, params
 
     outputs = gg.wf.Inputs.mapLeaves @inputs, f
+    gg.wf.Inputs.mapLeaves outputs, (data) -> gg.wf.Stdout.print data.table, null, 5
     for output, idx in outputs
       @output idx, output
     outputs
