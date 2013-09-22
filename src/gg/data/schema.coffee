@@ -12,8 +12,17 @@ class gg.data.Schema
   @unknown = -1
 
   constructor: ->
+    # maps keys -> attribute information (type, schema)
     @lookup = {}
+
+    # maps attributes to keys 
+    # e.g., if schema is { pts: {x, y} }
+    # attrToKeys is:
+    #   x -> pts
+    #   y -> pts
+    #   pts -> pts
     @attrToKeys = {}
+
     @log = gg.data.Schema.log
 
   # XXX: if key exists in schema, simply overwrites
@@ -44,6 +53,7 @@ class gg.data.Schema
           delete @lookup[key]
 
       delete @attrToKeys[col]
+
 
 
 
@@ -231,6 +241,8 @@ class gg.data.Schema
 
 
 
+  # 
+  # @return type object { type: , schema:  }
   @type: (v) ->
     if _.isDate v
       { type: gg.data.Schema.date }
@@ -259,6 +271,16 @@ class gg.data.Schema
     else
       { type: gg.data.Schema.ordinal }
 
+
+  @infer: (rows) ->
+    schema = new gg.data.Schema
+    return schema unless rows? and rows.length > 0
+    for row in rows[0...50]
+      row = row.raw() if _.isType row, gg.data.Row
+      for k, v of row
+        typeObj = gg.data.Schema.type v
+        schema.addColumn k, typeObj.type, typeObj.schema
+    schema
 
 
   @fromSpec: (spec) ->

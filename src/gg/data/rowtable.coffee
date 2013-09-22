@@ -13,7 +13,7 @@ class gg.data.RowTable extends gg.data.Table
   # XXX: This method infers schema information, and which may
   #      lose or be inconsistent with existing schema info
   @fromArray: (rows) ->
-    schema = gg.data.Table.inferSchemaFromObjs rows
+    schema = gg.data.Schema.infer rows
     table = new gg.data.RowTable schema, rows
     table
 
@@ -36,7 +36,7 @@ class gg.data.RowTable extends gg.data.Table
 
   reloadSchema: ->
     rows = _.map(@rows, (row) -> row.raw())
-    @setSchema gg.data.Table.inferSchemaFromObjs rows
+    @setSchema gg.data.Schema.infer rows
     @
 
   nrows: -> @rows.length
