@@ -22,7 +22,7 @@ class gg.scale.train.Data extends gg.core.BForm
       @log "trainOnData: pos:     #{JSON.stringify posMapping}"
 
 
-      scaleset.train t, null, posMapping
+      scaleset.train t, posMapping
       e.put 'scales', scaleset
       @log scaleset.toString()
 

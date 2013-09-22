@@ -12,7 +12,8 @@
 class gg.scale.Set
   @ggpackage = 'gg.scale.Set'
 
-  constructor: (@factory) ->
+  constructor: (@factory=null) ->
+    @factory ?= new gg.scale.Factory
     @scales = {}
     @spec = {}
     @id = gg.scale.Set::_id
@@ -191,8 +192,13 @@ class gg.scale.Set
   #        attr -> [aes, type]
   train: (table, posMapping={}) ->
     f = (table, scale, aes) =>
-      return unless table.contains aes
-      return if _.isSubclass scale, gg.scale.Identity
+      unless table.contains aes
+        @log "col #{aes} not in table"
+        return
+
+      if _.isSubclass scale, gg.scale.Identity
+        @log "scale is identity."
+        return
 
       col = table.getColumn(aes)
       unless col?

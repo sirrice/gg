@@ -55,6 +55,9 @@ class gg.xform.GroupBy extends gg.core.XForm
     gg.data.Schema.fromSpec spec
 
   compute: (data, params) ->
+    gg.xform.GroupBy.compute data, params
+
+  @compute: (data, params) ->
     table = data.table
     env = data.env
     schema = table.schema
@@ -67,11 +70,11 @@ class gg.xform.GroupBy extends gg.core.XForm
     grouper = @getGrouper gbAttrs, schema, scales, nBins
     bins = new gg.xform.Bins grouper.nBins, aggFuncs
 
-    data.table = gg.xform.GroupBy.groupBy table, bins, grouper, schema
+    data.table = @groupBy table, bins, grouper, schema
     @log data.table
     data
 
-  getGrouper: (gbAttrs, schema, scales, nBins) ->
+  @getGrouper: (gbAttrs, schema, scales, nBins) ->
     groupers = _.map gbAttrs, (gbAttr, idx) ->
       type = schema.type gbAttr
       scale = scales.scale gbAttr, type
@@ -133,8 +136,8 @@ class gg.xform.SingleKeyGrouper
     @log = gg.util.Log.logger @constructor.ggpackage, "1KeyGrouper"
     @name = @col
 
-    @log @col
-    @log @domain
+    @log "col: #{@col}, domain: #{@domain}"
+    @log "nbins: #{nbins}"
     @setup nbins
 
   # compute the value -> bin mapping functions given the data type

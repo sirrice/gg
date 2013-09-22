@@ -105,6 +105,7 @@ class gg.core.Data
 
     unless spec.type?
       @log.warn "spec.type not defined"
+      @log.warn spec
       return null
 
     # to gg.wf.Source object

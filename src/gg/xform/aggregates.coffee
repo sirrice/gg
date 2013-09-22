@@ -55,6 +55,7 @@ class gg.xform.Count extends gg.xform.Aggregate
     @val = null
 
   reset: -> @val = 0
+  # TODO: differentiate non-numeric (nan) from numeric
   update: (row) -> 
     #if _.isNumber row.get @arg
     @val += 1
@@ -71,7 +72,8 @@ class gg.xform.Sum extends gg.xform.Aggregate
     @val = null
 
   reset: -> @val = 0
-  update: (row) -> @val += (row.get @arg or 0)
+  update: (row) -> 
+    @val += (row.get(@arg) or 0)
   value: -> @val
 
 class gg.xform.Avg extends gg.xform.Aggregate
@@ -87,9 +89,11 @@ class gg.xform.Avg extends gg.xform.Aggregate
     @sum = 0
     @count = 0
 
+  # TODO: remember nulls
   update: (row) -> 
-    if _.isNumber row.get @arg
-      @sum += row.get @arg
+    y = row.get @arg
+    if _.isNumber(y) and _.isFinite(y)
+      @sum += y
       @count += 1
 
   value: -> @sum / @count

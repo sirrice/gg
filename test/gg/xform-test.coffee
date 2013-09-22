@@ -38,7 +38,7 @@ genCheckTable = (check) ->
 suite = vows.describe "xform.coffee"
 
 suite.addBatch
-  "single node xform" :
+  "Exec" :
     topic: new gg.wf.Exec
       params:
         f: (data) ->
@@ -58,7 +58,7 @@ suite.addBatch
 
       "outputs properly": genCheckRows (row) -> assert.lt row.get('a'), 0
 
-  "table source node" :
+  "TableSource" :
     topic: new gg.wf.TableSource 
       params: 
         table: makeTable()
@@ -69,7 +69,7 @@ suite.addBatch
           assert.equal 100, table.nrows()
       node.run()
 
-  "partition node" :
+  "Partition" :
     topic: new gg.wf.Partition
       params:
         f: (row) -> row.get('a')
@@ -87,7 +87,7 @@ suite.addBatch
         node.on '0', (id, idx, datas) ->
           assert.equal 10, _size(datas)
 
-  "split node":
+  "Split":
     topic: new gg.wf.Split {f: (table) -> table.split "a" }
 
     "has 10 groups": (node) ->
@@ -102,6 +102,51 @@ suite.addBatch
         node.setInput 0, makeTable(10)
         node.on '0', (id, idx, datas) ->
           assert.equal 10, _.size(datas)
+
+
+  "GroupBy":
+    topic: new gg.xform.GroupBy
+      params:
+        n: 5
+        gbAttrs: ['x', 'z']
+        aggFuncs:
+          'avg': 'avg'
+          'customname': 'sum'
+          'customarg': { type: 'sum', arg: 't' }
+          'count': 'count'
+
+    'when executed':
+      topic: (node) ->
+        rows = _.times 1000, (i) ->
+          if i < 12 
+            { x: NaN, y: NaN }
+          else if i < 20
+            { x: i % 2, z: i % 5, y: NaN, t: null }
+          else
+            { x: i % 2, z: i % 5, y: 10, t: -10 }
+        table = gg.data.RowTable.fromArray rows
+
+        #gg.util.Log.setDefaults { "": 0 }
+        set = new gg.scale.Set(
+          gg.scale.Config.fromSpec({z: 'linear', t: 'linear'}).factoryFor 0
+        )
+
+        set.train table, {}
+        env = new gg.wf.Env { scales: set }
+
+
+        data = new gg.wf.Data table, env
+        data = gg.xform.GroupBy.compute data, node.params
+        data
+
+      "has 10 rows": (data) ->
+        assert.equal data.table.nrows(), 10
+
+      "aggregates are correct": (data) ->
+        data.table.each (row) ->
+          assert.equal row.get('customname'), -row.get('customarg')
+          assert.equal row.get('avg'), 10
+
 
 
 
