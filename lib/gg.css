@@ -91,6 +91,3 @@ g.axis g text {
   color: black;
   font-size: 15px;
 }
-.y text {
-  transform: rotate(90deg);
-}

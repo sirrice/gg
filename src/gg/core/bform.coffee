@@ -22,8 +22,9 @@ class gg.core.BForm extends gg.wf.Barrier
 
     # wrap compute in a verification method
     compute = @spec.f or @compute.bind(@)
-    @compute = (datas, params) =>
-      gg.core.FormUtil.multiAddDefaults datas, params, @log
+    log = @log.bind(@)
+    @compute = (datas, params) ->
+      gg.core.FormUtil.multiAddDefaults datas, params, log
       gg.core.FormUtil.multiValidateInput datas, params
       compute datas, params
 

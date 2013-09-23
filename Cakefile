@@ -44,12 +44,12 @@ task 'clean', ->
 
 release = (callback) ->
   commands = []
+  commands.push "echo 'run: cd build/; python -m SimpleHTTPServer 8000'"
   commands.push "cp lib/gg.js public/js/"
   commands.push "cp build/js/prettify.js public/js/"
   commands.push "cp lib/gg.css public/css/"
   commands.push "cp -r build/vendor public/"
-  commands.push "phantomjs vendor/js/rasterize.js build/html/gallery.html docs/imgs/screenshot.png"
-  commands.push "phantomjs vendor/js/rasterize.js build/html/release.html docs/imgs/screenshot.png"
+  commands.push "slimerjs vendor/js/rasterize.js http://localhost:8000/html/release.html docs/imgs/screenshot.png"
 
   async.forEachSeries commands, run, ->
     callback() if callback

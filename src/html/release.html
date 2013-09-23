@@ -17,7 +17,7 @@
 
   var spec = {
     opts: { title: "Multi-layer faceted example" },
-    facets: {x: "f"},
+    facets: {y: "f"},
     layers: [
     // Histogram with 10 bins, rendering sum / 100
     {
@@ -95,7 +95,7 @@
     var npts = 5000;
     bigdata = _.map(_.range(0, npts), function(d) {
       g = Math.floor(Math.random() * 3) + 1;
-      f = Math.floor(Math.random() * 3);
+      f = Math.floor(Math.random() * 2);
       t = Math.floor(Math.random() * 2);
       gauss.variance(d * 30.0 / npts);
 

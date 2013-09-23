@@ -60,9 +60,10 @@ class gg.core.XForm extends gg.wf.Exec
 
     # wrap compute in a verification method
     compute = @spec.f or @compute.bind(@)
-    @compute = (data, params) =>
-      gg.core.FormUtil.addDefaults data, params, @log
-      gg.core.FormUtil.validateInput data, params, @log
+    log = @log.bind(@)
+    @compute = (data, params) ->
+      gg.core.FormUtil.addDefaults data, params, log
+      gg.core.FormUtil.validateInput data, params, log
       compute data, params
 
   extractAttr: (attr, spec=null) ->
