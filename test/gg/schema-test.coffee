@@ -85,7 +85,7 @@ suite.addBatch
 
     "table inference":
       topic: (row) ->
-        schema = gg.data.Table.inferSchemaFromObjs [row]
+        schema = gg.data.Schema.infer [row]
         schema
 
       "infers correct schema": (schema) ->
