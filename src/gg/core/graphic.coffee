@@ -23,7 +23,16 @@ class gg.core.Graphic
   ]
 
 
-  constructor: (@spec={}) ->
+  constructor: (spec=null) ->
+    @spec spec
+
+  spec: (spec=null) ->
+    unless spec?
+      return @spec
+
+    @spec = spec
+
+
     # setup debugging
     @debugspec = @spec.debug or { "": gg.util.Log.WARN }
     gg.util.Log.loggers = {}
@@ -60,6 +69,12 @@ class gg.core.Graphic
     @log = gg.util.Log.logger @constructor.ggpackage, "core"
 
 
+  pstore: ->
+    if @workflow?
+      gg.prov.PStore.get @workflow
+    else
+      @log.warn "plot has not been compiled.  no prov store found"
+      null
 
 
   compile: ->
