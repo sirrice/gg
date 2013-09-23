@@ -48,6 +48,7 @@ release = (callback) ->
   commands.push "cp build/js/prettify.js public/js/"
   commands.push "cp lib/gg.css public/css/"
   commands.push "cp -r build/vendor public/"
+  commands.push "phantomjs vendor/js/rasterize.js build/html/gallery.html docs/imgs/screenshot.png"
   commands.push "phantomjs vendor/js/rasterize.js build/html/release.html docs/imgs/screenshot.png"
 
   async.forEachSeries commands, run, ->

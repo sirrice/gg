@@ -274,7 +274,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
       eventCoordinator.emit eventName, pixelExtent
 
     brush = d3.svg.brush()
-      .on('brush', brushf.bind @)
+      .on('brush', brushf)
       .x(xscale.d3())
       .y(yscale.d3());
 

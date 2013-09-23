@@ -18,12 +18,15 @@ class gg.data.SchemaMap
     sSchema = source.schema
     target = new gg.data.RowTable tSchema
 
+    inSourceArray = (args...) => sSchema.inArray args...
+    inTargetArray = (args...) => tSchema.inArray args...
+
     source_all = sSchema.leafAttrs()
-    source_nonarray = _.reject source_all, sSchema.inArray.bind(sSchema)
-    source_array = _.filter source_all, sSchema.inArray.bind(sSchema)
+    source_nonarray = _.reject source_all, inSourceArray
+    source_array = _.filter source_all, inSourceArray 
     target_all = tSchema.leafAttrs()
-    target_nonarray = _.reject target_all, tSchema.inArray.bind(tSchema)
-    target_array = _.filter target_all, tSchema.inArray.bind(tSchema)
+    target_nonarray = _.reject target_all, inTargetArray
+    target_array = _.filter target_all, inTargetArray
 
     if _.any(target_all, (tAttr) -> tAttr not in source_all)
       throw Error("Can't map ??? -> #{tAttr}")
