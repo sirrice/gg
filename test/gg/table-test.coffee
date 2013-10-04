@@ -139,11 +139,31 @@ colSchema2 =
 _.extend colSchema2, schemaCheck
 
 
+multiSchema = 
+  topic: ->
+    rows = _.times 20, (i) -> 
+      {a:i+1, b:i%10, c: i%2,id:"#{i}",nest: {d:i, e:i}}
+    t = gg.data.Table.fromArray rows, "row"
+    parts = Transform.split t, "c"
+    new gg.data.MultiTable t.schema, _.map(parts, (o) -> o['table'])
+_.extend multiSchema, schemaCheck
+
+multiSchema2 = 
+  topic: ->
+    rows = _.times 20, (i) -> 
+      {a:i+1, b:i%10, c: i%2,id:"#{i}",nest: {d:i, e:i}}
+    t = gg.data.Table.fromArray rows, "col"
+    parts = Transform.split t, "c"
+    new gg.data.MultiTable t.schema, _.map(parts, (o) -> o['table'])
+_.extend multiSchema2, schemaCheck
+
 
 suite.addBatch
-  "row table": rowSchema
-  "col table": colSchema
-  "col table2": colSchema2
+#  "row table": rowSchema
+#  "col table": colSchema
+#  "col table2": colSchema2
+#  "multitable": multiSchema
+  "multitable2": multiSchema2
 
 
 suite.export module

@@ -11,8 +11,6 @@ class gg.data.Transform
     _.each rows, (row) -> newtable.addRow row
     newtable
 
-
-
   # Horizontally split table using an arbitrary splitting function
   # (preserves all existing columns)
   @split: (table, gbfunc) ->
