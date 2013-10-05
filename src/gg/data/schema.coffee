@@ -8,6 +8,7 @@ class gg.data.Schema
   @numeric = 2
   @date = 3
   @object = 4
+  @env = 5    # environment variable
   @unknown = -1
 
   constructor: (@cols=[], @types=[]) ->

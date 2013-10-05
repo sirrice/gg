@@ -10,7 +10,7 @@ Transform = gg.data.Transform
 
 schemaCheck = 
   "can be turned to json and parsed back": (table) ->
-    table2 = table.constructor.fromJSON table.toJSON()
+    table2 = table.clone()
 
     assert.deepEqual table.schema.toJSON(), table2.schema.toJSON()
     _.times table.nrows(), (idx) ->
@@ -78,12 +78,12 @@ schemaCheck =
           assert.lte row.get('b'), 0
           assert.equal row.get('a'), row.get('c')
 
-
   "adding unequal column should fail": (table) ->
     f = () -> table.addColumn "foo", []
     assert.throws f, Error
 
   "can add valid column": (table) ->
+    table = table.clone()
     table.addColumn "d", _.range(table.nrows())
     assert.equal table.ncols(), 6
 
@@ -157,13 +157,56 @@ multiSchema2 =
     new gg.data.MultiTable t.schema, _.map(parts, (o) -> o['table'])
 _.extend multiSchema2, schemaCheck
 
+twoTables = 
+  topic: ->
+    os = _.times 20, (i) -> 
+      {a:i+1, b:i%10, c: i%2,id:"#{i}",nest: {d:i, e:i}}
+    rt = gg.data.Table.fromArray os, "row"
+    ct = gg.data.Table.fromArray os, "col"
+    [rt, ct]
+
+  "functions are same": 
+    "getcol": ([rt, ct]) ->
+      assert.deepEqual rt.getCol('a'), ct.getCol('a')
+    "raw": ([rt, ct]) ->
+      assert.deepEqual rt.raw(), ct.raw()
+    "get row": ([rt, ct]) ->
+      assert.deepEqual rt.get(1), ct.get(1)
+    "get row, col": ([rt, ct]) ->
+      assert.equal rt.get(1, 'a'), ct.get(1, 'a')
+
+  "when cloned": 
+    topic: ([rt, ct]) ->
+      [rt.clone(), ct.clone()]
+
+    "has 20 rows": ([rt, ct]) ->
+      assert.equal rt.nrows(), 20
+      assert.equal ct.nrows(), 20
+
+    "when const col added": 
+      topic: ([rt, ct]) ->
+        [rt.addConstColumn('z', 10), ct.addConstColumn('z', 10)]
+
+      "has z": ([rt, ct]) ->
+        assert rt.has('z')
+        assert ct.has('z')
+
+      "z is col of 10": ([rt, ct]) ->
+        _.each rt.getCol('z'), (z) ->
+          assert.equal z, 10
+        _.each ct.getCol('z'), (z) ->
+          assert.equal z, 10
+
+
+
 
 suite.addBatch
-#  "row table": rowSchema
-#  "col table": colSchema
-#  "col table2": colSchema2
-#  "multitable": multiSchema
+  "row table": rowSchema
+  "col table": colSchema
+  "col table2": colSchema2
+  "multitable": multiSchema
   "multitable2": multiSchema2
+  "two tables": twoTables
 
 
 suite.export module

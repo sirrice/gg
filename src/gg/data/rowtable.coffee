@@ -1,5 +1,6 @@
 #<< gg/data/table
 
+# stores table as a list of arrays and a schema
 class gg.data.RowTable extends gg.data.Table
   @ggpackage = "gg.data.RowTable"
 
@@ -14,22 +15,27 @@ class gg.data.RowTable extends gg.data.Table
 
   cloneShallow: ->
     rows = _.clone @rows
-    new gg.data.RowTable @schema.clone(), rows
+    t = new gg.data.RowTable @schema.clone()
+    t.rows = rows
+    t
 
   cloneDeep: ->
-    rows = @rows.map (row) => row.clone()
-    new gg.data.RowTable @schema.clone(), rows
+    rows = @rows.map (row) -> _.clone row
+    t = new gg.data.RowTable @schema.clone()
+    t.rows = rows
+    t
 
   # this should really be a project
   addConstColumn: (col, val, type=null) ->
-    if @schema.has col
-      throw Error "#{col} already exists in schema #{@schema.toString()}"
+    if @has col
+      throw Error "#{col} already in schema #{@schema.toString()}"
 
     type = gg.data.Schema.type(val) unless type?
     @schema.addColumn col, type
-    @each (row) =>
-      row.schema = @schema
-      row.set(col, val)
+    idx = @schema.index col
+    for row in @rows
+      row[idx] = val
+    @
 
   addColumn: (col, vals, type=null) ->
     if @schema.has col
@@ -45,35 +51,74 @@ class gg.data.RowTable extends gg.data.Table
     
     @schema.addColumn col, type
     idx = @schema.index col
-    @each (row, idx) =>
-      row.schema = @schema
-      row.set col, vals[idx]
+    for row in @rows
+      row[idx] = vals[idx]
     @
 
 
-  addRow: (row) ->
-    @rows.push gg.data.Row.toRow(row, @schema)
+  # accepts an array of values (must conform with schema), {} objects, or a Row object
+  addRow: (row, pad=no) ->
+    unless row?
+      throw Error "adding null row"
+
+    if _.isArray(row)
+      unless row.length == @schema.ncols()
+        if row.length > @schema.ncols() or not pad
+          throw Error "row len wrong: #{row.length} != #{@schema.length}"
+        else
+          for i in [0...(@schema.ncols()-row.length)]
+            row.push null
+    else if _.isType row, gg.data.Row
+      arr = []
+      for col in @schema.cols
+        arr.push(row.get col)
+      row = arr
+    else if _.isObject row
+      arr = []
+      for col in @schema.cols
+        arr.push(row[col])
+      row = arr
+    else
+      throw Error "row type(#{row.constructor.name}) not array" 
+
+    @rows.push row
     @
 
+  # @return value if col is set, otherwise gg.data.Row object
   get: (idx, col=null) ->
     if idx >= 0 and idx < @nrows()
       if col?
-          @rows[idx].get col
+        if @schema.has col
+          @rows[idx][@schema.index col]
+        else
+          throw Error "col #{col} not in schema: #{@schema.toString()}"
       else
-          @rows[idx]
+          new gg.data.Row @rows[idx], @schema
     else
       null
 
   getCol: (col) -> @getColumn col
   getColumn: (col) ->
-    ret = []
-    @each (row) => ret.push row.get(col)
-    ret
+    unless @schema.has col
+      throw Error "col #{col} not in schema #{@schema.toString()}"
 
-  raw: -> @each (row) -> row.raw()
+    idx = @schema.index col
+    _.map @rows, (row) -> row[idx]
 
+  # return a list of {} objects
+  raw: -> 
+    _.map @rows, (r) => 
+      o = {}
+      for col in @schema.cols
+        o[col] = r[@schema.index col]
+      o
+
+  # Infers a schema from inputs and returns a row table object
+  # @param rows list of { } objects
   @fromArray: (rows) ->
     schema = gg.data.Schema.infer rows
+    rows = _.map rows, (o) ->
+      _.map schema.cols, (col) -> o[col]
     new gg.data.RowTable schema, rows
 
 

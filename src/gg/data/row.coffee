@@ -47,6 +47,7 @@ class gg.data.Row
 
   raw: -> @toJSON()
 
+  # turns an { } object into a gg.data.Row
   @toRow: (o, schema=null) ->
     return o if _.isType o, gg.data.Row
 

@@ -1,7 +1,9 @@
 #<< gg/data/table
 
+# Stores table in columnar format
 class gg.data.ColTable extends gg.data.Table
   @ggpackage = "gg.data.ColTable"
+
 
   constructor: (@schema, @cols=null) ->
     unless @cols?
@@ -26,6 +28,7 @@ class gg.data.ColTable extends gg.data.Table
     @schema.addColumn col, type
     idx = @schema.index col
     @cols[idx] = _.times(@nrows(), () -> val)
+    @
 
   addColumn: (col, vals, type=null) ->
     if @schema.has col
@@ -44,16 +47,20 @@ class gg.data.ColTable extends gg.data.Table
     @
 
 
+  # @param raw { } object or a gg.data.Row
   addRow: (raw) ->
     row = gg.data.Row.toRow raw, @schema
     for col in @schema.cols
-      @cols[@schema.index(col)].push row.get(col)
+      @cols[@schema.index col].push row.get(col)
 
   get: (idx, col=null) ->
     if col?
-      @cols[@schema.index(col)][idx]
+      if @schema.has col
+        @cols[@schema.index col][idx]
+      else
+        throw Error "col #{col} not in schema: #{@schema.toString()}"
     else
-      rowdata = _.map @cols, (coldata) => coldata[idx]
+      rowdata = _.map @cols, (coldata) -> coldata[idx]
       new gg.data.Row rowdata, @schema
 
   getCol: (col) -> @getColumn col
@@ -80,7 +87,4 @@ class gg.data.ColTable extends gg.data.Table
     for raw in json.data
       t.addRow raw
     t
-
-
-
 

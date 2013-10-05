@@ -72,7 +72,12 @@ class gg.data.Table
   ncols: -> @schema.ncols()
   cols: -> @schema.cols
 
-  schema: -> throw "not implemented"
+  # These are the _only_ methods that Change the schema
+  # XXX: No guarantees whether the change happens in place or creates a new table!
+  # @return table with modified schema
+  addConstColumn: -> throw "not implemented"
+  addColumn: -> throw "not implemented"
+
   iterator: -> throw "not implemented"
   stats: -> throw "not implemented"
 
@@ -88,5 +93,8 @@ class gg.data.Table
   toJSON: ->
     schema: @schema.toJSON()
     data: @raw()
+
+  clone: ->
+    @constructor.fromJSON @toJSON()
 
 

@@ -24,7 +24,8 @@ class gg.data.MultiTable extends gg.data.Table
 
   # this should really be a project
   addConstColumn: (col, val, type=null) ->
-    _.each @tables, (t) -> t.addConstColumn col, val, type
+    tables = _.map @tables, (t) -> t.addConstColumn col, val, type
+    new gg.data.MultiTable null, tables
 
   addColumn: (col, vals, type=null) ->
     if vals.length != @nrows()
@@ -35,6 +36,7 @@ class gg.data.MultiTable extends gg.data.Table
       subvals = vals[offset...offset+t.nrows()]
       t.addColumn col, subvals, type
       offset += t.nrows()
+    new gg.data.MultiTable null, @tables
 
   addRow: (row) ->
     row = gg.data.Row.toRow row
@@ -64,14 +66,7 @@ class gg.data.MultiTable extends gg.data.Table
     ret
 
   @fromJSON: (json) ->
-    schemaJson = json.schema
-    dataJson = json.data
-
-    schema = gg.data.Schema.fromJSON schemaJson
-    rows = []
-    for raw in dataJson
-      rows.push(gg.data.Row.toRow raw, schema)
-    new gg.data.RowTable schema, rows
+    gg.data.RowTable.fromJSON json
 
 
 
