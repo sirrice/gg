@@ -16,10 +16,34 @@ class gg.data.TableSet
 
   # can only partition on columns present in every table!
   partition: (cols) ->
+    cols = _.flatten [cols]
     unless @checkSchema cols
       throw Error "cols #{cols.join(' ')} not in all schemas"
     
+    keys = []
+    lefts = {}
+    rights = {}
     for table in @pairtables
-      partitions = table.partitionJoin cols
-    
-    
+      ps = gg.data.Transform.partitionJoin(
+        table.table, table.md, cols
+      )
+      for p in ps
+        key = p['key']
+        lefts[key] = [] unless key of lefts
+        lefts[key].push p['table'].table
+        rights[key] = [] unless key of rights
+        rights[key].push p['table'].md
+        keys.push key
+
+
+    keys = _.uniq keys
+    ret = []
+    for key in keys
+      left = gg.data.Table.merge lefts[key]
+      right = gg.data.Table.merge rights[key]
+      pt = new gg.data.PairTable left, right
+      ret.push pt
+    ret
+
+
+

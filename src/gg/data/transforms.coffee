@@ -91,8 +91,9 @@ class gg.data.Transform
         
     
   # Equijoin + partition on join columns
-  # @return Array[pairtable]
+  # @return Array[{key:, table: pairtable}]
   @partitionJoin: (t1, t2, joincols) ->
+    joincols = _.flatten [joincols]
     unless t1.hasCols(joincols)
       throw Error "left table doesn't have all columns: #{joincols} not in #{t1.schema.toString()}"
     unless t2.hasCols(keys)
@@ -108,7 +109,8 @@ class gg.data.Transform
       rows2 = ht2[key]
       left = t1.constructor.fromArray rows1, t1.schema.clone()
       right = t2.constructor.fromArray rows2, t2.schema.clone()
-      ret.push new gg.data.PairTable(left, right)
+      table = new gg.data.PairTable(left, right)
+      ret.push { key: key, table: table }
     ret
 
 

@@ -42,10 +42,9 @@ class gg.data.Table
         @idx = 0
       reset: -> @idx = 0
       next: -> 
-        throw Error("no more elements.  idx=#{@idx}") if @idx >= @nrows
-        el = @table.get @idx
+        throw Error("no more elements.  idx=#{@idx}") unless @hasNext()
         @idx += 1
-        el
+        @table.get @idx-1
       hasNext: -> @idx < @nrows
       close: -> @table = null
     new Iter(@)
@@ -119,9 +118,10 @@ class gg.data.Table
       schema = new gg.data.Schema()
       new klass schema
     else
-      table = new klass tables[0].schema
+      schema = gg.data.Schema.merge _.map(tables, (t) -> t.schema)
+      table = new klass schema
       for t in tables
-        t.each (row) -> table.add row
+        t.each (row) -> table.addRow row
       table
 
 

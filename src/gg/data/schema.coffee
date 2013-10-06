@@ -8,7 +8,8 @@ class gg.data.Schema
   @numeric = 2
   @date = 3
   @object = 4
-  @env = 5    # environment variable
+  @svg = 5    # environment variable
+  @container = 6
   @unknown = -1
 
   constructor: (@cols=[], @types=[]) ->
@@ -60,10 +61,15 @@ class gg.data.Schema
     else
       col of @col2idx
 
-  @merge: (schema1, schema2) ->
-    schema = schema1.clone()
-    for [col, type] in _.zip(schema.cols, schema.types)
-      schema.addColumn col, type
+  @merge: (schemas) ->
+    schemas = _.flatten arguments
+    schema = null
+    for curschema in schemas
+      unless schema?
+        schema = curschema.clone()
+      else
+        for [col, type] in _.zip(curschema.cols, curschema.types)
+          schema.addColumn col, type
     schema
 
   # @return type object { type: , schema:  }
