@@ -21,6 +21,79 @@ class gg.data.Table
   @ggpackage = "gg.data.Table"
   @log = gg.util.Log.logger @ggpackage, "Table"
 
+  # @param f functiton to run.  takes gg.data.Row, index as input
+  # @param n number of rows
+  each: (f, n=null) ->
+    iter = @iterator()
+    idx = 0
+    ret = []
+    while iter.hasNext()
+      ret.push f(iter.next(), idx)
+      idx +=1 
+      break if n? and idx >= n
+    iter.close()
+    ret
+
+  # dumb version of an iterator
+  iterator: ->
+    class Iter
+      constructor: (@table) ->
+        @nrows = @table.nrows()
+        @idx = 0
+      reset: -> @idx = 0
+      next: -> 
+        throw Error("no more elements.  idx=#{@idx}") if @idx >= @nrows
+        el = @table.get @idx
+        @idx += 1
+        el
+      hasNext: -> @idx < @nrows
+      close: -> @table = null
+    new Iter(@)
+
+  asArray: ->
+    ret = []
+    @each (row) -> ret.push row.toJSON()
+    ret
+
+  has: (col, type) -> @contains col, type
+  contains: (col, type) -> @schema.has col, type
+  hasCols: (cols, types=null) ->
+    _.all cols, (col, idx) =>
+      type = null
+      type = types[idx] if types? and types.length > idx
+      @has col, type
+  cols: -> @schema.cols
+  ncols: -> @schema.ncols()
+  nrows: -> 
+    i = 0
+    @each (row) -> i += 1
+    i
+  get: (idx, col=null) -> throw "not implemented"
+  getCol: (col) -> throw "not implemented"
+  getColumn: (col) -> throw "not implemented"
+  raw: -> throw "not implemented"
+  stats: -> throw "not implemented"
+
+
+  # These are the _only_ methods that Change the schema
+  # XXX: No guarantees whether the change happens in place or creates a new table!
+  # @return table with modified schema
+  addConstColumn: -> throw "not implemented"
+  addColumn: -> throw "not implemented"
+
+  # This is the only method other than addCol that changes the data
+  addRow: (row) -> throw "not implemented"
+
+
+  toJSON: ->
+    schema: @schema.toJSON()
+    data: @raw()
+
+  cloneShallow: -> throw "not implemented"
+  cloneDeep: -> @constructor.fromJSON @toJSON()
+  clone: -> @cloneDeep()
+
+
   @type2class: (tabletype="row") ->
     switch tabletype
       when "row"
@@ -33,12 +106,12 @@ class gg.data.Table
   # Tries to infer a schema for a list of objects
   #
   # @param rows [ { attr: val, .. } ]
-  @fromArray: (rows, tabletype="row") ->
+  @fromArray: (rows, schema=null, tabletype="row") ->
     klass = @type2class tabletype
     unless klass?
       throw Error "#{tabletype} doesnt have a class"
 
-    klass.fromArray rows
+    klass.fromArray rows, schema
 
   @merge: (tables, tabletype="row") ->
     klass = @type2class tabletype
@@ -52,34 +125,6 @@ class gg.data.Table
       table
 
 
-  # map(rows, f)
-  #
-  # @param f functiton to run
-  # @param n number of rows
-  each: (f, n=null) ->
-    n = @nrows() unless n?
-    n = Math.min @nrows(), n
-    _.times n, (i) => f @get(i), i
-
-
-  asArray: ->
-    ret = []
-    @each (row) -> ret.push row.toJSON()
-    ret
-
-  has: (col, type) -> @contains col, type
-  contains: (col, type) -> @schema.has col, type
-  ncols: -> @schema.ncols()
-  cols: -> @schema.cols
-
-  # These are the _only_ methods that Change the schema
-  # XXX: No guarantees whether the change happens in place or creates a new table!
-  # @return table with modified schema
-  addConstColumn: -> throw "not implemented"
-  addColumn: -> throw "not implemented"
-
-  iterator: -> throw "not implemented"
-  stats: -> throw "not implemented"
 
   @reEvalJS = /^{.*}$/
   @reVariable = /^[a-zA-Z]\w*$/
@@ -88,13 +133,3 @@ class gg.data.Table
   @isEvalJS: (s) ->@reEvalJS.test s
   @isVariable: (s) -> @reVariable.test s
   @isNestedAttr: (s) -> @reNestedAttr.test s
-
-
-  toJSON: ->
-    schema: @schema.toJSON()
-    data: @raw()
-
-  clone: ->
-    @constructor.fromJSON @toJSON()
-
-

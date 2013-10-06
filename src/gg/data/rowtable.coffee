@@ -6,6 +6,7 @@ class gg.data.RowTable extends gg.data.Table
 
   constructor: (@schema, rows=[]) ->
     throw Error("schema not present") unless @schema?
+    rows ?= []
     @rows = []
     _.each rows, (row) => @addRow row
     @log = gg.data.Table.log
@@ -115,8 +116,8 @@ class gg.data.RowTable extends gg.data.Table
 
   # Infers a schema from inputs and returns a row table object
   # @param rows list of { } objects
-  @fromArray: (rows) ->
-    schema = gg.data.Schema.infer rows
+  @fromArray: (rows, schema=null) ->
+    schema ?= gg.data.Schema.infer rows
     rows = _.map rows, (o) ->
       _.map schema.cols, (col) -> o[col]
     new gg.data.RowTable schema, rows

@@ -37,6 +37,12 @@ schemaCheck =
       for i in [0...col.length-1]
         assert.lt col[i+1], col[i]
 
+  "iterator works": (table) ->
+    iter = table.iterator()
+    while iter.hasNext()
+      row = iter.next()
+      assert.lt row.get('c'), 2
+
   "filter on a": (table) ->
     t = Transform.filter table, (row) -> row.get('c') == 0
     t.each (row) ->
@@ -44,7 +50,7 @@ schemaCheck =
 
   "split on b":
     topic: (table) -> 
-      Transform.split table, (row) -> row.get 'b'
+      Transform.split table, 'b'
     "has 10 partitions": (splits) -> 
       assert.equal _.size(splits), 10
 
@@ -84,7 +90,7 @@ schemaCheck =
 
   "can add valid column": (table) ->
     table = table.clone()
-    table.addColumn "d", _.range(table.nrows())
+    table = table.addColumn "d", _.range(table.nrows())
     assert.equal table.ncols(), 6
 
   "with function column":
@@ -111,7 +117,7 @@ rowSchema =
   topic: ->
     rows = _.times 20, (i) -> 
       {a:i+1, b:i%10, c: i%2,id:"#{i}",nest: {d:i, e:i}}
-    gg.data.Table.fromArray rows, "row"
+    gg.data.Table.fromArray rows, null, "row"
     
 _.extend rowSchema, schemaCheck
 
@@ -119,7 +125,7 @@ colSchema =
   topic: ->
     rows = _.times 20, (i) -> 
       {a:i+1, b:i%10, c: i%2,id:"#{i}",nest: {d:i, e:i}}
-    gg.data.Table.fromArray rows, "col"
+    gg.data.Table.fromArray rows, null, "col"
 _.extend colSchema, schemaCheck
 
 colSchema2 = 
@@ -143,26 +149,26 @@ multiSchema =
   topic: ->
     rows = _.times 20, (i) -> 
       {a:i+1, b:i%10, c: i%2,id:"#{i}",nest: {d:i, e:i}}
-    t = gg.data.Table.fromArray rows, "row"
+    t = gg.data.Table.fromArray rows, null, "row"
     parts = Transform.split t, "c"
-    new gg.data.MultiTable t.schema, _.map(parts, (o) -> o['table'])
+    new gg.data.MultiTable t.schema, parts
 _.extend multiSchema, schemaCheck
 
 multiSchema2 = 
   topic: ->
     rows = _.times 20, (i) -> 
       {a:i+1, b:i%10, c: i%2,id:"#{i}",nest: {d:i, e:i}}
-    t = gg.data.Table.fromArray rows, "col"
+    t = gg.data.Table.fromArray rows, null, "col"
     parts = Transform.split t, "c"
-    new gg.data.MultiTable t.schema, _.map(parts, (o) -> o['table'])
+    new gg.data.MultiTable t.schema, parts
 _.extend multiSchema2, schemaCheck
 
 twoTables = 
   topic: ->
     os = _.times 20, (i) -> 
       {a:i+1, b:i%10, c: i%2,id:"#{i}",nest: {d:i, e:i}}
-    rt = gg.data.Table.fromArray os, "row"
-    ct = gg.data.Table.fromArray os, "col"
+    rt = gg.data.Table.fromArray os, null, "row"
+    ct = gg.data.Table.fromArray os, null, "col"
     [rt, ct]
 
   "functions are same": 
@@ -185,7 +191,7 @@ twoTables =
 
     "when const col added": 
       topic: ([rt, ct]) ->
-        [rt.addConstColumn('z', 10), ct.addConstColumn('z', 10)]
+        [rt.clone().addConstColumn('z', 10), ct.clone().addConstColumn('z', 10)]
 
       "has z": ([rt, ct]) ->
         assert rt.has('z')

@@ -6,6 +6,7 @@ class gg.data.MultiTable extends gg.data.Table
 
   constructor: (@schema, @tables=[]) ->
     @log = gg.data.Table.log
+    @tables = _.compact @tables
     unless @schema?
       if @tables.length > 0
         @schema = @tables[0].schema.clone()
@@ -20,7 +21,7 @@ class gg.data.MultiTable extends gg.data.Table
 
   cloneDeep: ->
     ts = _.map @tables, (t) -> t.cloneDeep()
-    new gg.data.MultiTable ts
+    new gg.data.MultiTable @schema.clone(), ts
 
   # this should really be a project
   addConstColumn: (col, val, type=null) ->

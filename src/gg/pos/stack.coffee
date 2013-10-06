@@ -87,10 +87,7 @@ class gg.pos.Stack extends gg.pos.Position
     stack = d3.layout.stack()
     stackedLayers = stack(layers)
 
-    schema = params.get('outputSchema') data, params
-    rettable = new gg.data.RowTable schema
-
-    _.times groups.length, (idx) =>
+    newrows = _.times groups.length, (idx) =>
       group = groups[idx]
       layer = stackedLayers[idx]
       # create hash table for flattened rows in group.table
@@ -118,8 +115,10 @@ class gg.pos.Stack extends gg.pos.Position
         delete raw['group']
         raw
       )
-      rettable.addRow rowData
+      rowData
 
+    schema = params.get('outputSchema') data, params
+    rettable = new gg.data.RowTable schema, newrows
     rettable
 
   computeNormal: (data, params) ->
@@ -147,10 +146,9 @@ class gg.pos.Stack extends gg.pos.Position
     stack = d3.layout.stack()
     stackedLayers = stack(layers)
 
-    schema = params.get('outputSchema') data, params
-    rettable = new gg.data.RowTable schema
 
     # XXX: rewrite so don't need to clone
+    newrows = []
     _.times groups.length, (idx) =>
       group = groups[idx]
       layer = stackedLayers[idx]
@@ -164,8 +162,10 @@ class gg.pos.Stack extends gg.pos.Position
           row.set 'y0', pos.y0 + (baselines[x] or 0)
           row.set 'y1', row.get('y0') + pos.y
           row.set 'y', row.get('y1')
-          rettable.addRow row
+          newrows.push row
 
+    schema = params.get('outputSchema') data, params
+    rettable = new gg.data.RowTable schema, newrows
     rettable
 
 

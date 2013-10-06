@@ -1,10 +1,8 @@
 
 class gg.data.SchemaMap
 
-  @inferMapping: (source) ->
-
-
-
+  # @deprecated
+  #
   # map from source table to new schema
   # The naive implementation:
   # 1. recursively flattens the source table

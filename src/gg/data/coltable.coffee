@@ -6,8 +6,7 @@ class gg.data.ColTable extends gg.data.Table
 
 
   constructor: (@schema, @cols=null) ->
-    unless @cols?
-      @cols = _.times @schema.ncols(), ()->[]
+    @cols ?= _.times @schema.ncols(), ()->[]
     @log = gg.data.Table.log
 
   nrows: -> 
@@ -70,8 +69,8 @@ class gg.data.ColTable extends gg.data.Table
     _.times @nrows(), (i) => 
       _.o2map @schema.cols, (col) => [col, @cols[@schema.index(col)][i]]
 
-  @fromArray: (rows) ->
-    schema = gg.data.Schema.infer rows
+  @fromArray: (rows, schema=null) ->
+    schema ?= gg.data.Schema.infer rows
     cols = _.times schema.ncols(), () -> []
     for row in rows
       for col in schema.cols
