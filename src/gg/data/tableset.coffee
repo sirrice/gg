@@ -1,10 +1,12 @@
 
 
+# Collection of PairTables
+# Provides same APi as pairtable
 class gg.data.TableSet 
 
-  constructor: (@tables) ->
+  constructor: (@pairtables) ->
 
-  schemas: -> _.map @tables, (table) -> table.schema
+  schemas: -> _.map @pairtables, (table) -> table.schema
   checkSchema: (cols) ->
     for schema in @schemas()
       for col in cols
@@ -16,6 +18,8 @@ class gg.data.TableSet
   partition: (cols) ->
     unless @checkSchema cols
       throw Error "cols #{cols.join(' ')} not in all schemas"
-
-
-
+    
+    for table in @pairtables
+      partitions = table.partitionJoin cols
+    
+    

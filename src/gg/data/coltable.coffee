@@ -72,12 +72,18 @@ class gg.data.ColTable extends gg.data.Table
   @fromArray: (rows, schema=null) ->
     schema ?= gg.data.Schema.infer rows
     cols = _.times schema.ncols(), () -> []
-    for row in rows
-      for col in schema.cols
-        if col of row
-          cols[schema.index col].push row[col]
-        else
-          cols[schema.index col].push null
+    if rows? and _.isType(rows[0], gg.data.Row)
+      for row in rows
+        for col in schema.cols
+          idx = schema.index col
+          cols[idx].push row.get(col)
+    else
+      for row in rows
+        for col in schema.cols
+          if col of row
+            cols[schema.index col].push row[col]
+          else
+            cols[schema.index col].push null
     new gg.data.ColTable schema, cols
 
   @fromJSON: (json) ->

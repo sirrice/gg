@@ -118,8 +118,12 @@ class gg.data.RowTable extends gg.data.Table
   # @param rows list of { } objects
   @fromArray: (rows, schema=null) ->
     schema ?= gg.data.Schema.infer rows
-    rows = _.map rows, (o) ->
-      _.map schema.cols, (col) -> o[col]
+    if rows? and _.isType(rows[0], gg.data.Row)
+      rows = _.map rows, (row) ->
+        _.map schema.cols, (col) -> row.get(col)
+    else
+      rows = _.map rows, (o) ->
+        _.map schema.cols, (col) -> o[col]
     new gg.data.RowTable schema, rows
 
 

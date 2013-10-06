@@ -11,6 +11,8 @@ class gg.data.Transform
     _.each rows, (row) -> newtable.addRow row
     newtable
 
+  # Interal method to build hash tables based on equality of columns
+  # @param cols columns to use for equality test
   @buildHT: (t, cols) ->
     getkey = (row) -> _.map cols, (col) -> row.get(col)
     ht = {}
@@ -25,16 +27,17 @@ class gg.data.Transform
     ht
 
 
-
   # Horizontally split table using an arbitrary splitting function
   # (preserves all existing columns)
   @split: (table, splitcols) ->
+    splitcols = _.flatten [splitcols]
+    klass = table.constructor
     ht = @buildHT table, splitcols
-    _.map _.values(ht), (partition) ->
-      newt = new table.constructor table.schema.clone()
-      for row in partition
-        newt.addRow row
-      newt
+    _.map ht, (rows, k) -> 
+      {
+        key: k
+        table: klass.fromArray rows, table.schema.clone()
+      }
 
     ###
     # TODO: special case for this
@@ -90,10 +93,13 @@ class gg.data.Transform
   # Equijoin + partition on join columns
   # @return Array[pairtable]
   @partitionJoin: (t1, t2, joincols) ->
-    unless t1.hasCols(joincols) and t2.hasCols(keys)
-      throw Error
-    ht1 = buildHT t1
-    ht2 = buildHT t2
+    unless t1.hasCols(joincols)
+      throw Error "left table doesn't have all columns: #{joincols} not in #{t1.schema.toString()}"
+    unless t2.hasCols(keys)
+      throw Error "left table doesn't have all columns: #{joincols} not in #{t2.schema.toString()}"
+
+    ht1 = @buildHT t1, joincols
+    ht2 = @buildHT t2, joincols
     keys = _.uniq _.flatten [_.keys(ht1), _.keys(ht2)]
 
     ret = []

@@ -51,6 +51,7 @@ schemaCheck =
   "split on b":
     topic: (table) -> 
       Transform.split table, 'b'
+
     "has 10 partitions": (splits) -> 
       assert.equal _.size(splits), 10
 
@@ -151,7 +152,7 @@ multiSchema =
       {a:i+1, b:i%10, c: i%2,id:"#{i}",nest: {d:i, e:i}}
     t = gg.data.Table.fromArray rows, null, "row"
     parts = Transform.split t, "c"
-    new gg.data.MultiTable t.schema, parts
+    new gg.data.MultiTable t.schema, _.map(parts, (o) -> o['table'])
 _.extend multiSchema, schemaCheck
 
 multiSchema2 = 
@@ -160,7 +161,7 @@ multiSchema2 =
       {a:i+1, b:i%10, c: i%2,id:"#{i}",nest: {d:i, e:i}}
     t = gg.data.Table.fromArray rows, null, "col"
     parts = Transform.split t, "c"
-    new gg.data.MultiTable t.schema, parts
+    new gg.data.MultiTable t.schema, _.map(parts, (o) -> o['table'])
 _.extend multiSchema2, schemaCheck
 
 twoTables = 
