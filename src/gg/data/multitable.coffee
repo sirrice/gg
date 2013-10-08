@@ -1,7 +1,7 @@
 #<< gg/data/rowtable
 #<< gg/data/coltable
 
-class gg.data.MultiTable extends gg.data.PairTable
+class gg.data.MultiTable extends gg.data.Table
   @ggpackage = "gg.data.MultiTable"
 
   constructor: (@schema, @tables=[]) ->

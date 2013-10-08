@@ -76,6 +76,7 @@ class gg.data.Transform
         mapping[col] = (row) -> row.get col
     @map table, mapping
 
+
   @map: (table, mapping) ->
     rows = table.each (row, idx) ->
       _.o2map mapping, (f, k) ->
@@ -97,7 +98,7 @@ class gg.data.Transform
     unless t1.hasCols(joincols)
       throw Error "left table doesn't have all columns: #{joincols} not in #{t1.schema.toString()}"
     unless t2.hasCols(keys)
-      throw Error "left table doesn't have all columns: #{joincols} not in #{t2.schema.toString()}"
+      throw Error "right table doesn't have all columns: #{joincols} not in #{t2.schema.toString()}"
 
     ht1 = @buildHT t1, joincols
     ht2 = @buildHT t2, joincols

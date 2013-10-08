@@ -17,8 +17,8 @@ class gg.wf.Source extends gg.wf.Node
     throw Error("node not ready") unless @ready()
     params = @params
     compute = @params.get('compute') or @compute.bind(@)
+    pt = @inputs[0]
 
-    pt = new gg.data.PairTable
     compute pt, params, (err, pairtable) =>
       @error err if err?
       @output 0, pairtable

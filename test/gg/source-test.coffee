@@ -18,6 +18,7 @@ check =
         promise.emit 'success', tset
       node.on 'error', (errmsg) ->
         promise.emit 'error', errmsg
+      node.setInput 0, new gg.data.PairTable()
       node.run()
       promise
 

@@ -2,7 +2,7 @@
 
 # Collection of PairTables
 # Provides same APi as pairtable
-class gg.data.TableSet 
+class gg.data.TableSet extends gg.data.PairTable
 
   constructor: (@pairtables) ->
 
@@ -16,7 +16,7 @@ class gg.data.TableSet
 
   # can only partition on columns present in every table!
   partition: (cols) ->
-    cols = _.flatten [cols]
+    cols = _.compact _.flatten [cols]
     unless @checkSchema cols
       throw Error "cols #{cols.join(' ')} not in all schemas"
     
@@ -48,10 +48,10 @@ class gg.data.TableSet
 
 
   getTable: ->
-    tables = _.map @pairtables, (pt) -> pt.table()
+    tables = _.map @pairtables, (pt) -> pt.getTable()
     new gg.data.MultiTable null, tables
 
   getMD: ->
-    tables = _.map @pairtables, (pt) -> pt.md()
+    tables = _.map @pairtables, (pt) -> pt.getMD()
     new gg.data.MultiTable null, tables
 
