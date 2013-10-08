@@ -88,6 +88,9 @@ class gg.data.Table
     schema: @schema.toJSON()
     data: @raw()
 
+  toString: ->
+    JSON.stringify @raw()
+
   cloneShallow: -> throw "not implemented"
   cloneDeep: -> @constructor.fromJSON @toJSON()
   clone: -> @cloneDeep()

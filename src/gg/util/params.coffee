@@ -40,6 +40,10 @@ class gg.util.Params
     @put key, defaultVal
     @
 
+  require: (key, errmsg) ->
+    throw Error(errmsg) unless @has key
+      
+
   # o has the following structure:
   #
   #   key -> [[altkeys...], default]
@@ -59,6 +63,7 @@ class gg.util.Params
       @ensure k, v[0], v[1]
     @
 
+  has: (key) -> @contains key
   contains: (key) -> key of @data
 
   # @param args... arguments passed if return value is a function

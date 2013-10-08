@@ -1,13 +1,27 @@
 #<< gg/wf/node
 
 
-class gg.wf.Source extends gg.wf.Exec
+class gg.wf.Source extends gg.wf.Node
   @ggpackage = "gg.wf.Source"
   @type = "source"
 
+  parseSpec: ->
+    super
+    @params.ensure "tabletype", [], "row"
+    @params.ensure 'compute', ['f'], null
 
-  compute: (data, params) ->
+  compute: (pairtable, params, cb) ->
     throw Error("Source not setup to generate tables")
+  
+  run: ->
+    throw Error("node not ready") unless @ready()
+    params = @params
+    compute = @params.get('compute') or @compute.bind(@)
+
+    pt = new gg.data.PairTable
+    compute pt, params, (err, pairtable) =>
+      @error err if err?
+      @output 0, pairtable
 
 
 class gg.wf.TableSource extends gg.wf.Source
@@ -26,9 +40,9 @@ class gg.wf.TableSource extends gg.wf.Source
       else
         throw Error("TableSource needs a table as parameter")
 
-  compute: (data, params) ->
-    data.table = params.get('table')
-    data
+  compute: (pt, params, cb) ->
+    pt.table = params.get('table')
+    cb(null, pt)
 
 class gg.wf.RowSource extends gg.wf.Source
   @ggpackage = "gg.wf.RowSource"
@@ -41,12 +55,16 @@ class gg.wf.RowSource extends gg.wf.Source
     super
 
     @params.ensure "rows", ["array", "row"], null
+    @params.require "rows", "RowSource needs a table as parameter"
     unless @params.get('rows')?
-      throw Error("RowSource needs a table as parameter")
+      throw Error "RowSource needs a table as parameter"
 
-  compute: (data, params) ->
-    data.table = gg.data.RowTable.fromArray params.get('rows')
-    data
+  compute: (pt, params, cb) ->
+    pt.table = gg.data.Table.fromArray(
+      params.get('rows'), 
+      null, 
+      params.get('tabletype'))
+    cb null, pt
 
 
 
@@ -59,19 +77,15 @@ class gg.wf.CsvSource extends gg.wf.Source
 
   parseSpec: ->
     super
-    unless @params.contains 'url'
-      throw Error("CsvSource needs a URL")
+    @params.require 'url', 'CsvSource needs a URL'
 
-  run: ->
-    url = @params.get("url")
-    d3.csv url, (arr) =>
-      table = gg.data.RowTable.fromArray arr
-
-      f = (data) =>
-        new gg.wf.Data table, data.env
-      outputs = gg.wf.Inputs.mapLeaves @inputs[0], f
-      @output 0, outputs
-
+  compute: (pt, params, cb) ->
+    url = params.get 'url'
+    tabletype = params.get 'tabletype'
+    d3.csv url, (arr) ->
+      table = gg.data.Table.fromArray arr, null, tabletype
+      pt.table = table
+      cb null, pt
 
 class gg.wf.SQLSource extends gg.wf.Source
   @ggpackage = "gg.wf.SQLSource"
@@ -86,37 +100,33 @@ class gg.wf.SQLSource extends gg.wf.Source
     @params.ensure "uri", ["conn", "connection", "url"], null
     @params.ensure "query", ["q"], null
 
-    unless @params.get("uri")?
-      throw Error "SQLSource needs a connection URI: params.put 'uri', <URI>"
-    unless @params.get("query")?
-      throw Error "SQLSource needs a query string"
+    @params.require 'uri', "SQLSource needs a connection URI: params.put 'uri', <URI>"
+    @params.require 'query', "SQLSource needs a query string"
 
-  run: ->
+  compute: (pt, params, cb) ->
     unless pg?
       throw Error("pg is not allowed on the client side")
 
-    uri = @params.get "uri"
-    query = @params.get "q"
-    @log.level = 0
-    @log pg
+    uri = params.get "uri"
+    query = params.get "q"
+    tabletype = params.get 'tabletype'
     @log "uri: #{uri}"
     @log "query: #{query}"
     client = new pg.Client uri
-    client.connect (err) =>
-      throw Error(err) if err?
+    client.connect (err) ->
+      if err?
+        cb err, null
+        throw Error(err)
 
-      client.query query, (err, result) =>
-        throw Error err if err?
+      client.query query, (err, result) ->
+        if err?
+          cb err, null
+          throw Error(err)
 
         rows = result.rows
-        table = gg.data.RowTable.fromArray rows
         client.end()
 
-        f = (data) =>
-          new gg.wf.Data table, data.env
-        outputs = gg.wf.Inputs.mapLeaves @inputs[0], f
-        @log outputs
-        @output 0, outputs
+        table = gg.data.Table.fromArray rows, null, tabletype
+        pt.table = table
+        cb null, pt
 
-
-# MapSource

@@ -12,6 +12,8 @@ Desired Features
 1. Node-failure tolerance.  If a node throws an exception, dont block workflow on the next barrier, keep going.
 
 
+
+
 Aug 19, 2013
 ---------------
 
@@ -43,20 +45,20 @@ Developer specifies this model using some language
 
 Provenance store provides the following:
 
-1) models parent/child relationships between provenance objects
-   add/alter model
-2) provides INSERT api
-   new dataset/execution
-   updated data (insert/delete)
-3) provides SELECT api
-   every node has a prev/next semantics to the prev/next object
+1. models parent/child relationships between provenance objects
+   * add/alter model
+2. provides INSERT api
+   * new dataset/execution
+   * updated data (insert/delete)
+3. provides SELECT api
+   * every node has a prev/next semantics to the prev/next object
 
 Some Details
 
-1) Every element has an ID which is the path in this model
-   How does dev construct this path?  Want to cache parent path/define a context.
-2) Materialization, Storage, and Indexing schemes
-3) Needs access to gg runtime for re-execution.
+1. Every element has an ID which is the path in this model
+1. How does dev construct this path?  Want to cache parent path/define a context.
+2. Materialization, Storage, and Indexing schemes
+3. Needs access to gg runtime for re-execution.
 
 
 
@@ -91,18 +93,49 @@ July 9, 2013
 
 Some query attributes
 
-1. Path length
+1. Path length 
 1. Target/final node in query path
 1. Fetch data or just relationship? 
 1. Mid-query Cardinality
 1. Provenance size e.g., data provenance or config/static prov
 1. Result cardinality
-  * similar to boolean result
-  * top k
-  * random sample
-  * sample
+   * similar to boolean result
+   * top k
+   * random sample
+   * sample
 1. Boolean result? e.g., points share source data?
+2. Other results it shares inputs with (for linked brushing)
 1. Granularity e.g., partition/dataset/user/row/column
+2. Given rendered intermediate plots, relationship with end result plot
+    * given intermediate point or bar, what does it effect in the result.
+    * vice versa
+
+### Materialization Tricks
+
+Backward queries
+
+* Annotation: add metadata to the tuples that are materialized
+    * carry input ids
+    * carry subset of input ids (when to filter?)  use fact that intermediates are materialized?
+* Path: store the query graph/workflow
+* Last op results share inputs: track until data is partitioned?
+* Exact existence (A & B share inputs): store compressed sets
+* Approx existence (A & B shared inputs): store bloom filters
+* Separate datastore: 
+    * hashtable (bdb)
+    * indexed
+
+### Points of Materialization
+
+We don't want to materialize or support provenance queries from _anywhere_ in the pipeline, the user
+should specify before hand.
+
+* What operators to initiate queries from
+* What operators will ask provenance _about_
+* What exact queries
+
+
+
 
 ## Provenance
 

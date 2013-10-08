@@ -1,7 +1,7 @@
 #<< gg/data/rowtable
 #<< gg/data/coltable
 
-class gg.data.MultiTable extends gg.data.Table
+class gg.data.MultiTable extends gg.data.PairTable
   @ggpackage = "gg.data.MultiTable"
 
   constructor: (@schema, @tables=[]) ->
@@ -9,9 +9,10 @@ class gg.data.MultiTable extends gg.data.Table
     @tables = _.compact @tables
     unless @schema?
       if @tables.length > 0
-        @schema = @tables[0].schema.clone()
+        @schema = gg.data.Schema.merge _.map(@tables, (t) -> t.schema)
       else
         @schema = new gg.data.Schema()
+
 
   nrows: -> _.sum @tables, (t) -> t.nrows()
 

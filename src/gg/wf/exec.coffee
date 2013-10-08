@@ -12,7 +12,7 @@ class gg.wf.Exec extends gg.wf.Node
   parseSpec: ->
     @params.ensure 'compute', ['f'], null
 
-  compute: (data, params) -> data
+  compute: (tableset, params, cb) -> cb(null, tableset)
 
   # @return emits to single child node
   run: ->
@@ -21,15 +21,21 @@ class gg.wf.Exec extends gg.wf.Node
     params = @params
     compute = @params.get('compute') or @compute.bind(@)
     pstore = @pstore()
-    f = (data, path) =>
-      pstore.writeData path, path
-      compute data, params
 
-    outputs = gg.wf.Inputs.mapLeaves @inputs, f
-    gg.wf.Inputs.mapLeaves outputs, (data) -> gg.wf.Stdout.print data.table, null, 5
-    for output, idx in outputs
-      @output idx, output
-    outputs
+    tableset = new gg.data.TableSet @inputs
+    partitions = tableset.partition @params.get('key')
+    iterator = (pairtable, cb) ->
+      compute pairtable, params, cb
+    done = (err, partitions) =>
+
+    async.map partitions, iterator, (err, pairtables) =>
+      throw Error err if err?
+      result = new gg.data.MultiTable null, pairtables
+      @output 0, result
+
+
+
+
 
   @create: (params, compute) ->
     class ExecKlass extends gg.wf.Exec

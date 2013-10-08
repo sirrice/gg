@@ -1,5 +1,5 @@
 #<< gg/util/*
-#<< gg/data/table
+#<< gg/data/*
 
 try
   events = require 'events'
@@ -10,14 +10,14 @@ catch error
 # Implements a generic processing node that doesn't run
 #
 #
-# ::Specification::
+# Specification
 #
 # {
 #   name: {String}
 #   params: Params or Object
 # }
 #
-# :: Compute ::
+# Compute 
 #
 # The @compute function that external users provide are of the following signature:
 #
@@ -53,7 +53,8 @@ class gg.wf.Node extends events.EventEmitter
 
     @parseSpec()
 
-  parseSpec: -> null
+  parseSpec: -> 
+    @params.ensure 'keys', [], null
 
   # inputs is an array, one for each parent
   setup: (@nParents, @nChildren) ->
@@ -68,26 +69,21 @@ class gg.wf.Node extends events.EventEmitter
   # Output a result and call the appropriate handlers using @emit
   # @param outidx output port
   # @param data nested array of gg.wf.Data objects
-  output: (outidx, datas) ->
+  output: (outidx, tableset) ->
+    @emit outidx, @id, outidx, tableset
+    @emit "output", @id, outidx, tableset
+
     #
     # this block is all debugging code
     #
     listeners = @listeners outidx
-    n = listeners.length
-    flat = gg.wf.Inputs.flatten(datas)[0]
-    noutputs = flat.length
-    tablesizes = _.map flat, (data) ->
-      if data? and data.table?
-        data.table.nrows()
-      else
-        -1
-    @log.info "output: port(#{outidx}) ntables: #{noutputs}"
-    @log "tablesizes: #{tablesizes}"
-    @log datas
+    @log.info "output: port(#{outidx}), sizes: #{tableset.getTable().nrows()}"
+    @log tableset
 
-    # actuall output the data
-    @emit outidx, @id, outidx, datas
-    @emit "output", @id, outidx, datas
+
+  error: (err) -> 
+    err = Error(err) if _.isString err
+    @emit "error", err
 
   pstore: -> gg.prov.PStore.get @flow, @
 

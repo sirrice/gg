@@ -11,17 +11,6 @@
 # XForms also define default schema values, which will be used to fill
 # in the input table.
 #
-# Global State
-# ------------
-#
-# XForms are tied to an instance of a layer and has accessors for
-#
-# 1) which facet it belongs to
-# 2) which layer it belongs to
-# 3) the "correct" set of scales for its aesthetics -- this depends on
-#    the stage of the workflow and which scales training has happened
-#
-#
 # Spec:
 # {
 #   f: Compute Function

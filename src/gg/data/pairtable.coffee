@@ -3,7 +3,10 @@
 # Schema == shared columns
 class gg.data.PairTable 
 
-  constructor: (@table, @md) ->
+  constructor: (@table=null, @md=null) ->
+    @table ?= new gg.data.RowTable(new gg.data.Schema())
+    @md ?= new gg.data.RowTable(new gg.data.Schema())
+
     @cols = _.uniq _.flatten [@table.cols(), @md.cols()]
     @sharedCols = _.filter @cols, (col) =>
       (@table.has(col) and 
@@ -21,3 +24,10 @@ class gg.data.PairTable
   partition: (joincols) ->
     ps = gg.data.Transform.partitionJoin @table, @md, joincols
     _.map ps, (o) -> o['table']
+
+  # ensures there are tuples for each enuque combination of keys
+  ensure: (keys) ->
+    throw Error
+  
+  getTable: -> @table
+  getMD: -> @md

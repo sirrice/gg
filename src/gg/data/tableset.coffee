@@ -47,3 +47,11 @@ class gg.data.TableSet
 
 
 
+  getTable: ->
+    tables = _.map @pairtables, (pt) -> pt.table()
+    new gg.data.MultiTable null, tables
+
+  getMD: ->
+    tables = _.map @pairtables, (pt) -> pt.md()
+    new gg.data.MultiTable null, tables
+
