@@ -51,9 +51,19 @@ createSimpleTableSet = ->
 
   new gg.data.TableSet [pt1, pt2]
 
+createEmptyMD = ->
+  left = Table.fromArray [
+    { x: 1, y: 1, l: 1}
+    { x: 1, y: 2, l: 1}
+    { x: 2, y: 2, l: 3}
+    { x: 2, y: 3, l: 2}
+  ]
+  new gg.data.PairTable left
+
+
 checkEnsure =
   "when ensured on x,y":
-    topic: (ptable) -> ptable.ensure ['x', 'y']
+    topic: (ptable) -> ptable.clone().ensure ['x', 'y']
     "md": 
       topic: (tset) -> tset.getMD()
       "has 8 rows": (md) -> assert.equal md.nrows(), 8
@@ -65,9 +75,21 @@ checkEnsure =
           else 
             assert.equal p.nrows(), 4
 
+  "when ensured on nothing":
+    topic: (ptable) -> ptable.clone().ensure []
+    "md":
+      topic: (tset) -> tset.getMD()
+      "print": (md) ->
+        console.log md.raw()
+
+
 
 
 suite.addBatch
+  "ensure empty md":
+    _.extend({topic: createEmptyMD},
+      checkEnsure)
+###
   "ensure pairtable":
     _.extend({topic: createSimplePairTable},
       checkEnsure)
@@ -75,6 +97,7 @@ suite.addBatch
   "ensure tableset":
     _.extend({topic: createSimpleTableSet},
       checkEnsure)
+
 
   "pair table": 
     topic: ->
@@ -154,6 +177,6 @@ suite.addBatch
         partitions = table.partition ['j1', 'j2']
         assert.equal partitions.length, 6
 
-
+###
 
 suite.export module
