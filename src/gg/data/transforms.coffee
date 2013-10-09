@@ -11,6 +11,20 @@ class gg.data.Transform
     _.each rows, (row) -> newtable.addRow row
     newtable
 
+  @sortOn: (table, cols, reverse=no) ->
+    cols = _.flatten [cols]
+    getval = (row) -> _.map cols, (col) -> row.get(col)
+    reverse = if reverse then -1 else 1
+    cmp = (r1, r2) ->
+      for col in cols
+        continue unless r1.has(col) and r2.has(col)
+        if r1.get(col) > r2.get(col)
+          return 1 * reverse
+        if r1.get(col) < r2.get(col)
+          return -1 * reverse
+      return 0
+    
+
   # Interal method to build hash tables based on equality of columns
   # @param cols columns to use for equality test
   @buildHT: (t, cols) ->

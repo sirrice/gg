@@ -6,7 +6,6 @@ class gg.data.TableSet extends gg.data.PairTable
 
   constructor: (@pairtables) ->
 
-  schemas: -> _.map @pairtables, (table) -> table.schema
   checkSchema: (cols) ->
     for schema in @schemas()
       for col in cols
@@ -50,6 +49,8 @@ class gg.data.TableSet extends gg.data.PairTable
   ensure: (cols) ->
     new gg.data.PairTable(@getTable(), @getMD()).ensure(cols)
 
+  tableSchema: -> gg.data.Schema.merge _.map(@pairtables, (pt) -> pt.tableSchema())
+  mdSchema: -> gg.data.Schema.merge _.map(@pairtables, (pt) -> pt.mdSchema())
   getTable: ->
     tables = _.map @pairtables, (pt) -> pt.getTable()
     new gg.data.MultiTable null, tables

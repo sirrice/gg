@@ -60,6 +60,8 @@ class gg.data.PairTable
 
     new gg.data.TableSet newpartitions
   
+  tableSchema: -> @table.schema
+  mdSchema: -> @md.schema
   getTable: -> @table
   getMD: -> @md
   clone: -> new gg.data.PairTable @getTable().clone(), @getMD().clone()

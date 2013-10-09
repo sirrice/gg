@@ -45,14 +45,12 @@ class gg.data.Row
     data = _.clone @data
     new gg.data.Row @schema, data
 
-  toString: ->
-    o = _.o2map @schema.cols, (col) => [col, @get col]
-    JSON.stringify o
 
   toJSON: ->
     _.o2map @schema.cols, (col) => [col, @get col]
-
   raw: -> @toJSON()
+
+  toString: -> JSON.stringify(@toJSON())
 
   # turns an { } object into a gg.data.Row
   @toRow: (o, schema=null) ->
