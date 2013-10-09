@@ -17,15 +17,15 @@ class gg.data.TableSet extends gg.data.PairTable
   # can only partition on columns present in every table!
   partition: (cols) ->
     cols = _.compact _.flatten [cols]
-    unless @checkSchema cols
-      throw Error "cols #{cols.join(' ')} not in all schemas"
+    #unless @checkSchema cols
+    #throw Error "cols #{cols.join(' ')} not in all schemas"
     
     keys = []
     lefts = {}
     rights = {}
     for table in @pairtables
       ps = gg.data.Transform.partitionJoin(
-        table.table, table.md, cols
+        table.getTable(), table.getMD(), cols
       )
       for p in ps
         key = p['key']
@@ -36,6 +36,7 @@ class gg.data.TableSet extends gg.data.PairTable
         keys.push key
 
 
+    # create new PairTable for each unique key
     keys = _.uniq keys
     ret = []
     for key in keys
@@ -46,6 +47,8 @@ class gg.data.TableSet extends gg.data.PairTable
     ret
 
 
+  ensure: (cols) ->
+    new gg.data.PairTable(@getTable(), @getMD()).ensure(cols)
 
   getTable: ->
     tables = _.map @pairtables, (pt) -> pt.getTable()

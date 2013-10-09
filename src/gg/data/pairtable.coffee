@@ -25,9 +25,41 @@ class gg.data.PairTable
     ps = gg.data.Transform.partitionJoin @table, @md, joincols
     _.map ps, (o) -> o['table']
 
-  # ensures there are tuples for each enuque combination of keys
-  ensure: (keys) ->
-    throw Error
+  # ensures there MD tuples for each unique combination of keys
+  # if MD partition has records, clone any record and overwrite keys
+  # otherwise use MD schema to create new record
+  ensure: (cols) ->
+    sharedCols = _.filter cols, (col) => @md.schema.has col
+    restCols = _.reject cols, (col) => @md.schema.has col
+
+    ps = @partition sharedCols
+    newpartitions = []
+
+    for p in ps
+      t = p.getTable()
+      md = p.getMD()
+
+      if md.nrows() > 0
+        createCopy = () => md.each (row) -> row.clone()
+      else if @md.nrows() > 0
+        createCopy = () => [@md.get(0).clone()]
+      else
+        createCopy = () -> new gg.data.Row(new gg.data.Schema)
+
+      subpartitions = t.partition cols
+
+      for t in subpartitions
+        keyschema = t.schema.project cols
+        keyrow = new gg.data.Row keyschema
+        for col in cols
+          keyrow.set col, t.get(0, col)
+
+        rows = _.map createCopy(), (row) -> row.merge keyrow
+        newmd = gg.data.RowTable.fromArray rows
+        newpartitions.push new gg.data.PairTable(t, newmd)
+
+    new gg.data.TableSet newpartitions
   
   getTable: -> @table
   getMD: -> @md
+  clone: -> new gg.data.PairTable @getTable().clone(), @getMD().clone()

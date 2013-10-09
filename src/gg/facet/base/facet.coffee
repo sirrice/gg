@@ -35,6 +35,7 @@ class gg.facet.base.Facets
   @facetXKey = "facet-x"
   @facetYKey = "facet-y"
   @facetXYKeys = "facet-xy"
+  @facetKeys = ["facet-x", "facet-y"]
   @facetId = "facet-id"
 
   constructor: (@g, @spec={}) ->

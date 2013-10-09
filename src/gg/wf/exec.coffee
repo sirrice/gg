@@ -26,7 +26,6 @@ class gg.wf.Exec extends gg.wf.Node
     partitions = tableset.partition @params.get('key')
     iterator = (pairtable, cb) ->
       compute pairtable, params, cb
-
     async.map partitions, iterator, (err, pairtables) =>
       throw Error err if err?
       result = new gg.data.TableSet pairtables

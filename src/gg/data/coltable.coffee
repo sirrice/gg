@@ -20,7 +20,7 @@ class gg.data.ColTable extends gg.data.Table
   cloneDeep: -> @cloneShallow()
 
   addConstColumn: (col, val, type=null) ->
-    if @schema.has col
+    if @has col
       throw Error "#{col} already exists in schema #{@schema.toString()}"
     
     type = gg.data.Schema.type(val) unless type?
@@ -30,7 +30,7 @@ class gg.data.ColTable extends gg.data.Table
     @
 
   addColumn: (col, vals, type=null) ->
-    if @schema.has col
+    if @has col
       throw Error "#{col} already exists in schema #{@schema.toString()}"
     if vals.length != @nrows()
       throw Error "vals length != table length.  #{vals.length} != #{@nrows()}"
@@ -45,6 +45,12 @@ class gg.data.ColTable extends gg.data.Table
     @cols[@schema.index col] = vals
     @
 
+  rmColumn: (col) ->
+    return @ unless @has col
+    idx = @schema.index col
+    @cols.splice idx, 1
+    @schema = @schema.exclude col
+    @
 
   # @param raw { } object or a gg.data.Row
   addRow: (raw) ->
@@ -60,7 +66,7 @@ class gg.data.ColTable extends gg.data.Table
         throw Error "col #{col} not in schema: #{@schema.toString()}"
     else
       rowdata = _.map @cols, (coldata) -> coldata[idx]
-      new gg.data.Row rowdata, @schema
+      new gg.data.Row @schema, rowdata
 
   getCol: (col) -> @getColumn col
   getColumn: (col) -> @cols[@schema.index col]

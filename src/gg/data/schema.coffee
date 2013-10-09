@@ -45,11 +45,21 @@ class gg.data.Schema
       throw Error "can't update #{col} because type not unknown: #{@type col}"
 
   project: (cols) ->
+    cols = _.compact _.flatten [cols]
     types = _.map cols, (col) => 
       unless @has col
         throw Error("col #{col} not in schema")
       @types[@index col]
     new gg.data.Schema(cols, types)
+
+  # removes col, preserves ordering
+  exclude: (col) ->
+    idx = @index col
+    cols = _.clone(@cols)
+    types = _.clone(@types)
+    cols.splice idx, 1
+    types.splice idx, 1
+    new gg.data.Schema cols, types
 
   type: (col) -> @types[@index col]
 
@@ -61,6 +71,13 @@ class gg.data.Schema
     else
       col of @col2idx
 
+  merge: (other) ->
+    return unless _.isType other, gg.data.Schema
+    for col in other.cols
+      unless @has col
+        @addColumn col, other.type(col)
+    @
+
   @merge: (schemas) ->
     schemas = _.flatten arguments
     schema = null
@@ -71,6 +88,7 @@ class gg.data.Schema
         for [col, type] in _.zip(curschema.cols, curschema.types)
           schema.addColumn col, type
     schema
+
 
   # @return type object { type: , schema:  }
   @type: (v) ->
@@ -90,7 +108,7 @@ class gg.data.Schema
 
     for row in rows[0...50]
       if _.isType row, gg.data.Row
-        row.merge(row.schema) 
+        schema.merge(row.schema) 
       else
         for k, v of row
           schema.addColumn k, @type(v)

@@ -1,41 +1,41 @@
 #<< gg/wf/node
 
 #
-# The nested structure of the data objects is preserved, but 
-# temporarily flattens the @inputs for the @compute function
+# Multiinput -> tableset -> compute -> tableset -> multioutput
 #
-# @compute(tables) -> tables
-# The compute function takes a list of N tables and outputs N tables
-# such that the positions of the input and output tables match up
-#
+# Adds a hidden column (_barrier) to the data to track input and output ports
+# 
 class gg.wf.Barrier extends gg.wf.Node
   @ggpackage = "gg.wf.Barrier"
   @type = "barrier"
 
-
-  compute: (tablesets, params) -> tablesets
+  compute: (tableset, params, cb) -> cb null, tableset
 
   run: ->
     throw Error("Node not ready") unless @ready()
 
-    tableset = new gg.data.TableSet @inputs
-    partitions = tableset.partition @params.get('keys')
-    @compute partitions, @params
+    pairtables = _.map @inputs, (pt, idx) ->
+      t = pt.getTable()
+      t = t.addConstColumn '_barrier', idx
+      md = pt.getMD()
+      md = md.addConstColumn '_barrier', idx
+      new gg.data.PairTable t, md
 
+    tableset = new gg.data.TableSet pairtables
+    @compute tableset, @params, (err, tableset) =>
+      ps = gg.data.Transform.partitionJoin tableset.getTable(), tableset.getMD(), '_barrier'
+      for p in ps
+        idx = p['key']
+        result = p['table']
+        t = result.getTable().rmColumn '_barrier'
+        console.log t
+        result = new gg.data.PairTable t, result.getMD()
+        @output idx, result
 
-    [flat, md] = gg.wf.Inputs.flatten @inputs
-    datas = @compute flat, @params
-    outputs = gg.wf.Inputs.unflatten datas, md
-
-    # XXX: Write provenance.  assume input and output datas 
-    #      1) are the same (number and ids)
-    #      2) retain the same path
-    # XXX: Alternative -- @compute writes provenance
-    pstore = @pstore()
-    gg.wf.Inputs.mapLeaves @inputs, (data, path) ->
-      pstore.writeData path, path
-
-    for output, idx in outputs
-      @output idx, output
-    outputs
-
+        
+  @create: (params, f) ->
+    params ?= {}
+    class Klass extends gg.wf.Barrier
+      compute: (args...) -> f args...
+    new Klass 
+      params: params

@@ -8,12 +8,14 @@ class gg.data.Row
 
   # @param data [ value,... ]
   # @param schema 
-  constructor: (@data, @schema) ->
+  constructor: (@schema, @data=null) ->
     @log = gg.data.Row.log
     unless @schema?
       throw Error "Row needs a schema"
+    
+    @data ?= _.times @schema.ncols(), () -> null
     unless @data.length == @schema.ncols()
-      throw Error "ncols in row != schema  #{@data.length} != #{@schema.ncols()}"
+      @log.warn "ncols in row != schema  #{@data.length} != #{@schema.ncols()}"
 
   cols: -> @schema.cols
   has: (col, type=null) -> @schema.has col, type
@@ -23,20 +25,25 @@ class gg.data.Row
   project: (cols) ->
     schema = @schema.project cols
     data = _.map cols, (col) => @get col
-    new gg.data.Row data, schema
+    new gg.data.Row schema, data
 
-  merge: (row) ->
+  # @param cols columns to merge into this row.  if null, merges all
+  merge: (row, cols=null) ->
     unless _.isType row, gg.data.Row
       throw Error "can't merge non row"
-    cols = _.reject(schema.cols, (col) => @col.has col)
-    vals = _.map cols, (col) -> row.get col
-    @data.push.apply @data, vals
-    @schema.merge row.schema
-    @
+    cols ?= row.schema.cols
+    schema = @schema.clone()
+    schema.merge row.schema
+    ret = new gg.data.Row schema
+    for col in @schema.cols
+      ret.set col, @get(col)
+    for col in cols
+      ret.set col, row.get(col)
+    ret
 
   clone: ->
     data = _.clone @data
-    new gg.data.Row data, @schema
+    new gg.data.Row @schema, data
 
   toString: ->
     o = _.o2map @schema.cols, (col) => [col, @get col]
@@ -60,7 +67,7 @@ class gg.data.Row
     for col in schema.cols
       idx = schema.index col
       data[idx] = o[col]
-    new gg.data.Row data, schema
+    new gg.data.Row schema, data
 
 
 

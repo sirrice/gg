@@ -9,7 +9,73 @@ Schema = gg.data.Schema
 Transform = gg.data.Transform
 Table = gg.data.Table
 
+
+
+
+createSimplePairTable = -> 
+  left = Table.fromArray [
+    { x: 1, y: 1, l: 1}
+    { x: 1, y: 2, l: 1}
+    { x: 2, y: 2, l: 3}
+    { x: 2, y: 3, l: 2}
+  ]
+  right = Table.fromArray [
+    { x: 1, l: 1, z: 0 }
+    { x: 1, l: 3, z: 1 }
+    { x: 2, l: 2, z: 2 }
+    { x: 2, l: 1, z: 3 }
+  ]
+
+  new gg.data.PairTable left, right
+
+createSimpleTableSet = ->
+  left = Table.fromArray [
+    { x: 1, y: 1, l: 1}
+    { x: 1, y: 2, l: 1}
+  ]
+  right = Table.fromArray [
+    { x: 1, l: 1, z: 0 }
+    { x: 1, l: 3, z: 1 }
+  ]
+  pt1 = new gg.data.PairTable left, right
+
+  left = Table.fromArray [
+    { x: 2, y: 2, l: 3}
+    { x: 2, y: 3, l: 2}
+  ]
+  right = Table.fromArray [
+    { x: 2, l: 2, z: 2 }
+    { x: 2, l: 1, z: 3 }
+  ]
+  pt2 = new gg.data.PairTable left, right
+
+  new gg.data.TableSet [pt1, pt2]
+
+checkEnsure =
+  "when ensured on x,y":
+    topic: (ptable) -> ptable.ensure ['x', 'y']
+    "md": 
+      topic: (tset) -> tset.getMD()
+      "has 8 rows": (md) -> assert.equal md.nrows(), 8
+      "correct number of ys": (md) ->
+        ps = md.partition 'y'
+        for p in ps
+          if p.get(0, 'y') in [1, 3]
+            assert.equal p.nrows(), 2
+          else 
+            assert.equal p.nrows(), 4
+
+
+
 suite.addBatch
+  "ensure pairtable":
+    _.extend({topic: createSimplePairTable},
+      checkEnsure)
+
+  "ensure tableset":
+    _.extend({topic: createSimpleTableSet},
+      checkEnsure)
+
   "pair table": 
     topic: ->
       lschema = Schema.fromJSON
@@ -35,6 +101,7 @@ suite.addBatch
       "has 2 partitions": (table) ->
         partitions = table.partition 'j1'
         assert.equal partitions.length, 2
+
 
   "table set": 
     topic: ->

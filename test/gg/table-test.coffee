@@ -94,6 +94,25 @@ schemaCheck =
     table = table.addColumn "d", _.range(table.nrows())
     assert.equal table.ncols(), 6
 
+  "after adding column 't'":
+    topic: (table) ->
+      table.clone().addConstColumn 't', 99
+    "has 't'": (table) ->
+      table.each (row) ->
+        assert.equal row.get('t'), 99
+
+    "after removing column 't'":
+      topic: (table, orig) -> [table.rmColumn('t'), orig]
+
+      "dosent have t": ([table, orig]) ->
+        for i in [0...table.nrows()]
+          r1 = table.get i
+          assert.false r1.has('t')
+          r2 = orig.get i
+          for col in table.schema.cols
+            assert.equal r1.get(col), r2.get(col)
+
+
   "with function column":
     topic: ->
       rows = _.map _.range(20), (i) ->

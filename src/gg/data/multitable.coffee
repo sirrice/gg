@@ -40,6 +40,10 @@ class gg.data.MultiTable extends gg.data.Table
       offset += t.nrows()
     new gg.data.MultiTable null, @tables
 
+  rmColumn: (col) ->
+    tables = _.map @tables, (t) -> t.rmColumn col
+    new gg.data.MultiTable null, tables
+
   addRow: (row) ->
     row = gg.data.Row.toRow row
     if @tables.length == 0
@@ -49,7 +53,7 @@ class gg.data.MultiTable extends gg.data.Table
     @
 
   get: (idx, col=null) ->
-    for t in @tables
+    for t, tidx in @tables
       if idx < t.nrows()
         return t.get idx, col
       idx -= t.nrows()

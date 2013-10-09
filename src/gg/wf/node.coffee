@@ -54,7 +54,7 @@ class gg.wf.Node extends events.EventEmitter
     @parseSpec()
 
   parseSpec: -> 
-    @params.ensure 'keys', [], null
+    @params.ensure 'keys', ['key'], null
 
   # inputs is an array, one for each parent
   setup: (@nParents, @nChildren) ->

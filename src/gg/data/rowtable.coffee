@@ -56,6 +56,15 @@ class gg.data.RowTable extends gg.data.Table
       row[idx] = vals[idx]
     @
 
+  rmColumn: (col) ->
+    return @ unless @has col
+    rmidx = @schema.index col
+    for row in @rows
+      row.splice rmidx, 1
+
+    @schema = @schema.exclude col
+    @
+
 
   # accepts an array of values (must conform with schema), {} objects, or a Row object
   addRow: (row, pad=no) ->
@@ -94,7 +103,7 @@ class gg.data.RowTable extends gg.data.Table
         else
           throw Error "col #{col} not in schema: #{@schema.toString()}"
       else
-          new gg.data.Row @rows[idx], @schema
+          new gg.data.Row @schema, @rows[idx]
     else
       null
 

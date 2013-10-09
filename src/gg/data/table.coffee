@@ -54,6 +54,11 @@ class gg.data.Table
     @each (row) -> ret.push row.toJSON()
     ret
 
+  partition: (cols) ->
+    partitions = gg.data.Transform.split @, cols
+    _.map partitions, (p) -> p['table']
+
+
   has: (col, type) -> @contains col, type
   contains: (col, type) -> @schema.has col, type
   hasCols: (cols, types=null) ->

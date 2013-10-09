@@ -59,6 +59,9 @@ class gg.data.Transform
     _.map groups, (newtable, jsonkey) ->
       { key: keys[jsonkey], table: newtable }
     ###
+
+  # alias for @split
+  @partition: (args...) -> @split args...
       
   # create new table containing the (exact same)
   # rows from current table, with rows failing the filter
@@ -69,36 +72,41 @@ class gg.data.Transform
       newt.addRow row if f(row, idx)
     newt
 
+  @exclude: (table, cols) ->
+    cols = _.flatten [cols]
+    keep = _.reject table.schema.cols, (col) -> col in cols
+    @map table, keep
+
+  # add @param mapping to schema
   @transform: (table, mapping) ->
     schema = new gg.data.Schema
     for col in table.schema.cols
       unless col of mapping
-        mapping[col] = (row) -> row.get col
+        mapping[col] = ((col) -> (row) -> row.get col)(col)
     @map table, mapping
 
-
+  # return schema with ONLY mapping
   @map: (table, mapping) ->
-    rows = table.each (row, idx) ->
-      _.o2map mapping, (f, k) ->
-        v = try
-          f row, idx
-        catch err
-          console.log row.raw()
-          console.log f.toString()
-          console.log err
-          throw err
-        [k, v]
-    table.constructor.fromArray rows
+    iter = table.iterator()
+    idx = 0
+    newrows = []
+    while iter.hasNext()
+      row = iter.next()
+      o = _.o2map mapping, (f, k) ->
+        [k, f(row, idx)]
+      idx += 1
+      newrows.push o
+    table.constructor.fromArray newrows
         
     
   # Equijoin + partition on join columns
   # @return Array[{key:, table: pairtable}]
   @partitionJoin: (t1, t2, joincols) ->
     joincols = _.flatten [joincols]
-    unless t1.hasCols(joincols)
-      throw Error "left table doesn't have all columns: #{joincols} not in #{t1.schema.toString()}"
-    unless t2.hasCols(keys)
-      throw Error "right table doesn't have all columns: #{joincols} not in #{t2.schema.toString()}"
+    #unless t1.hasCols(joincols)
+    #  throw Error "left table doesn't have all columns: #{joincols} not in #{t1.schema.toString()}"
+    #unless t2.hasCols(keys)
+    #  throw Error "right table doesn't have all columns: #{joincols} not in #{t2.schema.toString()}"
 
     ht1 = @buildHT t1, joincols
     ht2 = @buildHT t2, joincols
