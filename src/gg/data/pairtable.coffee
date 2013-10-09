@@ -44,7 +44,7 @@ class gg.data.PairTable
       else if @md.nrows() > 0
         createCopy = () => [@md.get(0).clone()]
       else
-        createCopy = () -> new gg.data.Row(new gg.data.Schema)
+        createCopy = () -> [new gg.data.Row(new gg.data.Schema())]
 
       subpartitions = t.partition cols
 

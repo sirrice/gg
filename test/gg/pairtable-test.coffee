@@ -79,17 +79,21 @@ checkEnsure =
     topic: (ptable) -> ptable.clone().ensure []
     "md":
       topic: (tset) -> tset.getMD()
-      "print": (md) ->
-        console.log md.raw()
+      "has 4 rows": (md) -> assert.equal md.nrows(), 4
 
 
 
 
 suite.addBatch
   "ensure empty md":
-    _.extend({topic: createEmptyMD},
-      checkEnsure)
-###
+    topic: createEmptyMD
+    "when ensured on nothing":
+      topic: (ptable) -> ptable.clone().ensure []
+      "md":
+        topic: (tset) -> tset.getMD()
+        "has 1 row": (md) ->
+          assert.equal md.nrows(), 1
+
   "ensure pairtable":
     _.extend({topic: createSimplePairTable},
       checkEnsure)
@@ -177,6 +181,5 @@ suite.addBatch
         partitions = table.partition ['j1', 'j2']
         assert.equal partitions.length, 6
 
-###
 
 suite.export module
