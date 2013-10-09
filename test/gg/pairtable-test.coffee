@@ -103,6 +103,21 @@ suite.addBatch
       checkEnsure)
 
 
+  "pair table with dups": 
+    topic: ->
+      leftrows = _.times 10, (i) -> 
+        { id: i % 2, a: i%5, j1: i%2, j2: i%3 }
+      rightrows = _.times 10, (i) -> 
+        { id: i % 2, b: "b-#{i%4}", j1: i%2, j2:i%3 }
+      left = Table.fromArray leftrows
+      right = Table.fromArray rightrows
+      new gg.data.PairTable left, right
+
+    "when fully partitioned should fail": (table) ->
+      assert.throws table.fullPartition
+
+
+
   "pair table": 
     topic: ->
       lschema = Schema.fromJSON
@@ -128,6 +143,11 @@ suite.addBatch
       "has 2 partitions": (table) ->
         partitions = table.partition 'j1'
         assert.equal partitions.length, 2
+
+    "when fully partitioned":
+      topic: (table) ->
+        partitions = table.fullPartition()
+        assert.equal partitions.length, 10
 
 
   "table set": 
@@ -162,9 +182,9 @@ suite.addBatch
         j1: Schema.numeric
         j2: Schema.numeric
       leftrows = _.times 10, (i) -> 
-        { id: i, y: i%5, j1: i%2, j2: i%3 }
+        { id: i+10, y: i%5, j1: i%2, j2: i%3 }
       rightrows = _.times 10, (i) -> 
-        { id: i, z: "b-#{i%4}", j1: i%2, j2:i%3 }
+        { id: i+10, z: "b-#{i%4}", j1: i%2, j2:i%3 }
       left = Table.fromArray leftrows, lschema
       right = Table.fromArray rightrows, rschema
 
@@ -180,6 +200,12 @@ suite.addBatch
       "has 6 parts": (table) ->
         partitions = table.partition ['j1', 'j2']
         assert.equal partitions.length, 6
+
+
+    "when fully partitioned":
+      topic: (table) ->
+        partitions = table.fullPartition()
+        assert.equal partitions.length, 20
 
 
 suite.export module

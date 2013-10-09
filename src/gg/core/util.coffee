@@ -6,40 +6,36 @@ class gg.core.FormUtil
   #
 
   # throws exception if inputs don't validate with schema
-  @validateInput: (data, params, log) ->
-    table = data.table
-    env = data.env
+  @validateInput: (pt, params, log) ->
+    table = pt.getTable()
     return yes unless table.nrows() > 0
-    iSchema = params.get "inputSchema", data, params
+    iSchema = params.get "inputSchema", pt, params
     return unless iSchema?
-    missing = _.reject iSchema, (attr) -> table.contains attr
+
+    missing = _.reject iSchema, (col) -> table.has col
     if missing.length > 0
       if log?
         log log.logname
         gg.wf.Stdout.print table, null, 5, log
       throw Error("#{params.get 'name'}: input schema did not contain #{missing.join(",")}")
+    yes
 
   # adds default values for non-existent attributes in
   # data table.
-  @addDefaults: (data, params, log) ->
-    table = data.table
-    env = data.env
-    defaults = params.get "defaults", data, params
+  @addDefaults: (pt, params, log) ->
+    table = pt.getTable()
+    defaults = params.get "defaults", pt, params
     if log?
-      log "table schema: #{table.schema.toSimpleString()}"
+      log "table schema: #{table.schema.toString()}"
       log "expected:     #{JSON.stringify defaults}"
-    _.each defaults, (val, col) =>
-      unless table.contains col
-        if log?
-          log "adding:      #{col} -> #{val}"
-        table.addConstColumn col, val
 
-  @paneInfo: (data) ->
-    ret =
-      facetX: data.env.get(gg.facet.base.Facets.facetXKey)
-      facetY: data.env.get(gg.facet.base.Facets.facetYKey)
-      layer: data.env.get "layer"
-    ret
+    for col, val of defaults
+      unless table.has col
+        log "adding:   #{col} -> #{val}" if log?
+        table = table.addConstColumn col, val
+    new gg.data.PairTable table, pt.getMD()
+
+
 
   @scales: (data) ->
     env = data.env
@@ -53,15 +49,6 @@ class gg.core.FormUtil
   #
   # Multi-data methods
   #
-
-
-  @multiAddDefaults: (datas, params, log) ->
-    for data in datas
-      gg.core.FormUtil.addDefaults data, params, log
-
-  @multiValidateInput: (datas, params) ->
-    for data in datas
-      gg.core.FormUtil.validateInput data, params
 
   @scalesList: (datas) ->
     _.map datas, (data) -> data.env.get 'scales'

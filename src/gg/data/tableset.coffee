@@ -13,7 +13,6 @@ class gg.data.TableSet extends gg.data.PairTable
           return no
     yes
 
-  # can only partition on columns present in every table!
   partition: (cols) ->
     cols = _.compact _.flatten [cols]
     #unless @checkSchema cols

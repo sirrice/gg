@@ -50,10 +50,10 @@ class gg.core.XForm extends gg.wf.Exec
     # wrap compute in a verification method
     compute = @spec.f or @compute.bind(@)
     log = @log.bind(@)
-    @compute = (data, params) ->
-      gg.core.FormUtil.addDefaults data, params, log
-      gg.core.FormUtil.validateInput data, params, log
-      compute data, params
+    @compute = (pt, params, cb) ->
+      pt = gg.core.FormUtil.addDefaults pt, params, log
+      gg.core.FormUtil.validateInput pt, params, log
+      compute pt, params, cb
 
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?
@@ -69,17 +69,13 @@ class gg.core.XForm extends gg.wf.Exec
   #
 
   # Defaults for optional attributes
-  defaults: (data, params) -> {}
+  defaults: (pt, params) -> {}
 
   # Required input schema
-  inputSchema: (data, params) -> []
+  inputSchema: (pt, params) -> []
 
   # Expected output schema
-  outputSchema: (data, params) -> data.table.schema
-
-
-  paneInfo: (args...) -> gg.core.FormUtil.paneInfo args...
-  scales: (args...) -> gg.core.FormUtil.scales args...
+  outputSchema: (pt, params) -> pt.tableSchema()
 
   compile: ->
     nodes = []

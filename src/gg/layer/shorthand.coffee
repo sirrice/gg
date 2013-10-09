@@ -147,12 +147,11 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes = []
 
     # add environment variables
-    nodes.push new gg.xform.EnvPut
-      name: "layer-envput-#{@layerIdx}"
-      params:
-        pairs:
-          layer: @layerIdx
-          posMapping: @geom.posMapping()
+    gg.wf.Exec.create {}, (pt, params, cb) =>
+      md = pt.getMD()
+      md.addConstColumn 'layer', @layerIdx
+      md.addConstColumn 'posMapping', @geom.posMapping()
+      new gg.data.PairTable pt.getTable(), md
 
 
     nodes.push @compilePrestats()
@@ -177,18 +176,17 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
 
   compilePrestats: ->
-    nodes = []
+    nodes = [
+      @makeStdOut "init-data"
+      @map
+      @makeStdOut "post-map-#{@layerIdx}"
+      new gg.xform.ScalesSchema
+        name: "scales-schema-#{@layerIdx}"
+        params:
+          config: @g.scales.scalesConfig
+      @makeStdOut "post-scaleschema"
 
-    # pre-stats transforms
-    nodes.push @makeStdOut "init-data"
-    nodes.push @map
-    nodes.push @makeStdOut "post-map-#{@layerIdx}"
-    nodes.push new gg.xform.ScalesSchema
-      name: "scales-schema-#{@layerIdx}"
-      params:
-        config: @g.scales.scalesConfig
-    nodes.push @makeStdOut "post-scaleschema"
-    nodes
+    ]
 
   compileStats: ->
     nodes = []

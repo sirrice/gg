@@ -7,9 +7,10 @@
 class gg.xform.ScalesSchema extends gg.core.XForm
   @ggpackage = "gg.xform.ScalesSchema"
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
+
     scaleset = @scales data, params
     posMapping = env.get 'posMapping'
     log = @log

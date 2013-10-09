@@ -23,10 +23,10 @@ class gg.core.BForm extends gg.wf.Barrier
     # wrap compute in a verification method
     compute = @spec.f or @compute.bind(@)
     log = @log.bind(@)
-    @compute = (datas, params) ->
-      gg.core.FormUtil.multiAddDefaults datas, params, log
-      gg.core.FormUtil.multiValidateInput datas, params
-      compute datas, params
+    @compute = (tableset, params, cb) ->
+      tableset = gg.core.FormUtil.addDefaults tableset, params, log
+      gg.core.FormUtil.validateInput tableset, params
+      compute tableset, params, cb
 
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?
@@ -38,13 +38,13 @@ class gg.core.BForm extends gg.wf.Barrier
 
 
   # Defaults for optional attributes
-  defaults: (data, params) -> {}
+  defaults: (tableset, params) -> {}
 
   # Required input schema
-  inputSchema: (data, params) -> []
+  inputSchema: (tableset, params) -> []
 
   # Expected output schema
-  outputSchema: (data, params) -> data.table.schema
+  outputSchema: (tableset, params) -> data.table.schema
 
   paneInfo: (args...) -> gg.core.FormUtil.paneInfo args...
   scalesList: (args...) -> gg.core.FormUtil.scalesList args...

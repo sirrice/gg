@@ -7,11 +7,6 @@ class gg.data.PairTable
     @table ?= new gg.data.RowTable(new gg.data.Schema())
     @md ?= new gg.data.RowTable(new gg.data.Schema())
 
-    @cols = _.uniq _.flatten [@table.cols(), @md.cols()]
-    @sharedCols = _.filter @cols, (col) =>
-      (@table.has(col) and 
-        @md.has(col) and 
-        (@table.schema.type(col) == @md.schema.type(col)))
     @tableOnlyCols = _.filter @cols, (col) =>
       @table.has(col) and not @md.has(col)
     @mdOnlyCols = _.filter @cols, (col) =>
@@ -21,9 +16,29 @@ class gg.data.PairTable
     @schema = new gg.data.Schema @sharedCols, @types
 
 
+  sharedCols: ->
+    tSchema = @tableSchema()
+    mSchema = @mdSchema()
+    cols = _.uniq _.flatten [tSchema.cols, mSchema.cols]
+    sharedCols = _.filter cols, (col) =>
+      (tSchema.has(col) and mSchema.has(col) and 
+       (tSchema.type(col) == mSchema.type(col)))
+    sharedCols
+
   partition: (joincols) ->
     ps = gg.data.Transform.partitionJoin @table, @md, joincols
     _.map ps, (o) -> o['table']
+
+  # partition on _all_ of the shared columns
+  # 
+  # enforces invariant: each md should have a _single_ row
+  fullPartition: -> 
+    partitions = @partition @sharedCols()
+    for p in partitions
+      md = p.getMD()
+      if md.nrows() != 1
+        throw Error("fullpartition: md.nrows (#{md.nrows()}) != 1.\t#{md.toString()}")
+    partitions
 
   # ensures there MD tuples for each unique combination of keys
   # if MD partition has records, clone any record and overwrite keys
