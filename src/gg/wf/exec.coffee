@@ -23,9 +23,13 @@ class gg.wf.Exec extends gg.wf.Node
     pstore = @pstore()
 
     tableset = new gg.data.TableSet @inputs
-    partitions = tableset.partition @params.get('key')
+    partitions = tableset.fullPartition()
+    #partitions = tableset.partition @params.get('key')
     iterator = (pairtable, cb) ->
-      compute pairtable, params, cb
+      try
+        compute pairtable, params, cb
+      catch err
+        cb err, null
     async.map partitions, iterator, (err, pairtables) =>
       throw Error err if err?
       result = new gg.data.TableSet pairtables
@@ -42,5 +46,35 @@ class gg.wf.Exec extends gg.wf.Node
 
 
 
+
+
+# Assumes @compute runs synchronously and errors come from
+# exceptions
+#
+# @compute should _not_ accept not call the callback
+#
+class gg.wf.SyncExec extends gg.wf.Exec
+  parseSpec: ->
+    super
+    f = @params.get 'compute'
+    f ?= @compute.bind(@)
+    compute = (pairtable, params, cb) ->
+      try
+        res = f pairtable, params, () ->
+          throw Error "SyncExec should not call callback"
+        cb null, res
+      catch err
+        cb err, pairtable
+    @params.put 'compute', compute
+
+  compute: (pairtable, params, cb) -> pairtable
+
+  @create: (params=null, compute) ->
+    params ?= new gg.util.Params
+    class Klass extends gg.wf.SyncExec
+      compute: (pairtable, params, cb) ->
+        compute pairtable, params, cb
+    new Klass
+      params: params
 
 

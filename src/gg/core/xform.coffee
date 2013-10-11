@@ -21,7 +21,7 @@
 # }
 #
 #
-class gg.core.XForm extends gg.wf.Exec
+class gg.core.XForm extends gg.wf.SyncExec
   @ggpackage = 'gg.core.XForm'
   @log = gg.util.Log.logger @ggpackage, @ggpackage.substr(@ggpackage.lastIndexOf(".")+1)
 
@@ -50,10 +50,12 @@ class gg.core.XForm extends gg.wf.Exec
     # wrap compute in a verification method
     compute = @spec.f or @compute.bind(@)
     log = @log.bind(@)
-    @compute = (pt, params, cb) ->
+    @compute = (pt, params) ->
       pt = gg.core.FormUtil.addDefaults pt, params, log
       gg.core.FormUtil.validateInput pt, params, log
-      compute pt, params, cb
+      compute pt, params
+
+    super
 
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?

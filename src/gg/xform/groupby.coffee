@@ -24,6 +24,7 @@ class gg.xform.GroupBy extends gg.core.XForm
       nBins: [["nbins", "bin", "n", "nbin", "bins"], 20]
 
     gbAttrs = @params.get "gbAttrs"
+    gbAttrs = _.compact _.flatten [gbAttrs]
     throw Error() if gbAttrs.length is 0
 
     # nBins keeps track of the number of distinct values for each
@@ -37,13 +38,13 @@ class gg.xform.GroupBy extends gg.core.XForm
 
     super
 
-  inputSchema: (data, params) ->
+  inputSchema: (pairtable, params) ->
     params.get("gbAttrs")
 
-  outputSchema: (data, params) ->
+  outputSchema: (pairtable, params) ->
     gbAttrs = params.get "gbAttrs"
     aggFuncs = params.get "aggFuncs"
-    schema = data.table.schema
+    schema = pairtable.tableSchema()
 
     # XXX: assume that the aggregate functions output numeric types
     spec = {}
@@ -52,160 +53,81 @@ class gg.xform.GroupBy extends gg.core.XForm
     for gbAttr in gbAttrs
       spec[gbAttr] = schema.type gbAttr
 
-    gg.data.Schema.fromSpec spec
+    gg.data.Schema.fromJSON spec
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
     origSchema = table.schema
-    scales = env.get "scales"
+
+    scales = md.get 0, 'scales'
     gbAttrs = params.get "gbAttrs"
     aggFuncs = params.get "aggFuncs"
     nBins = params.get "nBins"
 
-    grouper = @constructor.getGrouper gbAttrs, origSchema, scales, nBins
-    bins = new gg.xform.Bins grouper.nBins, aggFuncs
 
-    schema = @outputSchema data, params
-    data.table = @constructor.groupBy table, bins, grouper, schema
-    gg.wf.Stdout.print data.table, null, 5, @log
-    data
+    @log "scales: #{scales.toString()}"
+    @log "get mapping functions on #{gbAttrs}, #{nBins}"
+    mapping = gg.xform.GroupBy.getMappingFunctions(
+      gbAttrs, origSchema, nBins, scales)
+    table = gg.data.Transform.transform table, mapping
+    partitions = gg.data.Transform.partition table, gbAttrs
+    rows = _.map partitions, (p) ->
+      gg.xform.GroupBy.aggregatePartition(aggFuncs, p['table'])
+
+    outputSchema = params.get('outputSchema') pairtable, params
+    newtable = gg.data.Table.fromArray rows, outputSchema
+    #gg.wf.Stdout.print data.table, null, 5, @log
+    new gg.data.PairTable newtable, md
+
+  @aggregatePartition: (aggFuncs, table) ->
+    aggVals = _.o2map aggFuncs, (spec, name) ->
+      agg = gg.xform.Aggregate.fromSpec spec
+      v = agg.compute table
+      [name, v]
+    row = table.get(0).raw()
+    _.extend row, aggVals
+    row
 
 
-
-  @getGrouper: (gbAttrs, schema, scales, nBins) ->
-    groupers = _.map gbAttrs, (gbAttr, idx) ->
+  @getMappingFunctions: (gbAttrs, schema, nBins, scales) ->
+    _.o2map gbAttrs, (gbAttr, idx) ->
       type = schema.type gbAttr
       scale = scales.scale gbAttr, type
       domain = scale.domain()
-      new gg.xform.SingleKeyGrouper gbAttr, type, domain, nBins[idx]
-    grouper = new gg.xform.MultiKeyGrouper groupers
-    @log "group has #{grouper.nBins} bins"
-    @log "groupBins: #{grouper.groupBins}"
-    grouper
+      keyF = gg.xform.GroupBy.getMappingFunction(
+        gbAttr, type, nBins[idx], scale)
+      [gbAttr, keyF]
 
-  @groupBy: (table, bins, grouper, schema) ->
-    # First pass compute aggregates
-    table.each (row) ->
-      idx = grouper.toBinidx row
-      for aggName, agg of bins.get(idx)
-        agg.update row
+  @getMappingFunction = (col, type, nbins, scale) ->
+    domain = scale.domain()
+    toKey = (row) -> row.get col
 
-    # turn each aggregate into row in new table
-    rows = []
-    for bin, binidx in bins.validBins()
-      row = {}
-      vals = grouper.fromBinidx binidx
-      _.each vals, (val, idx) ->
-        row[grouper.groupers[idx].name] = val
-
-      for aggName, agg of bin
-        row[aggName] = agg.value()
-      rows.push row
-
-    new gg.data.RowTable schema, rows
-
-class gg.xform.Bins 
-  constructor: (@maxBins, @aggFuncs) ->
-    @bins = _.times @maxBins, () -> null
-
-  # retrieve and/or create a new bin
-  get: (idx) ->
-    if idx < 0 or idx >= @maxBins
-      throw Error
-    unless @bins[idx]?
-      @bins[idx] = @newBin()
-
-    @bins[idx]
-
-  validBins: -> _.compact @bins
-
-  # Construct a new bin containing the aggregate functions to apply to 
-  # the tuples that fall in the bin
-  newBin: ->
-    _.o2map @aggFuncs, (funcName, attrName) ->
-      [attrName, gg.xform.Aggregate.fromSpec(funcName)]
-
-
-
-class gg.xform.SingleKeyGrouper
-  @ggpackage = "gg.xform.SingleKeyGrouper"
-
-  constructor: (@col, @type, @domain, nbins=5) ->
-    @log = gg.util.Log.logger @constructor.ggpackage, "1KeyGrouper"
-    @name = @col
-
-    @log "col: #{@col}, domain: #{@domain}"
-    @log "nbins: #{nbins}"
-    @setup nbins
-
-  # compute the value -> bin mapping functions given the data type
-  setup: (nbins) ->
-    switch @type
+    switch type
       when gg.data.Schema.ordinal
-        xtoidx = _.o2map @domain, (x, idx) -> [x, idx]
-        @nBins = @domain.length
-        @toBinidx = (row) => xtoidx[row.get @col]
-        @fromBinidx = (idx) => @domain[idx]
+        toKey = (row) -> row.get col
 
       when gg.data.Schema.numeric
-        [minD, maxD] = [@domain[0], @domain[1]]
+        [minD, maxD] = [domain[0], domain[1]]
         binRange = (maxD - minD) * 1.0
         binSize = Math.ceil(binRange / nbins)
-        @nBins = Math.ceil(binRange / binSize) + 1
-        @toBinidx = (row) => 
-          Math.floor((row.get(@col)+(binSize/2)-minD) / binSize)
-        @fromBinidx = (idx) -> (idx * binSize) + minD - (binSize / 2)
-
+        toKey = (row) -> 
+          idx = Math.floor((row.get(col)+(binSize/2)-minD) / binSize)
+          (idx * binSize) + minD - (binSize / 2)
 
       when gg.data.Schema.date
-        @domain = [@domain[0].getTime(), @domain[1].getTime()]
-        [minD, maxD] = [@domain[0], @domain[1]]
+        domain = [domain[0].getTime(), domain[1].getTime()]
+        [minD, maxD] = [domain[0], domain[1]]
         binRange = (maxD - minD) * 1.0
         binSize = Math.ceil(binRange / nbins)
-        @nBins = Math.ceil(binRange/binSize) + 1
-        @toBinidx = (row) => 
-          Math.floor((row.get(@col).getTime()-minD) / binSize)
-        @fromBinidx = (idx) => 
+        toKey = (row) ->
+          time = row.get(col).getTime()
+          idx = Math.floor((time-minD) / binSize)
           date = (idx * binSize) + minD + binSize/2
           new Date date
 
       else
-        throw Error("I don't support binning on col type: #{@type}")
-    
+        throw Error("I don't support binning on col type: #{type}")
 
-    
-class gg.xform.MultiKeyGrouper
-  @ggpackage = "gg.xform.MultiKeyGrouper"
-
-  constructor: (@groupers) ->
-    @log = gg.util.Log.logger @constructor.ggpackage, "MultiGrouper"
-    @groupBins = _.map @groupers, (grouper) -> grouper.nBins
-
-    @nBins = 1
-    @multipliers = []
-    for n, idx in @groupBins
-      @multipliers.push @nBins
-      @nBins *= n
-
-    @log "multipliers: #{@multipliers}"
-
-  toBinidx: (row) ->
-    ret = 0
-    for grouper, idx in @groupers
-      ret += grouper.toBinidx(row) * @multipliers[idx]
-    ret
-
-  fromBinidx: (binIdx) ->
-    ret = []
-    for idx in _.range(@multipliers.length-1, -1, -1)
-      mult = @multipliers[idx]
-      grouper = @groupers[idx]
-      grouperIdx = Math.floor(binIdx / mult)
-      binIdx = binIdx - (grouperIdx * mult)
-      ret.push grouper.fromBinidx grouperIdx
-    ret.reverse()
-
-
-
+    toKey
 

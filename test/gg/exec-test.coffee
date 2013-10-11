@@ -67,6 +67,28 @@ createAggExec = ->
     pairtable = new gg.data.PairTable t, pairtable.getMD()
     cb null, pairtable
 
+createSyncExec = ->
+  gg.wf.SyncExec.create null,  (pt, params) ->
+    t = pt.getTable().addConstColumn 'z', 99
+    new gg.data.PairTable t, pt.getMD()
+
+syncExec = 
+  topic: createSyncExec
+  "when run":
+    topic: (node) ->
+      promise = new events.EventEmitter
+      rows = _.times 10, (i) -> {a: i%2, b: i}
+      table = gg.data.Table.fromArray rows
+      node.on 'output', (id, idx, pt) ->
+        promise.emit 'success', pt
+      node.setInput 0, new gg.data.PairTable(table)
+      node.run()
+      promise
+
+    "has z column": (pt) ->
+      pt.getTable().each (row) ->
+        assert.equal row.get('z'), 99
+
 
 
 aggexecPairTable = 
@@ -124,6 +146,7 @@ suite.addBatch
   createdexec: createdexec
   "group by pairtable": aggexecTSet
   "group by tset": aggexecTSet
+  "synchronous exec": syncExec 
 
 
 suite.export module
