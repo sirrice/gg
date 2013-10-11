@@ -46,34 +46,24 @@ class gg.xform.Mapper extends gg.wf.Exec
     "aesthetic", "aesthetics"
   ]
 
-  constructor: ->
-    super
-
   parseSpec: ->
     @params.ensureAll
       mapping: [gg.xform.Mapper.attrs, {}]
       inverse: [[], @spec.inverse or {}]
-
-    @params.putAll
-      inputSchema: @inputSchema
-      outputSchema: @outputSchema
-    @params.ensure 'klassname', [], @constructor.ggpackage
+    #@params.ensure 'klassname', [], @constructor.ggpackage
     super
 
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
-    @log "transform: #{JSON.stringify params.get 'mapping'}"
-    @log "table:     #{JSON.stringify table.colNames()}"
-    @log table.clone()
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    mapping = params.get 'mapping'
 
-    # resolve aesthetic aliases in mapping
-    functions = _.mappingToFunctions table, params.get('mapping')
-    @log "functions: #{JSON.stringify functions}"
-    table = table.transform functions, yes
-    data.table = table
-    data
+    @log "transform: #{JSON.stringify mapping}"
+    @log "table:     #{JSON.stringify table.schema.toString()}"
+
+    functions = _.mappingToFunctions table, mapping
+    table = gg.data.Transform.transform table, functions
+    new gg.data.PairTable table, pairtable.getMD()
 
   @fromSpec: (spec) ->
     spec = _.clone spec
@@ -87,9 +77,7 @@ class gg.xform.Mapper extends gg.wf.Exec
     # aes should be the mapping
     inverse = spec.inverse
     unless spec.inverse?
-      inverse = {}
-      _.each mapping, (val, key) -> 
-        inverse[val] = key
+      inverse = _.o2map mapping, (v,k) -> [v, k]
     spec.params = 
       aes: mapping
       inverse: inverse

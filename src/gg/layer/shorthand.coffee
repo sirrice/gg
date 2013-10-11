@@ -187,6 +187,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
       @makeStdOut "post-scaleschema"
 
     ]
+    nodes
 
   compileStats: ->
     nodes = []

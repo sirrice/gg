@@ -66,49 +66,8 @@ class gg.core.Data
 
     spec
 
-  @isCsvString: (o) ->
-    _.all [
-      () -> _.isString(o)
-      () -> /\.csv$/.test(o.toLowerCase())
-    ], ((f) -> f())
 
-  @isJDBCString: (o) ->
-    _.all [
-      () -> _.isString(o)
-      () -> /^(postgres|mysql):\/\//.test o.toLowerCase()
-    ], ((f) -> f())
-
-
-  setDefault: (spec) ->
-    @defaults = gg.core.Data.loadSpec spec
-
-  addLayerDefaults: (layer) ->
-    lIdx = layer.layerIdx
-    dataSpec = layer.spec.data
-    @layerDefaults[lIdx] = gg.core.Data.loadSpec dataSpec
-    @specs.layerSpecs[lIdx] = layer.spec
-    @log "addLayer: #{layer.spec}"
-
-
-  data: (layerIdx) ->
-    spec =
-      if layerIdx?
-        @layerDefaults[layerIdx] or @defaults
-      else
-        @defaults
-
-    @log spec
-
-    unless spec?
-      @log.warn "no data defined"
-      return null
-
-    unless spec.type?
-      @log.warn "spec.type not defined"
-      @log.warn spec
-      return null
-
-    # to gg.wf.Source object
+  @spec2Node: (spec) ->
     node = switch spec.type
       when "table"
         new gg.wf.TableSource
@@ -138,6 +97,54 @@ class gg.core.Data
     node
 
 
+
+  @isCsvString: (o) ->
+    _.all [
+      () -> _.isString(o)
+      () -> /\.csv$/.test(o.toLowerCase())
+    ], ((f) -> f())
+
+  @isJDBCString: (o) ->
+    _.all [
+      () -> _.isString(o)
+      () -> /^(postgres|mysql):\/\//.test o.toLowerCase()
+    ], ((f) -> f())
+
+
+
+
+  setDefault: (spec) ->
+    @defaults = gg.core.Data.loadSpec spec
+
+  addLayerDefaults: (layer) ->
+    lIdx = layer.layerIdx
+    dataSpec = layer.spec.data
+    @layerDefaults[lIdx] = gg.core.Data.loadSpec dataSpec
+    @specs.layerSpecs[lIdx] = layer.spec
+    @log "addLayer: #{layer.spec}"
+
+
+
+
+  data: (layerIdx) ->
+    spec =
+      if layerIdx?
+        @layerDefaults[layerIdx] or @defaults
+      else
+        @defaults
+
+    @log spec
+
+    unless spec?
+      @log.warn "no data defined"
+      return null
+
+    unless spec.type?
+      @log.warn "spec.type not defined"
+      @log.warn spec
+      return null
+
+    @constructor.spec2Node spec
 
 
 

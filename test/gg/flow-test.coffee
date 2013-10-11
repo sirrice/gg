@@ -1,21 +1,33 @@
 require "../env"
 vows = require "vows"
 assert = require "assert"
+events = require "events"
 
 makeTable = (nrows=100) ->
-    rows = _.map _.range(nrows), (i) -> {a:1+i, b:i%10, c: i%2, id:i}
-    gg.data.RowTable.fromArray (rows)
+  rows = _.times nrows, (i) -> 
+    a:1+i
+    b:i%10
+    c: i%2
+    d: i%10
+    id:i
+  table = gg.data.Table.fromArray  rows
+  table
 
 
 
 suite = vows.describe "gg.wf.Flow"
+#gg.util.Log.setDefaults '': 0
 
-suite.addBatch
-  ###
+suite.addBatch {
   "Single Node Flow":
       topic: ->
           flow = new gg.wf.Flow
-          flow.exec (table) -> table.transform('b', (v)->v.get('b')*100)
+          flow.exec (pairtable, params, cb) -> 
+            table = pairtable.getTable()
+            table = gg.data.Transform.transform table, 
+              b: (row) -> row.get('b') * 100
+            ret = new gg.data.PairTable table, pairtable.getMD()
+            cb null,ret
           flow
 
       "can print": (flow) ->
@@ -25,12 +37,25 @@ suite.addBatch
       "is instantiated properly": (flow) ->
           root = flow.instantiate()
 
-      "can run": (flow) ->
-          flow.on "output", (id, table) ->
-              assert.isNotNull table
-              table.each (row, rowid) -> assert.equal row.get('b')%100, 0
-          flow.run makeTable(10)
+      "when run": 
+        topic: (flow) ->
+          promise = new events.EventEmitter
+          flow.prepend gg.core.Data.spec2Node
+            type: "table"
+            val: makeTable 10
+          flow.on "output", (id, pt) ->
+            promise.emit "success", pt
+          flow.run()
+          promise
 
+        "is correct": (pt) ->
+          assert.isNotNull pt
+          pt.getTable().each (row) ->
+            assert.equal row.get('b'), row.get('d')*100
+
+}
+
+foo = 
   "Two node flow":
       topic: ->
           flow = new gg.wf.Flow
@@ -145,7 +170,6 @@ suite.addBatch
       topic: ->
           flow = new gg.wf.Flow
 
-  ###
   "MultiBarrier flow":
     topic: ->
       flow = new gg.wf.Flow

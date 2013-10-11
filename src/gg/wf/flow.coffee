@@ -431,7 +431,9 @@ class gg.wf.Flow extends events.EventEmitter
     if _.isSubclass specOrNode, gg.wf.Node
       node = specOrNode
     else if _.isFunction specOrNode
-      node = new klass {f: specOrNode}
+      node = new klass 
+        params:
+          compute: specOrNode
     else
       node = new klass specOrNode
 

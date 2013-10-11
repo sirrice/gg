@@ -14,23 +14,23 @@ class gg.data.TableSet extends gg.data.PairTable
     yes
 
   partition: (cols) ->
-    cols = _.compact _.flatten [cols]
+    cols = _.uniq _.flatten [cols]
     #unless @checkSchema cols
     #throw Error "cols #{cols.join(' ')} not in all schemas"
     
     keys = []
     lefts = {}
     rights = {}
-    for table in @pairtables
+    for pairtable in @pairtables
       ps = gg.data.Transform.partitionJoin(
-        table.getTable(), table.getMD(), cols
+        pairtable.getTable(), pairtable.getMD(), cols
       )
       for p in ps
         key = p['key']
         lefts[key] = [] unless key of lefts
-        lefts[key].push p['table'].table
+        lefts[key].push p['table'].getTable()
         rights[key] = [] unless key of rights
-        rights[key].push p['table'].md
+        rights[key].push p['table'].getMD()
         keys.push key
 
 
