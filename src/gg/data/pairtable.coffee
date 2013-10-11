@@ -43,7 +43,7 @@ class gg.data.PairTable
   # ensures there MD tuples for each unique combination of keys
   # if MD partition has records, clone any record and overwrite keys
   # otherwise use MD schema to create new record
-  ensure: (cols) ->
+  ensure: (cols=[]) ->
     sharedCols = _.filter cols, (col) => @md.schema.has col
     restCols = _.reject cols, (col) => @md.schema.has col
 

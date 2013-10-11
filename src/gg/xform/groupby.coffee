@@ -64,16 +64,17 @@ class gg.xform.GroupBy extends gg.core.XForm
     gbAttrs = params.get "gbAttrs"
     aggFuncs = params.get "aggFuncs"
     nBins = params.get "nBins"
+    GroupBy = gg.xform.GroupBy
+    Transform = gg.data.Transform
 
 
     @log "scales: #{scales.toString()}"
     @log "get mapping functions on #{gbAttrs}, #{nBins}"
-    mapping = gg.xform.GroupBy.getMappingFunctions(
-      gbAttrs, origSchema, nBins, scales)
-    table = gg.data.Transform.transform table, mapping
-    partitions = gg.data.Transform.partition table, gbAttrs
+    mapping = GroupBy.getHashFuncs gbAttrs, origSchema, nBins, scales
+    table = Transform.transform table, mapping
+    partitions = Transform.partition table, gbAttrs
     rows = _.map partitions, (p) ->
-      gg.xform.GroupBy.aggregatePartition(aggFuncs, p['table'])
+      GroupBy.aggregatePartition aggFuncs, p['table']
 
     outputSchema = params.get('outputSchema') pairtable, params
     newtable = gg.data.Table.fromArray rows, outputSchema
@@ -90,16 +91,19 @@ class gg.xform.GroupBy extends gg.core.XForm
     row
 
 
-  @getMappingFunctions: (gbAttrs, schema, nBins, scales) ->
+  # Create hash functions 
+  @getHashFuncs: (gbAttrs, schema, nBins, scales) ->
     _.o2map gbAttrs, (gbAttr, idx) ->
       type = schema.type gbAttr
       scale = scales.scale gbAttr, type
       domain = scale.domain()
-      keyF = gg.xform.GroupBy.getMappingFunction(
+      keyF = gg.xform.GroupBy.getHashFunc(
         gbAttr, type, nBins[idx], scale)
       [gbAttr, keyF]
 
-  @getMappingFunction = (col, type, nbins, scale) ->
+  # Given a table column and its scale, return hash function
+  # that produces the correct number of buckets
+  @getHashFunc = (col, type, nbins, scale) ->
     domain = scale.domain()
     toKey = (row) -> row.get col
 

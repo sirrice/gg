@@ -53,6 +53,7 @@ class gg.core.XForm extends gg.wf.SyncExec
     @compute = (pt, params) ->
       pt = gg.core.FormUtil.addDefaults pt, params, log
       gg.core.FormUtil.validateInput pt, params, log
+      pt = gg.core.FormUtil.ensureScales pt, params, log
       compute pt, params
 
     super
@@ -69,6 +70,9 @@ class gg.core.XForm extends gg.wf.SyncExec
   #
   # Schema verification functions that subclasses can override
   #
+  ensureScales: (pairtable, params) -> gg.core.FormUtil.ensureScales pairtable, params, @log
+
+  scales: (pairtable, params) -> gg.core.FormUtil.scales pairtable, params, @log
 
   # Defaults for optional attributes
   defaults: (pt, params) -> {}

@@ -36,15 +36,39 @@ class gg.core.FormUtil
     new gg.data.PairTable table, pt.getMD()
 
 
-
-  @scales: (data) ->
-    env = data.env
-    layer = env.get "layer"
-    unless env.contains "scales"
-      config = env.get "scalesconfig"
+  @ensureScales: (pairtable, params, log) ->
+    md = pairtable.getMD()
+    unless md.nrows() <= 1
+      log.warn "@scales called with multiple rows: #{md.raw()}"
+    if md.nrows() == 0 
+      throw Error "@scales called with no md rows"
+    unless md.has 'scalesconfig'
+      md = md.addConstColumn 'scalesconfig', gg.scale.Config.fromSpec({})
+    unless md.has 'scales'
+      layer = md.get 0, 'layer'
+      config = md.get 0, 'scalesconfig'
       scaleset = config.scales layer
-      env.put "scales", scaleset
-    env.get "scales"
+      md = md.addConstColumn 'scales', scaleset
+      new gg.data.PairTable pairtable.getTable(), md
+    else
+      pairtable
+
+
+
+  @scales: (pairtable, params, log) ->
+    md = pairtable.getMD()
+    unless md.nrows() <= 1
+      log.warn "@scales called with multiple rows: #{md.raw()}"
+    if md.nrows() == 0 
+      throw Error "@scales called with no md rows"
+    if md.has 'scales'
+      md.get 0, 'scales'
+    else
+      layer = md.get 0, 'layer'
+      config = md.get 0, 'scalesconfig'
+      scaleset = config.scales layer
+      md.addConstColumn 'scales', scaleset
+      scaleset
 
   #
   # Multi-data methods

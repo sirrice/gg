@@ -64,6 +64,7 @@ class gg.wf.SyncExec extends gg.wf.Exec
           throw Error "SyncExec should not call callback"
         cb null, res
       catch err
+        console.log(err)
         cb err, pairtable
     @params.put 'compute', compute
 

@@ -170,16 +170,16 @@ class gg.scale.Set
 
 
   useScales: (table, posMapping={}, f) ->
-    _.each table.colNames(), (aes) =>
-      if @contains (posMapping[aes] or aes)
-        scale = @scale aes, gg.data.Schema.unknown, posMapping
+    for col in table.cols()
+      if @contains (posMapping[col] or col)
+        scale = @scale col, gg.data.Schema.unknown, posMapping
       else
-        tabletype = table.schema.type aes
-        @log "scaleset doesn't contain #{aes} creating using type #{tabletype}"
-        scale = @scale aes, tabletype, posMapping
-      @log scale
+        tabletype = table.schema.type col
+        @log "scaleset doesn't contain #{col} creating using type #{tabletype}"
+        scale = @scale col, tabletype, posMapping
+      @log scale.toString()
 
-      f table, scale, aes
+      table = f table, scale, col
 
     table
 
@@ -191,41 +191,41 @@ class gg.scale.Set
   #        attr -> aes
   #        attr -> [aes, type]
   train: (table, posMapping={}) ->
-    f = (table, scale, aes) =>
-      unless table.contains aes
-        @log "col #{aes} not in table"
-        return
+    f = (table, scale, col) =>
+      unless table.has col
+        @log "col #{col} not in table"
+        return table
 
       if _.isSubclass scale, gg.scale.Identity
         @log "scale is identity."
-        return
+        return table
 
-      col = table.getColumn(aes)
-      unless col?
-        console.log "aes: #{aes}"
-        console.log table
-        throw Error("Set.train: attr #{aes} does not exist in table")
+      colData = table.getColumn col
+      unless colData?
+        throw Error("Set.train: attr #{col} does not exist in table")
 
-      col = col.filter _.isValid
-      if col.length < table.nrows()
-        @log "filtered out #{table.nrows()-col.length} col values"
+      colData = colData.filter _.isValid
+      if colData.length < table.nrows()
+        @log "filtered out #{table.nrows()-colData.length} col values"
 
-      @log "col #{aes} has #{col.length} elements"
-      if col? and col.length > 0
-        newDomain = scale.defaultDomain col
+      @log "col #{col} has #{colData.length} elements"
+      if colData? and colData.length > 0
+        newDomain = scale.defaultDomain colData
         oldDomain = scale.domain()
-        @log "domains: #{scale.type} #{scale.constructor.name} #{oldDomain} + #{newDomain} = [#{_.mmin [oldDomain[0],newDomain[0]]}, #{_.mmax [oldDomain[1], newDomain[1]]}]"
-        unless newDomain?
-          throw Error()
-        if _.isNaN newDomain[0]
-          throw Error()
+        minval = _.mmin [oldDomain[0],newDomain[0]]
+        maxval = _.mmax [oldDomain[1], newDomain[1]]
+        @log "domains: #{scale.toString()} #{oldDomain} + #{newDomain} = [#{minval}, #{maxval}]"
+        throw Error() unless newDomain?
+        throw Error() if _.isNaN newDomain[0]
 
         scale.mergeDomain newDomain
 
         if scale.type is gg.data.Schema.numeric
-          @log "train: #{aes}(#{scale.id})\t#{oldDomain} merged with #{newDomain} to #{scale.domain()}"
+          @log "train: #{col}(#{scale.id})\t#{oldDomain} merged with #{newDomain} to #{scale.domain()}"
         else
-          @log "train: #{aes}(#{scale.id})\t#{scale}"
+          @log "train: #{col}(#{scale.id})\t#{scale}"
+
+      table
 
     @useScales table, posMapping, f
     @
@@ -234,17 +234,18 @@ class gg.scale.Set
   #        should be used
   #        e.g., median, q1, q3 should use 'y' position scale
   apply: (table,  posMapping={}) ->
-    f = (table, scale, aes) =>
+    f = (table, scale, col) =>
       str = scale.toString()
-      g = (v) -> scale.scale v
-      table.map g, aes if table.contains aes
-      @log "apply: #{aes}(#{scale.id}):\t#{str}\t#{table.nrows()} rows"
+      mapping = {}
+      mapping[col] = (row) -> scale.scale row.get(col)
+      if table.has col
+        table = gg.data.Transform.transform table, mapping
+      @log "apply: #{col}(#{scale.id}):\t#{str}\t#{table.nrows()} rows"
+      table
 
 
-    table = table.clone()
     @log "apply: table has #{table.nrows()} rows"
-    @useScales table, posMapping, f
-    #table.reloadSchema()
+    table = @useScales table, posMapping, f
     table
 
   # @param posMapping maps aesthetic names to the scale that
@@ -252,11 +253,12 @@ class gg.scale.Set
   #        e.g., median, q1, q3 should use 'y' position scale
   filter: (table, posMapping={}) ->
     filterFuncs = []
-    f = (table, scale, aes) =>
-      g = (row) -> scale.valid row.get(aes)
-      g.aes = aes
+    f = (table, scale, col) =>
+      g = (row) -> scale.valid row.get(col)
+      g.col = col
       @log "filter: #{scale.toString()}"
-      filterFuncs.push g if table.contains aes
+      filterFuncs.push g if table.has col
+      table
 
     @useScales table, posMapping, f
 
@@ -265,11 +267,11 @@ class gg.scale.Set
       for f in filterFuncs
         unless f(row)
           nRejected += 1
-          @log "Row rejected on attr #{f.aes} w val: #{row.get f.aes}"
+          @log "Row rejected on attr #{f.col} w val: #{row.get f.col}"
           return no
       yes
 
-    table = table.filter g
+    table = gg.data.Transform.filter table, g
     @log "filter: removed #{nRejected}.  #{table.nrows()} rows left"
     table
 
@@ -278,27 +280,34 @@ class gg.scale.Set
   #        that should be used
   #        e.g., median, q1, q3 should use 'y' position scale
   # @param {gg.Table} table
+  # @return inverted table
   invert: (table, posMapping={}) ->
-    f = (table, scale, aes) =>
-      g = (v) -> if v? then  scale.invert(v) else null
-      origDomain = scale.defaultDomain table.getColumn(aes)
+    f = (table, scale, col) =>
+      console.log "yo"
+      mapping = {}
+      mapping[col] = (row) ->
+        v = row.get col
+        if v? then scale.invert(v) else null
+
+      origDomain = scale.defaultDomain table.getColumn(col)
       newDomain = null
-      if table.contains aes
-        table.map g, aes
-        newDomain = scale.defaultDomain table.getColumn(aes)
+      console.log origDomain
+      if table.has col
+        table = gg.data.Transform.transform table, mapping
+        newDomain = scale.defaultDomain table.getColumn(col)
 
       if scale.domain()?
-        @log "invert: #{aes}(#{scale.id};#{scale.domain()}):\t#{origDomain} --> #{newDomain}"
+        @log "invert: #{col}(#{scale.id};#{scale.domain()}):\t#{origDomain} --> #{newDomain}"
+      table
 
-    table = table.clone()
-    @useScales table, posMapping, f
+    table = @useScales table, posMapping, f
     table
 
   labelFor: -> null
 
   toString: (prefix="") ->
-    arr = _.flatten _.map @scales, (map, aes) =>
-      _.map map, (scale, type) => "#{prefix}#{aes}: #{scale.toString()}"
+    arr = _.flatten _.map @scales, (map, col) =>
+      _.map map, (scale, type) => "#{prefix}#{col}: #{scale.toString()}"
     arr.join('\n')
 
 

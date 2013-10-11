@@ -12,7 +12,7 @@ makeTable = (nrows=100) ->
       d: d%5
       e: d%10
     }
-  gg.data.RowTable.fromArray rows
+  gg.data.Table.fromArray rows
 
 Schema = gg.data.Schema
 

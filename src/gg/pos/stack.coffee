@@ -184,7 +184,7 @@ class gg.pos.Stack extends gg.pos.Position
   compute: (data, params) ->
     table = data.table
     env = data.env
-    @log.warn "nrows: #{table.nrows()}\tschema: #{table.colNames()}"
+    @log.warn "nrows: #{table.nrows()}\tschema: #{table.cols()}"
     @log table.get(0).raw()
 
     inArray = table.schema.inArray 'x'

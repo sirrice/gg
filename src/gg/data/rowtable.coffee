@@ -101,7 +101,8 @@ class gg.data.RowTable extends gg.data.Table
         if @schema.has col
           @rows[idx][@schema.index col]
         else
-          throw Error "col #{col} not in schema: #{@schema.toString()}"
+          null
+          #throw Error "col #{col} not in schema: #{@schema.toString()}"
       else
           new gg.data.Row @schema, @rows[idx]
     else

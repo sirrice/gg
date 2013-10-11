@@ -100,7 +100,7 @@ class gg.scale.Scale
       throw Error("Scale.fromSpec needs an aesthetic: #{JSON.stringify @spec}")
 
     range = _.findGoodAttr @spec, ["range"], null
-    if range? and @aes not in gg.scale.Scale.xys
+    if range? #and @aes not in gg.scale.Scale.xys
       @range range
       @rangeSet = yes
 
