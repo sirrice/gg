@@ -48,7 +48,7 @@ class gg.core.XForm extends gg.wf.SyncExec
     @params.ensure "klassname", [], @constructor.ggpackage
 
     # wrap compute in a verification method
-    compute = @spec.f or @compute.bind(@)
+    compute = @params.get('compute') or @compute.bind(@)
     log = @log.bind(@)
     @compute = (pt, params) ->
       pt = gg.core.FormUtil.addDefaults pt, params, log

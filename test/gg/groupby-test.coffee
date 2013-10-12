@@ -66,6 +66,28 @@ suite.addBatch
             assert.equal avg, (sum/count)
 
 
-  
+  "bin2d":
+    topic: ->
+      new gg.pos.Bin2D
+
+    "when run": 
+      topic: (node) ->
+        promise = new events.EventEmitter
+        node.on 'output', (id, idx, pt) ->
+          promise.emit 'success', pt
+        node.setInput 0, makeTable()
+        node.run()
+        promise
+
+      "produces correct results": (res) ->
+        res.getTable().each (row) ->
+          avg = row.get('avg')
+          count = row.get('count')
+          sum = row.get('sum')
+          if _.isFinite avg
+            assert.equal avg, (sum/count)
+
+
+   
  
 suite.export module

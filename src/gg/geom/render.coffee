@@ -44,9 +44,9 @@ class gg.geom.Render extends gg.core.XForm
     if @log.level == gg.util.Log.DEBUG
       write = (text, opts={}) ->
         _.subSvg(svg, opts, "text").text(text)
-      write env.get(Facets.facetXKey), {dy: "1em"}
-      write env.get(Facets.facetYKey), {dy: "2em"}
-      write env.get(table.nrows()), {dy: "3em"}
+      write md.get(0, Facets.facetXKey), {dy: "1em"}
+      write md.get(0, Facets.facetYKey), {dy: "2em"}
+      write md.get(0, table.nrows()), {dy: "3em"}
 
 
     geoms = svg.selectAll(".geom")
@@ -58,8 +58,8 @@ class gg.geom.Render extends gg.core.XForm
         .on("mouseout", () -> )
 
     if @constructor.brush?
-      brushEventName = "brush-#{env.get Facets.facetId}"
-      event = env.get "event"
+      brushEventName = "brush-#{md.get 0, Facets.facetId}"
+      event = md.get 0, "event"
       event.on brushEventName, @constructor.brush(geoms)
 
     pairtable

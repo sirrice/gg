@@ -60,6 +60,15 @@ createEmptyMD = ->
   ]
   new gg.data.PairTable left
 
+createEmptyTable = ->
+  left = Table.fromArray [
+  ]
+  right = Table.fromArray [
+    { x: 1 }
+    { x: 2 }
+  ]
+  new gg.data.PairTable left, right
+
 
 checkEnsure =
   "when ensured on x,y":
@@ -101,6 +110,19 @@ suite.addBatch
   "ensure tableset":
     _.extend({topic: createSimpleTableSet},
       checkEnsure)
+
+  "empty table":
+    topic: createEmptyTable
+    
+    "when partitioned on x":
+      topic: (pairtable) ->
+        pairtable.partition 'x'
+      "has 2 partitions": (ps) ->
+        assert.equal ps.length, 2
+        for p in ps
+          assert.equal p.getTable().nrows(), 0
+          assert.equal p.getMD().nrows(), 1
+
 
 
   "pair table with dups": 

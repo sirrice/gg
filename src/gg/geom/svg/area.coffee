@@ -15,17 +15,18 @@ class gg.geom.svg.Area extends gg.geom.Render
   inputSchema: -> ['pts']
 
   render: (table, svg)  ->
-    rows = table.asArray()
-
     area = d3.svg.area()
-        .x((d) -> d.x)
-        .y0((d) -> d.y0)
-        .y1((d) -> d.y1)
+        .x((d) -> d.get 'x')
+        .y0((d) -> d.get 'y0')
+        .y1((d) -> d.get 'y1')
         #.interpolate('basis')
+
+    linetables = table.partition 'group'
+
 
     # attributes should be imported in bulk using
     # .attr( {} ) where {} is @attrs
-    areas = @groups(svg, 'areas', rows).selectAll('path')
+    areas = @groups(svg, 'areas', linetables).selectAll('path')
         .data((d) -> [d])
     enter = areas.enter()
     enterAreas = enter.append("path")
@@ -33,21 +34,21 @@ class gg.geom.svg.Area extends gg.geom.Render
 
     @applyAttrs enterAreas,
       class: "path"
-      d: (d) -> area(d.get 'pts')
-      "stroke": (t) -> t.get "stroke"
-      "stroke-width": (t) -> t.get 'stroke-width'
-      "stroke-opacity": (t) -> t.get "stroke-opacity"
-      fill: (t) -> t.get 'fill'
-      "fill-opacity": (t) -> t.get 'fill-opacity'
+      d: (d) -> area(d.rows())
+      "stroke": (t) -> t.get 0, "stroke"
+      "stroke-width": (t) -> t.get 0, 'stroke-width'
+      "stroke-opacity": (t) -> t.get 0, "stroke-opacity"
+      fill: (t) -> t.get 0, 'fill'
+      "fill-opacity": (t) -> t.get 0, 'fill-opacity'
 
 
     cssOver =
-      fill: (t) -> d3.rgb(t.get("fill")).darker(2)
+      fill: (t) -> d3.rgb(t.get(0, "fill")).darker(2)
       "fill-opacity": 1
 
     cssOut =
-      fill: (t) -> t.get('fill')
-      "fill-opacity": (t) -> t.get('fill-opacity')
+      fill: (t) -> t.get(0, 'fill')
+      "fill-opacity": (t) -> t.get(0, 'fill-opacity')
 
     _this = @
     areas

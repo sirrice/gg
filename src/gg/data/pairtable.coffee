@@ -34,10 +34,16 @@ class gg.data.PairTable
   # enforces invariant: each md should have a _single_ row
   fullPartition: -> 
     partitions = @partition @sharedCols()
-    for p in partitions
+    partitions = _.map partitions, (p) =>
       md = p.getMD()
-      if md.nrows() != 1
+      if md.nrows() == 0
+        rows = [new gg.data.Row(@mdSchema().clone())]
+        md = gg.data.Table.fromArray rows
+        new gg.data.PairTable p.getTable(), md
+      else if md.nrows() > 1
         throw Error("fullpartition: md.nrows (#{md.nrows()}) != 1.\t#{md.toString()}")
+      else
+        p
     partitions
 
   # ensures there MD tuples for each unique combination of keys

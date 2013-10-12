@@ -6,7 +6,7 @@ events = require 'events'
 
 suite = vows.describe "mapper.coffee"
 
-gg.util.Log.setDefaults {'': 0}
+#gg.util.Log.setDefaults {'': 0}
 
 runOnTable = (node, table) ->
   promise = new events.EventEmitter

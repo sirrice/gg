@@ -13,28 +13,7 @@ class gg.facet.grid.Facets extends gg.facet.base.Facets
     @layout2 = new gg.facet.grid.Layout(
       name: 'facet-layout2'
       params: @layoutParams).compile()
-    @renderpanes = new gg.facet.pane.Svg(
+    @_renderpanes = new gg.facet.pane.Svg(
         name: 'render-panes').compile()
 
-  renderPanes: -> @renderpanes
-
-  labelerNodes: ->
-    f = (data, param) ->
-      table = data.table
-      env = data.env
-      Facets = gg.facet.base.Facets
-      x = env.get Facets.facetXKey
-      y = env.get Facets.facetYKey
-      table.addConstColumn Facets.facetXKey, x
-      table.addConstColumn Facets.facetYKey, y
-      table
-
-    new gg.wf.Exec
-      name: "labeler"
-      params:
-        f: f
-    
-    [
-      new gg.facet.grid.Labeler
-      new gg.facet.grid.FillFacets
-    ]
+  renderPanes: -> @_renderpanes

@@ -17,6 +17,7 @@ check =
       rows = _.times 10, (i) -> {a: i%2, b: i}
       table = gg.data.Table.fromArray rows
       pt = new gg.data.PairTable table
+      pt = pt.ensure []
       node.on 'output', (id, idx, pt) ->
         promise.emit "success", pt
       node.setInput 0, pt
@@ -78,10 +79,12 @@ syncExec =
     topic: (node) ->
       promise = new events.EventEmitter
       rows = _.times 10, (i) -> {a: i%2, b: i}
-      table = gg.data.Table.fromArray rows
+      left = gg.data.Table.fromArray rows
+      right = gg.data.Table.fromArray [{a: 0}, {a: 1}]
+      pt = new gg.data.PairTable left, right
       node.on 'output', (id, idx, pt) ->
         promise.emit 'success', pt
-      node.setInput 0, new gg.data.PairTable(table)
+      node.setInput 0, pt
       node.run()
       promise
 
@@ -118,13 +121,16 @@ aggexecTSet =
   "when executed on tableset": 
     topic: (node) ->
       promise = new events.EventEmitter
-      rows = _.times 5, (i) -> {a: i%2, b: i}
-      table = gg.data.Table.fromArray rows
-      pt1 = new gg.data.PairTable table
+      left = gg.data.Table.fromArray(_.times 5, (i) ->
+        {a: i%2, b: i})
+      right = gg.data.Table.fromArray [{a:0}]
+      pt1 = new gg.data.PairTable left, right
       rows = _.times 5, (i) -> {a: (i+5)%2, b: (i+5)}
-      table = gg.data.Table.fromArray rows
-      pt2 = new gg.data.PairTable table
+      left = gg.data.Table.fromArray rows
+      right = gg.data.Table.fromArray [{a:1}]
+      pt2 = new gg.data.PairTable left, right
       tset = new gg.data.TableSet [pt1, pt2]
+      tset = tset.ensure()
 
       node.on 'output', (id, idx, pt) ->
         promise.emit "success", pt

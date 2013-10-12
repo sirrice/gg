@@ -126,7 +126,7 @@ class gg.facet.base.Render extends gg.core.BForm
 
 
 
-  compute: (datas, params) ->
+  compute: (tset, params) ->
     lc = _.first(datas).env.get 'lc'
     @renderLabels datas, params, lc
     _.each datas, (data) -> data.env.put 'lc', lc

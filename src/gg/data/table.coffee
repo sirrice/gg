@@ -49,11 +49,6 @@ class gg.data.Table
       close: -> @table = null
     new Iter(@)
 
-  asArray: ->
-    ret = []
-    @each (row) -> ret.push row.toJSON()
-    ret
-
   partition: (cols) ->
     partitions = gg.data.Transform.split @, cols
     _.map partitions, (p) -> p['table']
@@ -75,6 +70,7 @@ class gg.data.Table
   get: (idx, col=null) -> throw "not implemented"
   getCol: (col) -> throw "not implemented"
   getColumn: (col) -> throw "not implemented"
+  rows: -> @each (row) -> row
   raw: -> throw "not implemented"
   stats: -> throw "not implemented"
 

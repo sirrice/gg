@@ -53,27 +53,6 @@ class gg.data.Transform
         table: klass.fromArray rows, table.schema.clone()
       }
 
-    ###
-    # TODO: special case for this
-    if _.isString gbfunc
-      attr = gbfunc
-      gbfunc = ((key) -> (row) -> row.get(key))(attr)
-
-    klass = table.constructor
-    keys = {}
-    groups = {}
-    table.each (row) ->
-      key = gbfunc row
-      jsonkey = JSON.stringify key
-      unless jsonkey of groups
-        groups[jsonkey] = new klass table.schema.clone()
-        keys[jsonkey] = key
-      groups[jsonkey].addRow row
-
-    _.map groups, (newtable, jsonkey) ->
-      { key: keys[jsonkey], table: newtable }
-    ###
-
   # alias for @split
   @partition: (args...) -> @split args...
       
@@ -86,6 +65,7 @@ class gg.data.Transform
       newt.addRow row if f(row, idx)
     newt
 
+  # Project, but remove columns instead of projecting them
   @exclude: (table, cols) ->
     cols = _.flatten [cols]
     keep = _.reject table.schema.cols, (col) -> col in cols
@@ -94,6 +74,20 @@ class gg.data.Transform
   # add @param mapping to schema
   @transform: (table, mapping) ->
     schema = new gg.data.Schema
+    for col in table.schema.cols
+      unless col of mapping
+        mapping[col] = ((col) -> (row) -> row.get col)(col)
+    @map table, mapping
+
+  # single column transformations
+  # mapping is of the form
+  #
+  #   col: (colvalue) -> new value
+  #
+  @mapCols: (table, mapping) ->
+    schema = new gg.data.Schema
+    mapping = _.o2map mapping, (f, col) ->
+      [col, (row, idx) -> f(row.get(col), idx)]
     for col in table.schema.cols
       unless col of mapping
         mapping[col] = ((col) -> (row) -> row.get col)(col)
@@ -112,6 +106,7 @@ class gg.data.Transform
       newrows.push o
     table.constructor.fromArray newrows
         
+
     
   # Equijoin + partition on join columns
   # @return Array[{key:, table: pairtable}]

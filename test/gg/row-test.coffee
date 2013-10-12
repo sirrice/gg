@@ -19,11 +19,11 @@ suite.addBatch
         c: Schema.object
         d: Schema.ordinal
 
-      new Row row, schema
+      new Row schema, row
 
     "has cols": (row) ->
       for col in ['a', 'b', 'c', 'd']
-        row.has col
+        assert row.has(col)
 
     "can project": (row) ->
       newrow = row.project ['a', 'b']

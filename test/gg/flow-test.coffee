@@ -139,9 +139,8 @@ foo =
           flow
 
       "creates 10 partitions": (flow) ->
-          console.log flow.toString()
-          flow.on "output", (id, table) ->
-              console.log table
+          flow.on "output", (id, pt) ->
+            assert.equal pt.getTable().nrows(), 10
           flow.run makeTable(10)
 
   "Single partition-join flow no spec object":
@@ -152,9 +151,8 @@ foo =
           flow
 
       "creates 10 partitions": (flow) ->
-          console.log flow.toString()
           flow.on "output", (id, table) ->
-              console.log table
+            assert.equal table.getTable().nrows(), 10
           flow.run makeTable(10)
 
   "Nested partiiton-join":

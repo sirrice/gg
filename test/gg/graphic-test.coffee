@@ -2,6 +2,7 @@ require "../env"
 vows = require "vows"
 assert = require "assert"
 
+###
 makeTable = (nrows=100) ->
   rows = _.map _.range(0, nrows), (d) ->
     g = Math.floor(Math.random() * 3) + 1
@@ -52,7 +53,7 @@ spec =
       pos: "stack"
     }
   ]
-  ###
+
     {
       # post-stats mapping (e.g., count --> y)
       geom: {type:"interval", aes: {y:"total", r:"total", fill: "red"}},
@@ -85,7 +86,6 @@ spec =
       #stat: {type:"bin", name: "point-bin"}
 
     }
-    ###
 
   facets:
     x: "f"
@@ -157,3 +157,4 @@ suite.addBatch
       graphic.render svg, makeTable(100)
 
 suite.export module
+###

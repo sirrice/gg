@@ -2,7 +2,7 @@
 
 # A Barrier Transformation
 #
-class gg.core.BForm extends gg.wf.Barrier
+class gg.core.BForm extends gg.wf.SyncBarrier
   @ggpackage = "gg.core.BForm"
   @log = gg.util.Log.logger @ggpackage, @ggpackage.substr(@ggpackage.lastIndexOf(".")+1)
 
@@ -23,10 +23,10 @@ class gg.core.BForm extends gg.wf.Barrier
     # wrap compute in a verification method
     compute = @spec.f or @compute.bind(@)
     log = @log.bind(@)
-    @compute = (tableset, params, cb) ->
+    @compute = (tableset, params) ->
       tableset = gg.core.FormUtil.addDefaults tableset, params, log
       gg.core.FormUtil.validateInput tableset, params
-      compute tableset, params, cb
+      compute tableset, params
 
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?

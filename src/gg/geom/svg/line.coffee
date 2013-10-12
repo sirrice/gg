@@ -59,37 +59,36 @@ class gg.geom.svg.Line extends gg.geom.Render
 
 
   render: (table, svg) ->
-    rows = table.asArray()
+    linetables = table.partition 'group'
 
-    # attributes should be imported in bulk using
-    # .attr( {} ) where {} is @attrs
-    lines = @groups(svg, 'line', rows).selectAll('path')
-        .data((d) -> [d])
+    lines = @groups(svg, 'line', linetables)
+      .selectAll('path')
+      .data((d) -> [d])
     enter = lines.enter()
     enterLines = enter.append("path")
     exit = lines.exit()
 
     liner = d3.svg.line()
-        .x((d) -> d.x)
-        .y((d) -> d.y1)
+        .x((d) -> d.get 'x')
+        .y((d) -> d.get 'y1')
 
     @log "stroke is #{table.get 0, "stroke"}"
 
     cssNormal =
-      "stroke": (t) -> t.get("stroke")
-      "stroke-width": (t) -> t.get("stroke-width")
-      "stroke-opacity": (t) -> t.get("stroke-opacity")
+      "stroke": (t) -> t.get(0, "stroke")
+      "stroke-width": (t) -> t.get(0, "stroke-width")
+      "stroke-opacity": (t) -> t.get(0, "stroke-opacity")
       "fill": "none"
 
     cssOver =
-      stroke: (t) -> d3.rgb(t.get("fill")).darker(2)
-      "stroke-width": (t) -> t.get('stroke-width') + 1
+      stroke: (t) -> d3.rgb(t.get(0, "fill")).darker(2)
+      "stroke-width": (t) -> t.get(0, 'stroke-width') + 1
       "stroke-opacity": 1
 
 
     @applyAttrs enterLines,
       class: "geom"
-      d: (d) -> liner(d.get 'pts')
+      d: (d) -> liner(d.rows())
     @applyAttrs enterLines,
       cssNormal
 

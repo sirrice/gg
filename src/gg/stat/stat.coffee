@@ -11,11 +11,11 @@ class gg.stat.Stat extends gg.core.XForm
   # @return mapping from alias -> stat class object
   @getKlasses: ->
     klasses = @klasses.concat [
-      gg.stat.IdentityStat
+      gg.stat.Identity
       gg.stat.Bin1D
-      gg.stat.BoxplotStat
-      gg.stat.LoessStat
-      gg.stat.SortStat
+      gg.stat.Boxplot
+      gg.stat.Loess
+      gg.stat.Sort
       gg.stat.CDF
       gg.stat.Bin2D
     ]
@@ -36,7 +36,7 @@ class gg.stat.Stat extends gg.core.XForm
     else
       type = _.findGood [spec.type, spec.stat, "identity"]
 
-    klass = klasses[type] or gg.stat.IdentityStat
+    klass = klasses[type] or gg.stat.Identity
     ret = new klass spec
     @log "klass #{klass.name} from type: #{type}"
     ret

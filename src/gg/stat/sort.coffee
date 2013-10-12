@@ -1,8 +1,8 @@
 #<< gg/stat/stat
 
 # TODO: the proper API given array types
-class gg.stat.SortStat extends gg.stat.Stat
-  @ggpackage = "gg.stat.SortStat"
+class gg.stat.Sort extends gg.stat.Stat
+  @ggpackage = "gg.stat.Sort"
   @aliases = ['sort', 'sorted']
 
   parseSpec: ->
@@ -15,28 +15,35 @@ class gg.stat.SortStat extends gg.stat.Stat
       attrs: attrs
       reverse: reverse
 
-  inputSchema: (data, params) -> params.get 'attrs'
+  inputSchema: (pairtable, params) -> params.get 'attrs'
 
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
-    f = (attr) ->
-      table.contains(attr) and not table.schema.inArray(attr)
-    attrs = params.get 'attrs'
-    attrs = attrs.filter f
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
     reverse = params.get 'reverse'
+    attrs = params.get 'attrs'
+    attrs = attrs.filter (attr) -> table.has(attr)
+    reverse = if reverse then -1 else 1
 
     if attrs.length > 0
       cmp = (row1, row2) ->
         for attr in attrs
-          if row1.get(attr) > row2.get(attr)
-            return if reverse then -1 else 1
-          else if row1.get(attr) < row2.get(attr)
-            return if reverse then 1 else -1
+          v1 = row1[attr]
+          v2 = row2[attr]
+          unless v1? and v2?
+            if v1?
+              return -1 * reverse
+            else
+              return 1 * reverse
+          if v1 > v2
+            return 1 * reverse
+          else if v1 < v2
+            return -1 * reverse
         0
-      table.sort cmp
+      raws = table.raw() 
+      raws.sort cmp
 
-    data
+    table = gg.data.Table.fromArray raws
+    new gg.data.PairTable table, pairtable.getMD()
 
 

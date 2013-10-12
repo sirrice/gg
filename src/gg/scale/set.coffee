@@ -278,7 +278,6 @@ class gg.scale.Set
   # @return inverted table
   invert: (table, posMapping={}) ->
     f = (table, scale, col) =>
-      console.log "yo"
       mapping = {}
       mapping[col] = (row) ->
         v = row.get col
@@ -286,7 +285,6 @@ class gg.scale.Set
 
       origDomain = scale.defaultDomain table.getColumn(col)
       newDomain = null
-      console.log origDomain
       if table.has col
         table = gg.data.Transform.transform table, mapping
         newDomain = scale.defaultDomain table.getColumn(col)

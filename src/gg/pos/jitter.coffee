@@ -22,10 +22,10 @@ class gg.pos.Jitter extends gg.pos.Position
       xScale: xScale
       yScale: yScale
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
-    scales = @scales data
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
+    scales = md.get 0, 'scales'
     schema = table.schema
     map = {}
     Schema = gg.data.Schema
@@ -41,7 +41,7 @@ class gg.pos.Jitter extends gg.pos.Position
       map['y'] = (v) -> v + (0.5 - Math.random()) * yScale
 
     # XXX: Why doesn't this use table.transform instead?
-    table.map map
-    data
+    table = gg.data.Transform.mapCols table, map 
+    new gg.data.PairTable table, md
 
 

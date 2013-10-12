@@ -16,6 +16,7 @@
 # Spec:
 #
 #   facets: {
+#     desc: "x * y + z"
 #     (x|y): ???
 #     type: grid|wrap,
 #     scales: free|fixed,
@@ -32,10 +33,10 @@
 #
 class gg.facet.base.Facets
   @ggpackage = "gg.facet.base.Facets"
-  @facetXKey = "facet-x"
-  @facetYKey = "facet-y"
-  @facetXYKeys = "facet-xy"
-  @facetKeys = ["facet-x", "facet-y"]
+  #@facetXKey = "facet-x"
+  #@facetYKey = "facet-y"
+  #@facetXYKeys = "facet-xy"
+  @facetKeys = "facet-keys"
   @facetId = "facet-id"
 
   constructor: (@g, @spec={}) ->
@@ -98,37 +99,19 @@ class gg.facet.base.Facets
       location: "client"
     }
 
-
-
-
-
-  # Return workflow nodes that split the dataset along the
-  # x and y facets
-  splitterNodes: ->
-    # XXX: This implementation is not exactly right, because
-    # it will not result in groups for x/y facetpairs that
-    # don't have any tuples.  this should only be apparent
-    # when using "wrap" (we expect the cross product!)
-    facetXKey = gg.facet.base.Facets.facetXKey
-    facetYKey = gg.facet.base.Facets.facetYKey
-    x = _.flatten [@splitParams.get('x')]
-    y = _.flatten [@splitParams.get('y')]
-    facetXNode = new gg.wf.PartitionCols
-      name: 'facet-x'
-      params:
-        key: facetXKey
-        cols: x
-    facetYNode = new gg.wf.PartitionCols
-      name: 'facet-y'
-      params:
-        key: facetYKey
-        cols: y
-    [facetXNode, facetYNode]
-
-  # This executes on a per-facet-layer basis
-  # Not a barrier
   labelerNodes: ->
-    throw Error("labeler not implemented")
+    [
+      gg.xform.Mapper.fromSpec(
+        aes:
+          'facet-x': @splitParams.get 'x'
+          'facet-y': @splitParams.get 'y'
+      ),
+      gg.xform.Mapper.fromSpec(
+        aes:
+          'facet-keys': (row) -> [row.get('facet-x'), row.get('facet-y')]
+      )
+    ]
+
 
   @fromSpec: (g, spec) ->
     spec.type = spec.type or "grid"

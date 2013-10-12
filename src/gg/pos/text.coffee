@@ -18,13 +18,10 @@ class gg.pos.Text extends gg.pos.Position
     ['x', 'y', 'text']
 
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
     attrs = ['x', 'y', 'text']
-    inArr = _.map attrs, ((attr)->table.schema.inArray attr)
-    unless _.all(inArr) or not (_.any inArr)
-      throw Error("attributes must all be in arrays or all not")
 
     # box: [[x0, x1], [y0, y1]]
     boxes = table.each (row) ->
@@ -42,14 +39,13 @@ class gg.pos.Text extends gg.pos.Position
     @log.debug "got #{boxes.length} boxes from annealing"
     @log.debug "took #{Date.now()-start} ms"
 
-    _.each boxes, (box, idx) ->
-      row = table.get(idx)
-      row.set 'x0', box[0][0]
-      row.set 'x1', box[0][1]
-      row.set 'y0', box[1][0]
-      row.set 'y1', box[1][1]
+    table = gg.data.Transform.transform table,
+      x0: (row, idx) -> boxes[idx][0][0]
+      x1: (row, idx) -> boxes[idx][0][1]
+      y0: (row, idx) -> boxes[idx][1][0]
+      y1: (row, idx) -> boxes[idx][1][1]
 
-    data
+    new gg.data.PairTable table, pairtable.getMD()
 
 
 

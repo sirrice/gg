@@ -41,7 +41,7 @@ class gg.wf.TableSource extends gg.wf.Source
         throw Error("TableSource needs a table as parameter")
 
   compute: (pt, params, cb) ->
-    pt.table = params.get('table')
+    pt = new gg.data.PairTable params.get('table'), pt.getMD()
     cb(null, pt)
 
 class gg.wf.RowSource extends gg.wf.Source
@@ -60,10 +60,11 @@ class gg.wf.RowSource extends gg.wf.Source
       throw Error "RowSource needs a table as parameter"
 
   compute: (pt, params, cb) ->
-    pt.table = gg.data.Table.fromArray(
+    table = gg.data.Table.fromArray(
       params.get('rows'), 
       null, 
       params.get('tabletype'))
+    pt = new gg.data.PairTable table, pt.getMD()
     cb null, pt
 
 
@@ -84,7 +85,7 @@ class gg.wf.CsvSource extends gg.wf.Source
     tabletype = params.get 'tabletype'
     d3.csv url, (arr) ->
       table = gg.data.Table.fromArray arr, null, tabletype
-      pt.table = table
+      pt = new gg.data.PairTable table, pt.getMD()
       cb null, pt
 
 class gg.wf.SQLSource extends gg.wf.Source
@@ -127,6 +128,6 @@ class gg.wf.SQLSource extends gg.wf.Source
         client.end()
 
         table = gg.data.Table.fromArray rows, null, tabletype
-        pt.table = table
+        pt = new gg.data.PairTable table, pt.getMD()
         cb null, pt
 
