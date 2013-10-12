@@ -40,7 +40,6 @@ class gg.scale.Set
     set.spec =_.fromJSON json.spec
     set
 
-
   # overwriting
   keep: (aesthetics) ->
     _.each _.keys(@scales), (aes) =>
@@ -163,10 +162,6 @@ class gg.scale.Set
           @log "merge notfound + dropping scale: #{scale.toString()}"
 
     @
-
-
-
-
 
 
   useScales: (table, posMapping={}, f) ->

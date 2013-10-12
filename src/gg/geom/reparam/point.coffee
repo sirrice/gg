@@ -7,9 +7,9 @@ class gg.geom.reparam.Point extends gg.core.XForm
 
   inputSchema:  -> ['x', 'y']
 
-  outputSchema: (data) ->
-    table = data.table
-    schema = table.schema.clone()
+  outputSchema: (pairtable) ->
+    schema = pairtable.tableSchema().clone()
+
     xtype = schema.type 'x'
     ytype = schema.type 'y'
     for col in ['x0', 'x1']
@@ -20,21 +20,18 @@ class gg.geom.reparam.Point extends gg.core.XForm
         schema.addColumn col, ytype
     schema
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
-    schema = params.get('outputSchema') data
-    table.each (row) ->
-      r = row.get('r')
-      y = row.get('y')
-      x = row.get('x')
-
-      row.set('y1', y) unless row.contains('y1')
-      row.set('y0', 0) unless row.contains('y0')
-      row.set('x0', x - r) unless row.contains('x0')
-      row.set('x1', x + r) unless row.contains('x1')
-    table.setSchema schema
-    data
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
+    schema = params.get('outputSchema') pairtable
+    mapping = 
+      'y1': (row) -> if row.has('y1') then row.get('y1') else row.get('y')
+      'y0': (row) -> if row.has('y0') then row.get('y0') else 0
+      'x0': (row) -> if row.has('x0') then row.get('x0') else row.get('x')-row.get('r')
+      'x1': (row) -> if row.has('y1') then row.get('x1') else row.get('x')+row.get('r')
+    mapping = _.mappingToFunctions table, mapping
+    table = gg.data.Transform.transform table, mapping
+    new gg.data.PairTable table, md
 
 
 

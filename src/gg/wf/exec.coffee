@@ -21,12 +21,14 @@ class gg.wf.Exec extends gg.wf.Node
     params = @params
     compute = @params.get('compute') or @compute.bind(@)
     pstore = @pstore()
+    log = @log
 
     tableset = new gg.data.TableSet @inputs
     partitions = tableset.fullPartition()
     #partitions = tableset.partition @params.get('key')
     iterator = (pairtable, cb) ->
       try
+        log "calling compute in wf.exec"
         compute pairtable, params, cb
       catch err
         cb err, null

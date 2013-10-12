@@ -20,7 +20,7 @@ class gg.util.Aesmap
         ret = val row
         opstore.writeSchema [key], row.accessed
         ret
-    else if table.contains val
+    else if table.has val
       opstore.writeSchema key, val
       (row) -> row.get val
     else if _.isObject val
@@ -42,7 +42,7 @@ class gg.util.Aesmap
         if gg.data.Table.reVariable.test k
           "var #{k} = row.get('#{k}');"
 
-      cmds = _.compact _.map(table.schema.attrs(), varFunc)
+      cmds = _.compact _.map(table.schema.cols, varFunc)
       cmds.push "return #{userCode};"
       cmd = cmds.join ''
       Function("row", cmd)
@@ -60,3 +60,4 @@ class gg.util.RowWrapper
     @accessed[attr] = yes
     @row.get attr
 
+  has: (col, type) -> @row.has col, type

@@ -1,7 +1,8 @@
 #<< gg/wf/node
 
 # This class is a gg.core.XForm in signature only (ala duck typing) --
-# any XForm can have mappers but not the other way around.
+#
+# Any XForm can have mappers but not the other way around.
 #
 # gg.xform.Mapper performs a schema transformation.  It's spec is:
 #
@@ -38,7 +39,7 @@
 # Provenance mappings can be automatically extracted from MAPSPECs 
 # 1-4 and must be foresaken for 5
 #
-class gg.xform.Mapper extends gg.wf.Exec
+class gg.xform.Mapper extends gg.wf.SyncExec
   @ggpackage = "gg.xform.Mapper"
   @log = gg.util.Log.logger @ggpackage, 'map'
   @attrs = [
@@ -53,7 +54,6 @@ class gg.xform.Mapper extends gg.wf.Exec
     #@params.ensure 'klassname', [], @constructor.ggpackage
     super
 
-
   compute: (pairtable, params) ->
     table = pairtable.getTable()
     mapping = params.get 'mapping'
@@ -62,6 +62,7 @@ class gg.xform.Mapper extends gg.wf.Exec
     @log "table:     #{JSON.stringify table.schema.toString()}"
 
     functions = _.mappingToFunctions table, mapping
+
     table = gg.data.Transform.transform table, functions
     new gg.data.PairTable table, pairtable.getMD()
 

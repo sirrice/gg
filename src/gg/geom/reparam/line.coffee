@@ -4,52 +4,41 @@
 class gg.geom.reparam.Line extends gg.core.XForm
   @ggpackage = "gg.geom.reparam.Line"
 
-  defaults: ->
-    { group: '1' }
+  defaults: -> { group: '1' }
 
-  inputSchema: (data) -> ['x', 'y']
+  inputSchema: -> ['x', 'y']
 
-  outputSchema: (data) ->
-    table = data.table
-    env = data.env
+  outputSchema: (pairtable) ->
+    schema = pairtable.tableSchema()
     numeric = gg.data.Schema.numeric
-    xtype = table.schema.type 'x'
-    ytype = table.schema.type 'y'
-    gg.data.Schema.fromSpec
-      group: table.schema.typeObj 'group'
-      pts:
-        type: gg.data.Schema.array
-        schema:
-          x: xtype
-          y: ytype
-          y0: ytype
-          y1: ytype
+    xtype = schema.type 'x'
+    ytype = schema.type 'y'
+    gg.data.Schema.fromJSON
+      group: schema.type 'group'
+      x: xtype
+      y: ytype
+      y0: ytype
+      y1: ytype
 
-  schemaMapping: (data) ->
+  schemaMapping: ->
     y0: 'y'
     y1: 'y'
 
 
-  compute: (data, params) ->
-    [table, env] = [data.table, data.env]
-    scales = @scales data, params
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
+    scales = md.get 0, 'scales'
     y0 = scales.scale('y', gg.data.Schema.numeric).minRange()
     @log "compute: y0 set to #{y0}"
-    table.each (row) ->
-      row.set('y1', row.get('y')) unless row.hasAttr('y1')
-      row.set('y0', y0) unless row.hasAttr('y0')
 
-    groups = table.split 'group'
-    rows = _.map groups, (group) =>
-      groupTable = group.table
-      groupKey = group.key
-      rowData =
-        pts: groupTable.raw()
-        group: groupKey
-      @log.warn "group #{JSON.stringify groupKey} has #{groupTable.nrows()} pts"
-      rowData
+    table = gg.data.Transform.transform table,
+      y1: (row) ->
+        if row.has('y1') then row.get('y1') else row.get('y')
+      y0: (row) ->
+        if row.has('y0') then row.get('y0') else y0
 
-    schema = params.get('outputSchema') data, params
-    table = new gg.data.RowTable schema, rows
-    new gg.wf.Data table, env
+
+    schema = params.get('outputSchema') pairtable, params
+    new gg.data.PairTable table, md
 

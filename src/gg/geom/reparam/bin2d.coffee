@@ -4,23 +4,20 @@
 class gg.geom.reparam.Bin2D extends gg.geom.reparam.Rect
   @ggpackage = "gg.geom.reparam.Bin2D"
 
-  parseSpec: ->
-    super
-
   inputSchema: -> ['x', 'y', 'z']
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
-    scales = env.get "scales"
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
+    scales = md.get 0, 'scales'
     yscale = scales.scale 'y', gg.data.Schema.numeric
     padding = 1.0 - params.get("padding")
 
-    groups = table.split "group"
+    groups = table.partition ['group']
     width = null
     mindiff = null
     _.each groups, (group) ->
-      subtable = group.table
+      subtable = group.getTable()
 
       # XXX: assume xs is numerical!!
       xs = _.uniq(subtable.getColumn("x")).sort (a,b)->a-b
@@ -34,7 +31,8 @@ class gg.geom.reparam.Bin2D extends gg.geom.reparam.Rect
 
     minY = yscale.minDomain()
     minY = 0
-    getHeight = (row) -> yscale.scale(Math.abs(yscale.invert(row.get('y')) - minY))
+    getHeight = (row) -> 
+      yscale.scale(Math.abs(yscale.invert(row.get('y')) - minY))
     @log "mindiff: #{mindiff}\twidth: #{width}"
 
 

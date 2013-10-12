@@ -11,7 +11,7 @@ class gg.geom.Render extends gg.core.XForm
     super
     @params.put "location", "client"
 
-  svg: (data) -> data.env.get('svg').pane
+  svg: (md) -> md.get(0, 'svg').pane
 
   groups: (g, klass, rows) ->
     g.selectAll("g.#{klass}")
@@ -31,9 +31,10 @@ class gg.geom.Render extends gg.core.XForm
     _.each attrs, (val, attr) -> domEl.attr attr, val
     domEl
 
-  compute: (data, params) ->
-    [table, env] = [data.table, data.env]
-    svg = @svg data
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
+    svg = @svg md
     Facets = gg.facet.base.Facets
     gg.wf.Stdout.print table, null, 2, @log
 
@@ -61,7 +62,7 @@ class gg.geom.Render extends gg.core.XForm
       event = env.get "event"
       event.on brushEventName, @constructor.brush(geoms)
 
-    data
+    pairtable
 
   # @override this
   render: (table, rows) -> throw Error("#{@name}.render() not implemented")
