@@ -86,12 +86,13 @@ class gg.data.Transform
   #
   @mapCols: (table, mapping) ->
     schema = new gg.data.Schema
-    mapping = _.o2map mapping, (f, col) ->
-      [col, (row, idx) -> f(row.get(col), idx)]
-    for col in table.schema.cols
-      unless col of mapping
-        mapping[col] = ((col) -> (row) -> row.get col)(col)
-    @map table, mapping
+    rows = table.each (row, idx) ->
+      raw = row.raw()
+      o = _.o2map mapping, (f, col) ->
+        [col, f(raw[col], idx)]
+      _.extend raw, o
+      raw
+    table.constructor.fromArray rows
 
   # return schema with ONLY mapping
   @map: (table, mapping) ->

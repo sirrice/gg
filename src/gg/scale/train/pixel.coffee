@@ -22,19 +22,20 @@ class gg.scale.train.Pixel extends gg.core.BForm
   @ggpackage = "gg.scale.train.Pixel"
 
 
-  compute: (datas, params) ->
+
+  compute: (pairtable, params) ->
     # 0) copy existing scales
     # 1) iterate through each column, compute bounds
     # 2) invert bounds
     # 3) merge bounds with existing scales
     # 4) map tables once to invert using old scales + apply new scales
 
+    log = @log
     Schema = gg.data.Schema
-    fOldScaleSet = ([t, e], idx) =>
-      scaleset = e.get 'scales'
-      scaleset = scaleset.clone()
-      @log "#{idx} origScaleSet: #{scaleset.toString()}"
-      scaleset
+    fOldScales = (pt, idx) ->
+      s = pt.getMD().get(0, 'scales').clone()
+      log "#{idx} origScales: #{s.toString()}"
+      s
 
 
     # 1. use old scales to invert column value
@@ -42,14 +43,15 @@ class gg.scale.train.Pixel extends gg.core.BForm
     #    - reset domains of non-ordinal scales
     #    - preserve ordinal scales
     # 3. preserve existing ranges
-    fMergeDomain = ([t, e, oldscaleset], idx) =>
+    fMergeDomain = ([pt, oldscaleset], idx) =>
+      t = pt.getTable()
+      md = pt.getMD()
+      posMapping = md.get 0, 'posMapping'
       newscaleset = oldscaleset.clone()
       seen = {}
-      posMapping = e.get 'posMapping'
-      @log "#{idx} posMapping: #{JSON.stringify posMapping}"
 
       f = (table, oldscale, aes) =>
-        return if _.isSubclass oldscale, gg.scale.Identity
+        return table if _.isSubclass oldscale, gg.scale.Identity
 
         @log "#{idx} retrive #{aes}: #{oldscale.aes}\t#{oldscale.type}"
 
@@ -63,11 +65,11 @@ class gg.scale.train.Pixel extends gg.core.BForm
         unless col? and col.length > 0
           @log "#{idx} mergeDomain: aes #{aes} #{col? and col.length>0}"
           @log "#{idx} mergeDomain: #{newscale.toString()}"
-          return
+          return table
         if _.isSubclass oldscale, gg.scale.BaseCategorical
           @log "#{idx} mergeDomain: categorical.  skipping"
           @log "#{idx} mergeDomain: #{newscale.toString()}"
-          return
+          return table
 
         # Reset the domain if this is the first time we've seen it
         if newscale.id not of seen
@@ -83,48 +85,53 @@ class gg.scale.train.Pixel extends gg.core.BForm
         @log "#{idx} mergeDomain: #{aes}\trange: #{range}"
         @log "#{idx} mergeDomain: #{aes}\tdomain: #{domain}"
         @log "#{idx} mergeDomain: #{newscale.toString()}"
+        table
 
-      oldscaleset.useScales t, posMapping, f
-      e.put 'scales', newscaleset
+      t = oldscaleset.useScales t, posMapping, f
+      md = gg.data.Transform.mapCols md,
+        'scales': () -> newscaleset
+      new gg.data.PairTable t, md
 
-    fRescale = ([t, e, oldScales], idx ) =>
-      @log "#{idx} fRescale called layer: #{e.get "layer"}"
-      scaleset = e.get 'scales'
-      posMapping = e.get 'posMapping'
+    fRescale = ([pt, oldScales], idx ) =>
+      t = pt.getTable()
+      md = pt.getMD()
+      scaleset = md.get 0, 'scales'
+      posMapping = md.get 0, 'posMapping'
+      layer = md.get 0, 'layer'
       mappingFuncs = {}
+      @log "#{idx} fRescale called layer: #{layer}"
+
       rescale = (table, scale, aes) =>
-        return if scale.type == Schema.ordinal
+        return table if scale.type == Schema.ordinal
         oldScale = oldScales.scale aes, Schema.unknown, posMapping
         g = (v) -> scale.scale oldScale.invert(v)
         mappingFuncs[aes] = g
         @log "#{idx} rescale: old: #{oldScale.toString()}"
         @log "#{idx} rescale: new: #{scale.toString()}"
+        table
 
       scaleset.useScales t, posMapping, rescale
       @log "#{idx} #{scaleset.toString()}"
-      t.map mappingFuncs
-      t
+      t = gg.data.Transform.mapCols t, mappingFuncs
+      new gg.data.PairTable t, md
 
     # 0) setup some variables we'll need
-    tables = _.map datas, (d) -> d.table
-    envs = _.map datas, (d) -> d.env
-    oldScaleSets = _.map _.zip(tables, envs), fOldScaleSet
-    args = _.zip(tables, envs, oldScaleSets)
+    partitions = pairtable.fullPartition()
+    oldScaleSets = _.map partitions, fOldScales
+    args = _.zip(partitions, oldScaleSets)
 
     # 1) compute new scales
-    _.each args, fMergeDomain
+    partitions = _.map args, fMergeDomain
 
     # 2) retrain scales across facets/layers and expand domains
     #    must be done before rescaling!
-    gg.scale.train.Master.train datas, params
+    tset = new gg.data.TableSet partitions
+    tset = gg.scale.train.Master.train tset, params
+    partitions = tset.fullPartition()
+    args = _.zip(partitions, oldScaleSets)
 
     # 3} invert data using old scales, then apply new scales
-    newTables = _.map args, fRescale
+    partitions = _.map args, fRescale
 
-    _.times newTables.length, (idx) ->
-      datas[idx].table = newTables[idx]
-    datas
-
-
-
+    new gg.data.TableSet partitions
 

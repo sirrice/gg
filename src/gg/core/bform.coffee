@@ -21,12 +21,17 @@ class gg.core.BForm extends gg.wf.SyncBarrier
     @params.ensure "klassname", [], @constructor.ggpackage
 
     # wrap compute in a verification method
-    compute = @spec.f or @compute.bind(@)
-    log = @log.bind(@)
-    @compute = (tableset, params) ->
-      tableset = gg.core.FormUtil.addDefaults tableset, params, log
-      gg.core.FormUtil.validateInput tableset, params
-      compute tableset, params
+    f = @spec.f
+    f ?= @compute.bind @
+    FormUtil = gg.core.FormUtil
+    makecompute = (log) ->
+      (tableset, params) ->
+        tableset = FormUtil.addDefaults tableset, params, log
+        FormUtil.validateInput tableset, params
+        tableset = FormUtil.ensureScales tableset, params, log
+        f tableset, params
+    @params.put 'compute', makecompute(@log)
+    super
 
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?

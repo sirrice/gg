@@ -35,10 +35,12 @@ class gg.data.PairTable
   fullPartition: -> 
     partitions = @partition @sharedCols()
     partitions = _.map partitions, (p) =>
+      table = p.getTable()
       md = p.getMD()
       if md.nrows() == 0
-        rows = [new gg.data.Row(@mdSchema().clone())]
-        md = gg.data.Table.fromArray rows
+        row = new gg.data.Row(@mdSchema().clone())
+        row = row.merge table.get(0).project(@sharedCols())
+        md = gg.data.Table.fromArray [row]
         new gg.data.PairTable p.getTable(), md
       else if md.nrows() > 1
         throw Error("fullpartition: md.nrows (#{md.nrows()}) != 1.\t#{md.toString()}")

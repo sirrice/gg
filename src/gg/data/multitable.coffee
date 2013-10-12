@@ -18,7 +18,7 @@ class gg.data.MultiTable extends gg.data.Table
 
   cloneShallow: ->
     ts = _.map @tables, (t) -> t.cloneShallow()
-    new gg.data.MultiTable ts
+    new gg.data.MultiTable @schema.clone(), ts
 
   cloneDeep: ->
     ts = _.map @tables, (t) -> t.cloneDeep()

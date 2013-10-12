@@ -42,7 +42,11 @@ class gg.data.Row
     ret
 
   clone: ->
-    data = _.clone @data
+    data = _.map @data, (v) ->
+      if v.clone?
+        v.clone()
+      else
+        v
     new gg.data.Row @schema, data
 
 

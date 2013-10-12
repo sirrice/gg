@@ -45,10 +45,11 @@ class gg.core.FormUtil
     unless md.has 'scalesconfig'
       md = md.addConstColumn 'scalesconfig', gg.scale.Config.fromSpec({})
     unless md.has 'scales'
-      layer = md.get 0, 'layer'
-      config = md.get 0, 'scalesconfig'
-      scaleset = config.scales layer
-      md = md.addConstColumn 'scales', scaleset
+      md = gg.data.Transform.transform md,
+        scales: (row) ->
+          layer = row.get 'layer'
+          config = row.get 'scalesconfig'
+          config.scales(layer)
       new gg.data.PairTable pairtable.getTable(), md
     else
       pairtable

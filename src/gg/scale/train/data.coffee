@@ -6,28 +6,31 @@ class gg.scale.train.Data extends gg.core.BForm
   parseSpec: ->
     super
 
+  compute: (pairtable, params) ->
+    gg.scale.train.Data.train pairtable, params, @log
+
   # these training methods assume that the tables's attribute names
   # have been mapped to the aesthetic attributes that the scales
   # expect
-  compute: (datas, params) ->
-    fTrain = (data) =>
-      [t, e] = [data.table, data.env]
-      info = @paneInfo data
-      posMapping = e.get 'posMapping'
-      config = e.get 'scalesconfig'
-      scaleset = config.scales info.layer
+  @train: (pairtable, params, log) ->
+    log ?= console.log
+    partitions = pairtable.fullPartition()
 
-      @log "trainOnData: cols:    #{t.schema.toSimpleString()}"
-      @log "trainOnData: set.id:  #{scaleset.id}"
-      @log "trainOnData: pos:     #{JSON.stringify posMapping}"
+    for p in partitions
+      table = p.getTable()
+      md = p.getMD()
+      posMapping = md.get 0, 'posMapping'
+      scales = md.get 0, 'scales'
 
+      log "trainOnData: nrows:   #{table.nrows()}"
+      log "trainOnData: cols:    #{table.schema.toSimpleString()}"
+      log "trainOnData: set.id:  #{scales.id}"
+      log "trainOnData: pos:     #{JSON.stringify posMapping}"
 
-      scaleset.train t, posMapping
-      e.put 'scales', scaleset
-      @log scaleset.toString()
+      scales.train table, posMapping
+      log scales.toString()
 
-    _.each datas, fTrain
-    gg.scale.train.Master.train datas, params
-    datas
-
+    pairtable = new gg.data.TableSet partitions
+    pairtable = gg.scale.train.Master.train pairtable, params
+    pairtable
 
