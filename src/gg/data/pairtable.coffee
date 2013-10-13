@@ -25,14 +25,14 @@ class gg.data.PairTable
        (tSchema.type(col) == mSchema.type(col)))
     sharedCols
 
-  partition: (joincols) ->
+  partition: (joincols, type='outer') ->
     ps = gg.data.Transform.partitionJoin @table, @md, joincols
     _.map ps, (o) -> o['table']
 
   # partition on _all_ of the shared columns
   # 
   # enforces invariant: each md should have a _single_ row
-  fullPartition: -> 
+  fullPartition: (type='outer') -> 
     partitions = @partition @sharedCols()
     partitions = _.map partitions, (p) =>
       table = p.getTable()

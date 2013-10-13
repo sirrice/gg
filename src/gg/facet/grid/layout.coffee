@@ -8,21 +8,32 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
   #
   # compute layout information for each pane in the grid view
   #
-  layoutPanes: (datas, params, lc) ->
+  layoutPanes: (tset, params, lc) ->
+    xFacet = 'facet-x'
+    yFacet = 'facet-y'
+    md = tset.getMD()
+    partitions = tset.partition [xFacet, yFacet]
+
     # Setup Variables
-    tables = _.map datas, (d) -> d.table
-    envs = _.map datas, (d) -> d.env
     log = @log
     container = lc.plotC
     [w,h] = [container.w(), container.h()]
-    paddingPane = params.get('paddingPane')
-    showXAxis = params.get('showXAxis')
-    showYAxis = params.get('showYAxis')
-    xs = @xFacetVals datas
-    ys = @yFacetVals datas
+    paddingPane = params.get 'paddingPane'
+    showXAxis = params.get 'showXAxis'
+    showYAxis = params.get 'showYAxis'
+
+    xs = _.uniq md.getColumn(xFacet)
+    ys = _.uniq md.getColumn(yFacet)
     nxs = xs.length
     nys = ys.length
 
+    # Compute derived values
+    css = { 'font-size': '10pt' }
+    dims = _.textSize @getMaxYText(tset), css
+    yAxisW = dims.w + paddingPane
+    labelHeight = _.exSize().h + paddingPane
+    showXFacet = xs.length > 1 and xs[0]?
+    showYFacet = ys.length > 1 and ys[0]?
 
     log "paddingPane, envs, xs, ys:"
     log paddingPane
@@ -35,15 +46,6 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
         log ts
         log "facet #{x} #{y} has #{_.map ts,
           (t)->t.nrows()} rows"
-
-
-    # Compute derived values
-    css = { 'font-size': '10pt' }
-    dims = _.textSize @getMaxYText(datas), css
-    yAxisW = dims.w + paddingPane
-    labelHeight = _.exSize().h + paddingPane
-    showXFacet = not(xs.length is 1 and not xs[0]?)
-    showYFacet = not(ys.length is 1 and not ys[0]?)
     log "yAxisW: #{yAxisW}"
 
 

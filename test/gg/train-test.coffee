@@ -5,7 +5,7 @@ events = require 'events'
 
 suite = vows.describe "train.coffee"
 
-gg.util.Log.setDefaults {'gg.scale.train': 0}
+#gg.util.Log.setDefaults {'gg.scale.train': 0}
 
 runTest = (node, table) ->
   promise = new events.EventEmitter

@@ -32,11 +32,6 @@ class gg.facet.base.Layout extends gg.core.BForm
       margin: [[], 1]
 
 
-  xFacetVals: (datas) ->
-    @pick datas, gg.facet.base.Facets.facetXKey
-
-  yFacetVals: (datas) ->
-    @pick datas, gg.facet.base.Facets.facetYKey
 
   facetVals: (datas) ->
     Facets = gg.facet.base.Facets
@@ -56,20 +51,19 @@ class gg.facet.base.Layout extends gg.core.BForm
     css = {}
     _.exSize(css).h# + params.get('paddingPane')
 
-  getMaxYText: (datas) ->
-    envs = _.map datas, (d) -> d.env
-    scalesList = gg.core.FormUtil.scalesList datas
-    text = "100"
-    formatter = d3.format(",.0f")
-
-    _.each scalesList, (scaleSet) ->
-      yscale = scaleSet.scale 'y', gg.data.Schema.unknown
+  getMaxYText: (pairtable) ->
+    md = pairtable.getMD()
+    text = '100'
+    formatter = d3.format ',.0f'
+    md.each (row) ->
+      s = row.get 'scales'
+      yscale = s.scale 'y', gg.data.Schema.unknown
       y = yscale.maxDomain()
-      if _.isNumber
-        _text = formatter(y)
-        text = _text if _text? and  _text.length > text.length
-
-    return text
+      if _.isNumber y
+        _text = formatter y
+        if _text? and _text.length > text.length
+          text = _text
+    text
 
 
 

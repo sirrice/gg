@@ -111,24 +111,39 @@ class gg.data.Transform
     
   # Equijoin + partition on join columns
   # @return Array[{key:, table: pairtable}]
-  @partitionJoin: (t1, t2, joincols) ->
+  @partitionJoin: (t1, t2, joincols, type='outer') ->
     joincols = _.flatten [joincols]
-    #unless t1.hasCols(joincols)
-    #  throw Error "left table doesn't have all columns: #{joincols} not in #{t1.schema.toString()}"
-    #unless t2.hasCols(keys)
-    #  throw Error "right table doesn't have all columns: #{joincols} not in #{t2.schema.toString()}"
+    ###
+    unless t1.hasCols(joincols)
+      throw Error "left table doesn't have all columns: #{joincols} not in #{t1.schema.toString()}"
+    unless t2.hasCols(keys)
+      throw Error "right table doesn't have all columns: #{joincols} not in #{t2.schema.toString()}"
+    ###
 
     ht1 = @buildHT t1, joincols
     ht2 = @buildHT t2, joincols
-    keys = _.uniq _.flatten [_.keys(ht1), _.keys(ht2)]
+    schema1 = t1.schema
+    schema2 = t2.schema
+
+    keys = switch type
+      when 'inner'
+        _.intersection _.keys(ht1), _.keys(ht2)
+      when 'left'
+        _.keys(ht1)
+      when 'right'
+        _.keys(ht2)
+      when 'outer'
+        _.uniq _.flatten [_.keys(ht1), _.keys(ht2)]
+      else
+        throw Error "invalid join type #{type}"
 
     ret = []
     for key in keys
       rows1 = ht1[key]
       rows2 = ht2[key]
-      left = t1.constructor.fromArray rows1, t1.schema.clone()
-      right = t2.constructor.fromArray rows2, t2.schema.clone()
-      table = new gg.data.PairTable(left, right)
+      left = t1.constructor.fromArray rows1, schema1.clone()
+      right = t2.constructor.fromArray rows2, schema2.clone()
+      table = new gg.data.PairTable left, right
       ret.push { key: key, table: table }
     ret
 
