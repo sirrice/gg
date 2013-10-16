@@ -14,13 +14,11 @@ class gg.facet.base.Render extends gg.core.BForm
     @params.put "location", "client"
 
 
-  renderLabels: (datas, params, lc) ->
-    tables = _.map datas, (d) -> d.table
-    envs = _.map datas, (d) -> d.env
+  renderLabels: (md, params, lc) ->
     options = params.get 'options'
     fXLabel = params.get 'fXLabel'
     fYLabel = params.get 'fYLabel'
-    svg = _.first(envs).get('svg').facets
+    svg = md.get(0, 'svg').facets
     bgC = lc.background
     xflC = lc.xFacetLabelC
     yflC = lc.yFacetLabelC
@@ -98,9 +96,12 @@ class gg.facet.base.Render extends gg.core.BForm
     }
 
     # update environment
-    _.each envs, (env) ->
-      env.get('svg').plot = plotSvg
+    md = gg.data.Transform.mapCols md,
+      svg: (svg) -> 
+        svg.plot = plotSvg
+        svg
 
+    md
     # render the pane container
     ###
     draw = (c, fill) ->
@@ -126,11 +127,13 @@ class gg.facet.base.Render extends gg.core.BForm
 
 
 
-  compute: (tset, params) ->
-    lc = _.first(datas).env.get 'lc'
-    @renderLabels datas, params, lc
-    _.each datas, (data) -> data.env.put 'lc', lc
-    datas
+  compute: (pairtable, params) ->
+    md = pairtable.getMD()
+    lc = md.get 0, 'lc'
+    md = @renderLabels md, params, lc
+    md = gg.data.Transform.mapCols md,
+      lc: () -> lc
+    new gg.data.PairTable pairtable.getTable(), md
 
   @fromSpec: (spec) ->
     new gg.facet.grid.Render spec

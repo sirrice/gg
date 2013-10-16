@@ -38,7 +38,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @setupPos()
     @setupMap()
     @setupCoord()
-    @setupGroup()
     super
 
 
@@ -73,20 +72,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @coordSpec = @extractSpec "coord"
     @coordSpec.name = "coord-#{@layerIdx}"
     @coord = gg.coord.Coordinate.fromSpec @coordSpec
-
-  setupGroup: ->
-    @groupSpec = "group" if "group" of @mapSpec.aes
-
-    if @groupSpec?
-      @groupby = new gg.wf.PartitionCols
-        name: "group-#{@layerIdx}"
-        params:
-          key: "group"
-          cols: ['group']
-      @groupbymerge = new gg.wf.Merge
-        name: "groupbylabel-#{@layerIdx}"
-        params:
-          key: "group"
 
 
   # extract the geom/stat/pos specific spec from
@@ -147,18 +132,15 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes = []
 
     # add environment variables
-    gg.wf.Exec.create {}, (pt, params, cb) =>
-      md = pt.getMD()
-      md.addConstColumn 'layer', @layerIdx
-      md.addConstColumn 'posMapping', @geom.posMapping()
-      new gg.data.PairTable pt.getTable(), md
-
+    addenv = gg.xform.Mapper.fromSpec
+      name: "layer labeler"
+      aes:
+        layer: () => @layerIdx
+        posMapping: () => @geom.posMapping()
+    nodes.push addenv
 
     nodes.push @compilePrestats()
     nodes.push @compileStats()
-
-    nodes.push @g.facets.labelerNodes()
-    nodes.push @makeStdOut "post-facetLabel-#{@layerIdx}"
 
     nodes.push @compileGeomMap()
     nodes.push new gg.xform.ScalesValidate
@@ -192,9 +174,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
   compileStats: ->
     nodes = []
 
-    nodes.push @groupby
-    nodes.push @makeStdOut "post-gb"
-
     # train & filter scales
     nodes.push @g.scales.prestats
     nodes.push @makeStdOut "post-train"
@@ -208,8 +187,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # run the stat functions
     nodes.push @stats
     nodes.push @makeStdOut "post-stat-#{@layerIdx}"
-    nodes.push @groupbymerge
-    nodes.push @makeStdOut "post-groupby-#{@layerIdx}"
     nodes
 
 

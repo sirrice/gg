@@ -55,7 +55,7 @@ class gg.util.Textsize
 
       log "textsize of #{text}: #{width}x#{height} with #{JSON.stringify opts}"
 
-      if _.any [width, height], ((v) -> _.isNaN(v) or v is 0)
+      if _.any [width, height], ((v) -> (not v?) or _.isNaN(v) or v is 0)
         throw Error("exSize: width(#{width}), height(#{height})")
 
       ret =

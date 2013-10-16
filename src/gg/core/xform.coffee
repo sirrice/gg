@@ -30,8 +30,6 @@ class gg.core.XForm extends gg.wf.SyncExec
     super
 
   parseSpec: ->
-    @log "XForm spec: #{JSON.stringify @spec}"
-
     # pre-xform aesthetic mapping
     if _.findGoodAttr(@spec, gg.xform.Mapper.attrs, null)?
       mapSpec = _.clone @spec
@@ -53,7 +51,10 @@ class gg.core.XForm extends gg.wf.SyncExec
     @compute = (pt, params) ->
       pt = gg.core.FormUtil.addDefaults pt, params, log
       gg.core.FormUtil.validateInput pt, params, log
+      log "ensuring scales"
       pt = gg.core.FormUtil.ensureScales pt, params, log
+      log "running compute"
+      log compute.toString()
       compute pt, params
 
     super

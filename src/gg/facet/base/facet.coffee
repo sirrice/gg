@@ -44,7 +44,7 @@ class gg.facet.base.Facets
 
     @parseSpec()
 
-    @splitter = @splitterNodes()
+    @labeler = @labelerNodes()
     @trainer = new gg.scale.train.Master(
       name: 'facet_train').compile()
 
@@ -102,13 +102,17 @@ class gg.facet.base.Facets
   labelerNodes: ->
     [
       gg.xform.Mapper.fromSpec(
+        name: 'set facet key'
         aes:
           'facet-x': @splitParams.get 'x'
           'facet-y': @splitParams.get 'y'
       ),
       gg.xform.Mapper.fromSpec(
+        name: 'set facet keys'
         aes:
-          'facet-keys': (row) -> [row.get('facet-x'), row.get('facet-y')]
+          'facet-keys': (row) -> 
+            [row.get('facet-x'), row.get('facet-y')]
+          'facet-id': (row, idx) -> "facet-#{idx}"
       )
     ]
 

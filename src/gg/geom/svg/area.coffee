@@ -12,7 +12,7 @@ class gg.geom.svg.Area extends gg.geom.Render
     "fill-opacity": 0.7
     group: 1
 
-  inputSchema: -> ['pts']
+  inputSchema: -> ['x', 'y0', 'y1']
 
   render: (table, svg)  ->
     area = d3.svg.area()
@@ -34,7 +34,7 @@ class gg.geom.svg.Area extends gg.geom.Render
 
     @applyAttrs enterAreas,
       class: "path"
-      d: (d) -> area(d.rows())
+      d: (d) -> area(d.getRows())
       "stroke": (t) -> t.get 0, "stroke"
       "stroke-width": (t) -> t.get 0, 'stroke-width'
       "stroke-opacity": (t) -> t.get 0, "stroke-opacity"

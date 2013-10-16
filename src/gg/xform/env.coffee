@@ -16,12 +16,15 @@ class gg.xform.EnvPut extends gg.core.XForm
     super
     @params.ensure 'pairs', [], {}
 
-  compute: (pairtable, params, cb) ->
+  compute: (pairtable, params) ->
     md = pairtable.getMD()
-    _.each params.get('pairs'), (val, key) =>
-      md = md.addConstColumn key, val
+    pairs = params.get 'pairs'
+    mapping = _.o2map pairs, (v, k) ->
+      [k, () -> v]
+    md = gg.data.Transform.mapCols md,
+      mapping
     ret = new gg.data.PairTable pairtable.getTable(), md
-    cb null, ret
+    ret
 
 
 

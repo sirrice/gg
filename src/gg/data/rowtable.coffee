@@ -29,10 +29,12 @@ class gg.data.RowTable extends gg.data.Table
   # this should really be a project
   addConstColumn: (col, val, type=null) ->
     if @has col
-      throw Error "#{col} already in schema #{@schema.toString()}"
+      @log.warn "#{col} already in schema #{@schema.toString()}"
+      # in some modes, throw error
 
+    # TODO: check and enforce consistent type
     type = gg.data.Schema.type(val) unless type?
-    @schema.addColumn col, type
+    @schema.addColumn col, type unless @has col
     idx = @schema.index col
     for row in @rows
       row[idx] = val

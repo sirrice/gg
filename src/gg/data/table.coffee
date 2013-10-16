@@ -71,6 +71,7 @@ class gg.data.Table
   getCol: (col) -> throw "not implemented"
   getColumn: (col) -> throw "not implemented"
   rows: -> @each (row) -> row
+  getRows: -> @each (row) -> row
   raw: -> throw "not implemented"
   stats: -> throw "not implemented"
 

@@ -9,18 +9,15 @@ class gg.facet.pane.Svg extends gg.core.BForm
 
   b2translate: (b) -> "translate(#{b.x0},#{b.y0})"
 
-  renderFacetPane: (data, params) ->
-    table = data.table
-    env = data.env
-    svg = env.get('svg').plot
-    paneC = env.get 'paneC'
-    eventCoordinator = env.get 'event'
-    facetId = env.get gg.facet.base.Facets.facetId
-    return table unless paneC?
+  renderFacetPane: (md, params) ->
+    svg = md.get(0, 'svg').plot
+    paneC = md.get 0, 'paneC'
+    eventCoordinator = md.get 0, 'event'
+    facetId = md.get 0, 'facet-id'
+    return null unless paneC?
 
-    info = @paneInfo data, params
-    layerIdx = info.layer
-    scaleSet = @scales data, params
+    layerIdx = md.get 0, 'layer'
+    scaleSet = md.get 0, 'scales'
     dc = paneC.drawC()
     xfc = paneC.xFacetC()
     yfc = paneC.yFacetC()
@@ -47,8 +44,8 @@ class gg.facet.pane.Svg extends gg.core.BForm
     # XXX: check if show tick lines but not the labels
     @renderXAxis(el, dc, xac, xscale, {show: paneC.bXAxis})
     @renderYAxis(el, dc, yac, yscale, {show: paneC.bYAxis})
-    @renderXFacet(el, xfc, env) if paneC.bXFacet 
-    @renderYFacet(el, yfc, env) if paneC.bYFacet
+    @renderXFacet(el, xfc, md) if paneC.bXFacet 
+    @renderYFacet(el, yfc, md) if paneC.bYFacet
 
     dataPaneSvg = _.subSvg el, {
       class: 'data-pane facet-grid'
@@ -69,41 +66,6 @@ class gg.facet.pane.Svg extends gg.core.BForm
     el
 
 
-  compute: (datas, params) ->
-    # first pass to create panes
-    els = {}
-    for data in datas
-      info = @paneInfo data, params
-      key = JSON.stringify [info.facetX, info.facetY]
-      if key not of els
-        els[key] = @renderFacetPane data, params
-
-    # second pass sets env['svg'].paneSvg for each data
-
-    for data in datas
-      env = data.env
-      paneC = env.get 'paneC'
-      facetId = env.get gg.facet.base.Facets.facetId
-
-      info = @paneInfo data, params
-      layerIdx = info.layer
-      key = JSON.stringify [info.facetX, info.facetY]
-      dc = paneC.drawC()
-      el = els[key]
-
-      paneSvg = el.select('.data-pane').insert 'g', ':last-child'
-      paneSvg.attr {
-        class: 'layer-pane facet-layer-grid'
-        width: dc.w()
-        height: dc.h()
-        id: "facet-grid-#{paneC.xidx}-#{paneC.yidx}-#{layerIdx}"
-      }
-      env.get('svg').pane = paneSvg
-
-    datas
-
-
-
   renderBg: (el, container) ->
     bg = el.insert 'rect', ':first-child'
     bg.attr 
@@ -114,9 +76,9 @@ class gg.facet.pane.Svg extends gg.core.BForm
       class: 'pane-background facet-grid-background'
     bg
 
-  renderXFacet: (el, container, env) ->
-    text = env.get "xfacet-text"
-    size = env.get "xfacet-size"
+  renderXFacet: (el, container, md) ->
+    text = md.get 0, "xfacet-text"
+    size = md.get 0, "xfacet-size"
 
     xfel = el.insert 'g', ':first-child'
     xfel.attr 
@@ -137,9 +99,9 @@ class gg.facet.pane.Svg extends gg.core.BForm
       .text(text)
       .style("font-size", "#{size}pt")
 
-  renderYFacet: (el, container, env) ->
-    text = env.get "yfacet-text"
-    size = env.get "yfacet-size"
+  renderYFacet: (el, container, md) ->
+    text = md.get 0, "yfacet-text"
+    size = md.get 0, "yfacet-size"
 
     yfel = el.insert 'g', ':first-child'
     yfel.attr
@@ -283,5 +245,39 @@ class gg.facet.pane.Svg extends gg.core.BForm
       .call(brush)
 
       
+
+  compute: (pairtable, params) ->
+    md = pairtable.getMD()
+    # first pass to create panes
+    els = {}
+    md.each (row) =>
+      facetx = row.get 'facet-x'
+      facety = row.get 'facet-y'
+      key = JSON.stringify [facetx, facety]
+      unless key of els
+        svg = @renderFacetPane md, params
+        els[key] = svg if svg?
+
+    # second pass sets ['svg'].paneSvg for each data
+    md = gg.data.Transform.transform md,
+      svg: (row) ->
+        paneC = row.get 'paneC'
+        facetId = row.get 'facet-id'
+        layerIdx = row.get 'layer'
+        key = JSON.stringify [row.get('facet-x'), row.get('facet-y')]
+        dc = paneC.drawC()
+        el = els[key]
+
+        paneSvg = el.select('.data-pane').insert 'g', ':last-child'
+        paneSvg.attr {
+          class: 'layer-pane facet-layer-grid'
+          width: dc.w()
+          height: dc.h()
+          id: "facet-grid-#{paneC.xidx}-#{paneC.yidx}-#{layerIdx}"
+        }
+        row.get('svg').pane = paneSvg
+        row.get('svg')
+
+    new gg.data.PairTable pairtable.getTable(), md
 
 

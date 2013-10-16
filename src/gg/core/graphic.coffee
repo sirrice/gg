@@ -97,7 +97,7 @@ class gg.core.Graphic
     preMulticastNodes = []
     preMulticastNodes.push @datas.data()
     preMulticastNodes.push @setupEnvNode()
-    preMulticastNodes = preMulticastNodes.concat @facets.splitter
+    preMulticastNodes = preMulticastNodes.concat @facets.labeler
     preMulticastNodes = _.compact preMulticastNodes
 
     prev = null

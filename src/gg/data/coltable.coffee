@@ -21,10 +21,11 @@ class gg.data.ColTable extends gg.data.Table
 
   addConstColumn: (col, val, type=null) ->
     if @has col
-      throw Error "#{col} already exists in schema #{@schema.toString()}"
+      @log.warn "#{col} already exists in schema #{@schema.toString()}"
+      # throw error?
     
     type = gg.data.Schema.type(val) unless type?
-    @schema.addColumn col, type
+    @schema.addColumn col, type unless @has col
     idx = @schema.index col
     @cols[idx] = _.times(@nrows(), () -> val)
     @

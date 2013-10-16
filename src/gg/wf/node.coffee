@@ -78,7 +78,7 @@ class gg.wf.Node extends events.EventEmitter
     #
     listeners = @listeners outidx
     @log.info "output: port(#{outidx}), sizes: #{tableset.getTable().nrows()}"
-    @log tableset
+    #@log tableset
 
 
   error: (err) -> 

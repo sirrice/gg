@@ -23,7 +23,7 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
     # .attr( {} ) where {} is @attrs
     boxes = @agroup(svg, "boxes geoms", boxtables)
       .selectAll("circle")
-      .data(rows)
+      .data((d) -> d.getRows())
 
     enter = boxes.enter()
       .append("g")
@@ -91,7 +91,7 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
       y2: (t) -> t.get 0, 'lower'
 
     circles = enter.selectAll("circle")
-      .data((d) -> d.rows())
+      .data((d) -> d.getRows())
     enterCircles = circles.enter().append("circle")
 
     @applyAttrs enterCircles,

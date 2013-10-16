@@ -24,6 +24,7 @@ class gg.wf.Exec extends gg.wf.Node
     log = @log
 
     tableset = new gg.data.TableSet @inputs
+    sharedCols = tableset.sharedCols()
     partitions = tableset.fullPartition()
     #partitions = tableset.partition @params.get('key')
     iterator = (pairtable, cb) ->
@@ -33,7 +34,17 @@ class gg.wf.Exec extends gg.wf.Node
       catch err
         cb err, null
     async.map partitions, iterator, (err, pairtables) =>
-      throw Error err if err?
+      throw Error(err) if err?
+      pairtables = _.map pairtables, (pt) ->
+        md = pt.getMD()
+        t = pt.getTable()
+        o = {}
+        for col in sharedCols
+          o[col] = md.get 0, col
+        o = _.o2map o, (v, k) -> [k, ()->v]
+        t = gg.data.Transform.mapCols t, o
+        new gg.data.PairTable t, md
+
       result = new gg.data.TableSet pairtables
       @output 0, result
 
@@ -66,6 +77,7 @@ class gg.wf.SyncExec extends gg.wf.Exec
           throw Error "SyncExec should not call callback"
         cb null, res
       catch err
+        console.log("error in syncexec")
         console.log(err)
         cb err, pairtable
     @params.put 'compute', compute

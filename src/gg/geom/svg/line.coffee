@@ -12,7 +12,7 @@ class gg.geom.svg.Line extends gg.geom.Render
     fill: "none"
     group: '1'
 
-  inputSchema:  -> ['pts', 'group']
+  inputSchema:  -> ['x', 'y', 'y1', 'group']
 
   @linesCross: ([x0, y0, x1, y1], [xp0, yp0, xp1, yp1]) ->
     d = xp1*y1 - x1*yp1
@@ -88,7 +88,7 @@ class gg.geom.svg.Line extends gg.geom.Render
 
     @applyAttrs enterLines,
       class: "geom"
-      d: (d) -> liner(d.rows())
+      d: (d) -> liner(d.getRows())
     @applyAttrs enterLines,
       cssNormal
 

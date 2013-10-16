@@ -2,6 +2,30 @@
 
 class gg.data.Transform
 
+  # Creates a table that's cross product of the attrs
+  # @param cols { attr1: [ values], ... }
+  @cross: (cols, tabletype=null) ->
+    rows = @cross_ cols
+    return gg.data.Table.fromArray rows, null, tabletype
+
+  @cross_: (cols, tabletype=null) ->
+    if _.size(cols) == 0
+      return [{}]
+    rows = []
+    col = _.first _.keys cols
+    data = cols[col]
+    cols = _.omit cols, col
+    for v, idx in data
+      for subrow in @cross_ cols
+        row = {}
+        row[col] = v
+        _.extend row, subrow
+        rows.push row
+    return rows
+
+
+
+
   @sort: (table, cmp) ->
     rows = table.each (row) -> row
     rows.sort cmp

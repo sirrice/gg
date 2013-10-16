@@ -15,6 +15,7 @@ class gg.core.FormUtil
     missing = _.reject iSchema, (col) -> table.has col
     if missing.length > 0
       if log?
+        log "#{params.get 'name'}: input schema did not contain #{missing.join(",")}"
         log log.logname
         gg.wf.Stdout.print table, null, 5, log
       throw Error("#{params.get 'name'}: input schema did not contain #{missing.join(",")}")

@@ -43,7 +43,7 @@ class gg.data.Row
 
   clone: ->
     data = _.map @data, (v) ->
-      if v.clone?
+      if v? and v.clone?
         v.clone()
       else
         v

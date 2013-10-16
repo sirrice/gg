@@ -30,7 +30,8 @@ class gg.core.Layout extends gg.core.BForm
 
     # Add containers to the environment
     md = tset.getMD()
-    lc = _.first(md.getCol('lc')) or {}
+    lc = {}
+    lc = md.get 0, 'lc' if md.has 'lc'
     lc.titleC = titleC
     lc.facetC = facetC
     lc.baseC = c
