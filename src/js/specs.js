@@ -166,9 +166,10 @@ var geom_point_3 = {
 };
 
 var geom_point_4 = {
-  geom: "point"
- ,aes: {x: 'd', y: 'e', r: 'g', color: "g"}
-  ,pos: { type: 'jitter'}
+  layers: [
+   { geom: "point" ,pos: { type: 'jitter'} }
+  ]
+  ,aes: {x: 'd', y: 'e', r: 'g', color: "g"}
   ,scales: {
     fill: "color",
     r: { range: [2, 10] }
