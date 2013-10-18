@@ -100,22 +100,26 @@ class gg.facet.base.Facets
     }
 
   labelerNodes: ->
+    log = @log
     f = (pairtable, params) ->
       t = pairtable.getTable()
       md = pairtable.getMD()
       xcol = params.get 'x'
       ycol = params.get 'y'
+      log "x/ycols: #{xcol}/#{ycol}" 
       t = gg.data.Transform.transform t, 
         'facet-x': (row) -> row.get xcol
         'facet-y': (row) -> row.get ycol
+      pt = new gg.data.PairTable t, md
+      pt = pt.ensure ['facet-x', 'facet-y']
+      md = pt.getMD()
       md = gg.data.Transform.transform md, 
-        'facet-x': (row) -> row.get xcol
-        'facet-y': (row) -> row.get ycol
         'facet-keys': (row) -> 
-          "key-#{row.get(xcol)}-#{row.get(ycol)}"
-        'facet-id': (row) -> "facet-#{row.get(xcol)}-#{row.get(ycol)}"
+          "key-#{row.get('facet-x')}-#{row.get('facet-y')}"
+        'facet-id': (row) ->
+          "facet-#{row.get('facet-x')}-#{row.get('facet-y')}"
 
-      new gg.data.PairTable t, md
+      new gg.data.PairTable pt.getTable(), md
       
 
     gg.wf.SyncBlock.create f, @splitParams, 'facet-labeler'
