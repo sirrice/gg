@@ -98,6 +98,15 @@ class gg.wf.Node extends events.EventEmitter
 
   compile: -> [@]
 
+  @create: (compute, params, name) ->
+    params ?= {}
+    params = new gg.util.Params params
+    params.put 'compute', compute
+    class Klass extends @
+    ret = new Klass
+      name: name
+      params: params
+    ret
 
 
 

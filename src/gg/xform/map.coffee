@@ -57,11 +57,26 @@ class gg.xform.Mapper extends gg.wf.SyncExec
   compute: (pairtable, params) ->
     table = pairtable.getTable()
     mapping = params.get 'mapping'
-
     @log "transform: #{JSON.stringify mapping}"
     @log "table:     #{JSON.stringify table.schema.toString()}"
 
+
+    if 'group' of mapping
+      groupable = mapping['group']
+      unless _.isObject groupable
+        groupable = {}
+    else
+      allcols = _.keys mapping
+      cols = _.filter allcols, (c) -> gg.core.Aes.groupable c
+      groupable = _.pick mapping, cols
+    @log "groupable: #{groupable}"
+
+    gFuncs = _.mappingToFunctions table, groupable
     functions = _.mappingToFunctions table, mapping
+    if _.size(gFuncs) > 0
+      functions['group'] = (row) ->
+        _.o2map gFuncs, (f, col) -> [col, f(row)]
+
 
     table = gg.data.Transform.transform table, functions
     new gg.data.PairTable table, pairtable.getMD()
@@ -73,7 +88,6 @@ class gg.xform.Mapper extends gg.wf.SyncExec
 
     unless mapping? and _.size(mapping) > 0
       return null 
-
 
     # aes should be the mapping
     inverse = spec.inverse

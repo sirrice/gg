@@ -10,9 +10,10 @@ class gg.data.Schema
   @object = 4
   @svg = 5    # environment variable
   @container = 6
+  @function = 7
   @unknown = -1
 
-  constructor: (@cols=[], @types=[]) ->
+  constructor: (@cols=[], @types=[], @defaults={}) ->
     if @cols.length != @types.length
       throw Error("len of cols != types #{@cols.length} != #{@types.length}")
 
@@ -28,6 +29,8 @@ class gg.data.Schema
   isDate: (col) -> @type(col) is gg.data.Schema.date
   isObject: (col) -> @type(col) is gg.data.Schema.object
   isUnknown: (col) -> @type(col) is gg.data.Schema.unknown
+  default: (col) -> @defaults[col]
+
 
   addColumn: (col, type=gg.data.Schema.unknown) ->
     unless @has col

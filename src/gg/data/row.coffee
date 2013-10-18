@@ -8,7 +8,7 @@ class gg.data.Row
 
   # @param data [ value,... ]
   # @param schema 
-  constructor: (@schema, @data=null) ->
+  constructor: (@schema, @data=null, @defaults={}) ->
     @log = gg.data.Row.log
     unless @schema?
       throw Error "Row needs a schema"
@@ -21,6 +21,11 @@ class gg.data.Row
   has: (col, type=null) -> @schema.has col, type
   contains: (col, type=null) -> @schema.has col, type
   get: (col) -> @data[@schema.index(col)]
+  ###
+    v = @data[@schema.index(col)]
+    v = @defaults[col] if _.isUndefined(v)
+    v
+  ###
   set: (col, v) -> @data[@schema.index(col)] = v
   project: (cols) ->
     schema = @schema.project cols

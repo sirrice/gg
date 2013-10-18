@@ -4,7 +4,8 @@
 class gg.geom.reparam.Line extends gg.core.XForm
   @ggpackage = "gg.geom.reparam.Line"
 
-  defaults: -> { group: '1' }
+  defaults: -> 
+    group: {}
 
   inputSchema: -> ['x', 'y']
 

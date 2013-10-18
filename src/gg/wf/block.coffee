@@ -1,23 +1,29 @@
 #<< gg/wf/node
 
-# Flattens (irreversibly) and processes all wf.Data objects for a layer
-# Expect that wf.Data objects are mutated in place or added, but 
-# not replaced -- ids for the same "logical" Data don't change.
+# Sends the entire pairtable (without partitioning first like Exec
+# or Barrier) to the compute
 class gg.wf.Block extends gg.wf.Node
   @ggpackage = "gg.wf.Block"
   @type = "block"
 
-  compute: (datas, params) -> datas
+  parseSpec: ->
+    @params.ensure 'compute', ['f'], null
+
+  compute: (pairtable, params, cb) -> cb null, pairtable
 
   run: ->
     throw Error("node not ready") unless @ready()
 
     params = @params
     pstore = @pstore()
+    compute = @params.get('compute') or @compute.bind(@)
 
-    [flat, paths] = gg.wf.Inputs.flatten @inputs[0]
-    newdatas = @compute flat, params
+    tset = new gg.data.TableSet [@inputs[0]]
+    compute tset, params, (err, pairtable) =>
+      throw Error(err) if err?
+      @output 0, pairtable
 
+    ###
     # Write provenance
     pstore = @pstore()
     id2path = _.o2map flat, (data, idx) -> [data.id, paths[idx]]
@@ -26,8 +32,25 @@ class gg.wf.Block extends gg.wf.Node
         pstore.writeData [idx], id2path[data.id]
       else
         pstore.writeData [idx], null
-
-    @output 0, newdatas
-
+    ###
 
 
+
+class gg.wf.SyncBlock extends gg.wf.Block
+  parseSpec: ->
+    super
+    name = @name
+    f = @params.get 'compute'
+    f ?= @compute.bind(@)
+    compute = (pairtable, params, cb) ->
+      try
+        res = f pairtable, params, () ->
+          throw Error "SyncBlock should not call callcack"
+        cb null, res
+      catch err
+        console.log "error in syncblock #{name}"
+        console.log err
+        cb err, null
+    @params.put 'compute', compute
+
+  compute: (pairtable, params, cb) -> pairtable

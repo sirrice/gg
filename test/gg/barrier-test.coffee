@@ -47,7 +47,7 @@ check =
 
 barrier = 
   topic: ->
-    gg.wf.Barrier.create null, (tset, params, cb) ->
+    gg.wf.Barrier.create (tset, params, cb) ->
       t = tset.getTable()
       t = gg.data.Transform.transform t, { 
         c: (row) -> row.get('a')*row.get('b')

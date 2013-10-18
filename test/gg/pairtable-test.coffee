@@ -229,5 +229,23 @@ suite.addBatch
         partitions = table.fullPartition()
         assert.equal partitions.length, 20
 
+  "nested tableset":
+    topic: ->
+      rows = _.times 20, (i) -> {x: i, y: i+1}
+      t = gg.data.Table.fromArray rows
+      pt = new gg.data.PairTable t
+      tset = new gg.data.TableSet [pt]
+      tset = new gg.data.TableSet [tset]
+      tset
+
+    "when getTable called":
+      topic: (tset) -> tset.getTable()
+
+      "can get column x": (t) ->
+        assert.equal t.nrows(), 20
+        t.each (row) ->
+          assert _.isNumber(row.get('x'))
+
+
 
 suite.export module

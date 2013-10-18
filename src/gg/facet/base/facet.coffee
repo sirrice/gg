@@ -100,22 +100,25 @@ class gg.facet.base.Facets
     }
 
   labelerNodes: ->
-    [
-      gg.xform.Mapper.fromSpec(
-        name: 'set facet key'
-        aes:
-          'facet-x': @splitParams.get 'x'
-          'facet-y': @splitParams.get 'y'
-      ),
-      gg.xform.Mapper.fromSpec(
-        name: 'set facet keys'
-        aes:
-          'facet-keys': (row) -> 
-            [row.get('facet-x'), row.get('facet-y')]
-          'facet-id': (row, idx) -> "facet-#{idx}"
-      )
-    ]
+    f = (pairtable, params) ->
+      t = pairtable.getTable()
+      md = pairtable.getMD()
+      xcol = params.get 'x'
+      ycol = params.get 'y'
+      t = gg.data.Transform.transform t, 
+        'facet-x': (row) -> row.get xcol
+        'facet-y': (row) -> row.get ycol
+      md = gg.data.Transform.transform md, 
+        'facet-x': (row) -> row.get xcol
+        'facet-y': (row) -> row.get ycol
+        'facet-keys': (row) -> 
+          "key-#{row.get(xcol)}-#{row.get(ycol)}"
+        'facet-id': (row) -> "facet-#{row.get(xcol)}-#{row.get(ycol)}"
 
+      new gg.data.PairTable t, md
+      
+
+    gg.wf.SyncBlock.create f, @splitParams, 'facet-labeler'
 
   @fromSpec: (g, spec) ->
     spec.type = spec.type or "grid"

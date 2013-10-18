@@ -225,7 +225,6 @@ twoTables =
 
 
 
-
 suite.addBatch
   "row table": rowSchema
   "col table": colSchema

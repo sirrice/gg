@@ -10,7 +10,7 @@ class gg.geom.svg.Line extends gg.geom.Render
     "stroke-opacity": 0.7
     stroke: "black"
     fill: "none"
-    group: '1'
+    group: {}
 
   inputSchema:  -> ['x', 'y', 'y1', 'group']
 
@@ -75,23 +75,22 @@ class gg.geom.svg.Line extends gg.geom.Render
     @log "stroke is #{table.get 0, "stroke"}"
 
     cssNormal =
-      "stroke": (t) -> t.get(0, "stroke")
-      "stroke-width": (t) -> t.get(0, "stroke-width")
-      "stroke-opacity": (t) -> t.get(0, "stroke-opacity")
+      "stroke": (g) -> g.get('stroke')
+      "stroke-width": (g) -> g.get("stroke-width")
+      "stroke-opacity": (g) -> g.get("stroke-opacity")
       "fill": "none"
 
     cssOver =
-      stroke: (t) -> d3.rgb(t.get(0, "fill")).darker(2)
-      "stroke-width": (t) -> t.get(0, 'stroke-width') + 1
+      stroke: (g) -> d3.rgb(g.get("fill")).darker(2)
+      "stroke-width": (g) -> g.get('stroke-width') + 1
       "stroke-opacity": 1
 
 
     @applyAttrs enterLines,
       class: "geom"
       d: (d) -> liner(d.getRows())
-    @applyAttrs enterLines,
-      cssNormal
 
+    @applyAttrs enterLines, cssNormal
 
     _this = @
     lines

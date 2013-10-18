@@ -36,7 +36,7 @@ check =
 
 createdexec = 
   topic: ->
-    gg.wf.Exec.create null, (pairtable, params, cb) ->
+    gg.wf.Exec.create (pairtable, params, cb) ->
       table = gg.data.Transform.map pairtable.getTable(),
         attr1: (row) -> row.get('a') * -1
       pairtable = new gg.data.PairTable table, pairtable.getMD()
@@ -56,7 +56,7 @@ extendedexec =
 _.extend extendedexec, check
 
 createAggExec = ->
-  gg.wf.Exec.create { key: 'a' }, (pairtable, params, cb) ->
+  gg.wf.Exec.create ((pairtable, params, cb) ->
     t = pairtable.getTable()
     bcol = t.getCol 'b'
     total = _.sum bcol
@@ -66,10 +66,10 @@ createAggExec = ->
 
     t = t.constructor.fromArray [row], schema
     pairtable = new gg.data.PairTable t, pairtable.getMD()
-    cb null, pairtable
+    cb null, pairtable), {key: 'a'} 
 
 createSyncExec = ->
-  gg.wf.SyncExec.create null,  (pt, params) ->
+  gg.wf.SyncExec.create  (pt, params) ->
     t = pt.getTable().addConstColumn 'z', 99
     new gg.data.PairTable t, pt.getMD()
 

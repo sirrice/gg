@@ -116,7 +116,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     arg = _.clone params
     params =
       n: 5
-      aess: null
+      cols: null
     _.extend params, arg
     new gg.wf.Stdout
       name: "#{name}-#{@layerIdx}"
@@ -132,14 +132,23 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes = []
 
     # add environment variables
-    addenv = gg.xform.Mapper.fromSpec
-      name: "layer labeler"
-      aes:
-        layer: () => @layerIdx
-        posMapping: () => @geom.posMapping()
+    addenv = gg.wf.SyncBlock.create ((pt, params) ->
+      [t, md] = [pt.getTable(), pt.getMD()]
+      layerIdx = params.get 'layer'
+      posMapping = params.get 'posMapping'
+      t = gg.data.Transform.mapCols t, 
+        layer: () -> layerIdx
+      md = gg.data.Transform.mapCols md, 
+        layer: () -> layerIdx
+        posMapping: () -> posMapping
+      new gg.data.PairTable t, md), {
+        layer: @layerIdx
+        posMapping: @geom.posMapping()
+      }, 'layer-labeler'
     nodes.push addenv
 
     nodes.push @compilePrestats()
+    nodes.push @g.facets.labeler
     nodes.push @compileStats()
 
     nodes.push @compileGeomMap()

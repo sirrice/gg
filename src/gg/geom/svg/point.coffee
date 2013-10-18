@@ -12,7 +12,7 @@ class gg.geom.svg.Point extends gg.geom.Render
     stroke: "steelblue"
     "stroke-width": 0
     "stroke-opacity": 0.5
-    group: 1
+    group: {}
 
   inputSchema: ->
     ['x', 'y']

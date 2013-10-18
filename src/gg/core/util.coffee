@@ -30,17 +30,29 @@ class gg.core.FormUtil
       log "table schema: #{table.schema.toString()}"
       log "expected:     #{JSON.stringify defaults}"
 
-    for col, val of defaults
-      unless table.has col
-        log "adding:   #{col} -> #{val}" if log?
-        table = table.addConstColumn col, val
+    mapping = _.o2map defaults, (v, k) ->
+      if k == 'group'
+        unless _.isObject v
+          throw Error "group default value should be object: #{v}"
+        log "adding:  #{k} -> #{v}"
+        f = (row) ->
+          newv = _.clone v
+          _.extend newv, row.get('group') if row.has 'group'
+          newv
+        [k, f]
+      else if table.has k
+        null
+      else
+        log "adding:  #{k} -> #{v}"
+        [k, () -> v]
+    table = gg.data.Transform.transform table, mapping
     new gg.data.PairTable table, pt.getMD()
 
 
   @ensureScales: (pairtable, params, log) ->
     md = pairtable.getMD()
     unless md.nrows() <= 1
-      log.warn "@scales called with multiple rows: #{md.raw()}"
+      log.warn "@scales called with multiple rows: #{md.nrows()}"
     if md.nrows() == 0 
       throw Error "@scales called with no md rows"
     unless md.has 'scalesconfig'

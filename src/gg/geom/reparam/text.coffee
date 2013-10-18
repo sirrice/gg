@@ -5,8 +5,7 @@ class gg.geom.reparam.Text extends gg.core.XForm
   @ggpackage = "gg.geom.reparam.Text"
 
 
-  defaults: ->
-    group: "1"
+  defaults: -> group: {}
 
   inputSchema: -> ['x', 'y', 'text']
 

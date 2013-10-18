@@ -6,11 +6,11 @@ class gg.geom.svg.Area extends gg.geom.Render
 
 
   defaults:  ->
+    group: {}
     "stroke-width": 1
     stroke: "steelblue"
     fill: "grey"
     "fill-opacity": 0.7
-    group: 1
 
   inputSchema: -> ['x', 'y0', 'y1']
 
@@ -34,21 +34,21 @@ class gg.geom.svg.Area extends gg.geom.Render
 
     @applyAttrs enterAreas,
       class: "path"
-      d: (d) -> area(d.getRows())
-      "stroke": (t) -> t.get 0, "stroke"
-      "stroke-width": (t) -> t.get 0, 'stroke-width'
-      "stroke-opacity": (t) -> t.get 0, "stroke-opacity"
-      fill: (t) -> t.get 0, 'fill'
-      "fill-opacity": (t) -> t.get 0, 'fill-opacity'
+      d: (t) -> area(t.getRows())
+      "stroke": (g) -> g.get(0, 'stroke')
+      "stroke-width": (g) -> g.get(0, 'stroke-width')
+      "stroke-opacity": (g) -> g.get(0, "stroke-opacity")
+      fill: (g) -> g.get(0, 'fill')
+      "fill-opacity": (g) -> g.get(0, 'fill-opacity')
 
 
     cssOver =
-      fill: (t) -> d3.rgb(t.get(0, "fill")).darker(2)
+      fill: (g) -> d3.rgb(g.get(0, "fill")).darker(2)
       "fill-opacity": 1
 
     cssOut =
-      fill: (t) -> t.get(0, 'fill')
-      "fill-opacity": (t) -> t.get(0, 'fill-opacity')
+      fill: (g) -> g.get(0, 'fill')
+      "fill-opacity": (g) -> g.get(0, 'fill-opacity')
 
     _this = @
     areas

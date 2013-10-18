@@ -44,8 +44,8 @@ class gg.geom.Render extends gg.core.XForm
     if @log.level == gg.util.Log.DEBUG
       write = (text, opts={}) ->
         _.subSvg(svg, opts, "text").text(text)
-      write md.get(0, Facets.facetXKey), {dy: "1em"}
-      write md.get(0, Facets.facetYKey), {dy: "2em"}
+      write md.get(0, 'facet-x'), {dy: "1em"}
+      write md.get(0, 'facet-y'), {dy: "2em"}
       write md.get(0, table.nrows()), {dy: "3em"}
 
 

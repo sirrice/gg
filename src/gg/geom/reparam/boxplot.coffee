@@ -10,7 +10,7 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
 
   defaults: ->
     x: 1
-    group: "1"
+    group: {}
 
   # outliers is an array with schema {outlier:}
   inputSchema: ->

@@ -14,6 +14,8 @@ class gg.scale.train.Data extends gg.core.BForm
   # expect
   @train: (pairtable, params, log) ->
     log ?= console.log
+    pairtable = pairtable.ensure pairtable.sharedCols()
+    pairtable = gg.core.FormUtil.ensureScales pairtable, params, log
     partitions = pairtable.fullPartition()
 
     for p in partitions

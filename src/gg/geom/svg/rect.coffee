@@ -10,7 +10,7 @@ class gg.geom.svg.Rect extends gg.geom.Render
     stroke: "steelblue"
     "stroke-width": 1
     "stroke-opacity": 0.5
-    group: 1
+    group: {}
 
   inputSchema: ->
     ['x0', 'x1', 'y0', 'y1']

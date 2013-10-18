@@ -12,7 +12,7 @@ class gg.pos.Stack extends gg.pos.Position
   @aliases = ["stack", "stacked"]
 
   addDefaults: ->
-    group: "1"
+    group: {}
     y0: 0
     y1: 'y'
     x0: 'x'

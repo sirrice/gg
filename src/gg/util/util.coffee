@@ -96,7 +96,7 @@ class gg.util.Util
     ret = {}
     _.each o, (args...) ->
       pair = f args...
-      ret[pair[0]] = pair[1]
+      ret[pair[0]] = pair[1] if pair?
     ret
 
   @list2map: (args...) -> @o2map args...

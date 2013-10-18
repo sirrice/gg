@@ -26,10 +26,10 @@ class gg.wf.Exec extends gg.wf.Node
     tableset = new gg.data.TableSet @inputs
     sharedCols = tableset.sharedCols()
     partitions = tableset.fullPartition()
+    @log "created #{partitions.length} partitions on cols #{sharedCols}"
     #partitions = tableset.partition @params.get('key')
     iterator = (pairtable, cb) ->
       try
-        log "calling compute in wf.exec"
         compute pairtable, params, cb
       catch err
         cb err, null
@@ -49,13 +49,6 @@ class gg.wf.Exec extends gg.wf.Node
       @output 0, result
 
 
-  @create: (params=null, compute) ->
-    params ?= new gg.util.Params
-    class Klass extends gg.wf.Exec
-      compute: (pairtable, params, cb) ->
-        compute pairtable, params, cb
-    new Klass
-      params: params
 
 
 
@@ -71,25 +64,19 @@ class gg.wf.SyncExec extends gg.wf.Exec
     super
     f = @params.get 'compute'
     f ?= @compute.bind(@)
+    name = @name
     compute = (pairtable, params, cb) ->
       try
         res = f pairtable, params, () ->
           throw Error "SyncExec should not call callback"
         cb null, res
       catch err
-        console.log("error in syncexec")
+        console.log("error in syncexec: #{name}")
         console.log(err)
-        cb err, pairtable
+        cb err, null
     @params.put 'compute', compute
 
   compute: (pairtable, params, cb) -> pairtable
 
-  @create: (params=null, compute) ->
-    params ?= new gg.util.Params
-    class Klass extends gg.wf.SyncExec
-      compute: (pairtable, params, cb) ->
-        compute pairtable, params, cb
-    new Klass
-      params: params
 
 
