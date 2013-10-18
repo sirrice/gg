@@ -15,7 +15,7 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
   # outliers is an array with schema {outlier:}
   inputSchema: ->
     ['x', 'q1', 'median', 'q3', 'lower', 'upper',
-      'outliers', 'min', 'max']
+      'outlier', 'min', 'max']
 
   # outliers is an array with schema {outlier:}
   outputSchema: (pairtable) ->

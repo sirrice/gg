@@ -10,10 +10,11 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
     stroke: "steelblue"
     fill: d3.rgb("steelblue").brighter(2)
     "fill-opacity": 0.5
+    group: {}
 
   inputSchema: ->
     ['x','q1', 'median', 'q3', 'lower', 'upper',
-      'outliers', 'min', 'max']
+      'outlier', 'min', 'max']
 
   render: (table, svg) ->
     nonoutliers = table.schema.exclude 'outlier'
@@ -23,7 +24,7 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
     # .attr( {} ) where {} is @attrs
     boxes = @agroup(svg, "boxes geoms", boxtables)
       .selectAll("circle")
-      .data((d) -> d.getRows())
+      .data((d) -> [d])
 
     enter = boxes.enter()
       .append("g")

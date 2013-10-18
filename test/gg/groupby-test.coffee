@@ -26,8 +26,8 @@ makeTable = ->
       {x: NaN, y: NaN }
     else
       {
-        x: i%100
-        z: Math.floor(Math.random()*200)
+        x: i%5
+        z: Math.floor(Math.random()*20)
         y: (i+1)%2}
   table = gg.data.Table.fromArray rows
   md = gg.data.Table.fromArray [{scales: set}]
@@ -46,6 +46,10 @@ suite.addBatch
             "avg": "avg"
             'count': 'count'
             "sum": "sum"
+            q1: 
+              type: 'quantile'
+              params:
+                k: .5
       gb
 
     "when run": 
@@ -62,6 +66,7 @@ suite.addBatch
           avg = row.get('avg')
           count = row.get('count')
           sum = row.get('sum')
+          console.log [avg, row.get('q1')]
           if _.isFinite avg
             assert.equal avg, (sum/count)
 

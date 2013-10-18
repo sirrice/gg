@@ -1,14 +1,19 @@
 #<< gg/stat/stat
 
 
-class gg.stat.Boxplot extends gg.stat.Stat
+class gg.stat.Boxplot extends gg.xform.GroupBy
   @ggpackage = "gg.stat.Boxplot"
   @aliases = ['boxplot', 'quantile']
+
+  parseSpec: ->
+    @params.put 'gbAttrs', 'x'
+    @params.put 'nBins', -1
+    super
 
   defaults: ->
     x: 0
 
-  inputSchema: -> ['x', 'y']#'group']
+  inputSchema: -> ['x', 'y']
 
   outputSchema: (pairtable) ->
     Schema = gg.data.Schema
@@ -35,7 +40,9 @@ class gg.stat.Boxplot extends gg.stat.Stat
     min: 'y'
     max: 'y'
 
-  computeStatistics: (vals) ->
+  udf: (table, params) ->
+    x = table.get 0, 'x'
+    vals = table.getColumn 'y'
     vals.sort d3.ascending
 
     q1 = d3.quantile vals, 0.25
@@ -60,22 +67,6 @@ class gg.stat.Boxplot extends gg.stat.Stat
       outlier: v
       min: min
       max: max
+      x: x
     rows
-
-  compute: (pairtable, params) ->
-    table = pairtable.getTable()
-    groups = table.partition 'x'
-    rows = []
-    _.map groups, (group) =>
-      x = group.get 0, 'x'
-      ys = group.getColumn 'y'
-      for row in @computeStatistics ys
-        row.x = x
-        rows.push row
-
-    schema = params.get('outputSchema') pairtable, params
-    table = gg.data.Table.fromArray rows, schema
-    new gg.data.PairTable table, pairtable.getMD()
-
-
 

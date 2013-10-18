@@ -17,8 +17,8 @@ var geoms = {
 var selected_geoms = {
   point: false,
   interval: false,
-  boxplot:false,
-  line: true,
+  boxplot:true,
+  line: false,
   jitter:false,
   multiline: false
 

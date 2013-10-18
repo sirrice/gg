@@ -32,7 +32,7 @@ class gg.wf.Exec extends gg.wf.Node
     else
       partitions = tableset.fullPartition()
     @log "created #{partitions.length} partitions on cols #{sharedCols}"
-    #partitions = tableset.partition @params.get('key')
+
     iterator = (pairtable, cb) ->
       try
         compute pairtable, params, cb
