@@ -1,5 +1,6 @@
 
 class gg.stat.Stat extends gg.core.XForm
+
   # list of dynamically registered stat classes
   @klasses = []
 

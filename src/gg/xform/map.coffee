@@ -79,7 +79,10 @@ class gg.xform.Mapper extends gg.wf.SyncExec
 
 
     table = gg.data.Transform.transform table, functions
-    new gg.data.PairTable table, pairtable.getMD()
+    pt = new gg.data.PairTable table, pairtable.getMD()
+    if _.size(gFuncs) > 0
+      pt = pt.ensure ['group']
+    pt
 
   @fromSpec: (spec) ->
     spec = _.clone spec

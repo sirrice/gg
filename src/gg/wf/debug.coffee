@@ -17,7 +17,7 @@ class gg.wf.Stdout extends gg.wf.SyncBlock
       cols: [ ['aess'], null ]
 
   compute: (pairtable, params) ->
-    mdcols = ['layer', 'facet-x', 'facet-y', 'scales', 'lc']
+    mdcols = ['layer', 'facet-x', 'facet-y', 'group', 'lc']
     gg.wf.Stdout.print pairtable.getTable(), params.get('cols'), params.get('n'), @log
     gg.wf.Stdout.print pairtable.getMD(), mdcols, params.get('n'), @log
     pairtable

@@ -25,7 +25,12 @@ class gg.wf.Exec extends gg.wf.Node
 
     tableset = new gg.data.TableSet @inputs
     sharedCols = tableset.sharedCols()
-    partitions = tableset.fullPartition()
+    keys = params.get 'keys'
+    if keys?
+      @log "partitioning on custom cols: #{keys}"
+      partitions = tableset.partition key
+    else
+      partitions = tableset.fullPartition()
     @log "created #{partitions.length} partitions on cols #{sharedCols}"
     #partitions = tableset.partition @params.get('key')
     iterator = (pairtable, cb) ->
