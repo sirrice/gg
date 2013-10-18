@@ -8,7 +8,7 @@ class gg.xform.ScalesSchema extends gg.core.XForm
   @ggpackage = "gg.xform.ScalesSchema"
 
   compute: (pairtable, params) ->
-    pairtable = @ensureScales pairtable, params
+    pairtable = @ensureScales pairtable, params, @log
     table = pairtable.getTable()
     schema = table.schema
     md = pairtable.getMD()
@@ -24,14 +24,12 @@ class gg.xform.ScalesSchema extends gg.core.XForm
       if scaletypes.length == 0
         scale = scaleset.scale col, tabletype, posMapping
         log "settype: #{col}:#{tabletype} unknown.  create: #{scale.toString()}"
-        types = [scale.type]
-
-      else if types.length == 1
+      else if scaletypes.length == 1
         # XXX: type checking and downcast rules here
-        scaletype = types[0]
+        scaletype = scaletypes[0]
         unless scaletype is gg.data.Schema.unknown
           if tabletype >= scaletype
-            log "settype: #{col}\t#{scaletype}"
+            log "settype: #{col}\t#{scaletype} from #{tabletype}"
             table.schema.setType col, scaletype
           else
             log table.getColumn(col)[0...10]
@@ -54,7 +52,7 @@ class gg.xform.ScalesApply extends gg.core.XForm
       aess: @spec.aess or []
 
   compute: (pairtable, params) ->
-    pairtable = @ensureScales pairtable, params
+    pairtable = @ensureScales pairtable, params, @log
     table = pairtable.getTable()
     md = pairtable.getMD()
 

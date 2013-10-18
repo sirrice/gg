@@ -14,6 +14,7 @@ class gg.data.PairTable
 
     @types = _.map @sharedCols, (col) => @table.schema.type col
     @schema = new gg.data.Schema @sharedCols, @types
+    @log = gg.util.Log.logger @constructor.ggpackage, 'pairtable'
 
 
   sharedCols: ->
@@ -26,7 +27,8 @@ class gg.data.PairTable
     sharedCols
 
   partition: (joincols, type='outer') ->
-    ps = gg.data.Transform.partitionJoin @table, @md, joincols
+    joincols = _.intersection joincols, @sharedCols()
+    ps = gg.data.Transform.partitionJoin @getTable(), @getMD(), joincols
     _.map ps, (o) -> o['table']
 
   # partition on _all_ of the shared columns
@@ -43,7 +45,8 @@ class gg.data.PairTable
         md = gg.data.Table.fromArray [row]
         new gg.data.PairTable p.getTable(), md
       else if md.nrows() > 1
-        throw Error("fullpartition: md.nrows (#{md.nrows()}) != 1.\t#{md.toString()}")
+        #@log.warn "fullpartition: md.nrows (#{md.nrows()}) != 1.\t#{md.raw()}"
+        p
       else
         p
     partitions
@@ -52,8 +55,14 @@ class gg.data.PairTable
   # if MD partition has records, clone any record and overwrite keys
   # otherwise use MD schema to create new record
   ensure: (cols=[]) ->
+    cols = _.flatten [cols]
     sharedCols = _.filter cols, (col) => @md.schema.has col
     restCols = _.reject cols, (col) => @md.schema.has col
+    unknownCols = _.reject restCols, (col) => @table.schema.has col
+    restCols = _.filter restCols, (col) => @table.schema.has col
+    if unknownCols.length > 0
+      @log.warn "ensure dropping unknown cols: #{unknownCols}"
+
 
     ps = @partition sharedCols
     newpartitions = []
@@ -62,6 +71,7 @@ class gg.data.PairTable
       t = p.getTable()
       md = p.getMD()
 
+
       if md.nrows() > 0
         createCopy = () => md.each (row) -> row.clone()
       else if @md.nrows() > 0
@@ -69,17 +79,20 @@ class gg.data.PairTable
       else
         createCopy = () -> [new gg.data.Row(new gg.data.Schema())]
 
-      subpartitions = t.partition cols
+      if restCols.length == 0
+        subpartitions = []
+      else
+        subpartitions = t.partition restCols
 
-      for t in subpartitions
-        keyschema = t.schema.project cols
+      for sp in subpartitions
+        keyschema = sp.schema.project restCols
         keyrow = new gg.data.Row keyschema
-        for col in cols
-          keyrow.set col, t.get(0, col)
+        for col in keyschema.cols
+          keyrow.set col, sp.get(0, col)
 
         rows = _.map createCopy(), (row) -> row.merge keyrow
         newmd = gg.data.RowTable.fromArray rows
-        newpartitions.push new gg.data.PairTable(t, newmd)
+        newpartitions.push new gg.data.PairTable(sp, newmd)
 
     new gg.data.TableSet newpartitions
   

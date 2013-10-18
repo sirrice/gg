@@ -42,6 +42,7 @@ class gg.data.Schema
       no
 
   setType: (col, type) ->
+    return if type == @type(col)
     if @type(col) is gg.data.Schema.unknown
       @types[@index col] = type
     else

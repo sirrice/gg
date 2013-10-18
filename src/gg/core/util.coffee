@@ -52,8 +52,10 @@ class gg.core.FormUtil
   @ensureScales: (pairtable, params, log) ->
     md = pairtable.getMD()
     unless md.nrows() <= 1
-      log.warn "@scales called with multiple rows: #{md.nrows()}"
+      log "@scales called with multiple rows: #{md.nrows()}"
     if md.nrows() == 0 
+      log "@scales called with no md rows"
+      log pairtable.getTable()
       throw Error "@scales called with no md rows"
     unless md.has 'scalesconfig'
       md = md.addConstColumn 'scalesconfig', gg.scale.Config.fromSpec({})

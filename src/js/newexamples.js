@@ -15,10 +15,10 @@ var geoms = {
 };
 
 var selected_geoms = {
-  point: true,
+  point: false,
   interval: false,
   boxplot:false,
-  line: false,
+  line: true,
   jitter:false,
   multiline: false
 

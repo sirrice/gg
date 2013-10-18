@@ -13,6 +13,7 @@ class gg.data.TableSet extends gg.data.PairTable
           return no
     yes
 
+  ###
   partition: (cols) ->
     cols = _.uniq _.flatten [cols]
     #unless @checkSchema cols
@@ -43,6 +44,7 @@ class gg.data.TableSet extends gg.data.PairTable
       pt = new gg.data.PairTable left, right
       ret.push pt
     ret
+  ###
 
 
   ensure: (cols) ->
