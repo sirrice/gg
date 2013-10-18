@@ -206,8 +206,8 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     partitions = _.map partitions, (p) ->
       fkey = _.map facetKeys, (fk) -> p.get 0, fk
       paneC = grid.getByVal fkey[0], fkey[1]
-      xfont = xfonts[x]
-      yfont = yfonts[y]
+      xfont = xfonts[fkey[0]]
+      yfont = yfonts[fkey[1]]
 
       gg.data.Transform.transform p,
         'xfacet-text': () -> xfont.text

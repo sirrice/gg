@@ -69,7 +69,7 @@ class gg.xform.Mapper extends gg.wf.SyncExec
       allcols = _.keys mapping
       cols = _.filter allcols, (c) -> gg.core.Aes.groupable c
       groupable = _.pick mapping, cols
-    @log "groupable: #{groupable}"
+    @log "groupable: #{JSON.stringify groupable}"
 
     gFuncs = _.mappingToFunctions table, groupable
     functions = _.mappingToFunctions table, mapping

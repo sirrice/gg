@@ -51,18 +51,24 @@ class gg.data.Transform
 
   # Interal method to build hash tables based on equality of columns
   # @param cols columns to use for equality test
+  # @return [ht, keys]  where
+  #   ht = JSON.stringify(key) -> rows
+  #   keys: JSON.stringify(key) -> key
   @buildHT: (t, cols) ->
     getkey = (row) -> _.map cols, (col) -> row.get(col)
     ht = {}
+    keys = {}
     iter = t.iterator()
     while iter.hasNext()
       row = iter.next()
       key = getkey row
+      strkey = JSON.stringify key
       # XXX: may need to use toJSON on key
-      ht[key] = [] unless key of ht
-      ht[key].push row
+      ht[strkey] = [] unless strkey of ht
+      ht[strkey].push row
+      keys[strkey] = key
     iter.close()
-    ht
+    [ht, keys]
 
 
   # Horizontally split table using an arbitrary splitting function
@@ -70,10 +76,10 @@ class gg.data.Transform
   @split: (table, splitcols) ->
     splitcols = _.flatten [splitcols]
     klass = table.constructor
-    ht = @buildHT table, splitcols
+    [ht, keys] = @buildHT table, splitcols
     _.map ht, (rows, k) -> 
       {
-        key: k
+        key: keys[k]
         table: klass.fromArray rows, table.schema.clone()
       }
 
@@ -144,12 +150,12 @@ class gg.data.Transform
       throw Error "right table doesn't have all columns: #{joincols} not in #{t2.schema.toString()}"
     ###
 
-    ht1 = @buildHT t1, joincols
-    ht2 = @buildHT t2, joincols
+    [ht1, keys1] = @buildHT t1, joincols
+    [ht2, keys2] = @buildHT t2, joincols
     schema1 = t1.schema
     schema2 = t2.schema
 
-    keys = switch type
+    strkeys = switch type
       when 'inner'
         _.intersection _.keys(ht1), _.keys(ht2)
       when 'left'
@@ -162,12 +168,13 @@ class gg.data.Transform
         throw Error "invalid join type #{type}"
 
     ret = []
-    for key in keys
-      rows1 = ht1[key]
-      rows2 = ht2[key]
+    for strkey in strkeys
+      rows1 = ht1[strkey]
+      rows2 = ht2[strkey]
       left = t1.constructor.fromArray rows1, schema1.clone()
       right = t2.constructor.fromArray rows2, schema2.clone()
       table = new gg.data.PairTable left, right
+      key = if strkey of keys1 then keys1[strkey] else keys2[strkey]
       ret.push { key: key, table: table }
     ret
 

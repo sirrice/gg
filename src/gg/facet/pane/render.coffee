@@ -7,7 +7,8 @@ class gg.facet.pane.Svg extends gg.core.BForm
     super
     @params.put "location", "client"
 
-  b2translate: (b) -> "translate(#{b.x0},#{b.y0})"
+  @b2translate: (b) -> "translate(#{b.x0},#{b.y0})"
+  b2translate: (b) -> @constructor.b2translate b
 
   renderFacetPane: (md, params) ->
     svg = md.get(0, 'svg').plot
@@ -250,13 +251,10 @@ class gg.facet.pane.Svg extends gg.core.BForm
     md = pairtable.getMD()
     # first pass to create panes
     els = {}
-    md.each (row) =>
-      facetx = row.get 'facet-x'
-      facety = row.get 'facet-y'
-      key = JSON.stringify [facetx, facety]
-      unless key of els
-        svg = @renderFacetPane md, params
-        els[key] = svg if svg?
+    els = _.o2map md.partition('facet-id'), (p) => 
+      facetid = p.get 0, 'facet-id'
+      svg = @renderFacetPane p, params
+      if svg? then [facetid, svg] else null
 
     # second pass sets ['svg'].paneSvg for each data
     md = gg.data.Transform.transform md,
@@ -264,9 +262,8 @@ class gg.facet.pane.Svg extends gg.core.BForm
         paneC = row.get 'paneC'
         facetId = row.get 'facet-id'
         layerIdx = row.get 'layer'
-        key = JSON.stringify [row.get('facet-x'), row.get('facet-y')]
         dc = paneC.drawC()
-        el = els[key]
+        el = els[facetId]
 
         paneSvg = el.select('.data-pane').insert 'g', ':last-child'
         paneSvg.attr {
@@ -274,9 +271,12 @@ class gg.facet.pane.Svg extends gg.core.BForm
           width: dc.w()
           height: dc.h()
           id: "facet-grid-#{paneC.xidx}-#{paneC.yidx}-#{layerIdx}"
+          container: gg.facet.pane.Svg.b2translate(paneC.bound())
         }
-        row.get('svg').pane = paneSvg
-        row.get('svg')
+        svg = row.get 'svg'
+        svg = _.o2map svg, (v, k) -> [k,v]
+        svg.pane = paneSvg
+        svg
 
     new gg.data.PairTable pairtable.getTable(), md
 

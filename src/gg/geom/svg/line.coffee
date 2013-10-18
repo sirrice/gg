@@ -75,14 +75,14 @@ class gg.geom.svg.Line extends gg.geom.Render
     @log "stroke is #{table.get 0, "stroke"}"
 
     cssNormal =
-      "stroke": (g) -> g.get('stroke')
-      "stroke-width": (g) -> g.get("stroke-width")
-      "stroke-opacity": (g) -> g.get("stroke-opacity")
+      "stroke": (g) -> g.get(0, 'stroke')
+      "stroke-width": (g) -> g.get(0, "stroke-width")
+      "stroke-opacity": (g) -> g.get(0, "stroke-opacity")
       "fill": "none"
 
     cssOver =
-      stroke: (g) -> d3.rgb(g.get("fill")).darker(2)
-      "stroke-width": (g) -> g.get('stroke-width') + 1
+      stroke: (g) -> d3.rgb(g.get(0, "fill")).darker(2)
+      "stroke-width": (g) -> g.get(0, 'stroke-width') + 1
       "stroke-opacity": 1
 
 

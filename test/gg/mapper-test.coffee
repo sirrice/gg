@@ -108,6 +108,7 @@ suite.addBatch
 
       "the group is correct": (pt) ->
         pt.getTable().each (row) ->
+          console.log row.raw()
           assert.equal row.get('group').stroke, row.get('x')
           assert.equal row.get('stroke'), row.get('x')
   

@@ -5,6 +5,9 @@ class gg.pos.Dodge extends gg.pos.Position
   @ggpackage = "gg.pos.Dodge"
   @aliases = ["dodge"]
 
+  defaults: ->
+    group: {}
+
   parseSpec: ->
     super
     @params.put "padding", _.findGoodAttr @spec, ['pad', 'padding'], 0.05
@@ -14,8 +17,7 @@ class gg.pos.Dodge extends gg.pos.Position
 
   compute: (pairtable, params) ->
     table = pairtable.getTable()
-    table = gg.data.Transform.transform table, { '_base': (row) -> [row.get('x0'),row.get('x1')]}
-    partitions = table.partition '_base'
+    partitions = table.partition ['x0', 'x1']
 
     maxGroup = _.mmax partitions, (p) -> p.nrows()
     groupcol = _.uniq _.map(table.getColumn('group'), String)
