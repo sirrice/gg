@@ -51,6 +51,9 @@ class gg.core.Graphic
     @layers = new gg.layer.Layers @, @layerspec
     @scales = new gg.scale.Scales @, @scalespec
     @datas = gg.core.Data.fromSpec @spec.data
+    @map = gg.xform.Mapper.fromSpec 
+      name: "base-aes-map"
+      aes: @aesspec
 
     # connect layer specs with scales config
     _.each @layers.layers, (layer) =>
@@ -97,6 +100,7 @@ class gg.core.Graphic
     preMulticastNodes = []
     preMulticastNodes.push @datas.data()
     preMulticastNodes.push @setupEnvNode()
+    preMulticastNodes.push @map
     preMulticastNodes = _.compact preMulticastNodes
 
     prev = null

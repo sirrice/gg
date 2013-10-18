@@ -35,12 +35,6 @@ class gg.wf.Barrier extends gg.wf.Node
         @output idx, result
 
         
-  @create: (params, f) ->
-    params ?= {}
-    class Klass extends gg.wf.Barrier
-      compute: (args...) -> f args...
-    new Klass 
-      params: params
 
 class gg.wf.SyncBarrier extends gg.wf.Barrier
   parseSpec: ->
@@ -58,10 +52,4 @@ class gg.wf.SyncBarrier extends gg.wf.Barrier
           cb err, null
     @params.put 'compute', makecompute(f)
         
-  @create: (params, f) ->
-    params ?= {}
-    class Klass extends gg.wf.SyncBarrier
-      compute: (args...) -> f args...
-    new Klass 
-      params: params
 

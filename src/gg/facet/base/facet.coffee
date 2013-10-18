@@ -122,7 +122,7 @@ class gg.facet.base.Facets
       new gg.data.PairTable pt.getTable(), md
       
 
-    gg.wf.SyncBlock.create f, @splitParams, 'facet-labeler'
+    gg.wf.SyncBarrier.create f, @splitParams, 'facet-labeler'
 
   @fromSpec: (g, spec) ->
     spec.type = spec.type or "grid"

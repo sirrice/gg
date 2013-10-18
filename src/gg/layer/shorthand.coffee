@@ -64,7 +64,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
   setupMap: ->
     mapSpec  = _.findGoodAttr @spec, ['aes', 'aesthetic', 'mapping'], {}
-    mapSpec = _.extend(_.clone(@g.aesspec), mapSpec)
+    #mapSpec = _.extend(_.clone(@g.aesspec), mapSpec)
     @mapSpec = {aes: mapSpec, name: "map-shorthand-#{@layerIdx}"}
     @map = gg.xform.Mapper.fromSpec @mapSpec
 

@@ -88,7 +88,7 @@ class gg.wf.Node extends events.EventEmitter
   pstore: -> gg.prov.PStore.get @flow, @
 
   # Convenienc method to check if this is a barrier
-  isBarrier: -> @type is "barrier"
+  isBarrier: -> @type in ["barrier", 'block']
 
   #
   # The calling function is responsible for calling ready

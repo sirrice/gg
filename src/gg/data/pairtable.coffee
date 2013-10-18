@@ -63,7 +63,6 @@ class gg.data.PairTable
     if unknownCols.length > 0
       @log.warn "ensure dropping unknown cols: #{unknownCols}"
 
-
     ps = @partition sharedCols
     newpartitions = []
 
@@ -80,7 +79,7 @@ class gg.data.PairTable
         createCopy = () -> [new gg.data.Row(new gg.data.Schema())]
 
       if restCols.length == 0
-        subpartitions = []
+        subpartitions = [t]
       else
         subpartitions = t.partition restCols
 
