@@ -17,9 +17,8 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
 
   outputSchema: (pairtable) ->
     Schema = gg.data.Schema
-    schema = pairtable.tableSchema()
-    gg.data.Schema.fromJSON
-      x: schema.type 'x'
+    schema = pairtable.tableSchema().clone()
+    newschema = Schema.fromJSON
       q1: Schema.numeric
       q3: Schema.numeric
       median: Schema.numeric
@@ -28,6 +27,7 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
       outlier: Schema.numeric
       min: Schema.numeric
       max: Schema.numeric
+    schema.merge newschema
 
   schemaMapping: ->
     x: 'x'
@@ -59,14 +59,17 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
     outliers = [null] unless outliers.length > 0
 
     rows = _.map outliers, (v) -> 
-      q1: q1
-      median: median
-      q3: q3
-      lower: lower
-      upper: upper
-      outlier: v
-      min: min
-      max: max
-      x: x
+      newrow = table.get(0).raw()
+      _.extend newrow,
+        q1: q1
+        median: median
+        q3: q3
+        lower: lower
+        upper: upper
+        outlier: v
+        min: min
+        max: max
+        x: x
+      newrow
     rows
 

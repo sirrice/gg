@@ -72,7 +72,7 @@ var geom_boxplot2 =
     "aes": {
       "x": "f",
       "y": "e",
-      "group": { color: "f" }
+      color: "f"
     }, "stats": "boxplot"
   }
   ],
@@ -85,7 +85,7 @@ var geom_area = {
     aes: {
       x: "d",
       y: "e",
-      group: "{{fill: t, stroke: t}}"
+      fill: 't', stroke: 't'
     }
   }
   ,pos: "stack"
@@ -95,7 +95,7 @@ var geom_area = {
 var geom_boxplot =  {
   layers: [{
     aes: {
-      group: { color: "t" }
+      color: "t"
       ,y: "d"
       ,x: "{Math.floor(e/100)*100}"
     }
@@ -131,7 +131,7 @@ var geom_point_1 = {
 }
 
 var geom_point_sum = {
-  geom: "point"
+  layers: [{geom: "point"}]
  ,aes: {x: 'd', y: 'e'}
  ,stat: "bin"
 
@@ -141,7 +141,7 @@ var geom_point_interval = {
   layers: [{
     geom: "interval"
    ,pos: "dodge"
-   ,aes: {x: '{Math.floor(d/10.)*10 + "d"}', y: 'e', group: {color: 'g'}}
+   ,aes: {x: '{Math.floor(d/10.)*10 + "d"}', y: 'e', color: 'g'}
    ,stat: "bin"
   }],
   facets: {y: 't'}
@@ -149,14 +149,14 @@ var geom_point_interval = {
 
 
 var geom_point_2 = {
-  geom: "point"
+  layers: [{geom: "point"}]
  ,aes: {x: 'd', y: 'e', r: 'g'}
  ,scales: { r: { range: [2, 10] } }
 
 }
 
 var geom_point_3 = {
-  geom: "point"
+  layers: [{geom: "point"}]
  ,aes: {x: 'd', y: 'e', r: 'g', fill: 'g'}
   ,scales: {
     fill: "color",
@@ -166,7 +166,7 @@ var geom_point_3 = {
 };
 
 var geom_point_4 = {
-  geom: "point"
+  layers: [{geom: "point"}]
  ,aes: {x: 'd', y: 'e', r: 'g', color: "g"}
   ,pos: { type: 'jitter'}
   ,scales: {
@@ -177,7 +177,7 @@ var geom_point_4 = {
 };
 
 var colored_lines = {
-  geom: "line",
+  layers: [{geom: "line"}],
   aes: {
     x: 'd',  y: "e",
     group : {color: "g"}

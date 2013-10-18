@@ -141,16 +141,14 @@ class gg.xform.GroupBy extends gg.core.XForm
   outputSchema: (pairtable, params) ->
     gbAttrs = params.get "gbAttrs"
     aggFuncs = params.get "aggFuncs"
-    schema = pairtable.tableSchema()
+    schema = pairtable.tableSchema().clone()
 
     # XXX: assume that the aggregate functions output numeric types
     spec = {}
     for aggName, agg of aggFuncs
       spec[aggName] =  gg.data.Schema.numeric
-    for gbAttr in gbAttrs
-      spec[gbAttr] = schema.type gbAttr
-
-    gg.data.Schema.fromJSON spec
+    newSchema = gg.data.Schema.fromJSON spec
+    schema.merge newSchema
 
   compute: (pairtable, params) ->
     table = pairtable.getTable()
