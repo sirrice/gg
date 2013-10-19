@@ -1,15 +1,18 @@
 #<< gg/pos/position
 
 
-class gg.pos.Dodge extends gg.pos.Position
+class gg.pos.Dodge extends gg.core.XForm
   @ggpackage = "gg.pos.Dodge"
   @aliases = ["dodge"]
 
   defaults: ->
     group: {}
+    x0: 'x'
+    x1: 'x'
 
   parseSpec: ->
     super
+    @params.put 'keys', ['facet-x', 'facet-y', 'layer']
     @params.put "padding", _.findGoodAttr @spec, ['pad', 'padding'], 0.05
 
   inputSchema: -> ['x', 'x0', 'x1', 'group']
@@ -19,8 +22,8 @@ class gg.pos.Dodge extends gg.pos.Position
     table = pairtable.getTable()
     partitions = table.partition ['x0', 'x1']
 
-    maxGroup = _.mmax partitions, (p) -> p.nrows()
-    groupcol = _.uniq _.map(table.getColumn('group'), String)
+    maxGroup = _.mmax(partitions, (p) -> p.nrows()).nrows()
+    groupcol = _.uniq _.map(table.getColumn('group'), JSON.stringify)
     ngroups = groupcol.length
     groups = table.partition 'group'
     padding = params.get 'padding'

@@ -25,7 +25,8 @@ class gg.scale.Set
   clone: () ->
     ret = new gg.scale.Set @factory
     ret.spec = _.clone @spec
-    ret.merge @, yes
+    for s in @scalesList()
+      ret.set s.clone()
     ret
 
   toJSON: ->
@@ -40,17 +41,11 @@ class gg.scale.Set
     set.spec =_.fromJSON json.spec
     set
 
-  # overwriting
-  keep: (aesthetics) ->
-    _.each _.keys(@scales), (aes) =>
-        if aes not in aesthetics
-            delete @scales[aes]
-    @
 
   exclude: (aesthetics) ->
     _.each aesthetics, (aes) =>
-        if aes of @scales
-            delete @scales[aes]
+      if aes of @scales
+        delete @scales[aes]
     @
 
   aesthetics: ->
@@ -63,7 +58,7 @@ class gg.scale.Set
   types: (aes, posMapping={}) ->
     aes = posMapping[aes] or aes
     if aes of @scales
-      types = _.map @scales[aes], (v, k) -> parseInt k
+      types = _.map _.keys(@scales[aes]), parseInt
       types.filter (t) -> _.isNumber t and not _.isNaN t
       types
     else
@@ -122,47 +117,25 @@ class gg.scale.Set
       @log "resetDomain #{scale.toString()}"
       scale.resetDomain()
 
-
-
-  # @param scaleSets array of gg.scale.Set objects
-  # @return a single gg.scale.Set object that merges the inputs
-  @merge: (scaleSets) ->
-    return null if scaleSets.length is 0
-
-    ret = scaleSets[0].clone()
-    _.each _.rest(scaleSets), (scales) -> ret.merge scales, true
-    ret
-
-  # @param scales a gg.scale.Set object
-  # @param insert should we add new aesthetics that exist in scales argument?
-  # merges domains of argument scales with self
-  # updates in place
+  # for scales in this set, merge any that can be found
+  # in scales argument
   #
-  merge: (scales, insert=true) ->
-    _.each scales.aesthetics(), (aes) =>
-      if aes is 'text'
-          return
+  # @param scales a gg.scale.Set or gg.scale.MergedSet object
+  #
+  merge: (scales) ->
+    for col, colscales of @scales
+      continue if col is 'text'
 
-      _.each scales.scales[aes], (scale, type) =>
-        # XXX: when should this ever be skipped?
-        #return unless scale.domainUpdated and scale.rangeUpdated
+      for type, s of colscales
+        continue unless scales.contains(col, type, s.constructor.name)
+        continue if _.isType s, gg.scale.Identity
 
-        if @contains aes, type
-          mys = @scale aes, type
-          oldd = mys.domain()
-          mys.mergeDomain scale.domain()
-          @log "merge: #{mys.domainUpdated} #{aes}.#{mys.id}:#{type}: #{oldd} + #{scale.domain()} -> #{mys.domain()}"
-
-        else if insert
-          copy = scale.clone()
-          @log "merge: #{aes}.#{copy.id}:#{type}: clone: #{copy.domainUpdated}/#{scale.domainUpdated}: #{copy.toString()}"
-          @scale copy, type
-
-        else
-          @log "merge notfound + dropping scale: #{scale.toString()}"
+        other = scales.get col, type, s.constructor.name
+        oldd = s.domain()
+        s.mergeDomain other.domain()
+        @log "merge: #{s.domainUpdated} #{col}.#{s.id}:#{type}: #{oldd} + #{other.domain()} -> #{s.domain()}"
 
     @
-
 
   useScales: (table, posMapping={}, f) ->
     for col in table.cols()

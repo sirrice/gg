@@ -39,12 +39,14 @@ class gg.core.FormUtil
           newv = _.clone v
           _.extend newv, row.get('group') if row.has 'group'
           newv
-        [k, f]
-      else if table.has k
-        null
+        return [k, f]
+
+      if table.has k
+        return null
       else
         log "adding:  #{k} -> #{v}"
-        [k, () -> v]
+        f = _.mapToFunction table, k, v
+        return [k, f]
     table = gg.data.Transform.transform table, mapping
     new gg.data.PairTable table, pt.getMD()
 

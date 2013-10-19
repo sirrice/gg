@@ -55,6 +55,9 @@ class gg.core.Graphic
       name: "base-aes-map"
       aes: @aesspec
 
+    
+
+
     # connect layer specs with scales config
     _.each @layers.layers, (layer) =>
       @scales.scalesConfig.addLayerDefaults layer
@@ -92,11 +95,6 @@ class gg.core.Graphic
       name: 'core-render'
       params: @params).compile()
 
-
-    #
-    # pre-filter transformations??
-    #
-
     preMulticastNodes = []
     preMulticastNodes.push @datas.data()
     preMulticastNodes.push @setupEnvNode()
@@ -127,7 +125,7 @@ class gg.core.Graphic
 
       prev = multicast
       for node in nodes
-        unless node.type == 'barrier'
+        unless node.isBarrier()
           wf.connectBridge prev, node
           prev = node
 

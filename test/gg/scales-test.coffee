@@ -165,7 +165,8 @@ suite.addBatch
 
         "when merged":
           topic: ([ss1, ss2]) ->
-            gg.scale.Set.merge [ss1, ss2]
+            merged = new gg.scale.MergedSet [ss1, ss2]
+            ss1.clone().merge merged
 
           "has domain [0, 499]": (scales) ->
             assert.arrayEqual scales.scale('a', Schema.unknown).domain(), [0, 499]

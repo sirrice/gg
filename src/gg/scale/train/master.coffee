@@ -14,6 +14,7 @@ class gg.scale.train.Master extends gg.core.BForm
   compute: (pairtable, params) ->
     gg.scale.train.Master.train pairtable, params
 
+
   @train: (pairtable, params) ->
     scalesTrain = params.get('scalesTrain') or 'fixed'
 
@@ -21,12 +22,12 @@ class gg.scale.train.Master extends gg.core.BForm
     md = pairtable.getMD()
 
     if scalesTrain is 'fixed'
-      scalesList = _.uniq md.getColumn 'scales'
-      masterScales = gg.scale.Set.merge scalesList
+      scalesList = _.uniq(md.getColumn('scales'), false, (s) -> s.id)
+      masterScales = new gg.scale.MergedSet scalesList
       #@expandDomains masterScales
       md = gg.data.Transform.mapCols md,
         scales: (scales) ->
-          scales.merge masterScales, no
+          scales.merge masterScales
           scales
     else
       md = @trainFreeScales md

@@ -117,7 +117,7 @@ class gg.xform.ScalesValidate extends gg.core.XForm
     posMapping = md.get 0, 'posMapping'
 
     for col in scales.aesthetics()
-      stypes = scales.types col
+      stypes = scales.types col, posMapping
       if stypes.length > 1
         throw Error "Layer scaleset #{col} has >1 types: #{stypes}"
     pairtable

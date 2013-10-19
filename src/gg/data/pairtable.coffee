@@ -79,9 +79,10 @@ class gg.data.PairTable
         createCopy = () -> [new gg.data.Row(new gg.data.Schema())]
 
       if restCols.length == 0
-        subpartitions = [t]
-      else
-        subpartitions = t.partition restCols
+        newpartitions.push p
+        continue
+
+      subpartitions = t.partition restCols
 
       for sp in subpartitions
         keyschema = sp.schema.project restCols

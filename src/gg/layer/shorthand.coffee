@@ -116,7 +116,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     arg = _.clone params
     params =
       n: 5
-      cols: null
+      cols: ['layer', 'group', 'fill', 'x', 'y']
     _.extend params, arg
     new gg.wf.Stdout
       name: "#{name}-#{@layerIdx}"
@@ -190,6 +190,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
       name: "scalesfilter-#{@layerIdx}"
       params:
         posMapping: @geom.posMapping()
+        config: @g.scales.scalesConfig
     nodes.push @makeStdOut "post-scalefilter-#{@layerIdx}"
     nodes.push @makeScalesOut "pre-stat-#{@layerIdx}"
 

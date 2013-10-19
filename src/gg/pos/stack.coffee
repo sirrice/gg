@@ -7,11 +7,18 @@
 # If stacking lines, may want to run gg.pos.XXX beforehand, so that
 # the lines all have the same number of points and the x values are aligned.
 #
-class gg.pos.Stack extends gg.pos.Position
+class gg.pos.Stack extends gg.core.XForm
   @ggpackage = "gg.pos.Stack"
   @aliases = ["stack", "stacked"]
 
-  addDefaults: ->
+
+  parseSpec: ->
+    super
+    @params.put 'keys', ['facet-x', 'facet-y', 'layer']
+    @params.put "padding", _.findGoodAttr @spec, ['pad', 'padding'], 0.05
+
+
+  defaults: ->
     group: {}
     y0: 0
     y1: 'y'
@@ -20,8 +27,8 @@ class gg.pos.Stack extends gg.pos.Position
 
   # pts requires the schema
   #   x: x value
-  #   y: height of the layer
-  #   y0: (optional) baseline for the layer. only y0 of firstlayer is kept
+  #   y: height of the group
+  #   y0: (optional) baseline for the group. only y0 of firstlayer is kept
   inputSchema: -> ['x', 'y']
 
   # x: x position, may have been interpolated
@@ -82,7 +89,6 @@ class gg.pos.Stack extends gg.pos.Position
       rows = _.map xs, (x) ->
         if x of x2row then x2row[x] else {x:x, y:0, y0:0}
       rows
-
 
     layers = _.map groups, values
     stack = d3.layout.stack()

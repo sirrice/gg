@@ -90,8 +90,8 @@ class gg.facet.base.Layout extends gg.core.BForm
     unless options.minimal
       titleH = @getTitleHeight(params)
       em = _.textSize("m", {}).h
-      @log.warn "title size: #{titleH}"
-      @log.warn "em size: #{em}"
+      @log "title size: #{titleH}"
+      @log "em size: #{em}"
 
       plotW = w
       plotW -= (paddingPane + titleH) # yaxis

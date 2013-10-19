@@ -56,8 +56,12 @@ class gg.stat.Loess extends gg.stat.Stat
     @log.warn "bw: #{bandwidth}\tacc: #{acc}"
 
     smoothys = loessfunc(xs, ys)
+    prototyperow = table.get(0).raw()
     rows = _.compact _.map _.zip(xs, smoothys), ([x,y]) ->
-      { x: x, y: y } if _.isValid(y) and _.isValid(x)
+      if _.isValid(y) and _.isValid(x)
+        newrow = _.clone(prototyperow)
+        _.extend newrow, { x: x, y: y } 
+        return newrow
 
     @log "#{smoothys.length - rows.length} rejected post-loess"
     @log "compute: xs: #{JSON.stringify xs.slice(0,6)}"

@@ -9,7 +9,6 @@ class gg.stat.Bin1D extends gg.xform.GroupBy
 
   parseSpec: ->
     defaults = 
-      nBins: 20
       gbAttrs: ['x']
       aggFuncs: 
         count: 'count'
@@ -20,6 +19,7 @@ class gg.stat.Bin1D extends gg.xform.GroupBy
     defaults = new gg.util.Params defaults
     defaults.merge @params
     @params = defaults
+    @params.ensure 'nBins', ['n', 'bins', 'nbins'], 20
 
     super
 

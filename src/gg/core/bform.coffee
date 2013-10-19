@@ -25,11 +25,10 @@ class gg.core.BForm extends gg.wf.SyncBarrier
     f ?= @compute.bind @
     FormUtil = gg.core.FormUtil
     makecompute = (log) ->
-      (tableset, params) ->
-        tableset = FormUtil.addDefaults tableset, params, log
-        FormUtil.validateInput tableset, params
-        tableset = FormUtil.ensureScales tableset, params, log
-        f tableset, params
+      (pairtable, params) ->
+        pairtable = FormUtil.addDefaults pairtable, params, log
+        FormUtil.validateInput pairtable, params
+        f pairtable, params
     @params.put 'compute', makecompute(@log)
     super
 

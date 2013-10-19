@@ -115,12 +115,36 @@ var geom_boxplot =  {
 }
 
 var geom_interval = {
-  layers: [{
+  layers: [{geom: 'interval'}, {
     geom: { type:"interval", aes: {y: '{total/(1+count)}'} }
-   ,aes: {x: 'd', y: 'e', 'fill': 'f',  "fill-opacity": 0.9}
    ,stat: "bin"
-  }],
-  facets: {y: 't', x: 'g'}
+  }]
+  ,aes: {x: 'd', y: 'e', 'fill': 'f',  "fill-opacity": 0.9}
+  ,facets: {y: 't', x: 'g'}
+};
+
+var geom_interval = {
+  "layers": [
+    {
+      "geom": "point", aes: {r: 'f',color: 'black'}, scales: {color: 'identity'}
+    },
+    {
+      "geom": {
+        "type": "rect", aes: {y:'avg'}
+      }, pos: "stack",
+      "stat": "bin",scales: {color: 'color'}
+    }
+  ], 
+
+      "aes": {
+        "x": "d", 
+        "y": "e", 
+        "color": "g"
+      }, 
+  "facets": {
+    "y": "t", 
+    "x": "f"
+  }, debug: {'gg.wf.std':3}
 };
 
 var geom_point_1 = {
@@ -139,7 +163,7 @@ var geom_point_sum = {
 
 var geom_point_interval = {
   layers: [{
-    geom: "interval"
+    geom: "line"
    ,pos: "dodge"
    ,aes: {x: '{Math.floor(d/10.)*10 + "d"}', y: 'e', color: 'g'}
    ,stat: "bin"
@@ -177,10 +201,10 @@ var geom_point_4 = {
 };
 
 var colored_lines = {
-  layers: [{geom: "line"}],
+  layers: [{geom: "line", stat: 'loess'}],
   aes: {
     x: 'd',  y: "e",
-    group : {color: "g"}
+    color: "g"
   }
 };
 
