@@ -79,8 +79,7 @@ class gg.data.Table
   # These are the _only_ methods that Change the schema
   # XXX: No guarantees whether the change happens in place or creates a new table!
   # @return table with modified schema
-  addConstColumn: -> throw "not implemented"
-  addColumn: -> throw "not implemented"
+  setColumn: -> throw "not implemented"
 
   # This is the only method other than addCol that changes the data
   addRow: (row) -> throw "not implemented"

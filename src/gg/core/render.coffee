@@ -51,9 +51,9 @@ class gg.core.Render extends gg.core.BForm
 
 
     # update md variables
-    md = gg.data.Transform.mapCols md, {
-      svg: (svg) -> 
-        svg.facets = facetsSvg
-        svg
-    }
+    md = gg.data.Transform.mapCols md, [
+      ['svg', ((svg) -> 
+          svg.facets = facetsSvg
+          svg), gg.data.Schema.object ]
+    ]
     new gg.data.PairTable pairtable.getTable(), md

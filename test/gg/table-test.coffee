@@ -56,48 +56,51 @@ schemaCheck =
       assert.equal _.size(splits), 10
 
   "map on b": (table) ->
-    t = Transform.map table, {
-      b: (row) -> -row.get('b')
-    }
+    t = Transform.map table, [
+      ['b', ((row) -> -row.get('b')), Schema.numeric]
+    ]
     assert.equal t.schema.ncols(), 1
     assert.deepEqual t.schema.cols[0], 'b'
 
   "transformations on b":
     "using function":
       topic: (table) ->
-        Transform.transform table, {
-          b: ((v) -> -v.get('b'))
-        }
+        Transform.transform table, [
+          ['b', ((v) -> -v.get('b')), Schema.numeric]
+        ]
 
       "is negative": (table) ->
         table.each (row) -> assert.lte row.get('b'), 0
 
     "using two key object":
       topic: (table) ->
-        Transform.transform table, {
+        mapping = {
           a: (v) -> v.get 'a'
           b: (v) -> -v.get 'b'
           c: (v) -> v.get 'a'
-        }, no
+        }
+        mapping = _.map mapping, (f,k) -> [k,f,Schema.numeric]
+        Transform.transform table, mapping
 
       "is correct": (table) ->
         table.each (row) ->
           assert.lte row.get('b'), 0
           assert.equal row.get('a'), row.get('c')
 
-  "adding unequal column should fail": (table) ->
-    f = () -> table.addColumn "foo", []
-    assert.throws f, Error
 
+  ###
   "can add valid column": (table) ->
     table = table.clone()
     table = table.addColumn "d", _.range(table.nrows())
     assert.equal table.ncols(), 6
+  ###
 
   "after adding column 't'":
     topic: (table) ->
-      table.clone().addConstColumn 't', 99
+      table.clone().setColumn 't', 99
     "has 't'": (table) ->
+      assert table.has('t')
+      assert table.schema.has('t')
       table.each (row) ->
         assert.equal row.get('t'), 99
 
@@ -211,7 +214,7 @@ twoTables =
 
     "when const col added": 
       topic: ([rt, ct]) ->
-        [rt.clone().addConstColumn('z', 10), ct.clone().addConstColumn('z', 10)]
+        [rt.clone().setColumn('z', 10), ct.clone().setColumn('z', 10)]
 
       "has z": ([rt, ct]) ->
         assert rt.has('z')

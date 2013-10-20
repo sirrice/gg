@@ -25,10 +25,11 @@ class gg.scale.train.Master extends gg.core.BForm
       scalesList = _.uniq(md.getColumn('scales'), false, (s) -> s.id)
       masterScales = new gg.scale.MergedSet scalesList
       #@expandDomains masterScales
-      md = gg.data.Transform.mapCols md,
-        scales: (scales) ->
+      md = gg.data.Transform.mapCols md, [
+        ['scales', ((scales) ->
           scales.merge masterScales
-          scales
+          scales), gg.data.Schema.object]
+      ]
     else
       md = @trainFreeScales md
 
@@ -53,11 +54,13 @@ class gg.scale.train.Master extends gg.core.BForm
     ps = _.map md.partition(['facet-x', 'facet-y']), (p) ->
       x = p.get 0, xFacet
       y = p.get 0, yFacet
-      gg.data.Transform.mapCols p,
-        scales: (scales) ->
+      gg.data.Transform.mapCols p, [
+        ['scales', ((scales) ->
           scales.merge xscalesList[x], no
           scales.merge yscalesList[y], no
-          scales
+          scales), gg.data.Schema.object
+        ]
+      ]
 
     return new gg.data.MultiTable null, ps
 

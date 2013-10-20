@@ -51,6 +51,7 @@ createSimpleTableSet = ->
 
 
 log = (text) ->
+  console.log text
   output = [
     '# rows: 4'
     'Schema: [["x",2],["y",2],["l",2]]'
@@ -68,6 +69,7 @@ suite.addBatch
       topic: createSimplePairTable
       "is correct": (pairtable) ->
         gg.wf.Stdout.print pairtable.getTable(), null, 10, log
+
 
     "on tableset":
       topic: createSimpleTableSet

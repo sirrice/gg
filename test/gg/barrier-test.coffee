@@ -49,9 +49,9 @@ barrier =
   topic: ->
     gg.wf.Barrier.create (tset, params, cb) ->
       t = tset.getTable()
-      t = gg.data.Transform.transform t, { 
-        c: (row) -> row.get('a')*row.get('b')
-      }
+      t = gg.data.Transform.transform t, [ 
+        ['c', ((row) -> row.get('a')*row.get('b')), gg.data.Schema.numeric]
+      ]
       tset = new gg.data.PairTable t, tset.getMD()
       cb null, tset
 _.extend barrier, check

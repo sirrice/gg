@@ -30,7 +30,7 @@ class gg.core.FormUtil
       log "table schema: #{table.schema.toString()}"
       log "expected:     #{JSON.stringify defaults}"
 
-    mapping = _.o2map defaults, (v, k) ->
+    mapping = _.map defaults, (v, k) ->
       if k == 'group'
         unless _.isObject v
           throw Error "group default value should be object: #{v}"
@@ -39,14 +39,14 @@ class gg.core.FormUtil
           newv = _.clone v
           _.extend newv, row.get('group') if row.has 'group'
           newv
-        return [k, f]
+        return [k, f, gg.data.Schema.object]
 
       if table.has k
         return null
       else
         log "adding:  #{k} -> #{v}"
-        f = _.mapToFunction table, k, v
-        return [k, f]
+        return _.mapToFunction table, k, v
+    mapping = _.compact mapping
     table = gg.data.Transform.transform table, mapping
     new gg.data.PairTable table, pt.getMD()
 
@@ -60,13 +60,16 @@ class gg.core.FormUtil
       log pairtable.getTable()
       throw Error "@scales called with no md rows"
     unless md.has 'scalesconfig'
-      md = md.addConstColumn 'scalesconfig', gg.scale.Config.fromSpec({})
+      md = md.setColumn 'scalesconfig', gg.scale.Config.fromSpec({})
     unless md.has 'scales'
-      md = gg.data.Transform.transform md,
-        scales: (row) ->
-          layer = row.get 'layer'
-          config = row.get 'scalesconfig'
-          config.scales(layer)
+      f = (row) ->
+        layer = row.get 'layer'
+        config = row.get 'scalesconfig'
+        config.scales(layer)
+
+      md = gg.data.Transform.transform md, [
+        ['scales', f, gg.data.Schema.object]
+      ]
       new gg.data.PairTable pairtable.getTable(), md
     else
       pairtable
@@ -85,7 +88,7 @@ class gg.core.FormUtil
       layer = md.get 0, 'layer'
       config = md.get 0, 'scalesconfig'
       scaleset = config.scales layer
-      md.addConstColumn 'scales', scaleset
+      md = md.setColumn 'scales', scaleset
       scaleset
 
   #

@@ -19,10 +19,8 @@ class gg.xform.EnvPut extends gg.core.XForm
   compute: (pairtable, params) ->
     md = pairtable.getMD()
     pairs = params.get 'pairs'
-    mapping = _.o2map pairs, (v, k) ->
-      [k, () -> v]
-    md = gg.data.Transform.mapCols md,
-      mapping
+    for k, v of pairs
+      md = md.setColumn k, v
     ret = new gg.data.PairTable pairtable.getTable(), md
     ret
 

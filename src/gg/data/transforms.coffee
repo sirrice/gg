@@ -24,8 +24,6 @@ class gg.data.Transform
     return rows
 
 
-
-
   @sort: (table, cmp) ->
     rows = table.each (row) -> row
     rows.sort cmp
@@ -99,43 +97,87 @@ class gg.data.Transform
   @exclude: (table, cols) ->
     cols = _.flatten [cols]
     keep = _.reject table.schema.cols, (col) -> col in cols
-    @map table, keep
+    mapping = _map keep, (col) ->
+      f = (val) -> val
+      [col, f, table.schema.type(col)]
+    @mapCols table, mapping
 
   # add @param mapping to schema
+  #
+  # @param mapping is list of triples
+  #
+  #  [ [key, f, type ] ]
+  #
   @transform: (table, mapping) ->
-    schema = new gg.data.Schema
+    lookup = _.o2map mapping, ([col, f, type]) -> [col, f]
     for col in table.schema.cols
-      unless col of mapping
-        mapping[col] = ((col) -> (row) -> row.get col)(col)
+      unless col of lookup
+        f = ((col) -> (row) -> row.get(col))(col)
+        mapping.push [col, f, table.schema.type(col)]
     @map table, mapping
 
   # single column transformations
   # mapping is of the form
   #
-  #   col: (colvalue) -> new value
+  #   [
+  #     [ key, f, type ]
+  #   ]
+  #
+  # where f: (colval, idx) -> newval
   #
   @mapCols: (table, mapping) ->
-    schema = new gg.data.Schema
+    mapping = _.map _.compact(mapping), ([col, f, type]) ->
+      type ?= f.type or gg.data.Schema.unknown
+      [col, f, type]
+
+    schema = table.schema.clone()
+    schema = schema.exclude _.map(mapping, ([c,f,t])->c)
+    newSchema = new gg.data.Schema()
+    for [col, f, type] in mapping
+      newSchema.addColumn col, type
+    schema.merge newSchema
+
     rows = table.each (row, idx) ->
       raw = row.raw()
-      o = _.o2map mapping, (f, col) ->
-        [col, f(raw[col], idx)]
-      _.extend raw, o
+      _.map mapping, ([col, f, type]) ->
+        v = f raw[col], idx
+        if idx <= 10 and schema.type(col) == gg.data.Schema.unknown
+          schema.setType col, gg.data.Schema.type(v)
+        raw[col] = v
       raw
-    table.constructor.fromArray rows
 
-  # return schema with ONLY mapping
+    table.constructor.fromArray rows, schema
+
+
+  # mapping is of the form
+  #
+  #   [ [key, f, type] ]
+  #
+  # where f: (row, idx) -> newval
+  #
   @map: (table, mapping) ->
+    mapping = _.map _.compact(mapping), ([col, f, type]) ->
+      type ?= f.type or gg.data.Schema.unknown
+      [col, f, type]
+
+    schema = new gg.data.Schema()
+    for [col, f, type] in mapping
+      schema.addColumn col, type
+
     iter = table.iterator()
     idx = 0
     newrows = []
     while iter.hasNext()
       row = iter.next()
-      o = _.o2map mapping, (f, k) ->
-        [k, f(row, idx)]
+      o = _.o2map mapping, ([col, f, type], idx) ->
+        v = f row, idx
+        if idx == 0
+          if schema.type(col) == gg.data.Schema.unknown
+            schema.setType gg.data.Schema.type(v)
+        [col, v]
       idx += 1
       newrows.push o
-    table.constructor.fromArray newrows
+    table.constructor.fromArray newrows, schema
         
 
     

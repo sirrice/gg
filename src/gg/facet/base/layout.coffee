@@ -209,12 +209,16 @@ class gg.facet.base.Layout extends gg.core.BForm
   addPanesToEnv: (md, grid, paddingPane) ->
     # 1. add each pane's bounds to their environment
     # 2. update scale sets to be within drawing container
-    md = gg.data.Transform.transform md,
-      paneC: (row) ->
-        x = row.get 'facet-x'
-        y = row.get 'facet-y'
-        paneC = grid[x][y]
-        paneC
+    md = gg.data.Transform.transform md, [
+      [ 'paneC'
+        ((row) ->
+          x = row.get 'facet-x'
+          y = row.get 'facet-y'
+          paneC = grid[x][y]
+          paneC)
+        gg.data.Schema.object
+      ]
+    ]
 
     md.each (row) ->
       x = row.get 'facet-x'
@@ -262,11 +266,11 @@ class gg.facet.base.Layout extends gg.core.BForm
       y = p.get 0, 'facet-y'
       xfont = xfonts[idx]
       yfont = yfonts[idx]
-      gg.data.Transform.transform p, 
-        "xfacet-text": xfont.text
-        "xfacet-size": xfont.size
-        "yfacet-text": yfont.text
-        "yfacet-size": yfont.size
+      p = p.setColumn "xfacet-text", xfont.text
+      p = p.setColumn "xfacet-size", xfont.size
+      p = p.setColumn "yfacet-text", yfont.text
+      p = p.setColumn "yfacet-size", yfont.size
+      p
 
   # augments layout container (lc) with additional
   # containers.

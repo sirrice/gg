@@ -96,10 +96,10 @@ class gg.facet.base.Render extends gg.core.BForm
     }
 
     # update environment
-    md = gg.data.Transform.mapCols md,
-      svg: (svg) -> 
+    md = gg.data.Transform.mapCols md, [
+      ['svg', ((svg) -> 
         svg.plot = plotSvg
-        svg
+        svg), gg.data.Schema.object]]
 
     md
     # render the pane container
@@ -131,8 +131,7 @@ class gg.facet.base.Render extends gg.core.BForm
     md = pairtable.getMD()
     lc = md.get 0, 'lc'
     md = @renderLabels md, params, lc
-    md = gg.data.Transform.mapCols md,
-      lc: () -> lc
+    md = md.setColumn 'lc', lc
     new gg.data.PairTable pairtable.getTable(), md
 
   @fromSpec: (spec) ->

@@ -36,7 +36,7 @@ class gg.core.Layout extends gg.core.BForm
     lc.facetC = facetC
     lc.baseC = c
 
-    md = gg.data.Transform.transform md, {'lc': (row)->lc}
+    md = md.setColumn 'lc', lc
     new gg.data.PairTable tset.getTable(), md
 
 

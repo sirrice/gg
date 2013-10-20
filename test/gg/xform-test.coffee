@@ -4,6 +4,7 @@ assert = require "assert"
 events = require 'events'
 
 suite = vows.describe "xform.coffee"
+Schema = gg.data.Schema
 
 
 makeTable = (nrows=100) ->
@@ -45,8 +46,9 @@ suite.addBatch
       params:
         f: (pt) ->
           t = pt.getTable()
-          t = gg.data.Transform.transform t, 
-            a: (row) -> -row.get('a')
+          t = gg.data.Transform.transform t, [
+            ['a', ((row) -> -row.get('a')), Schema.numeric]
+          ]
           new gg.data.PairTable t, pt.getMD()
 
     "runs compute correctly": genCheckTable  (pt) ->

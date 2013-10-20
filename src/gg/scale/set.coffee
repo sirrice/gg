@@ -129,7 +129,8 @@ class gg.scale.Set
         #throw Error("gg.ScaleSet.get(#{aes}) doesn't have any scales")
 
     else
-      if (@userdefinedType(aes) != gg.data.Schema.unknown) and _.size(@scales[aes]) > 0
+      udt = @userdefinedType aes
+      if (udt != type) and (udt != gg.data.Schema.unknown) and _.size(@scales[aes]) > 0
         @log.warn "downcasting requested scale type from #{type} -> #{@userdefinedType aes} because user defined"
         _.values(@scales[aes])[0]
       else
@@ -237,10 +238,14 @@ class gg.scale.Set
   apply: (table,  posMapping={}) ->
     f = (table, scale, col) =>
       str = scale.toString()
-      mapping = {}
-      mapping[col] = (row) -> scale.scale row.get(col)
+      mapping = [] 
+      mapping.push [
+        col
+        ((v) -> scale.scale v)
+        gg.data.Schema.unknown
+      ]
       if table.has col
-        table = gg.data.Transform.transform table, mapping
+        table = gg.data.Transform.mapCols table, mapping
       @log "apply: #{col}(#{scale.id}):\t#{str}\t#{table.nrows()} rows"
       table
 
@@ -255,7 +260,13 @@ class gg.scale.Set
   filter: (table, posMapping={}) ->
     filterFuncs = []
     f = (table, scale, col) =>
-      g = (row) -> scale.valid row.get(col)
+      g = (row) -> 
+        v = row.get col
+        checks = [_.isNaN, _.isUndefined, _.isNull]
+        if not _.any(checks, (f) -> f(v))
+          scale.valid v
+        else
+          true
       g.col = col
       @log "filter: #{scale.toString()}"
       filterFuncs.push g if table.has col
@@ -284,15 +295,18 @@ class gg.scale.Set
   # @return inverted table
   invert: (table, posMapping={}) ->
     f = (table, scale, col) =>
-      mapping = {}
-      mapping[col] = (row) ->
-        v = row.get col
-        if v? then scale.invert(v) else null
+      mapping = [
+        [
+          col
+          (v) -> if v? then scale.invert(v) else null
+          gg.data.Schema.unknown
+        ]
+      ]
 
       origDomain = scale.defaultDomain table.getColumn(col)
       newDomain = null
       if table.has col
-        table = gg.data.Transform.transform table, mapping
+        table = gg.data.Transform.mapCols table, mapping
         newDomain = scale.defaultDomain table.getColumn(col)
 
       if scale.domain()?

@@ -12,6 +12,16 @@ makeTable = ->
   rows = _.times 10, (i) ->
     x: i
     y: i
+    q1: i
+    median: i
+    q3: i
+    lower: i
+    upper: i
+    outlier: null
+    min: i
+    max: i
+
+
   table = gg.data.Table.fromArray rows
 
   config = gg.scale.Config.fromSpec
@@ -27,6 +37,7 @@ makeTable = ->
   md = gg.data.Table.fromArray [ {scalesconfig: config} ]
   pt = new gg.data.PairTable table, md
   pt = pt.ensure([])
+  pt = gg.core.FormUtil.ensureScales pt, {}, gg.util.Log.logger("")
 
 
 runOnTable = (node, table) ->
@@ -56,7 +67,7 @@ suite.addBatch
   
   "Boxplot Reparam":
     topic: ->
-      new gg.geom.reparam.Rect
+      new gg.geom.reparam.Boxplot
 
     "when run on data":
       topic: (node) ->
@@ -100,8 +111,8 @@ suite.addBatch
       "table as reparamed cols": (pt) ->
         table = pt.getTable()
         assert table.has('group'), "table doesn't have group"
-        assert table.has('y0')
-        assert table.has('y1')
+        assert table.has('y0'), 'table should have y0'
+        assert table.has('y1'), 'table should have y1'
         table.each (row) ->
           y = row.get 'y'
           y1 = row.get 'y1'

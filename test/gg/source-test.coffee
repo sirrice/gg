@@ -7,7 +7,6 @@ assert = require "assert"
 
 suite = vows.describe "pairtable.js"
 Schema = gg.data.Schema
-Transform = gg.data.Transform
 Table = gg.data.Table
 
 check =

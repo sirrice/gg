@@ -114,8 +114,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
         table
 
       t = oldscaleset.useScales t, posMapping, f
-      md = gg.data.Transform.mapCols md,
-        'scales': () -> newscaleset
+      md = md.setColumn 'scales', newscaleset
       new gg.data.PairTable t, md
 
 
@@ -128,13 +127,12 @@ class gg.scale.train.Pixel extends gg.core.BForm
       scaleset = md.get 0, 'scales'
       posMapping = md.get 0, 'posMapping'
       layer = md.get 0, 'layer'
-      mappingFuncs = {}
+      mappingFuncs = []
       log "#{idx} fRescale called layer: #{layer}"
 
       rescale = (table, scale, aes) =>
         if scale.type == Schema.ordinal
-          console.log table.schema.type aes
-          console.log "scale ordinal, skipping: #{aes}"
+          log "scale ordinal, skipping: #{aes}"
           return table 
         tabletype = table.schema.type aes
         if oldscaleset.contains (posMapping[aes] or aes), tabletype
@@ -142,10 +140,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
         else
           oldScale = oldscaleset.scale aes, Schema.unknown, posMapping
         g = (v) -> scale.scale oldScale.invert(v)
-        if posMapping[aes] == 'y'
-          ys = table.getColumn aes
-          console.log "ys #{aes} minmax: #{[_.min(ys), _.max(ys)]}"
-        mappingFuncs[aes] = g
+        mappingFuncs.push [aes, g, gg.data.Schema.unknown]
         log "#{idx} rescale: old: #{oldScale.toString()}"
         log "#{idx} rescale: new: #{scale.toString()}"
         table
@@ -156,10 +151,14 @@ class gg.scale.train.Pixel extends gg.core.BForm
       if t.has 'y'
         ys = t.getColumn 'y'
         yscale = scaleset.get 'y', [t.schema.type('y'), Schema.unknown]
-        if _.min(ys) < yscale.range()[0]
-          throw Error("shit, rescaled y is < range #{_.min ys}")
-        if _.max(ys) > yscale.range()[1]
-          throw Error("shit, rescaled y is > range #{_.max ys}")
+        range = yscale.range()
+        [miny, maxy] = [_.min(ys), _.max(ys)]
+        if miny < range[0]
+          console.log(yscale.toString())
+          throw Error("shit, rescaled y(#{miny}) is < range(#{range[0]}) ")
+        if maxy > range[1]
+          console.log(yscale.toString())
+          throw Error("shit, rescaled y(#{maxy}) is > range(#{range[1]})")
 
       new gg.data.PairTable t, md
 

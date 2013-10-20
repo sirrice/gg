@@ -21,12 +21,13 @@ class gg.geom.reparam.Text extends gg.core.XForm
     table = pairtable.getTable()
 
     cols = ['x', 'y', 'text']
-
-    table = gg.data.Transform.transform table,
+    mapping =
       x0: (row) -> row.get 'x'
       x1: (row) -> row.get('x') + _.textSize(row.get 'text').w
       y0: (row) -> row.get 'x'
       y1: (row) -> row.get 'y' + _.textSize(row.get 'text').h
+    mapping = _.map mapping, (f,k) -> [k,f,gg.data.Schema.numeric]
+    table = gg.data.Transform.transform table,mapping 
 
     new gg.data.PairTable table, pairtable.getMD()
 

@@ -160,17 +160,18 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
       xrange = [paddingPane, drawC.w()-2*paddingPane]
       yrange = [paddingPane, drawC.h()-2*paddingPane]
 
+      f = (scales) ->
+        for aes in gg.scale.Scale.xs
+          for type in scales.types(aes)
+            scales.scale(aes, type).range xrange
+        for aes in gg.scale.Scale.ys
+          for type in scales.types(aes)
+            scales.scale(aes, type).range yrange
+        scales
 
-      p = gg.data.Transform.mapCols p,
-        paneC: () -> paneC
-        scales: (scales) ->
-          for aes in gg.scale.Scale.xs
-            for type in scales.types(aes)
-              scales.scale(aes, type).range xrange
-          for aes in gg.scale.Scale.ys
-            for type in scales.types(aes)
-              scales.scale(aes, type).range yrange
-          scales
+      p = p.setColumn 'paneC', paneC, gg.data.Schema.object
+      p = gg.data.Transform.mapCols p, [
+        ['scales', f, gg.data.Schema.object]]
       p
 
 
@@ -208,11 +209,10 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
       paneC = grid.getByVal fkey[0], fkey[1]
       xfont = xfonts[fkey[0]]
       yfont = yfonts[fkey[1]]
-
-      gg.data.Transform.transform p,
-        'xfacet-text': () -> xfont.text
-        'xfacet-size': () -> xfont.size
-        'yfacet-text': () -> yfont.text
-        'yfacet-size': () -> yfont.size
+      p = p.setColumn 'xfacet-text', xfont.text
+      p = p.setColumn 'xfacet-size', xfont.size
+      p = p.setColumn 'yfacet-text', yfont.text
+      p = p.setColumn 'yfacet-size', yfont.size
+      p
 
     new gg.data.MultiTable null, partitions

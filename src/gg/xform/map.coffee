@@ -57,32 +57,44 @@ class gg.xform.Mapper extends gg.wf.SyncExec
   compute: (pairtable, params) ->
     table = pairtable.getTable()
     mapping = params.get 'mapping'
+
+    functions = @constructor.mappingToFunctions table, mapping
+    table = gg.data.Transform.transform table, functions
+    pt = new gg.data.PairTable table, pairtable.getMD()
+    if 'group' in _.map(functions, ([col,f,t])->col)
+      pt = pt.ensure ['group']
+    pt
+
+  @mappingToFunctions: (table, mapping) ->
     @log "transform: #{JSON.stringify mapping}"
     @log "table:     #{JSON.stringify table.schema.toString()}"
 
-
+    groupable = null
     if 'group' of mapping
       groupable = mapping['group']
       unless _.isObject groupable
         groupable = {}
+      mapping = _.omit mapping, 'group'
     else
       allcols = _.keys mapping
       cols = _.filter allcols, (c) -> gg.core.Aes.groupable c
-      groupable = _.pick mapping, cols
+      if cols.length > 0
+        groupable = _.pick mapping, cols
     @log "groupable: #{JSON.stringify groupable}"
 
-    gFuncs = _.mappingToFunctions table, groupable
     functions = _.mappingToFunctions table, mapping
-    if _.size(gFuncs) > 0
-      functions['group'] = (row) ->
-        _.o2map gFuncs, (f, col) -> [col, f(row)]
+    if groupable?
+      gFuncs = _.mappingToFunctions table, groupable
+      groupf = ((gf) ->
+        (row, idx) ->
+          _.o2map gf, ([col, f, type]) -> 
+            [col, f(row, idx)]
+        )(gFuncs)
+      functions.push ['group', groupf, gg.data.Schema.object]
+
+    functions
 
 
-    table = gg.data.Transform.transform table, functions
-    pt = new gg.data.PairTable table, pairtable.getMD()
-    if _.size(gFuncs) > 0
-      pt = pt.ensure ['group']
-    pt
 
   @fromSpec: (spec) ->
     spec = _.clone spec

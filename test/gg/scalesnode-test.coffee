@@ -99,6 +99,7 @@ suite.addBatch
           { scalesconfig: config }]
         pt = new gg.data.PairTable table, md
         pt = pt.ensure([])
+        pt = gg.core.FormUtil.ensureScales pt
         runOnTable node, pt
 
       "is correct": (pt) ->
@@ -134,6 +135,7 @@ suite.addBatch
           { scalesconfig: config }]
         pt = new gg.data.PairTable table, md
         pt = pt.ensure([])
+        pt = gg.core.FormUtil.ensureScales pt
         runOnTable node, pt
 
       "results are correct": (pt) ->
@@ -171,6 +173,7 @@ suite.addBatch
           { scalesconfig: config }]
         pt = new gg.data.PairTable table, md
         pt = pt.ensure([])
+        pt = gg.core.FormUtil.ensureScales pt
         runOnTable node, pt
 
       "results are correct": (pt) ->
@@ -213,6 +216,7 @@ suite.addBatch
           { scalesconfig: config }]
         pt = new gg.data.PairTable table, md
         pt = pt.ensure([])
+        pt = gg.core.FormUtil.ensureScales pt
         runOnTable node, pt
 
       "results are correct": (pt) ->

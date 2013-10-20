@@ -33,12 +33,15 @@ class gg.geom.reparam.Line extends gg.core.XForm
     y0 = scales.scale('y', gg.data.Schema.numeric).minRange()
     @log "compute: y0 set to #{y0}"
 
-    table = gg.data.Transform.transform table,
-      y1: (row) ->
-        if row.has('y1') then row.get('y1') else row.get('y')
-      y0: (row) ->
-        if row.has('y0') then row.get('y0') else y0
+    y1f = (row) ->
+      if row.has('y1') then row.get('y1') else row.get('y')
+    y0f = (row) ->
+      if row.has('y0') then row.get('y0') else y0
 
+    table = gg.data.Transform.transform table, [
+      ['y0', y0f, gg.data.Schema.numeric]
+      ['y1', y1f, gg.data.Schema.numeric]
+    ]
 
     schema = params.get('outputSchema') pairtable, params
     new gg.data.PairTable table, md

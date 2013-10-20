@@ -17,9 +17,9 @@ class gg.wf.Barrier extends gg.wf.Node
 
     pairtables = _.map @inputs, (pt, idx) ->
       t = pt.getTable()
-      t = t.addConstColumn '_barrier', idx
+      t = t.setColumn '_barrier', idx, gg.data.Schema.numeric
       md = pt.getMD()
-      md = md.addConstColumn '_barrier', idx
+      md = md.setColumn '_barrier', idx, gg.data.Schema.numeric
       new gg.data.PairTable t, md
 
     tableset = new gg.data.TableSet pairtables

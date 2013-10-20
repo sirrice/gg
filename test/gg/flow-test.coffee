@@ -3,6 +3,8 @@ vows = require "vows"
 assert = require "assert"
 events = require "events"
 
+Schema = gg.data.Schema
+
 makeTable = (nrows=100) ->
   rows = _.times nrows, (i) -> 
     a:1+i
@@ -24,8 +26,9 @@ suite.addBatch {
           flow = new gg.wf.Flow
           flow.exec (pairtable, params, cb) -> 
             table = pairtable.getTable()
-            table = gg.data.Transform.transform table, 
-              b: (row) -> row.get('b') * 100
+            table = gg.data.Transform.transform table, [
+              ['b', ((row) -> row.get('b') * 100), Schema.numeric]
+            ]
             ret = new gg.data.PairTable table, pairtable.getMD()
             cb null,ret
           flow
@@ -62,16 +65,18 @@ suite.addBatch {
             params: 
               compute: (pt, params, cb) -> 
                 t = pt.getTable()
-                t = gg.data.Transform.transform t,
-                  a: (row) -> -1
+                t = gg.data.Transform.transform t,[
+                  ['a', ((row) -> -1), Schema.numeric]
+                ]
                 cb null, new gg.data.PairTable(t, pt.getMD())
           flow.exec
             name: "node2"
             params: 
               compute: (pt, params, cb) -> 
                 t = pt.getTable()
-                t = gg.data.Transform.transform t,
-                  b: (row) -> 100
+                t = gg.data.Transform.transform t,[
+                  ['b', ((row) -> 100), Schema.numeric]
+                ]
                 cb null, new gg.data.PairTable(t, pt.getMD())
           flow
 
@@ -104,8 +109,7 @@ suite.addBatch {
           name: "node#{i}"
           params:
             compute: (pt, params, cb) -> 
-              map = {}
-              map["o#{i}"] = (row) -> i
+              map = [["o#{i}", ((row) -> i), null]]
               t = gg.data.Transform.transform pt.getTable(), map
               ret = new gg.data.PairTable t, pt.getMD()
               cb null, ret

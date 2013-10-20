@@ -38,16 +38,15 @@ class gg.wf.Exec extends gg.wf.Node
         compute pairtable, params, cb
       catch err
         cb err, null
+
     async.map partitions, iterator, (err, pairtables) =>
       throw Error(err) if err?
       pairtables = _.map pairtables, (pt) ->
         md = pt.getMD()
         t = pt.getTable()
-        o = {}
         for col in keys
-          o[col] = md.get 0, col
-        o = _.o2map o, (v, k) -> [k, ()->v]
-        t = gg.data.Transform.mapCols t, o
+          v = md.get 0, col
+          t = t.setColumn col, v
         new gg.data.PairTable t, md
 
       result = new gg.data.TableSet pairtables

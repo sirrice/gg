@@ -257,27 +257,29 @@ class gg.facet.pane.Svg extends gg.core.BForm
       if svg? then [facetid, svg] else null
 
     # second pass sets ['svg'].paneSvg for each data
-    md = gg.data.Transform.transform md,
-      svg: (row) ->
-        paneC = row.get 'paneC'
-        facetId = row.get 'facet-id'
-        layerIdx = row.get 'layer'
-        dc = paneC.drawC()
-        el = els[facetId]
+    f = (row) ->
+      paneC = row.get 'paneC'
+      facetId = row.get 'facet-id'
+      layerIdx = row.get 'layer'
+      dc = paneC.drawC()
+      el = els[facetId]
 
-        paneSvg = el.select('.data-pane').insert 'g', ':last-child'
-        paneSvg.attr {
-          class: 'layer-pane facet-layer-grid'
-          width: dc.w()
-          height: dc.h()
-          id: "facet-grid-#{paneC.xidx}-#{paneC.yidx}-#{layerIdx}"
-          container: gg.facet.pane.Svg.b2translate(paneC.bound())
-        }
-        svg = row.get 'svg'
-        svg = _.o2map svg, (v, k) -> [k,v]
-        svg.pane = paneSvg
-        svg
+      paneSvg = el.select('.data-pane').insert 'g', ':last-child'
+      paneSvg.attr {
+        class: 'layer-pane facet-layer-grid'
+        width: dc.w()
+        height: dc.h()
+        id: "facet-grid-#{paneC.xidx}-#{paneC.yidx}-#{layerIdx}"
+        container: gg.facet.pane.Svg.b2translate(paneC.bound())
+      }
+      svg = row.get 'svg'
+      svg = _.o2map svg, (v, k) -> [k,v]
+      svg.pane = paneSvg
+      svg
 
+    md = gg.data.Transform.transform md, [
+      ['svg', f, gg.data.Schema.object]
+    ]
     new gg.data.PairTable pairtable.getTable(), md
 
 

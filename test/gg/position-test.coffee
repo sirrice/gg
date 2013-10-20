@@ -12,7 +12,13 @@ suite.addBatch {
     topic: ->
       rows = _.times 10, (i) ->
         j = Math.floor(i/5)*3 + 1
-        { group: i%2, x: j*10, x0: j*10-4, x1: j*10+4 }
+        { 
+          group: i%2
+          x: j*10
+          x0: j*10-4
+          x1: j*10+4, 
+          '_base': [j*10-4, j*10+4] 
+        }
       gg.data.Table.fromArray rows
 
 

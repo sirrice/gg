@@ -107,17 +107,29 @@ class gg.facet.base.Facets
       xcol = params.get 'x'
       ycol = params.get 'y'
       log "x/ycols: #{xcol}/#{ycol}" 
-      t = gg.data.Transform.transform t, 
-        'facet-x': (row) -> row.get xcol
-        'facet-y': (row) -> row.get ycol
+      tmapping = 
+        'facet-x': xcol
+        'facet-y': ycol
+      tmapping = _.mappingToFunctions t, tmapping
+      t = gg.data.Transform.transform t, tmapping
       pt = new gg.data.PairTable t, md
       pt = pt.ensure ['facet-x', 'facet-y']
       md = pt.getMD()
-      md = gg.data.Transform.transform md, 
-        'facet-keys': (row) -> 
-          "key-#{row.get('facet-x')}-#{row.get('facet-y')}"
-        'facet-id': (row) ->
-          "facet-#{row.get('facet-x')}-#{row.get('facet-y')}"
+      mmapping = [
+        [
+          'facet-keys'
+          ((row) -> 
+            "key-#{row.get('facet-x')}-#{row.get('facet-y')}")
+          gg.data.Schema.ordinal
+        ]
+        [
+          'facet-id'
+          ((row) ->
+            "facet-#{row.get('facet-x')}-#{row.get('facet-y')}")
+          gg.data.Schema.ordinal
+        ]
+      ]
+      md = gg.data.Transform.transform md, mmapping
 
       new gg.data.PairTable pt.getTable(), md
       

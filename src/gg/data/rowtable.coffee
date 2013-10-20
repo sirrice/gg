@@ -27,36 +27,21 @@ class gg.data.RowTable extends gg.data.Table
     t
 
   # this should really be a project
-  addConstColumn: (col, val, type=null) ->
+  #
+  # Sets col in all rows to constant value
+  setColumn: (col, val, type=null) ->
     if @has col
       @log.warn "#{col} already in schema #{@schema.toString()}"
       # in some modes, throw error
 
     # TODO: check and enforce consistent type
     type = gg.data.Schema.type(val) unless type?
-    @schema.addColumn col, type unless @has col
+    @schema.addColumn(col, type) unless @has(col)
     idx = @schema.index col
     for row in @rows
       row[idx] = val
     @
 
-  addColumn: (col, vals, type=null) ->
-    if @schema.has col
-      throw Error "#{col} already exists in schema #{@schema.toString()}"
-    if vals.length != @nrows()
-      throw Error "vals length != table length.  #{vals.length} != #{@nrows()}"
-
-    unless type?
-      type = if vals.length == 0 
-        gg.data.Schema.unknown
-      else
-        gg.data.Schema.type vals[0]
-    
-    @schema.addColumn col, type
-    idx = @schema.index col
-    for row in @rows
-      row[idx] = vals[idx]
-    @
 
   rmColumn: (col) ->
     return @ unless @has col

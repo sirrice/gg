@@ -38,11 +38,12 @@ class gg.pos.Dodge extends gg.core.XForm
         newWidth = width / ngroups
         row.get('x') - width/2 + idx*newWidth + newWidth/2
 
-      gg.data.Transform.transform group,
+      mapping =
         x: newx
         x0: (row) -> newx(row) - (1.0-padding)*neww(row)/2
         x1: (row) -> newx(row) + (1.0-padding)*neww(row)/2
-
+      mapping = _.map mapping, (f,k) -> [k,f,gg.data.Schema.numeric]
+      gg.data.Transform.transform group, mapping
 
     table = new gg.data.MultiTable null, groups
     new gg.data.PairTable table, pairtable.getMD()

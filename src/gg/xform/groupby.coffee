@@ -49,13 +49,13 @@ class gg.xform.GroupByAnnotate extends gg.core.XForm
 
   # Create hash functions 
   @getHashFuncs: (gbAttrs, schema, nBins, scales) ->
-    _.o2map gbAttrs, (gbAttr, idx) ->
+    _.map gbAttrs, (gbAttr, idx) ->
       type = schema.type gbAttr
       scale = scales.scale gbAttr, type
       domain = scale.domain()
       keyF = gg.xform.GroupByAnnotate.getHashFunc(
         gbAttr, type, nBins[idx], domain)
-      [gbAttr, keyF]
+      [gbAttr, keyF, type]
 
   # Given a table column and its scale, return hash function
   # that produces the correct number of buckets

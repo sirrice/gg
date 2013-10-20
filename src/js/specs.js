@@ -100,7 +100,7 @@ var geom_area = {
 var geom_boxplot =  {
   layers: [{
     aes: {
-      color: "t"
+      color: "g"
       ,y: "d"
       ,x: "{Math.floor(e/100)*100}"
     }

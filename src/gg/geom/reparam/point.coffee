@@ -29,7 +29,7 @@ class gg.geom.reparam.Point extends gg.core.XForm
       'y0': (row) -> if row.has('y0') then row.get('y0') else 0
       'x0': (row) -> if row.has('x0') then row.get('x0') else row.get('x')-row.get('r')
       'x1': (row) -> if row.has('y1') then row.get('x1') else row.get('x')+row.get('r')
-    mapping = _.mappingToFunctions table, mapping
+    mapping = _.map mapping, (f, k) -> [k, f, gg.data.Schema.numeric]
     table = gg.data.Transform.transform table, mapping
     new gg.data.PairTable table, md
 

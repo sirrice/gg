@@ -25,20 +25,10 @@ class gg.data.MultiTable extends gg.data.Table
     new gg.data.MultiTable @schema.clone(), ts
 
   # this should really be a project
-  addConstColumn: (col, val, type=null) ->
-    tables = _.map @tables, (t) -> t.addConstColumn col, val, type
+  setColumn: (col, val, type=null) ->
+    tables = _.map @tables, (t) -> t.setColumn col, val, type
     new gg.data.MultiTable null, tables
 
-  addColumn: (col, vals, type=null) ->
-    if vals.length != @nrows()
-      throw Error "vals length != table length.  #{vals.length} != #{@nrows()}"
-
-    offset = 0
-    for t in @tables
-      subvals = vals[offset...offset+t.nrows()]
-      t.addColumn col, subvals, type
-      offset += t.nrows()
-    new gg.data.MultiTable null, @tables
 
   rmColumn: (col) ->
     tables = _.map @tables, (t) -> t.rmColumn col

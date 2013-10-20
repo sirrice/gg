@@ -39,11 +39,13 @@ class gg.pos.Text extends gg.pos.Position
     @log.debug "got #{boxes.length} boxes from annealing"
     @log.debug "took #{Date.now()-start} ms"
 
-    table = gg.data.Transform.transform table,
-      x0: (row, idx) -> boxes[idx][0][0]
-      x1: (row, idx) -> boxes[idx][0][1]
-      y0: (row, idx) -> boxes[idx][1][0]
-      y1: (row, idx) -> boxes[idx][1][1]
+    Schema = gg.data.Schema
+    table = gg.data.Transform.transform table, [
+      ['x0', ((row, idx) -> boxes[idx][0][0]), Schema.numeric]
+      ['x1', ((row, idx) -> boxes[idx][0][1]), Schema.numeric]
+      ['y0', ((row, idx) -> boxes[idx][1][0]), Schema.numeric]
+      ['y1', ((row, idx) -> boxes[idx][1][1]), Schema.numeric]
+    ]
 
     new gg.data.PairTable table, pairtable.getMD()
 

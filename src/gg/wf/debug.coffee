@@ -62,17 +62,16 @@ class gg.wf.Scales extends gg.wf.SyncBlock
     @params.ensureAll
       key: [ [], _.flatten [gg.facet.base.Facets.facetKeys, 'layer'] ]
 
-
   compute: (pairtable, params) ->
     md = pairtable.getMD()
-    md.each (row) ->
+    md.each (row) =>
       layer = row.get 'layer'
       scale = row.get 'scales'
       gg.wf.Scales.print scale, layer, @log
     pairtable
 
   @print: (scaleset, layerIdx, log=null) ->
-    log = @log unless log?
+    log ?= @log 
 
     log "scaleset #{scaleset.id}, #{scaleset.scales}"
     _.each scaleset.scales, (map, aes) ->

@@ -6,7 +6,6 @@ assert = require "assert"
 
 suite = vows.describe "pairtable.js"
 Schema = gg.data.Schema
-Transform = gg.data.Transform
 Table = gg.data.Table
 
 
@@ -99,7 +98,8 @@ suite.addBatch
     "when ensured on nothing":
       topic: (ptable) -> ptable.clone().ensure []
       "md":
-        topic: (tset) -> tset.getMD()
+        topic: (tset) -> 
+          tset.getMD()
         "has 1 row": (md) ->
           assert.equal md.nrows(), 1
 

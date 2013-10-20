@@ -57,12 +57,16 @@ class gg.data.Schema
     new gg.data.Schema(cols, types)
 
   # removes col, preserves ordering
-  exclude: (col) ->
-    idx = @index col
-    cols = _.clone(@cols)
-    types = _.clone(@types)
-    cols.splice idx, 1
-    types.splice idx, 1
+  exclude: (rm) ->
+    rm = _.flatten [rm]
+    idxs = _.map rm, (col) => @index col
+    cols = []
+    types = []
+    for col in @cols
+      if @index(col) not in idxs
+        cols.push col
+        types.push @type(col)
+
     new gg.data.Schema cols, types
 
   type: (col) -> @types[@index col]

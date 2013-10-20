@@ -12,14 +12,14 @@ var geoms = {
   ,jitter: geom_point_4
   ,line: colored_lines
   ,multiline: colored_lines_multi
-  ,boxplot: geom_boxplot2
+  ,boxplot: geom_boxplot
 };
 
 var selected_geoms = {
-  area: true,
+  area: false,
   point: false,
   interval: false,
-  boxplot:false,
+  boxplot:true,
   radius: false,
   line: false,
   jitter:false,

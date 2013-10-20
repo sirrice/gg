@@ -25,7 +25,6 @@ makeTable = ->
     {'facet-x': 2, 'facet-y': 2, x:5, y:10 }
     {'facet-x': 2, 'facet-y': 3, x:5, y:10 }
   ]
-  console.log rows
   table = gg.data.Table.fromArray rows
   pt = new gg.data.PairTable table
   pt = pt.ensure ['facet-x', 'facet-y']
@@ -33,9 +32,9 @@ makeTable = ->
     titleC: new gg.core.Bound
     facetC: new gg.core.Bound 0, 0, 500, 500
     baseC: new gg.core.Bound 0, 0, 500, 500
-  md = gg.data.Transform.transform pt.getMD(),
-    lc: () -> lc
-    svg: () -> 0
+  md = pt.getMD()
+  md.setColumn 'lc', lc
+  md.setColumn 'svg', 0
   pt = new gg.data.PairTable pt.getTable(), md
   gg.core.FormUtil.ensureScales pt, null, gg.util.Log.logger('test')
 

@@ -27,9 +27,15 @@ class gg.data.PairTable
     sharedCols
 
   partition: (joincols, type='outer') ->
-    joincols = _.intersection joincols, @sharedCols()
+    joincols = _.flatten [joincols]
+    #joincols = _.intersection joincols, @sharedCols()
     ps = gg.data.Transform.partitionJoin @getTable(), @getMD(), joincols
-    _.map ps, (o) -> o['table']
+    _.map ps, (o) -> 
+      p = o['table']
+      if p.getTable().nrows() == 0
+        console.log 'table has no rows'
+        console.log p.getTable().schema.toString()
+      p
 
   # partition on _all_ of the shared columns
   # 
@@ -39,11 +45,19 @@ class gg.data.PairTable
     partitions = _.map partitions, (p) =>
       table = p.getTable()
       md = p.getMD()
+      if table.nrows() == 0
+        console.log('table has no rows')
+        console.log(table.schema.toString())
+        if table.schema.cols.length == 0 and @tableSchema().cols.length > 0
+          console.log(table)
+          console.log(md)
+          console.log(@)
+          throw Error("full partition created diff schemas")
       if md.nrows() == 0
         row = new gg.data.Row(@mdSchema().clone())
         row = row.merge table.get(0).project(@sharedCols())
-        md = gg.data.Table.fromArray [row]
-        new gg.data.PairTable p.getTable(), md
+        md = gg.data.Table.fromArray [row], @mdSchema().clone()
+        new gg.data.PairTable table, md
       else if md.nrows() > 1
         #@log.warn "fullpartition: md.nrows (#{md.nrows()}) != 1.\t#{md.raw()}"
         p
@@ -63,6 +77,8 @@ class gg.data.PairTable
     if unknownCols.length > 0
       @log.warn "ensure dropping unknown cols: #{unknownCols}"
 
+    newMdSchema = @mdSchema()
+    newMdSchema.merge @tableSchema().project(restCols)
     ps = @partition sharedCols
     newpartitions = []
 
@@ -91,7 +107,7 @@ class gg.data.PairTable
           keyrow.set col, sp.get(0, col)
 
         rows = _.map createCopy(), (row) -> row.merge keyrow
-        newmd = gg.data.RowTable.fromArray rows
+        newmd = gg.data.RowTable.fromArray rows, newMdSchema
         newpartitions.push new gg.data.PairTable(sp, newmd)
 
     new gg.data.TableSet newpartitions

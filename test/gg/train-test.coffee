@@ -4,6 +4,7 @@ assert = require "assert"
 events = require 'events'
 
 suite = vows.describe "train.coffee"
+Schema = gg.data.Schema
 
 #gg.util.Log.setDefaults {'gg.scale.train': 0}
 
@@ -94,9 +95,10 @@ suite.addBatch
       pt = pt.ensure ['facet-x', 'facet-y']
       pt = gg.core.FormUtil.ensureScales pt, null, gg.util.Log.logger('test')
       pt = gg.scale.train.Data.train pt, new gg.util.Params({scalesTrain:'free'}), () ->
-      t = gg.data.Transform.mapCols pt.getTable(),
-        x: (x, idx) -> if idx % 2 == 0 then 200 else 0
-        y: (y, idx) -> if idx % 2 == 0 then 200 else 0
+      t = gg.data.Transform.mapCols pt.getTable(), [
+        ['x', ((x, idx) -> if idx % 2 == 0 then 200 else 0), Schema.numeric]
+        ['y', ((y, idx) -> if idx % 2 == 0 then 200 else 0), Schema.numeric]
+      ]
       pt = new gg.data.PairTable t, pt.getMD()
       pt
 

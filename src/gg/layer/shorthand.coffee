@@ -147,11 +147,9 @@ class gg.layer.Shorthand extends gg.layer.Layer
       [t, md] = [pt.getTable(), pt.getMD()]
       layerIdx = params.get 'layer'
       posMapping = params.get 'posMapping'
-      t = gg.data.Transform.mapCols t, 
-        layer: () -> layerIdx
-      md = gg.data.Transform.mapCols md, 
-        layer: () -> layerIdx
-        posMapping: () -> posMapping
+      t = t.setColumn 'layer', layerIdx
+      md = md.setColumn 'layer', layerIdx
+      md = md.setColumn 'posMapping', posMapping
       new gg.data.PairTable t, md), {
         layer: @layerIdx
         posMapping: @geom.posMapping()
@@ -195,16 +193,16 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes = []
 
     # train & filter scales
+    nodes.push @makeStdOut "pre-train"
     nodes.push @g.scales.prestats
+    nodes.push @makeScalesOut "pre-stat-#{@layerIdx}"
     nodes.push @makeStdOut "post-train"
-    ###
     nodes.push new gg.xform.ScalesFilter
       name: "scalesfilter-#{@layerIdx}"
       params:
         posMapping: @geom.posMapping()
         config: @g.scales.scalesConfig
-    ###
-    #nodes.push @makeStdOut "post-scalefilter-#{@layerIdx}"
+    nodes.push @makeStdOut "post-scalefilter-#{@layerIdx}"
     nodes.push @makeScalesOut "pre-stat-#{@layerIdx}"
 
     # run the stat functions

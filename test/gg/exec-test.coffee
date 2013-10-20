@@ -37,8 +37,9 @@ check =
 createdexec = 
   topic: ->
     gg.wf.Exec.create (pairtable, params, cb) ->
-      table = gg.data.Transform.map pairtable.getTable(),
-        attr1: (row) -> row.get('a') * -1
+      table = gg.data.Transform.map pairtable.getTable(), [
+        ['attr1', ((row) -> row.get('a') * -1), Schema.numeric]
+      ]
       pairtable = new gg.data.PairTable table, pairtable.getMD()
       cb null, pairtable
 _.extend createdexec, check
@@ -48,8 +49,9 @@ extendedexec =
     klass = class ExecKlass extends gg.wf.Exec
       compute: (pairtable, params, cb) ->
         table = pairtable.getTable()
-        table = gg.data.Transform.map table, 
-          attr1: (row) -> row.get('a') * -1
+        table = gg.data.Transform.map table, [
+          ['attr1', ((row) -> row.get('a') * -1), Schema.numeric]
+        ]
         pairtable = new gg.data.PairTable table, pairtable.getMD()
         cb null, pairtable
     new klass
@@ -70,7 +72,7 @@ createAggExec = ->
 
 createSyncExec = ->
   gg.wf.SyncExec.create  (pt, params) ->
-    t = pt.getTable().addConstColumn 'z', 99
+    t = pt.getTable().setColumn 'z', 99
     new gg.data.PairTable t, pt.getMD()
 
 syncExec = 
