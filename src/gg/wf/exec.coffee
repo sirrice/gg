@@ -77,7 +77,7 @@ class gg.wf.SyncExec extends gg.wf.Exec
         cb null, res
       catch err
         console.log("error in syncexec: #{name}")
-        console.log(err)
+        console.log(err.toString())
         cb err, null
     @params.put 'compute', compute
 

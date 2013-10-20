@@ -41,7 +41,7 @@ var crazy = {
           "aes": {
                 "x": "d",
                     "y": "e",
-                       group: {color: "g", "stroke-width": 2}
+                       color: "g", "stroke-width": 2
                   },
              stat: {type:"loess", bw: 0.3, acc: 1e-12},
                scales: {
@@ -55,7 +55,7 @@ var crazy = {
           "aes": {
                 "x": "d",
                     "y": "e",
-                       group: {color: "g", "stroke-opacity": 0.2}
+                    color: "g", "stroke-opacity": 0.2
                    }
     }
 
@@ -80,17 +80,22 @@ var geom_boxplot2 =
 };
 
 var geom_area = {
-  geom: {
-    type: "area",
-    aes: {
+  layers: [{
+    geom: {
+      type: "area"
+    }
+    ,aes: {
       x: "d",
       y: "e",
       fill: 't', stroke: 't'
     }
-  }
-  ,pos: "stack"
-  ,scales: { fill: { type: "color" }}
+    ,pos: "stack"
+    ,stat: 'loess'
+    ,scales: { fill: { type: "color" }}
+  }],
+  debug: {'gg.wf.std': 0}
 };
+
 
 var geom_boxplot =  {
   layers: [{
@@ -214,12 +219,11 @@ var colored_lines_multi = {
   geom: "line",
   pos: "stack"
   },
-  {geom: "line"
-  }
+  {geom: "area"  }
   ],
   aes: {
     x: 'd',  y: "e",
-    group : {color: "g"}
+    color: "g"
   }
 };
 

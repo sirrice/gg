@@ -2,8 +2,9 @@
 var geoms = {
   //area: geom_area,
   //boxplot: geom_boxplot,
-  interval: geom_interval,
-  point: geom_point_1
+  area: geom_area
+  ,interval: geom_interval
+  ,point: geom_point_1
   ,sum: geom_point_sum
   //,interval: geom_point_interval
   ,radius: geom_point_2
@@ -15,8 +16,9 @@ var geoms = {
 };
 
 var selected_geoms = {
+  area: true,
   point: false,
-  interval: true,
+  interval: false,
   boxplot:false,
   radius: false,
   line: false,

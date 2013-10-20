@@ -51,6 +51,7 @@ class gg.wf.Stdout extends gg.wf.SyncBlock
 class gg.wf.Scales extends gg.wf.SyncBlock
   @ggpackage = "gg.wf.Scales"
   @type = "scaleout"
+  @log = gg.util.Log.logger @ggpackage, "scalesout"
 
   constructor: (@spec) ->
     super
@@ -71,12 +72,12 @@ class gg.wf.Scales extends gg.wf.SyncBlock
     pairtable
 
   @print: (scaleset, layerIdx, log=null) ->
-    log = gg.util.Log.logger("scaleout") unless log?
+    log = @log unless log?
 
     log "scaleset #{scaleset.id}, #{scaleset.scales}"
-    _.each scaleset.scalesList(), (scale) =>
-      str = scale.toString()
-      log "layer #{layerIdx}, #{str}"
+    _.each scaleset.scales, (map, aes) ->
+      _.each map, (scale, type) ->
+        log "#{scaleset.id} l(#{layerIdx}) t(#{type})\t#{scale.toString()}"
 
 
 

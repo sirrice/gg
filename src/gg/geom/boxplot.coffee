@@ -22,4 +22,5 @@ class gg.geom.Boxplot extends gg.geom.Geom
     map
 
 
-
+  scaleConfigs: ->
+    x: 'ordinal'

@@ -47,20 +47,31 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @geom = gg.geom.Geom.fromSpec @, @geomSpec
 
   setupStats: ->
+    globalSpec = @extractSpec 'stat', @g.spec
+    globalSpec = _.flatten [globalSpec]
+    globalStats = _.map globalSpec, (subSpec) ->
+      gg.stat.Stat.fromSpec subSpec
+
     @statSpec = @extractSpec "stat"
-    if _.isArray @statSpec
-      @stats = _.map @statSpec, (@subSpec) ->
-        gg.stat.Stat.fromSpec @subSpec
-    else
-      @stats = [gg.stat.Stat.fromSpec @statSpec]
+    @statSpec = _.flatten [@statSpec]
+    @stats = _.map @statSpec, (subSpec) ->
+      gg.stat.Stat.fromSpec subSpec
+
+    @stats.unshift.apply @stats, globalStats
+    @stats
 
   setupPos: ->
+    globalSpec  = @extractSpec "pos", @g.spec
+    globalSpec = _.flatten [globalSpec]
+    globalPos = _.map globalSpec, (subSpec) ->
+      gg.pos.Position.fromSpec subSpec
+
     @posSpec  = @extractSpec "pos"
-    if _.isArray @posSpec
-      @pos = _.map @posSpec, (@subSpec) ->
-        gg.pos.Position.fromSpec @subSpec
-    else
-      @pos = [gg.pos.Position.fromSpec @posSpec]
+    @posSpec = _.flatten [@posSpec]
+    @pos = _.map @posSpec, (subSpec) ->
+      gg.pos.Position.fromSpec subSpec
+    @pos.unshift.apply @pos, globalPos
+    @pos
 
   setupMap: ->
     mapSpec  = _.findGoodAttr @spec, ['aes', 'aesthetic', 'mapping'], {}
@@ -109,7 +120,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
       subSpec.aes = _.extend defaultAes, subSpec.aes
       subSpec.param = {} unless subSpec.param?
 
-    subSpec.name = "#{xform}-shorthand-#{@layerIdx}" unless subSpec.name?
+    subSpec.name = "#{xform}-#{subSpec.type}-#{@layerIdx}" unless subSpec.name?
     subSpec
 
   makeStdOut: (name, params) ->
@@ -186,17 +197,20 @@ class gg.layer.Shorthand extends gg.layer.Layer
     # train & filter scales
     nodes.push @g.scales.prestats
     nodes.push @makeStdOut "post-train"
+    ###
     nodes.push new gg.xform.ScalesFilter
       name: "scalesfilter-#{@layerIdx}"
       params:
         posMapping: @geom.posMapping()
         config: @g.scales.scalesConfig
-    nodes.push @makeStdOut "post-scalefilter-#{@layerIdx}"
+    ###
+    #nodes.push @makeStdOut "post-scalefilter-#{@layerIdx}"
     nodes.push @makeScalesOut "pre-stat-#{@layerIdx}"
 
     # run the stat functions
     nodes.push @stats
     nodes.push @makeStdOut "post-stat-#{@layerIdx}"
+    nodes.push @makeScalesOut "post-stat-#{@layerIdx}"
     nodes
 
 
@@ -212,6 +226,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     #nodes.push new gg.wf.Stdout {name: "pre-geom-map", n: 1}
     nodes.push @geom.map
     nodes.push @makeStdOut "pre-geomtrain-#{@layerIdx}"
+    nodes.push @makeScalesOut "pre-geomtrain-#{@layerIdx}"
 
 
     #nodes.push new gg.wf.Stdout {name: "post-geom-map", n: 1}

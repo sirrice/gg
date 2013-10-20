@@ -58,11 +58,15 @@ class gg.scale.Set
   types: (aes, posMapping={}) ->
     aes = posMapping[aes] or aes
     if aes of @scales
-      types = _.map _.keys(@scales[aes]), parseInt
-      types.filter (t) -> _.isNumber t and not _.isNaN t
+      types = _.keys(@scales[aes])
+      types = _.map types, (v) -> parseInt(v)
+      types.filter (t) -> _.isNumber(t) and not _.isNaN(t)
       types
     else
       []
+
+  userdefinedType: (aes) ->
+    @factory.type aes
 
   # @param type.  the only time type should be null is when
   #        retrieving the "master" scale to render for guides
@@ -103,9 +107,13 @@ class gg.scale.Set
         #throw Error("gg.ScaleSet.get(#{aes}) doesn't have any scales")
 
     else
-      unless type of @scales[aes]
-        @scales[aes][type] = @factory.scale aes, type
-      @scales[aes][type]
+      if (@userdefinedType(aes) != gg.data.Schema.unknown) and _.size(@scales[aes]) > 0
+        @log.warn "downcasting requested scale type from #{type} -> #{@userdefinedType aes} because user defined"
+        _.values(@scales[aes])[0]
+      else
+        unless type of @scales[aes]
+          @scales[aes][type] = @factory.scale aes, type
+        @scales[aes][type]
 
 
   scalesList: ->

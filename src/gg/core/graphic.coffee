@@ -56,8 +56,6 @@ class gg.core.Graphic
       aes: @aesspec
 
     
-
-
     # connect layer specs with scales config
     _.each @layers.layers, (layer) =>
       @scales.scalesConfig.addLayerDefaults layer

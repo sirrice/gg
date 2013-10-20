@@ -29,6 +29,7 @@ class gg.xform.GroupByAnnotate extends gg.core.XForm
     table = pairtable.getTable()
     md = pairtable.getMD()
     origSchema = table.schema
+    return pairtable if table.nrows() == 0
 
     scales = md.get 0, 'scales'
     gbAttrs = params.get "gbAttrs"
@@ -124,6 +125,7 @@ class gg.xform.GroupBy extends gg.core.XForm
       nBins: [["nbins", "bin", "n", "nbin", "bins"], 20]
 
     @annotate = new gg.xform.GroupByAnnotate 
+      name: "#{@name}-anno"
       params: 
         gbAttrs: @params.get('gbAttrs')
         nBins: @params.get('nBins')

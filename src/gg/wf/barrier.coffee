@@ -41,6 +41,7 @@ class gg.wf.SyncBarrier extends gg.wf.Barrier
     super
     f = @params.get 'compute'
     f ?= @compute.bind @
+    name = @name
     makecompute = (f) ->
       (pairtable, params, cb) ->
         try
@@ -48,7 +49,8 @@ class gg.wf.SyncBarrier extends gg.wf.Barrier
             throw Error "SyncBarrier should not call callback"
           cb null, res
         catch err
-          console.log err
+          console.log "err in SyncBarrier #{name}"
+          console.log err.toString()
           cb err, null
     @params.put 'compute', makecompute(f)
         
