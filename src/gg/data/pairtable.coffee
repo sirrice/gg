@@ -89,9 +89,6 @@ class gg.data.PairTable
       else
         createCopy = () -> [new gg.data.Row(new gg.data.Schema())]
 
-      if restCols.length == 0
-        newpartitions.push p
-        continue
 
       subpartitions = t.partition restCols
 

@@ -94,8 +94,6 @@ class gg.xform.Mapper extends gg.wf.SyncExec
 
     functions
 
-
-
   @fromSpec: (spec) ->
     spec = _.clone spec
     mapping = _.findGoodAttr spec, gg.xform.Mapper.attrs, null
