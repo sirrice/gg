@@ -102,7 +102,7 @@ var geom_boxplot =  {
     aes: {
       color: "g"
       ,y: "d"
-      ,x: "{Math.floor(e/100)*100}"
+      ,x: "{Math.floor(e/200)*200}"
     }
    ,geom: { 
       type: "boxplot"

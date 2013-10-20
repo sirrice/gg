@@ -22,10 +22,9 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
 
     # attributes should be imported in bulk using
     # .attr( {} ) where {} is @attrs
-    boxes = @agroup(svg, "boxes geoms", boxtables)
-      .selectAll("circle")
-      .data((d) -> [d])
-
+    boxes = svg.append("g").classed('boxes geoms', true)
+    boxes = boxes.selectAll('g')
+      .data(boxtables)
     enter = boxes.enter()
       .append("g")
       .attr("class", "boxplot")
@@ -92,7 +91,9 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
       y2: (t) -> t.get 0, 'lower'
 
     circles = enter.selectAll("circle")
-      .data((d) -> d.getRows())
+      .data((d) -> 
+        d.getRows().filter (row) -> 
+          _.isValid(row.get('outlier')))
     enterCircles = circles.enter().append("circle")
 
     @applyAttrs enterCircles,

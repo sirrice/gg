@@ -58,18 +58,20 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
     outliers = vals.slice(0, lowerIdx).concat(vals.slice(upperIdx + 1))
     outliers = [null] unless outliers.length > 0
 
+    boxstats = 
+      q1: q1
+      median: median
+      q3: q3
+      lower: lower
+      upper: upper
+      min: min
+      max: max
+      x: x
+    @log "boxstats: #{JSON.stringify boxstats}"
+
     rows = _.map outliers, (v) -> 
       newrow = table.get(0).raw()
-      _.extend newrow,
-        q1: q1
-        median: median
-        q3: q3
-        lower: lower
-        upper: upper
-        outlier: v
-        min: min
-        max: max
-        x: x
+      _.extend newrow, boxstats
       newrow
     rows
 

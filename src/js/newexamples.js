@@ -20,12 +20,12 @@ var selected_geoms = {
   area: false,
   point: false,
   interval: false,
-  boxplot:false,
+  boxplot:true,
   radius: false,
   line: false,
   jitter:false,
   multiline: false,
-  ptinterval: true
+  ptinterval: false
 
 };
 

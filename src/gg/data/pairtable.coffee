@@ -32,9 +32,6 @@ class gg.data.PairTable
     ps = gg.data.Transform.partitionJoin @getTable(), @getMD(), joincols
     _.map ps, (o) -> 
       p = o['table']
-      if p.getTable().nrows() == 0
-        console.log 'table has no rows'
-        console.log p.getTable().schema.toString()
       p
 
   # partition on _all_ of the shared columns
@@ -46,8 +43,6 @@ class gg.data.PairTable
       table = p.getTable()
       md = p.getMD()
       if table.nrows() == 0
-        console.log('table has no rows')
-        console.log(table.schema.toString())
         if table.schema.cols.length == 0 and @tableSchema().cols.length > 0
           console.log(table)
           console.log(md)
