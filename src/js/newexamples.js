@@ -13,17 +13,19 @@ var geoms = {
   ,line: colored_lines
   ,multiline: colored_lines_multi
   ,boxplot: geom_boxplot
+  ,ptinterval: geom_point_interval
 };
 
 var selected_geoms = {
   area: false,
   point: false,
   interval: false,
-  boxplot:true,
+  boxplot:false,
   radius: false,
   line: false,
   jitter:false,
-  multiline: false
+  multiline: false,
+  ptinterval: true
 
 };
 

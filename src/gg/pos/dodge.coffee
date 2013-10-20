@@ -22,7 +22,8 @@ class gg.pos.Dodge extends gg.core.XForm
     table = pairtable.getTable()
     partitions = table.partition ['x0', 'x1']
 
-    maxGroup = _.mmax(partitions, (p) -> p.nrows()).nrows()
+    nrows = _.map(partitions, (p) -> p.nrows())
+    maxGroup = _.max(nrows)
     groupcol = _.uniq _.map(table.getColumn('group'), JSON.stringify)
     ngroups = groupcol.length
     groups = table.partition 'group'

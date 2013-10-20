@@ -185,6 +185,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
         params:
           config: @g.scales.scalesConfig
       @makeStdOut "post-scaleschema"
+      @makeScalesOut "post-scaleschema-#{@layerIdx}"
 
     ]
     nodes

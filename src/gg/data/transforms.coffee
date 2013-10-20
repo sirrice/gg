@@ -171,9 +171,9 @@ class gg.data.Transform
       row = iter.next()
       o = _.o2map mapping, ([col, f, type], idx) ->
         v = f row, idx
-        if idx == 0
+        if idx <= 10
           if schema.type(col) == gg.data.Schema.unknown
-            schema.setType gg.data.Schema.type(v)
+            schema.setType col, gg.data.Schema.type(v)
         [col, v]
       idx += 1
       newrows.push o
