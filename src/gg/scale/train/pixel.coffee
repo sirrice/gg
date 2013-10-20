@@ -79,7 +79,9 @@ class gg.scale.train.Pixel extends gg.core.BForm
 
         log "#{idx} retrive #{aes}: #{oldscale.aes}\t#{oldscale.type}"
 
-        if newscaleset.contains oldscale.aes
+        if newscaleset.contains oldscale.aes, t.schema.type(aes)
+          newscale = newscaleset.scale oldscale.aes, t.schema.type(aes)
+        else if newscaleset.contains oldscale.aes
           newscale = newscaleset.scale oldscale.aes, Schema.unknown
         else
           newscale = oldscale.clone()
@@ -130,9 +132,19 @@ class gg.scale.train.Pixel extends gg.core.BForm
       log "#{idx} fRescale called layer: #{layer}"
 
       rescale = (table, scale, aes) =>
-        return table if scale.type == Schema.ordinal
-        oldScale = oldscaleset.scale aes, Schema.unknown, posMapping
+        if scale.type == Schema.ordinal
+          console.log table.schema.type aes
+          console.log "scale ordinal, skipping: #{aes}"
+          return table 
+        tabletype = table.schema.type aes
+        if oldscaleset.contains (posMapping[aes] or aes), tabletype
+          oldScale = oldscaleset.scale aes, tabletype, posMapping
+        else
+          oldScale = oldscaleset.scale aes, Schema.unknown, posMapping
         g = (v) -> scale.scale oldScale.invert(v)
+        if posMapping[aes] == 'y'
+          ys = table.getColumn aes
+          console.log "ys #{aes} minmax: #{[_.min(ys), _.max(ys)]}"
         mappingFuncs[aes] = g
         log "#{idx} rescale: old: #{oldScale.toString()}"
         log "#{idx} rescale: new: #{scale.toString()}"
@@ -141,6 +153,14 @@ class gg.scale.train.Pixel extends gg.core.BForm
       scaleset.useScales t, posMapping, rescale
       log "#{idx} #{scaleset.toString()}"
       t = gg.data.Transform.mapCols t, mappingFuncs
+      if t.has 'y'
+        ys = t.getColumn 'y'
+        yscale = scaleset.get 'y', [t.schema.type('y'), Schema.unknown]
+        if _.min(ys) < yscale.range()[0]
+          throw Error("shit, rescaled y is < range #{_.min ys}")
+        if _.max(ys) > yscale.range()[1]
+          throw Error("shit, rescaled y is > range #{_.max ys}")
+
       new gg.data.PairTable t, md
 
 

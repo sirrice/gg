@@ -52,8 +52,18 @@ class gg.scale.Set
     keys = _.keys @scales
     _.uniq _.compact _.flatten keys
 
-  contains: (aes, type=null) ->
-    aes of @scales and (not type or type of @scales[aes])
+  contains: (aes, type=null, posMapping={}) ->
+    aes = posMapping[aes] or aes
+    if aes of @scales
+      unless type?
+        return true
+      unless _.size(@scales[aes]) > 0
+        unless type is gg.data.Schema.unknown
+          return true
+      if type of @scales[aes]
+        return true
+    false
+  has: (aes, type, posMapping) -> @contains aes, type, posMapping
 
   types: (aes, posMapping={}) ->
     aes = posMapping[aes] or aes
@@ -87,14 +97,26 @@ class gg.scale.Set
 
   # Combines fetching and creating scales
   #
-  get: (aes, type, posMapping={}) ->
-    unless type?
-      throw Error("type cannot be null anymore: #{aes}")
+  get: (aes, types, posMapping={}) ->
+    unless types?
+      throw Error("type cannot be null: #{aes}")
+    types = _.reject _.flatten([types]), _.isNull
+    unless types.length > 0
+      throw Error("type cannot be empty: #{aes}")
+
 
     aes = 'x' if aes in gg.scale.Scale.xs
     aes = 'y' if aes in gg.scale.Scale.ys
     aes = posMapping[aes] or aes
     @scales[aes] = {} unless aes of @scales
+
+    type = null
+    for t in types
+      if @has aes, t
+        type = t
+        break
+    type ?= _.last types
+
 
     if type is gg.data.Schema.unknown
       vals = _.values @scales[aes]
@@ -147,8 +169,11 @@ class gg.scale.Set
 
   useScales: (table, posMapping={}, f) ->
     for col in table.cols()
-      if @contains (posMapping[col] or col)
-        scale = @scale col, gg.data.Schema.unknown, posMapping
+      if @contains col, null, posMapping
+        truecol = posMapping[col] or col
+        tabletype = table.schema.type col
+        unknown = gg.data.Schema.unknown
+        scale = @scale col, [tabletype, unknown], posMapping
       else
         tabletype = table.schema.type col
         @log "scaleset doesn't contain #{col} creating using type #{tabletype}"
