@@ -11,6 +11,182 @@ Desired Features
   * ggplot2-like interface
 1. Node-failure tolerance.  If a node throws an exception, dont block workflow on the next barrier, keep going.
 
+   
+    
+    
+Misc Braindump
+-------
+
+
+* scales identified by
+
+    class
+    value type
+    aesthetic
+    
+    get(aes, type) -> 
+
+
+Two tables -- data and metadata.  Implemented the same, equijoins between the two
+
+* Normal Table (T)
+* Metadata Table (MT)
+
+PairedTable
+
+    partition(keys) -> [pairedtable*] 
+    tables -> [table]
+    mdtables -> [table]
+
+TableSet
+    partition(keys) -> pairedtables
+    
+    
+
+Each operator takes a list of PairedTables as input
+
+    class OP
+        compute: (tableset) -> 
+            ps = tableset.partition(keys)
+            ps = map(f, ps)
+            tableset(ps)
+
+    class Train
+        compute: (tableset) ->
+            partitions = tableset.partition(facets.keys + ['layer'])
+            partitions = map(f, partitions)
+            tableset(partitions)
+
+    
+    
+    train:
+        ps = pairedtable.part([fx, fy, layer])
+        for t, mt in ps
+            for row in mt
+                row.scale.train(t)
+            merged = merge([row.scale for row in mt])
+        mergeinto(merged, ps.all_scales)
+            
+    renderFacets
+        for scale in mt.unique('scales')
+            render(scale) 
+        for pane in mt.unique('pane')
+            render(pane)
+        …
+    
+    posTrainScales:
+        ps = pairedtable.part([fx, fy, layer])
+        ps.each(invert scale)
+        ps.each(train)
+        merged = merge(ps.scales)
+        mergeinto(merged, ps.all_scales)            
+        return ps
+
+
+
+* Layers may have tables with different schemas
+    * 
+* Single layer is a single table
+* Table may be internally partitioned e.g., on facets, color, grouping, etc
+
+Holistic functions that operate across layers only update auxilary information (scales, container sizes) or add new tables
+        
+Processing(keys, blockkeys)
+
+    partitions = table.partition(keys)
+    partitions = for t' in partitions
+        [t' = TableSet([t'.partition(blockkeys)])]
+        f(t')
+    merge
+
+Layout([], [facetx, facety])
+        
+
+Data interface
+
+    table/tableset
+    env
+
+Env interface (non data info)
+
+    svgs
+    container info
+    events
+
+Schema interface
+
+Augmented schema interface
+
+    core cols
+    key cols
+
+Table Interface
+
+    iterator
+    each
+    close
+    schema
+    stats
+
+Augmented Table interface
+
+    schema -> augmented schema        
+
+Table operations
+
+    partition(table, cols) -> tableset    
+    project(table, select)
+    filter(table, where)
+    join(t1, t2, on. type)
+
+
+
+Scales training should
+
+    probe each partition for their domains
+    merge with its own
+    merge across scales
+    
+Layout should
+
+    take facet information
+    take scale information(maybe)   
+    take plot spec options (params)
+    create plot containers
+    
+Geom should
+
+    take partition (facet,layer,groupby) as input
+    add reparam geom info (hidden (_x, _y…) or open (x, y)?)
+
+Pos (two types)
+
+    partition on (facet, layer), internally split on groupby
+    partition on (facet, layer, groupby)
+
+Currently stored in env
+
+    svg
+    lc
+    facetx
+    facety
+    layer
+    scalesconfig
+    scales
+    paneC
+    event
+    facetid
+    facet-text
+    facet-size
+    posmapping
+
+Can be stored in table
+
+    facet
+    faceid
+    layer
+    
+    
 
 
 

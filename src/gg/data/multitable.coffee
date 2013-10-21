@@ -13,7 +13,6 @@ class gg.data.MultiTable extends gg.data.Table
       else
         @schema = new gg.data.Schema()
 
-
   nrows: -> _.sum @tables, (t) -> t.nrows()
 
   cloneShallow: ->
@@ -29,6 +28,17 @@ class gg.data.MultiTable extends gg.data.Table
     tables = _.map @tables, (t) -> t.setColumn col, val, type
     new gg.data.MultiTable null, tables
 
+  addColumn: (col, vals, type=null, overwrite=no) ->
+    if vals.length != @nrows()
+      throw Error "values not same length as table: #{vals.length} != #{@nrows()}"
+
+    offset = 0
+    tables = _.map @tables, (t) ->
+      subvals = vals[offset...offset+t.nrows()]
+      t.addColumn col, subvals, type, overwrite
+      offset += t.nrows()
+      t
+    new gg.data.MultiTable null, tables
 
   rmColumn: (col) ->
     tables = _.map @tables, (t) -> t.rmColumn col
@@ -48,11 +58,10 @@ class gg.data.MultiTable extends gg.data.Table
         return t.get idx, col
       idx -= t.nrows()
 
-  getCol: (col) -> @getColumn col
-  getColumn: (col) ->
+  _getColumn: (col) ->
     ret = []
     for t in @tables
-      ret.push.apply ret, t.getColumn(col)
+      ret.push.apply ret, t._getColumn(col)
     ret
 
   raw: ->

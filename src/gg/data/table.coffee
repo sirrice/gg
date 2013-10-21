@@ -62,14 +62,27 @@ class gg.data.Table
       type = types[idx] if types? and types.length > idx
       @has col, type
   cols: -> @schema.cols
+
   ncols: -> @schema.ncols()
   nrows: -> 
     i = 0
     @each (row) -> i += 1
     i
+
   get: (idx, col=null) -> throw "not implemented"
-  getCol: (col) -> throw "not implemented"
-  getColumn: (col) -> throw "not implemented"
+  _getColumn: (col) -> throw "not implemented"
+  getCol: (col) -> @getColumn col
+  getColumn: (col) -> 
+    if @has col
+      @_getColumn col
+    else
+      path = col.split '.'
+      if @has path[0]
+        colData = @_getColumn path[0]
+        path = _.rest path
+        colData = _.map colData, (v) -> _.reach(v, path)
+      else
+        throw Error "col #{col} not in schema #{@cols()}"
   rows: -> @each (row) -> row
   getRows: -> @each (row) -> row
   raw: -> throw "not implemented"
@@ -79,7 +92,27 @@ class gg.data.Table
   # These are the _only_ methods that Change the schema
   # XXX: No guarantees whether the change happens in place or creates a new table!
   # @return table with modified schema
-  setColumn: -> throw "not implemented"
+  setColumn: (col, val, type=null) -> 
+    if @has col
+      @log.warn "#{col} already in schema #{@schema.toString()}"
+      # in some modes, throw error
+    vals = _.times(@nrows(), () -> val)
+    @addColumn col, vals, type, yes
+    @
+
+  _addColumn: (col, vals) -> throw Error "not implemented"
+  addColumn: (col, vals, type=null, overwrite=no) ->
+    if vals.length != @nrows()
+      throw Error "values not same length as table: #{vals.length} != #{@nrows()}"
+    if @has(col) and not overwrite
+      throw Error "column already exists: #{col}"
+
+    type ?= gg.data.Schema.type(vals[0]) 
+    @schema.addColumn col, type
+    @_addColumn col, vals
+    @
+
+
 
   # This is the only method other than addCol that changes the data
   addRow: (row) -> throw "not implemented"

@@ -83,6 +83,15 @@ class gg.util.Util
         json.val
 
 
+  # reach into object o using path
+  #
+  # @return value at path, or null
+  @reach: (o, path) ->
+    for col in path
+      break unless o?
+      o = o[col]
+    o
+
 
   @ggklass: (ggpackage) ->
     cmd = "return ('gg' in window)? window.#{ggpackage} : #{ggpackage}"
@@ -210,6 +219,8 @@ _.mixin
   mappingToFunctions: gg.util.Aesmap.mappingToFunctions
   cross: gg.util.Util.cross
   dateFromISOString: gg.util.Util.dateFromISOString
+  reach: gg.util.Util.reach
+
 
 Date.prototype.fromISOString = gg.util.Util.dateFromISOString
 Date.fromISOString = gg.util.Util.dateFromISOString

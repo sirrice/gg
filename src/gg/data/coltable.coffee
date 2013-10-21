@@ -5,61 +5,81 @@ class gg.data.ColTable extends gg.data.Table
   @ggpackage = "gg.data.ColTable"
 
 
-  constructor: (@schema, @cols=null) ->
-    @cols ?= _.times @schema.ncols(), ()->[]
+  constructor: (@schema, @colDatas=null) ->
+    @colDatas ?= _.times @schema.ncols(), ()->[]
     @log = gg.data.Table.log
 
   nrows: -> 
-    if @cols.length == 0 then 0 else @cols[0].length
-  ncols: -> @cols.length
+    if @colDatas.length == 0 then 0 else @colDatas[0].length
+  ncols: -> @colDatas.length
 
   cloneShallow: ->
-    cols = _.map @cols, (col) -> _.clone col
+    cols = _.map @colDatas, (col) -> _.clone col
     new gg.data.ColTable @schema.clone(), cols
 
   cloneDeep: -> @cloneShallow()
 
-  setColumn: (col, val, type=null) ->
-    if @has col
-      @log.warn "#{col} already exists in schema #{@schema.toString()}"
-      # throw error?
-    
-    type = gg.data.Schema.type(val) unless type?
-    @schema.addColumn col, type unless @has col
-    idx = @schema.index col
-    @cols[idx] = _.times(@nrows(), () -> val)
+  # internal method
+  _addColumn: (col, vals) ->
+    unless @has col
+      throw Error("col should be in the schema: #{col}")
+    @colDatas[@schema.index col] = vals
     @
-
 
   rmColumn: (col) ->
     return @ unless @has col
     idx = @schema.index col
-    @cols.splice idx, 1
+    @colDatas.splice idx, 1
     @schema = @schema.exclude col
     @
 
+  # Adds array, {}, or Row object as a row in this table
+  #
   # @param raw { } object or a gg.data.Row
-  addRow: (raw) ->
-    row = gg.data.Row.toRow raw, @schema
-    for col in @schema.cols
-      @cols[@schema.index col].push row.get(col)
+  # @param pad if argument is an array of value, should we pad the end with nulls
+  #        if not enough values
+  # @return self
+  addRow: (raw, pad=no) ->
+    unless row?
+      throw Error "adding null row"
+
+    if _.isArray raw
+      unless raw.length == @schema.ncols()
+        if raw.length > @schema.ncols() or not pad
+          throw Error "row len wrong: #{row.length} != #{@schema.length}"
+
+        for idx in _.range(@schema.ncols())
+          if idx <= raw.length
+            @colDatas[idx].push raw[idx]
+          else
+            @colDatas[idx].push null
+
+    else if _.isType row, gg.data.Row
+      for col, idx in @colDatas()
+        @colDatas[@schema.index col].push row.get(col)
+    else if _.isObject row
+      for col, idx in @colDatas()
+        @colDatas[@schema.index col].push row[col]
+    else
+      throw Error "row type(#{row.constructor.name}) not supported" 
+    @
 
   get: (idx, col=null) ->
     if col?
       if @schema.has col
-        @cols[@schema.index col][idx]
+        @colDatas[@schema.index col][idx]
       else
         throw Error "col #{col} not in schema: #{@schema.toString()}"
     else
-      rowdata = _.map @cols, (coldata) -> coldata[idx]
+      rowdata = _.map @colDatas, (coldata) -> coldata[idx]
       new gg.data.Row @schema, rowdata
 
-  getCol: (col) -> @getColumn col
-  getColumn: (col) -> @cols[@schema.index col]
+  _getColumn: (col) -> 
+    @colDatas[@schema.index col]
 
   raw: ->
     _.times @nrows(), (i) => 
-      _.o2map @schema.cols, (col) => [col, @cols[@schema.index(col)][i]]
+      _.o2map @schema.cols, (col) => [col, @colDatas[@schema.index(col)][i]]
 
   @fromArray: (rows, schema=null) ->
     schema ?= gg.data.Schema.infer rows

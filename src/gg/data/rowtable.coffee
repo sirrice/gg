@@ -26,22 +26,18 @@ class gg.data.RowTable extends gg.data.Table
     t.rows = rows
     t
 
-  # this should really be a project
-  #
-  # Sets col in all rows to constant value
-  setColumn: (col, val, type=null) ->
-    if @has col
-      @log.warn "#{col} already in schema #{@schema.toString()}"
-      # in some modes, throw error
-
-    # TODO: check and enforce consistent type
-    type = gg.data.Schema.type(val) unless type?
-    @schema.addColumn(col, type) unless @has(col)
-    idx = @schema.index col
-    for row in @rows
-      row[idx] = val
+  # internal method
+  _addColumn: (col, vals) ->
+    unless @has col
+      throw Error("col should be in the schema: #{col}")
+    colidx = @schema.index col
+    for row, rowidx in @rows
+      row[colidx] = vals[rowidx]
     @
 
+  _getColumn: (col) ->
+    idx = @schema.index col
+    _.map @rows, (row) -> row[idx]
 
   rmColumn: (col) ->
     return @ unless @has col
@@ -53,7 +49,12 @@ class gg.data.RowTable extends gg.data.Table
     @
 
 
-  # accepts an array of values (must conform with schema), {} objects, or a Row object
+  # Adds array, {}, or Row object as a row in this table
+  #
+  # @param row { } object or a gg.data.Row
+  # @param pad if argument is an array of value, should we pad the end with nulls
+  #        if not enough values
+  # @return self
   addRow: (row, pad=no) ->
     unless row?
       throw Error "adding null row"
@@ -66,17 +67,11 @@ class gg.data.RowTable extends gg.data.Table
           for i in [0...(@schema.ncols()-row.length)]
             row.push null
     else if _.isType row, gg.data.Row
-      arr = []
-      for col in @schema.cols
-        arr.push(row.get col)
-      row = arr
+      row = _.map @cols(), (col) -> row.get(col)
     else if _.isObject row
-      arr = []
-      for col in @schema.cols
-        arr.push(row[col])
-      row = arr
+      row = _.map @cols(), (col) -> row[col]
     else
-      throw Error "row type(#{row.constructor.name}) not array" 
+      throw Error "row type(#{row.constructor.name}) not supported" 
 
     @rows.push row
     @
@@ -94,14 +89,6 @@ class gg.data.RowTable extends gg.data.Table
           new gg.data.Row @schema, @rows[idx]
     else
       null
-
-  getCol: (col) -> @getColumn col
-  getColumn: (col) ->
-    unless @schema.has col
-      throw Error "col #{col} not in schema #{@schema.toString()}"
-
-    idx = @schema.index col
-    _.map @rows, (row) -> row[idx]
 
   # return a list of {} objects
   raw: -> 
