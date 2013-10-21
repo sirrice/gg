@@ -92,8 +92,7 @@ var geom_area = {
     ,pos: "stack"
     ,stat: 'loess'
     ,scales: { fill: { type: "color" }}
-  }],
-  debug: {'gg.wf.std': 0}
+  }]
 };
 
 
@@ -149,7 +148,7 @@ var geom_interval = {
   "facets": {
     "y": "t", 
     "x": "f"
-  }, debug: {'gg.wf.std':3}
+  }
 };
 
 var geom_point_1 = {

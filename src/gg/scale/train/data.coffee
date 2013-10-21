@@ -31,6 +31,7 @@ class gg.scale.train.Data extends gg.core.BForm
         log "trainOnData: pos:     #{JSON.stringify posMapping}"
 
         scales.train table, posMapping
+
         log scales.toString()
 
     pairtable = new gg.data.TableSet partitions

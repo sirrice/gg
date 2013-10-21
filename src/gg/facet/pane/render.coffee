@@ -44,7 +44,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
     @renderBg(el, dc) # render this first so it's at the bottom
     # XXX: check if show tick lines but not the labels
     @renderXAxis(el, dc, xac, xscale, {show: paneC.bXAxis})
-    @renderYAxis(el, dc, yac, yscale, {show: paneC.bYAxis})
+    @renderYAxis(el, dc, yac, yscale, {show: paneC.bXAxis})
     @renderXFacet(el, xfc, md) if paneC.bXFacet 
     @renderYFacet(el, yfc, md) if paneC.bYFacet
 
@@ -78,8 +78,9 @@ class gg.facet.pane.Svg extends gg.core.BForm
     bg
 
   renderXFacet: (el, container, md) ->
-    text = md.get 0, "xfacet-text"
-    size = md.get 0, "xfacet-size"
+    opts = md.get 0, 'xfacettext-opts'
+    text = opts.text
+    size = opts.size
 
     xfel = el.insert 'g', ':first-child'
     xfel.attr 
@@ -101,8 +102,9 @@ class gg.facet.pane.Svg extends gg.core.BForm
       .style("font-size", "#{size}pt")
 
   renderYFacet: (el, container, md) ->
-    text = md.get 0, "yfacet-text"
-    size = md.get 0, "yfacet-size"
+    opts = md.get 0, 'yfacettext-opts'
+    text = opts.text
+    size = opts.size
 
     yfel = el.insert 'g', ':first-child'
     yfel.attr
@@ -249,14 +251,22 @@ class gg.facet.pane.Svg extends gg.core.BForm
 
   compute: (pairtable, params) ->
     md = pairtable.getMD()
-    # first pass to create panes
+
+    # 
+    # 1st pass to create panes, which includes g.data-pane.  
+    # This is where geoms in each layer will be rendered
+    #
     els = {}
     els = _.o2map md.partition('facet-id'), (p) => 
       facetid = p.get 0, 'facet-id'
       svg = @renderFacetPane p, params
-      if svg? then [facetid, svg] else null
+      if svg? 
+        [facetid, svg] 
 
-    # second pass sets ['svg'].paneSvg for each data
+    #
+    # Second pass sets ['svg'].paneSvg for each data
+    # and adds g.layer-pane for each layer
+    #
     f = (row) ->
       paneC = row.get 'paneC'
       facetId = row.get 'facet-id'

@@ -123,14 +123,38 @@ var selected_geoms = {
     });
   }
 
+
   var render = function(specs) {
     var ex   = function () {
       $("#examples").empty();
       return d3.select('#examples').append('span');
     };
-    specs.data = bigdata
+    specs.data = gg.data.Table.fromArray(bigdata, null, 'row')
     var plot = gg(specs);
     plot.render(ex());
+    plot.on("done", function(debug) {
+
+      debug = _.map(debug, function(o, id) {
+        return [o['name'], o['cost']]
+      })
+      debug = _.sortBy(debug, function(o) { return o[1] })
+      var cost = gg.util.Util.sum(_.map(debug, function(o){return o[1]}));
+      debug = _.map(debug, function(o) {
+        console.log(o[0] + "\t\t" + o[1]);
+        return {x: o[0], y: o[1]}
+      })
+      console.log("total cost\t\t" + cost);
+
+      var dspecs = {
+        layers: [
+          {geom:'rect'}
+        ],
+        data: debug
+      };
+      var dplot = gg(dspecs);
+      dplot.render(d3.select("#debug").append("span"));
+
+    })
 
     return;
 

@@ -26,6 +26,9 @@ class gg.data.ColTable extends gg.data.Table
     @colDatas[@schema.index col] = vals
     @
 
+  _getColumn: (col) -> 
+    @colDatas[@schema.index col]
+
   rmColumn: (col) ->
     return @ unless @has col
     idx = @schema.index col
@@ -39,26 +42,26 @@ class gg.data.ColTable extends gg.data.Table
   # @param pad if argument is an array of value, should we pad the end with nulls
   #        if not enough values
   # @return self
-  addRow: (raw, pad=no) ->
+  addRow: (row, pad=no) ->
     unless row?
       throw Error "adding null row"
 
-    if _.isArray raw
-      unless raw.length == @schema.ncols()
-        if raw.length > @schema.ncols() or not pad
+    if _.isArray row
+      unless row.length == @schema.ncols()
+        if row.length > @schema.ncols() or not pad
           throw Error "row len wrong: #{row.length} != #{@schema.length}"
 
         for idx in _.range(@schema.ncols())
-          if idx <= raw.length
-            @colDatas[idx].push raw[idx]
+          if idx <= row.length
+            @colDatas[idx].push row[idx]
           else
             @colDatas[idx].push null
 
     else if _.isType row, gg.data.Row
-      for col, idx in @colDatas()
+      for col, idx in @cols()
         @colDatas[@schema.index col].push row.get(col)
     else if _.isObject row
-      for col, idx in @colDatas()
+      for col, idx in @cols()
         @colDatas[@schema.index col].push row[col]
     else
       throw Error "row type(#{row.constructor.name}) not supported" 
@@ -73,9 +76,6 @@ class gg.data.ColTable extends gg.data.Table
     else
       rowdata = _.map @colDatas, (coldata) -> coldata[idx]
       new gg.data.Row @schema, rowdata
-
-  _getColumn: (col) -> 
-    @colDatas[@schema.index col]
 
   raw: ->
     _.times @nrows(), (i) => 

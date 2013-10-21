@@ -13,6 +13,7 @@ class gg.data.RowTable extends gg.data.Table
 
 
   nrows: -> @rows.length
+  klass: -> gg.data.RowTable
 
   cloneShallow: ->
     rows = _.clone @rows

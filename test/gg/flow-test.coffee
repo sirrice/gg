@@ -25,6 +25,7 @@ suite.addBatch {
       topic: ->
           flow = new gg.wf.Flow
           flow.exec (pairtable, params, cb) -> 
+            console.log "hi"
             table = pairtable.getTable()
             table = gg.data.Transform.transform table, [
               ['b', ((row) -> row.get('b') * 100), Schema.numeric]

@@ -160,6 +160,8 @@ class gg.util.Textsize
   # allow chopping up the string
   @fit: (text="", width, height, minfont, opts={}, el) ->
     optsize = @fontSize text, width, height, opts
+    nchar = text.length
+
     @log "optsize:   #{optsize}"
     @log "minfont:   #{minfont}"
     @log "container: #{width} x #{height}"
@@ -181,9 +183,41 @@ class gg.util.Textsize
       text: text
       font: optsize
       size: optsize
+      'font-size': "#{optsize}pt"
+      nchar: nchar
       w: dim.w
       h: dim.h
     }
+
+  # return a function that takes a text value and returns
+  # 
+  #     { text:, font:, size:, w:, h: }
+  #
+  @fitMany: (texts, w, h, minfont, opts={}, el) ->
+    texts = _.flatten [texts]
+    texts = _.map texts, String
+
+    fonts = _.map texts, (text) ->
+      gg.util.Textsize.fit text, w, h, minfont, opts, el
+
+    minfont = _.min fonts, (f) -> f.size
+    minsize = minfont.size
+    nchar = minfont.nchar
+
+    (text) ->
+      text = String(text).substr 0, nchar
+      {
+        text: text
+        font: minfont.size
+        size: minfont.size
+        'font-size': minfont['font-size']
+        nchar: nchar
+      }
+
+
+
+
+
 
 
 

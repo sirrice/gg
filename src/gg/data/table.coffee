@@ -87,6 +87,7 @@ class gg.data.Table
   getRows: -> @each (row) -> row
   raw: -> throw "not implemented"
   stats: -> throw "not implemented"
+  klass: -> gg.data.ColTable
 
 
   # These are the _only_ methods that Change the schema
@@ -126,7 +127,7 @@ class gg.data.Table
     JSON.stringify @raw()
 
   cloneShallow: -> throw "not implemented"
-  cloneDeep: -> @constructor.fromJSON @toJSON()
+  cloneDeep: -> @klass().fromJSON @toJSON()
   clone: -> @cloneDeep()
 
 

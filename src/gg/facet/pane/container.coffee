@@ -29,9 +29,13 @@ class gg.facet.pane.Container
     @bYFacet,
     @bXAxis,
     @bYAxis,
-    @labelHeight,
-    @yAxisW,
-    @padding=5) ->
+    @opts={}) ->
+
+      @labelHeight = @opts.labelHeight or 15
+      @yAxisW = @opts.yAxisW or 20
+      @xAxisW = @opts.xAxisW or 20
+      @padding = @opts.padding or 5
+
       @lpad = @rpad = @upad = @bpad = 0
       @lpad = @padding unless @bYAxis
       @rpad = @padding unless @bYFacet
@@ -53,6 +57,7 @@ class gg.facet.pane.Container
     bYAxis: @bYAxis
     labelHeight: @labelHeight
     yAxisW: @yAxisW
+    xAxisW: @xAxisW
 
   @fromJSON: (json) ->
     new gg.facet.pane.Container(
@@ -67,11 +72,11 @@ class gg.facet.pane.Container
       json.bYAxis
       json.labelHeight
       json.yAxisW
+      json.xAxisW
     )
 
   toString: ->
     JSON.stringify @toJSON()
-
 
   #
   # bounds for the container (pane + facets + axes)

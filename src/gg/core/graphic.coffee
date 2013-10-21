@@ -13,7 +13,7 @@ try
 catch error
   console.log error
 
-class gg.core.Graphic
+class gg.core.Graphic extends events.EventEmitter
   @ggpackage = "gg.core.Graphic"
   @envKeys = [
     'layer'
@@ -176,7 +176,9 @@ class gg.core.Graphic
       @workflow = optimizer.run @workflow
 
     @log "running workflow"
-    #@workflow.on "done", () => parentSvg.append @svg
+    @workflow.on "done", (debug) => 
+      @emit "done", debug
+      #parentSvg.append @svg
     @workflow.run @options
 
 

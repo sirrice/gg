@@ -28,7 +28,7 @@ class gg.data.Transform
     rows = table.each (row) -> row
     rows.sort cmp
 
-    klass = table.constructor
+    klass = table.klass()
     newtable = new klass table.schema
     _.each rows, (row) -> newtable.addRow row
     newtable
@@ -73,7 +73,7 @@ class gg.data.Transform
   # (preserves all existing columns)
   @split: (table, splitcols) ->
     splitcols = _.flatten [splitcols]
-    klass = table.constructor
+    klass = table.klass()
     [ht, keys] = @buildHT table, splitcols
     _.map ht, (rows, k) -> 
       {
@@ -88,7 +88,8 @@ class gg.data.Transform
   # rows from current table, with rows failing the filter
   # test not present
   @filter: (table, f) ->
-    newt = new table.constructor table.schema.clone()
+    klass = table.klass()
+    newt = new klass table.schema.clone()
     table.each (row, idx) ->
       newt.addRow row if f(row, idx)
     newt
@@ -146,7 +147,7 @@ class gg.data.Transform
         raw[col] = v
       raw
 
-    table.constructor.fromArray rows, schema
+    table.klass().fromArray rows, schema
 
 
   # mapping is of the form
@@ -177,7 +178,7 @@ class gg.data.Transform
         [col, v]
       idx += 1
       newrows.push o
-    table.constructor.fromArray newrows, schema
+    table.klass().fromArray newrows, schema
         
 
     
@@ -213,8 +214,8 @@ class gg.data.Transform
     for strkey in strkeys
       rows1 = ht1[strkey]
       rows2 = ht2[strkey]
-      left = t1.constructor.fromArray rows1, schema1.clone()
-      right = t2.constructor.fromArray rows2, schema2.clone()
+      left = t1.klass().fromArray rows1, schema1.clone()
+      right = t2.klass().fromArray rows2, schema2.clone()
       table = new gg.data.PairTable left, right
       key = if strkey of keys1 then keys1[strkey] else keys2[strkey]
       ret.push { key: key, table: table }

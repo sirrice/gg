@@ -50,20 +50,24 @@ class gg.facet.base.Layout extends gg.core.BForm
     css = {}
     _.exSize(css).h# + params.get('paddingPane')
 
-  getMaxYText: (md) ->
+  getMaxYText: (md) -> @getMaxText md, 'y'
+  getMaxYText: (md) -> @getMaxText md, 'y'
+
+
+  getMaxText: (md, aes) ->
     text = '100'
     formatter = d3.format ',.0f'
-    md.each (row) ->
-      s = row.get 'scales'
-      yscale = s.scale 'y', gg.data.Schema.unknown
-      y = yscale.maxDomain()
-      if _.isNumber y
-        _text = formatter y
-        if _text? and _text.length > text.length
-          text = _text
+    for set in md.getColumn('scales')
+      scale = set.scale aes, gg.data.Schema.unknown
+      if scale.type == gg.data.Schema.numeric
+        for v in scale.domain()
+          if _.isNumber v
+            _text = formatter v
+          else
+            _text = String v
+          if _text? and _text.length > text.length
+            text = _text
     text
-
-
 
 
   #

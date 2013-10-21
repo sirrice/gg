@@ -13,40 +13,6 @@ class gg.data.TableSet extends gg.data.PairTable
           return no
     yes
 
-  ###
-  partition: (cols) ->
-    cols = _.uniq _.flatten [cols]
-    #unless @checkSchema cols
-    #throw Error "cols #{cols.join(' ')} not in all schemas"
-    
-    keys = []
-    lefts = {}
-    rights = {}
-    for pairtable in @pairtables
-      ps = gg.data.Transform.partitionJoin(
-        pairtable.getTable(), pairtable.getMD(), cols
-      )
-      for p in ps
-        key = p['key']
-        lefts[key] = [] unless key of lefts
-        lefts[key].push p['table'].getTable()
-        rights[key] = [] unless key of rights
-        rights[key].push p['table'].getMD()
-        keys.push key
-
-
-    # create new PairTable for each unique key
-    keys = _.uniq keys
-    ret = []
-    for key in keys
-      left = gg.data.Table.merge lefts[key]
-      right = gg.data.Table.merge rights[key]
-      pt = new gg.data.PairTable left, right
-      ret.push pt
-    ret
-  ###
-
-
   ensure: (cols) ->
     new gg.data.PairTable(@getTable(), @getMD()).ensure(cols)
 

@@ -75,8 +75,14 @@ class gg.scale.Set
     else
       []
 
-  userdefinedType: (aes) ->
-    @factory.type aes
+  userdefinedType: (aes) -> @factory.type aes
+
+  getAll: (aess, posMapping={}) ->
+    ret = []
+    for aes in aess
+      for type in @types aes, posMapping
+        ret.push @get(aes, type)
+    ret
 
   # @param type.  the only time type should be null is when
   #        retrieving the "master" scale to render for guides

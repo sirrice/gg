@@ -1,60 +1,7 @@
 #<< gg/facet/pane/container
 #<< gg/facet/base/layout
+#<< gg/facet/grid/pane
 
-
-
-class gg.facet.grid.PaneGrid
-  constructor: (@xs, @ys, opts) ->
-    showXFacet = opts.showXFacet
-    showYFacet = opts.showYFacet
-    showXAxis = opts.showXAxis
-    showYAxis = opts.showYAxis
-    labelHeight = opts.labelHeight
-    yAxisW = opts.yAxisW
-    nxs = @xs.length
-    nys = @ys.length
-
-    @grid = _.map @xs, (x, xidx) =>
-      _.map @ys, (y, yidx) =>
-        bXFacet = showXFacet and yidx is 0
-        bYFacet = showYFacet and xidx >= nxs-1
-        bXAxis = showXAxis and yidx >= nys-1
-        bYAxis = showYAxis and xidx is 0
-        new gg.facet.pane.Container(
-          gg.core.Bound.empty(),
-          xidx,
-          yidx,
-          x,
-          y,
-          bXFacet,
-          bYFacet,
-          bXAxis,
-          bYAxis,
-          labelHeight,
-          yAxisW
-        )
-
-  getByIdx: (xidx, yidx) -> @grid[xidx][yidx]
-
-  getByVal: (x, y) ->
-    xidx = _.indexOf @xs, x
-    yidx = _.indexOf @ys, y
-    @getByIdx xidx, yidx
-
-  xPrefix: (xidx, yidx) ->
-    _.times xidx, (i) => @grid[i][yidx]
-
-  yPrefix: (xidx, yidx) ->
-    _.times yidx, (i) => @grid[xidx][i]
-
-
-
-
-  each: (f) ->
-    ret = _.map @grid, (o, x) ->
-      _.map o, (pane, y) ->
-        f pane, x, y
-    _.flatten ret
 
 
 class gg.facet.grid.Layout extends gg.facet.base.Layout
@@ -70,12 +17,16 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     facetKeys = [xFacet, yFacet]
 
     # Setup Variables
-    log = @log
-    container = lc.plotC
-    [w,h] = [container.w(), container.h()]
     paddingPane = params.get 'paddingPane'
     showXAxis = params.get 'showXAxis'
     showYAxis = params.get 'showYAxis'
+    log = @log
+
+    #
+    # Dimensions we are working with
+    #
+    container = lc.plotC
+    [w,h] = [container.w(), container.h()]
 
     xs = _.uniq md.getColumn(xFacet)
     ys = _.uniq md.getColumn(yFacet)
@@ -84,11 +35,15 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
 
     # Compute derived values
     css = { 'font-size': '10pt' }
-    dims = _.textSize @getMaxYText(md), css
-    yAxisW = dims.w + paddingPane
     labelHeight = _.exSize().h + paddingPane
     showXFacet = xs.length > 1 and xs[0]?
     showYFacet = ys.length > 1 and ys[0]?
+
+    # axis label dimensions
+    xdims = _.textSize @getMaxText(md, 'x'), css
+    ydims = _.textSize @getMaxText(md, 'y'), css
+    yAxisW = ydims.w + paddingPane
+    xAxisW = xdims.w + paddingPane
 
     log "paddingPane, md, xs, ys:"
     log paddingPane
@@ -103,85 +58,66 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
         showYAxis
         labelHeight
         yAxisW 
+        xAxisW
     }
+    grid.layout w, h
 
-    nonPaneWs = _.times nys, ()->0
-    nonPaneHs = _.times nxs, ()->0
-    grid.each (pane, xidx, yidx) ->
-      x = xs[xidx]
-      y = ys[yidx]
-      dx = labelHeight*pane.bYFacet+yAxisW*pane.bYAxis
-      dy = labelHeight*(pane.bXFacet+pane.bXAxis)
-      nonPaneWs[yidx] += dx
-      nonPaneHs[xidx] += dy
 
-    
-    # compute actual pane sizes
-    # constraints:
-    # 1) label and axis heights are fixed (labelHeight)
-    # 2) panes all have same height and width
-    # 3) total height/width of panes + paddings + label + axes
-    #    is equal to container.w()/h()
-
-    # facet, axis width and height
-    nonPaneW = _.mmax nonPaneWs
-    nonPaneH = _.mmax nonPaneHs
-    # total amount of width/height for panes
-    paneH = (h - nonPaneH) / nys
-    paneW = (w - nonPaneW) / nxs
-
-    grid.each (pane, xidx, yidx) ->
-      pane.c.x1 = paneW
-      pane.c.y1 = paneH
-      dx = _.sum _.map grid.xPrefix(xidx, yidx), (pane) -> pane.w()
-      dy = _.sum _.map grid.yPrefix(xidx, yidx), (pane) -> pane.h()
-      pane.c.d dx, dy
-      pane.c.d pane.yAxisC().w(), pane.xFacetC().h()
-
-      log "pane(#{xs[xidx]},#{ys[yidx]}): #{pane.c.toString()}"
-
-    # create bounds objects for each pane
-    log "creating bounds objects for each pane"
-
-    # 1. add each pane's bounds to their environment
-    # 2. update scale sets to be within drawing container
-
+    # make sure we have a MD row for every facet
     xytable = gg.data.Transform.cross 
       'facet-x': xs
       'facet-y': ys
     tmp = new gg.data.PairTable xytable, md
-    tmp = tmp.ensure [xFacet, yFacet]
+    tmp = tmp.ensure facetKeys
     md = tmp.getMD()
+
+    xTextF = gg.util.Textsize.fitMany(
+      xs, grid.paneW, labelHeight+paddingPane, 8, {padding: 2}
+    )
+    yTextF = gg.util.Textsize.fitMany(
+      ys, grid.paneH, labelHeight+paddingPane, 8, {padding: 2}
+    )
+
+    # 
+    # Update MD:
+    # 1. add paneC 
+    # 2. update x/y scale ranges
+    # 3. update facet text opts
+    #
+
     partitions = md.partition facetKeys
     partitions = _.map partitions, (p) ->
-      fkey = _.map facetKeys, (fk) -> p.get 0, fk
-      paneC = grid.getByVal fkey[0], fkey[1]
+      x = p.get 0, xFacet
+      y = p.get 0, yFacet
+      paneC = grid.getByVal x, y
       drawC = paneC.drawC()
+
+      # 1. add each pane's bounds to their environment
+      p = p.setColumn 'paneC', paneC, gg.data.Schema.object
+
+      # 2. update scale sets to be within drawing container
       xrange = [paddingPane, drawC.w()-2*paddingPane]
       yrange = [paddingPane, drawC.h()-2*paddingPane]
+      for set in p.getColumn 'scales'
+        for s in set.getAll gg.scale.Scale.xs
+          s.range xrange
+        for s in set.getAll gg.scale.Scale.ys
+          s.range yrange
 
-      f = (scales) ->
-        for aes in gg.scale.Scale.xs
-          for type in scales.types(aes)
-            scales.scale(aes, type).range xrange
-        for aes in gg.scale.Scale.ys
-          for type in scales.types(aes)
-            scales.scale(aes, type).range yrange
-        scales
-
-      p = p.setColumn 'paneC', paneC, gg.data.Schema.object
-      p = gg.data.Transform.mapCols p, [
-        ['scales', f, gg.data.Schema.object]]
+      xopts = xTextF x
+      yopts = yTextF y
+      p = p.setColumn 'xfacettext-opts', xopts
+      p = p.setColumn 'yfacettext-opts', yopts
       p
 
 
 
-    #
+    ###
     # Compute font sizes and add to md
     #
-    fit = (args...) -> gg.util.Textsize.fit args...
-    xfonts = {}
-    yfonts = {}
+    _.map partitions, (p) ->
+
+
 
     for x, xidx in xs
       text = String x
@@ -214,5 +150,6 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
       p = p.setColumn 'yfacet-text', yfont.text
       p = p.setColumn 'yfacet-size', yfont.size
       p
+    ###
 
     new gg.data.MultiTable null, partitions

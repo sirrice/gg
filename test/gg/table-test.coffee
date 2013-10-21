@@ -37,6 +37,10 @@ schemaCheck =
       for i in [0...col.length-1]
         assert.lt col[i+1], col[i]
 
+  "each works": (table) ->
+    table.each (row) ->
+      assert.lt row.get('c'), 2
+
   "iterator works": (table) ->
     iter = table.iterator()
     while iter.hasNext()
@@ -44,6 +48,8 @@ schemaCheck =
       assert.lt row.get('c'), 2
 
   "filter on a": (table) ->
+    console.log(table.get(0).raw())
+    console.log(table.klass().name)
     t = Transform.filter table, (row) -> row.get('c') == 0
     t.each (row) ->
       assert.equal 0, row.get('c')
@@ -229,12 +235,12 @@ twoTables =
 
 
 suite.addBatch
-  "row table": rowSchema
+#  "row table": rowSchema
   "col table": colSchema
-  "col table2": colSchema2
-  "multitable": multiSchema
-  "multitable2": multiSchema2
-  "two tables": twoTables
+  #  "col table2": colSchema2
+  #  "multitable": multiSchema
+  #  "multitable2": multiSchema2
+  #  "two tables": twoTables
 
 
 suite.export module

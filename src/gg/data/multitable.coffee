@@ -14,6 +14,11 @@ class gg.data.MultiTable extends gg.data.Table
         @schema = new gg.data.Schema()
 
   nrows: -> _.sum @tables, (t) -> t.nrows()
+  klass: -> 
+    if @tables.length > 0
+      @tables[0].klass()
+    else
+      gg.data.ColTable
 
   cloneShallow: ->
     ts = _.map @tables, (t) -> t.cloneShallow()

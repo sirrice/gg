@@ -38,6 +38,7 @@ class gg.data.PairTable
   # 
   # enforces invariant: each md should have a _single_ row
   fullPartition: (type='outer') -> 
+    klass = @getMD().klass()
     partitions = @partition @sharedCols()
     partitions = _.map partitions, (p) =>
       table = p.getTable()
@@ -51,7 +52,7 @@ class gg.data.PairTable
       if md.nrows() == 0
         row = new gg.data.Row(@mdSchema().clone())
         row = row.merge table.get(0).project(@sharedCols())
-        md = gg.data.Table.fromArray [row], @mdSchema().clone()
+        md = klass.fromArray [row], @mdSchema().clone()
         new gg.data.PairTable table, md
       else if md.nrows() > 1
         #@log.warn "fullpartition: md.nrows (#{md.nrows()}) != 1.\t#{md.raw()}"
@@ -71,6 +72,8 @@ class gg.data.PairTable
     restCols = _.filter restCols, (col) => @table.schema.has col
     if unknownCols.length > 0
       @log.warn "ensure dropping unknown cols: #{unknownCols}"
+
+    klass = @getMD().klass()
 
     newMdSchema = @mdSchema()
     newMdSchema.merge @tableSchema().project(restCols)
@@ -99,7 +102,7 @@ class gg.data.PairTable
           keyrow.set col, sp.get(0, col)
 
         rows = _.map createCopy(), (row) -> row.merge keyrow
-        newmd = gg.data.RowTable.fromArray rows, newMdSchema
+        newmd = klass.fromArray rows, newMdSchema
         newpartitions.push new gg.data.PairTable(sp, newmd)
 
     new gg.data.TableSet newpartitions
