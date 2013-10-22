@@ -29,8 +29,10 @@ class gg.scale.train.Pixel extends gg.core.BForm
   # 4) map tables once to invert using old scales + apply new scales
   #
   compute: (pairtable, params) ->
+    gg.scale.train.Pixel.train pairtable, params, @log
 
-    log = @log
+  @train: (pairtable, params, log) ->
+
     fOldScales = (pt, idx) ->
       s = pt.getMD().get(0, 'scales').clone()
       log "#{idx} origScales: #{s.toString()}"
@@ -42,7 +44,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
     args = _.zip(partitions, oldScaleSets)
 
     # 1) compute new scales
-    fMergeDomain = @constructor.createMergeDomain @log
+    fMergeDomain = @createMergeDomain log
     partitions = _.map args, fMergeDomain
     tset = new gg.data.TableSet partitions
 
@@ -53,7 +55,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
     args = _.zip(partitions, oldScaleSets)
 
     # 3} invert data using old scales, then apply new scales
-    fRescale = @constructor.createRescale @log
+    fRescale = @createRescale log
     partitions = _.map args, fRescale
 
     new gg.data.TableSet partitions
@@ -70,7 +72,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
     ([pt, oldscaleset], idx) ->
       t = pt.getTable()
       md = pt.getMD()
-      posMapping = md.get 0, 'posMapping'
+      posMapping = md.get(0, 'posMapping') or {}
       newscaleset = oldscaleset.clone()
       seen = {}
 
@@ -125,7 +127,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
       t = pt.getTable()
       md = pt.getMD()
       scaleset = md.get 0, 'scales'
-      posMapping = md.get 0, 'posMapping'
+      posMapping = md.get(0, 'posMapping') or {}
       layer = md.get 0, 'layer'
       mappingFuncs = []
       log "#{idx} fRescale called layer: #{layer}"

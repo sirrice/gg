@@ -51,16 +51,16 @@ createSimpleTableSet = ->
 
 
 log = (text) ->
-  console.log text
   output = [
     '# rows: 4'
     'Schema: [["x",2],["y",2],["l",2]]'
-    '{"x":1,"y":1,"l":1}'
-    '{"x":1,"y":2,"l":1}'
-    '{"x":2,"y":2,"l":3}'
-    '{"x":2,"y":3,"l":2}'
+    '[["x",1],["y",1],["l",1]]'
+    '[["x",1],["y",2],["l",1]]'
+    '[["x",2],["y",2],["l",3]]'
+    '[["x",2],["y",3],["l",2]]'
   ]
-  assert (text in output)
+  res = (text in output)
+  assert res
 
 
 suite.addBatch
@@ -68,6 +68,7 @@ suite.addBatch
     "on pairtable":
       topic: createSimplePairTable
       "is correct": (pairtable) ->
+        console.log pairtable.getTable().nrows()
         gg.wf.Stdout.print pairtable.getTable(), null, 10, log
 
 

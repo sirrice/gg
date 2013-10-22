@@ -65,13 +65,13 @@ suite.addBatch
       pt = new gg.data.PairTable table
       pt = pt.ensure ['facet-x', 'facet-y']
       pt = gg.core.FormUtil.ensureScales pt, null, gg.util.Log.logger('test')
-      pt = gg.scale.train.Data.train pt, new gg.util.Params({scalesTrain:'fixed'}), () ->
+      pt = gg.scale.train.Data.train pt, new gg.util.Params({scalesTrain:'free'}), () ->
 
     "then trained on master":
       topic: (pt) ->
         node = new gg.scale.train.Master
           params: 
-            scalesTrain: 'fixed'
+            scalesTrain: 'free'
         runTest node, pt
 
       "doesnt crash": (pt) ->
@@ -94,7 +94,7 @@ suite.addBatch
       pt = new gg.data.PairTable table
       pt = pt.ensure ['facet-x', 'facet-y']
       pt = gg.core.FormUtil.ensureScales pt, null, gg.util.Log.logger('test')
-      pt = gg.scale.train.Data.train pt, new gg.util.Params({scalesTrain:'fixed'}), () ->
+      pt = gg.scale.train.Data.train pt, new gg.util.Params({scalesTrain:'free'}), () ->
       t = gg.data.Transform.mapCols pt.getTable(), [
         ['x', ((x, idx) -> if idx % 2 == 0 then 200 else 0), Schema.numeric]
         ['y', ((y, idx) -> if idx % 2 == 0 then 200 else 0), Schema.numeric]
