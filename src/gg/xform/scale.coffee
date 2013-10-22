@@ -7,37 +7,39 @@
 class gg.xform.ScalesSchema extends gg.core.XForm
   @ggpackage = "gg.xform.ScalesSchema"
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
-    scaleset = @scales data, params
-    posMapping = env.get 'posMapping'
+  compute: (pairtable, params) ->
+    pairtable = @ensureScales pairtable, params, @log
+    table = pairtable.getTable()
+    schema = table.schema
+    md = pairtable.getMD()
+
+    scaleset = md.get 0, 'scales'
+    posMapping = md.get 0, 'posMapping'
     log = @log
 
-    _.each table.colNames(), (attr) ->
-      tabletype = table.schema.type attr
-      types = scaleset.types attr, posMapping
-      if types.length == 0
-        scale = scaleset.scale attr, tabletype, posMapping
-        log "settype: #{attr}:#{tabletype} unknown.  create: #{scale.toString()}"
-        types = [scale.type]
+    _.each table.cols(), (col) ->
+      tabletype = schema.type col
+      scaletypes = scaleset.types col, posMapping
 
-      else if types.length is 1
+      if scaletypes.length == 0
+        scale = scaleset.scale col, tabletype, posMapping
+        log "settype: #{col}:#{tabletype} unknown.  create: #{scale.toString()}"
+      else if scaletypes.length == 1
         # XXX: type checking and downcast rules here
-        stype = types[0]
-        unless stype is gg.data.Schema.unknown
-          if tabletype >= stype
-            log "settype: #{attr}\t#{stype}"
-            table.schema.setType attr, stype
+        scaletype = scaletypes[0]
+        unless scaletype is gg.data.Schema.unknown
+          if tabletype >= scaletype
+            log "settype: #{col}\t#{scaletype} from #{tabletype}"
+            table.schema.setType col, scaletype
           else
-            log table.getColumn(attr)[0...10]
-            throw Error("Upcast #{attr}: #{tabletype}->#{stype}")
+            log table.getColumn(col)[0...10]
+            throw Error("Upcast #{col}: #{tabletype}->#{scaletype}")
 
-      else if types.length > 1
-        throw Error("#{attr} has >1 types in scaleset: #{types}")
+      else
+        throw Error("#{col} has >1 types in scaleset: #{scaletypes}")
 
+    pairtable
 
-    data
 
 
 # transforms data -> pixel/aesthetic values
@@ -49,13 +51,18 @@ class gg.xform.ScalesApply extends gg.core.XForm
     @params.putAll
       aess: @spec.aess or []
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
+  compute: (pairtable, params) ->
+    pairtable = @ensureScales pairtable, params, @log
+    table = pairtable.getTable()
+    md = pairtable.getMD()
+
+    scales = md.get 0, 'scales'
+    posMapping = md.get 0, 'posMapping'
+
     @log "table has #{table.nrows()} rows"
-    scales = @scales data, params
-    data.table = scales.apply table, env.get('posMapping')
-    data
+    table = scales.apply table, posMapping
+    new gg.data.PairTable table, md
+
 
 
 # transforms pixel -> data
@@ -67,12 +74,14 @@ class gg.xform.ScalesInvert extends gg.core.XForm
     @params.putAll
       aess: @spec.aess or []
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
-    scales = @scales data, params
-    data.table = scales.invert table, env.get('posMapping')
-    data
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
+
+    scales = md.get 0, 'scales'
+    posMapping = md.get 0, 'posMapping'
+    table = scales.invert table, posMapping
+    new gg.data.PairTable table, md
 
 
 
@@ -85,16 +94,14 @@ class gg.xform.ScalesFilter extends gg.core.XForm
     @params.putAll
       aess: @spec.aess or []
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
-    @log "table has #{table.nrows()} rows"
-    nrows = table.nrows()
-    scales = @scales data, params
-    @log scales.toString()
-    data.table = scales.filter table, env.get('posMapping')
-    @log "filtered #{nrows - table.nrows()} rows"
-    data
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
+
+    scales = md.get 0, 'scales'
+    posMapping = md.get 0, 'posMapping'
+    table = scales.filter table, posMapping
+    new gg.data.PairTable table, md
 
 
 # Ensure that each layer+pane's scale set only has a single scale for a given
@@ -102,16 +109,16 @@ class gg.xform.ScalesFilter extends gg.core.XForm
 class gg.xform.ScalesValidate extends gg.core.XForm
   @ggpackage = "gg.xform.ScalesValidate"
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
-    scaleset = @scales data, params
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
 
-    _.each scaleset.aesthetics(), (aes) ->
-      stypes = scaleset.types(aes)
+    scales = md.get 0, 'scales'
+    posMapping = md.get 0, 'posMapping'
+
+    for col in scales.aesthetics()
+      stypes = scales.types col, posMapping
       if stypes.length > 1
-        throw Error("Layer scaleset #{aes} has >1 types: #{stypes}")
-
-    data
-
+        throw Error "Layer scaleset #{col} has >1 types: #{stypes}"
+    pairtable
 

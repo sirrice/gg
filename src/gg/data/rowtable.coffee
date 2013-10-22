@@ -1,281 +1,140 @@
 #<< gg/data/table
 
+# stores table as a list of arrays and a schema
 class gg.data.RowTable extends gg.data.Table
   @ggpackage = "gg.data.RowTable"
 
   constructor: (@schema, rows=[]) ->
     throw Error("schema not present") unless @schema?
+    rows ?= []
     @rows = []
     _.each rows, (row) => @addRow row
     @log = gg.data.Table.log
 
 
-  # XXX: This method infers schema information, and which may
-  #      lose or be inconsistent with existing schema info
-  @fromArray: (rows) ->
-    schema = gg.data.Schema.infer rows
-    table = new gg.data.RowTable schema, rows
-    table
-
-
-  @toRow: (data, schema) ->
-    if _.isType data, gg.data.Row
-      if data.schema != schema
-        row = data.clone()
-        row.schema = schema
-        row
-      else
-        data
-    else
-      new gg.data.Row data, schema
-
-  setSchema: (schema) ->
-    @each (row) -> row.schema = schema
-    @schema = schema
-    @
-
-  reloadSchema: ->
-    rows = _.map(@rows, (row) -> row.raw())
-    @setSchema gg.data.Schema.infer rows
-    @
-
   nrows: -> @rows.length
-  ncols: -> @schema.nkeys()
-  colNames: -> @schema.attrs()
-  contains: (attr, type) -> @schema.contains attr, type
+  klass: -> gg.data.RowTable
 
   cloneShallow: ->
-    rows = @rows.map (row) -> row
-    new gg.data.RowTable @schema.clone(), rows
+    rows = _.clone @rows
+    t = new gg.data.RowTable @schema.clone()
+    t.rows = rows
+    t
 
   cloneDeep: ->
-    rows = @rows.map (row) => row.clone()
-    new gg.data.RowTable @schema.clone(), rows
-
-  # In-place sort function
-  sort: (cmp, update=yes) ->
-    if update
-      @rows.sort cmp
-      @
-    else
-      clone = @clone()
-      clone.sort cmp, yes
-
-  merge: (table) ->
-    # ensure schemas
-    if _.isSubclass table, gg.data.RowTable
-      @rows.push.apply @rows, table.rows
-    else
-      throw Error("merge not implemented for #{@constructor.name}")
-    @
-
-  @merge: (tables) ->
-    if tables.length == 0
-      new gg.data.RowTable @schema
-    else
-      t = tables[0].cloneShallow()
-      for t2, idx in tables
-          t.merge(t2) if idx > 0
-      t
+    rows = @rows.map (row) -> _.clone row
+    t = new gg.data.RowTable @schema.clone()
+    t.rows = rows
+    t
 
 
-  # Horizontally split table using an arbitrary splitting function
-  # (preserves all existing columns)
-  split: (gbfunc) ->
-    if _.isString gbfunc
-      attr = gbfunc
-      gbfunc = ((key) -> (row) -> row.get(key))(attr)
-
-    keys = {}
-    groups = {}
-    _.each @rows, (row) ->
-      key = gbfunc row
-      jsonKey = JSON.stringify key
-      groups[jsonKey] = [] unless jsonKey of groups
-      groups[jsonKey].push row
-      keys[jsonKey] = key
-
+  # more efficient version of each, allocates single
+  # data.Row object for entire iteration and minimizes 
+  # copies
+  fastEach: (f, n=null) ->
+    row = new gg.data.Row @schema
     ret = []
-    schema = @schema.clone()
-    _.each groups, (rows, jsonKey) ->
-      partition = new gg.data.RowTable schema, rows
-      ret.push {key: keys[jsonKey], table: partition}
+    for raw, idx in @rows
+      row.data = raw
+      ret.push f(row, idx)
+      break if n? and idx >= n
     ret
 
+  # internal method
+  _addColumn: (col, vals) ->
+    unless @has col
+      throw Error("col should be in the schema: #{col}")
+    colidx = @schema.index col
+    for row, rowidx in @rows
+      row[colidx] = vals[rowidx]
+    @
+
+  _getColumn: (col) ->
+    idx = @schema.index col
+    _.map @rows, (row) -> row[idx]
+
+  rmColumn: (col) ->
+    return @ unless @has col
+    rmidx = @schema.index col
+    for row in @rows
+      row.splice rmidx, 1
+
+    @schema = @schema.exclude col
+    @
 
 
-
-  flatten: (cols=null, recursive=false) ->
-    table = new gg.data.RowTable @schema.flatten(cols, recursive)
-    @each (row) -> table.merge row.flatten(cols, recursive)
-    table
-
-  # 1 to 1 mapping function
+  # Adds array, {}, or Row object as a row in this table
   #
-  # @param colname either a string, or an object of {key: xform} pairs
-  # @param {Function|boolean} funcOrUpdate
-  #        if colname is a string, funcOrUpdate is a transformation
-  #        function (val, row) -> newVal.
-  #        if colname is an object, used as update (see below)
-  # @param {boolean} update
-  #        true if transformation should update the table
-  #        false if rows should be new, with only columns specified by transformation
-  #
-  transform: (colname, funcOrUpdate=yes, update=yes) ->
-    if _.isObject colname
-        mapping = colname
-        update = funcOrUpdate
-    else
-        mapping = {}
-        mapping[colname] = funcOrUpdate
+  # @param row { } object or a gg.data.Row
+  # @param pad if argument is an array of value, should we pad the end with nulls
+  #        if not enough values
+  # @return self
+  addRow: (row, pad=no) ->
+    unless row?
+      throw Error "adding null row"
 
-    if update
-      @each (row) =>
-        newrow = @transformRow row, mapping
-        row.merge newrow
-      @reloadSchema()
-      @
-    else
-      newrows = @each (row) => @transformRow row, mapping
-      gg.data.RowTable.fromArray newrows
-
-  # constructs a new object and populates it using mapping specs
-  transformRow: (row, mapping) ->
-    ret = {}
-    _.each mapping, (f, newattr) =>
-      newvalue = try
-        f row
-      catch error
-        @log.error row.raw()
-        @log.error f.toString()
-        @log.error error
-        throw error
-
-      if _.isArray newvalue
-        if gg.data.Table.isNestedAttr newattr
-          [attr1, attr2] = newattr.split(".")
-          ret[attr1] = [] unless attr1 of ret
-          for el, idx in newvalue
-            while idx >= ret[attr1].length
-              ret[attr1].push {}
-            ret[attr1][idx][attr2] = el
+    if _.isArray(row)
+      row = _.clone row
+      unless row.length == @schema.ncols()
+        if row.length > @schema.ncols() or not pad
+          throw Error "row len wrong: #{row.length} != #{@schema.length}"
         else
-          throw Error("mapping arrays need to be nested")
-      else
-        ret[newattr] = newvalue
-    ret
+          for i in [0...(@schema.ncols()-row.length)]
+            row.push null
+    else if _.isType row, gg.data.Row
+      row = _.map @cols(), (col) -> row.get(col)
+    else if _.isObject row
+      row = _.map @cols(), (col) -> row[col]
+    else
+      throw Error "row type(#{row.constructor.name}) not supported" 
 
-
-  # create new table containing the (exactly same)
-  # rows from current table, with rows failing the filter
-  # test not present
-  filter: (f) ->
-    newrows = []
-    @each (row, idx) -> newrows.push row if f(row, idx)
-    new gg.data.RowTable @schema, newrows
-
-
-  # transforms the values of column(s) on a per-column basis
-  # Destructively updates!
-  # Each mapping function takes the current field as input
-  # XXX: doesn't perform nested map operations correctly
-  map: (fOrMap, colName=null) ->
-    if _.isFunction fOrMap
-      unless colName?
-        throw Error("RowTable.map without colname!")
-      f = fOrMap
-      fOrMap = {}
-      fOrMap[colName] = f
-
-    schema = @schema
-    @each (row, idx) ->
-      _.each fOrMap, (f, col) ->
-        if schema.inArray col
-          arr = _.map row.get(col), f
-          row.set col, arr
-        else
-          newv = f(row.get(col))
-          row.set col, newv
-
-    # reload schema if any new cols were added
-    unless _.all(fOrMap, (f,col) => @contains col)
-      @reloadSchema()
+    @rows.push row
     @
 
-  addConstColumn: (name, val, type=null) ->
-    type = gg.data.Schema.type(val) unless type?
-    @addColumn name, _.repeat(@nrows(), val), type
-
-  addColumn: (name, vals, type=null) ->
-    if vals.length != @nrows()
-      throw Error("column has #{vals.length} values,
-        table has #{@rows.length} rows")
-
-    unless type?
-      type = if vals.length is 0
-        {type: gg.data.Schema.unknown, schema: null}
-      else
-        gg.data.Schema.type vals[0]
-
-    if @schema.contains name
-      if type.type != @schema.type name
-        throw Error("column #{name} already exists in table and
-           #{type} != #{@schema.type name}")
-      else
-        @log.warn "column #{name} already exists in table"
-
-    @schema.addColumn name, type.type, type.schema
-    @rows.forEach (row, idx) => 
-      row.addColumn(name, vals[idx])
-      row.schema = @schema
-    @
-
-  addRow: (row) ->
-    # enforce schema
-    @rows.push gg.data.RowTable.toRow(row, @schema)
-    @
-
-  get: (row, col=null) ->
-    if row >= 0 and row < @rows.length
+  # @return value if col is set, otherwise gg.data.Row object
+  get: (idx, col=null) ->
+    if idx >= 0 and idx < @nrows()
       if col?
-          @rows[row].get col
+        if @schema.has col
+          @rows[idx][@schema.index col]
+        else
+          null
+          #throw Error "col #{col} not in schema: #{@schema.toString()}"
       else
-          @rows[row]
+          new gg.data.Row @schema, @rows[idx]
     else
       null
 
-  getCol: (col) -> @getColumn col
-  getColumn: (col) ->
-    # XXX: hack.  make it do the right thing if no rows
-    if @nrows() > 0 and @schema.contains col
-      if @schema.inArray col
-        _.flatten _.times @nrows(), (idx) => @get(idx, col)
-      else
-        _.times @nrows(), (idx) => @get(idx, col)
-    else if @nrows() == 0 and @schema.contains col
-      []
+  # return a list of {} objects
+  raw: -> 
+    _.map @rows, (r) => 
+      o = {}
+      for col in @schema.cols
+        o[col] = r[@schema.index col]
+      o
+
+  # Infers a schema from inputs and returns a row table object
+  # @param rows list of { } objects
+  @fromArray: (rows, schema=null) ->
+    schema ?= gg.data.Schema.infer rows
+    if rows? and _.isType(rows[0], gg.data.Row)
+      rows = _.map rows, (row) ->
+        _.map schema.cols, (col) -> row.get(col)
     else
-      if @schema.contains col and @schema.isArray col
-        []
-      else
-        null
+      rows = _.map rows, (o) ->
+        _.map schema.cols, (col) -> o[col]
+    new gg.data.RowTable schema, rows
 
-  asArray: -> _.map @rows, (row) -> row
-  raw: -> _.map @rows, (row) -> row.raw()
-  rows: @rows
-
-  toJSON: ->
-    schema: @schema.toJSON()
-    data: @raw()
 
   @fromJSON: (json) ->
     schemaJson = json.schema
     dataJson = json.data
 
-    schema = gg.data.Schema.fromSpec schemaJson
-    rawrows = dataJson
-
-    new gg.data.RowTable schema, rawrows
+    schema = gg.data.Schema.fromJSON schemaJson
+    rows = []
+    for raw in dataJson
+      rows.push(gg.data.Row.toRow raw, schema)
+    new gg.data.RowTable schema, rows
 
 
 

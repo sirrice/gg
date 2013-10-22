@@ -12,7 +12,7 @@ class gg.geom.svg.Point extends gg.geom.Render
     stroke: "steelblue"
     "stroke-width": 0
     "stroke-opacity": 0.5
-    group: 1
+    group: {}
 
   inputSchema: ->
     ['x', 'y']
@@ -42,8 +42,8 @@ class gg.geom.svg.Point extends gg.geom.Render
   render: (table, svg) ->
     gg.wf.Stdout.print table, ['x', 'fill'], 5, @log
 
-    rows = table.asArray()
-    circles = @agroup(svg, "circles geoms", rows)
+    rows = table.getRows()
+    circles = svg.append('g').classed('circles geoms', true)
       .selectAll("circle")
       .data(rows)
     enter = circles.enter()

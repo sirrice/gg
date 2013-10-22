@@ -1,21 +1,36 @@
 require "../env"
 vows = require "vows"
 assert = require "assert"
+events = require "events"
+
+Schema = gg.data.Schema
 
 makeTable = (nrows=100) ->
-    rows = _.map _.range(nrows), (i) -> {a:1+i, b:i%10, c: i%2, id:i}
-    gg.data.RowTable.fromArray (rows)
+  rows = _.times nrows, (i) -> 
+    a:1+i
+    b:i%10
+    c: i%2
+    d: i%10
+    id:i
+  table = gg.data.Table.fromArray  rows
+  table
 
 
 
 suite = vows.describe "gg.wf.Flow"
+#gg.util.Log.setDefaults '': 0
 
-suite.addBatch
-  ###
+suite.addBatch {
   "Single Node Flow":
       topic: ->
           flow = new gg.wf.Flow
-          flow.exec (table) -> table.transform('b', (v)->v.get('b')*100)
+          flow.exec (pairtable, params, cb) -> 
+            table = pairtable.getTable()
+            table = gg.data.Transform.transform table, [
+              ['b', ((row) -> row.get('b') * 100), Schema.numeric]
+            ]
+            ret = new gg.data.PairTable table, pairtable.getMD()
+            cb null,ret
           flow
 
       "can print": (flow) ->
@@ -25,55 +40,101 @@ suite.addBatch
       "is instantiated properly": (flow) ->
           root = flow.instantiate()
 
-      "can run": (flow) ->
-          flow.on "output", (id, table) ->
-              assert.isNotNull table
-              table.each (row, rowid) -> assert.equal row.get('b')%100, 0
-          flow.run makeTable(10)
+      "when run": 
+        topic: (flow) ->
+          promise = new events.EventEmitter
+          flow.prepend gg.core.Data.spec2Node
+            type: "table"
+            val: makeTable 10
+          flow.on "output", (id, pt) ->
+            promise.emit "success", pt
+          flow.run()
+          promise
+
+        "is correct": (pt) ->
+          assert.isNotNull pt
+          pt.getTable().each (row) ->
+            assert.equal row.get('b'), row.get('d')*100
+
 
   "Two node flow":
       topic: ->
           flow = new gg.wf.Flow
-          flow.exec({name: "node1", f: (t) -> t.transform('a', (v)->-1 )})
-              .exec({name: "node2", f: (t) -> t.transform('b', (v)->100 )})
+          flow.exec
+            name: "node1"
+            params: 
+              compute: (pt, params, cb) -> 
+                t = pt.getTable()
+                t = gg.data.Transform.transform t,[
+                  ['a', ((row) -> -1), Schema.numeric]
+                ]
+                cb null, new gg.data.PairTable(t, pt.getMD())
+          flow.exec
+            name: "node2"
+            params: 
+              compute: (pt, params, cb) -> 
+                t = pt.getTable()
+                t = gg.data.Transform.transform t,[
+                  ['b', ((row) -> 100), Schema.numeric]
+                ]
+                cb null, new gg.data.PairTable(t, pt.getMD())
           flow
+
       "can print": (flow) ->
-          correct = "node1\t->\tnode2\nnode2\t->\tSINK"
-          console.log flow.toString()
-          assert.equal flow.toString(), correct
+          correct = "node1@client\t->\tnode2(1)\nnode2@client\t->\tSINK"
+          assert.equal correct, flow.toString()
 
-      "can run": (flow) ->
-          flow.on "output", (id, table) ->
-              assert.isNotNull table
-              console.log table
-              table.each (row, rid) ->
-                  assert.equal row.get('a'), -1
-                  assert.equal row.get('b'), 100
+      "when run": 
+        topic: (flow) ->
+          promise = new events.EventEmitter
+          flow.prepend gg.core.Data.spec2Node
+            type: "table"
+            val: makeTable 10
+          flow.on "output", (id, pt) ->
+            promise.emit "success", pt
+          flow.run()
+          promise
 
-          flow.run makeTable(10)
+        "checks out": (pt) ->
+          assert.isNotNull pt
+          pt.getTable().each (row) ->
+              assert.equal row.get('a'), -1
+              assert.equal row.get('b'), 100
 
-    "10 node flow":
-        topic: ->
-            flow = new gg.wf.Flow
+  "10 node flow":
+    topic: ->
+      flow = new gg.wf.Flow
+      _.time 10, (i) ->
+        flow.exec 
+          name: "node#{i}"
+          params:
+            compute: (pt, params, cb) -> 
+              map = [["o#{i}", ((row) -> i), null]]
+              t = gg.data.Transform.transform pt.getTable(), map
+              ret = new gg.data.PairTable t, pt.getMD()
+              cb null, ret
+      flow
+
+      "when run": 
+        topic: (flow) ->
+          promise = new events.EventEmitter
+          flow.prepend gg.core.Data.spec2Node
+            type: "table"
+            val: makeTable 10
+          flow.on "output", (id, pt) ->
+            promise.emit "success", pt
+          flow.run()
+          promise
+
+
+        "is correct": (pt) ->
+          assert.isNotNull pt
+          pt.getTable().each (row) ->
             _.each _.range(10), (i) ->
-                flow.exec {name: "node#{i}", f: (t) -> t.transform("o#{i}", (v)->i)}
-            flow
+                assert.equal row.get("o#{i}"), i
+}
 
-        "can print": (flow) ->
-            correct = "node0\t->\tnode1\nnode1\t->\tnode2\nnode2\t->\tnode3\n" +
-                      "node3\t->\tnode4\nnode4\t->\tnode5\nnode5\t->\tnode6\n" +
-                      "node6\t->\tnode7\nnode7\t->\tnode8\nnode8\t->\tnode9\nnode9\t->\tSINK"
-            assert.equal flow.toString(), correct
-
-        "can run": (flow) ->
-            flow.on "output", (id, table) ->
-                assert.isNotNull table
-                table.each (row, rid) ->
-                    _.each _.range(10), (i) ->
-                        assert.equal row.get("o#{i}"), i
-
-            flow.run makeTable(10)
-
+foo =                
   "Single partition-join flow using spec":
       topic: ->
           flow = new gg.wf.Flow
@@ -82,9 +143,8 @@ suite.addBatch
           flow
 
       "creates 10 partitions": (flow) ->
-          console.log flow.toString()
-          flow.on "output", (id, table) ->
-              console.log table
+          flow.on "output", (id, pt) ->
+            assert.equal pt.getTable().nrows(), 10
           flow.run makeTable(10)
 
   "Single partition-join flow no spec object":
@@ -95,9 +155,8 @@ suite.addBatch
           flow
 
       "creates 10 partitions": (flow) ->
-          console.log flow.toString()
           flow.on "output", (id, table) ->
-              console.log table
+            assert.equal table.getTable().nrows(), 10
           flow.run makeTable(10)
 
   "Nested partiiton-join":
@@ -145,7 +204,6 @@ suite.addBatch
       topic: ->
           flow = new gg.wf.Flow
 
-  ###
   "MultiBarrier flow":
     topic: ->
       flow = new gg.wf.Flow

@@ -7,10 +7,9 @@ class gg.wf.Start extends gg.wf.Node
   ready: -> yes
 
   run: ->
-    data = new gg.wf.Data null
-    outputs = [data]
     @pstore().writeData [0], []
-    @output 0, outputs
-    outputs
+
+    result = new gg.data.PairTable
+    @output 0, result
 
 

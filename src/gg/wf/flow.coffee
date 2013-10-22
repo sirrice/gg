@@ -39,6 +39,9 @@ class gg.wf.Flow extends events.EventEmitter
     # nodes are {n: nodeid, p: port}
     @portGraph = null
 
+    @debug = {}
+
+
 
   instantiate: ->
 
@@ -431,7 +434,9 @@ class gg.wf.Flow extends events.EventEmitter
     if _.isSubclass specOrNode, gg.wf.Node
       node = specOrNode
     else if _.isFunction specOrNode
-      node = new klass {f: specOrNode}
+      node = new klass 
+        params:
+          compute: specOrNode
     else
       node = new klass specOrNode
 
@@ -512,8 +517,9 @@ class gg.wf.Flow extends events.EventEmitter
     runner.on "output", (nodeid, outport, data) =>
       @emit "output", outport, data
 
-    runner.on "done", () =>
-      @emit "done", yes
+    runner.on "done", (debug) =>
+      @debug = debug
+      @emit "done", debug
     @log "created runner"
 
     # if can access server

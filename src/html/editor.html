@@ -1,0 +1,69 @@
+<ggplot2js!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>The Grammar of Graphics</title>
+<link rel="stylesheet" type="text/css" href="../css/gg.css"/>
+<!--<script src="http://d3js.org/d3.v3.min.js"></script>-->
+<script src="../vendor/js/underscore.min.js"></script>
+<script src="../vendor/js/jquery.min.js"></script>
+<script src="../js/gg.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/prettify.js"></script>
+<script src="../js/specs.js"></script>
+<script src="../js/newexamples.js"></script>
+</head>
+<body style="width:100%">
+  <!--<h1>The Grammar of Graphics</h1>-->
+
+
+  <style>
+    body {
+      font-size: 13pt;
+    }
+    table {
+      border-collapse: collapse;
+    }
+    td {
+      border: 1px solid gray;
+      padding: 5px;
+    }
+    .node {
+        stroke: black;
+        stroke-width: 1.5px;
+    }
+
+    .link {
+        stroke-opacity: .6;
+    }
+
+  </style>
+
+
+<div id="querydiv" style="float: left; width: 28em;">
+
+  <div id="controls" style=" margin-top: 10px; margin-bottom: 10px; font-size: 15pt;"></div>
+  <div>
+    <textarea rows=20 cols=35 id="query" style="font-size: 15pt;"> </textarea>
+  </div>
+  <button id="submit">Compile &amp; Render</button>
+  <div style="font-size: 5pt"> "opts": { "title": "baller plot!" }  </div>
+  <div style="font-size: 5pt"> "facets": { "x": "f" }  </div>
+  <div style="font-size: 5pt"> "coord": "yflip"  </div>
+
+  <h2>Data</h2>
+  <div>
+    <table style="font-size:15pt;" id="sample_data">
+      <tr>
+        <td>d (0-100)</td><td> e (d + noise)</td><td> g (0-3)</td><td> f (0-3)</td><td> t (0-3)</td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+
+
+<div id='examples' style="float:left; width: 50%; min-width: 800;"></div>
+
+</body>
+</html>

@@ -17,7 +17,7 @@ class gg.geom.svg.Text extends gg.geom.Render
 
   render: (table, svg) ->
     gg.wf.Stdout.print table, null, 5, @log
-    rows = table.asArray()
+    rows = table.rows()
 
     texts = @agroup(svg, "text geoms", rows)
       .selectAll("text")
@@ -28,21 +28,21 @@ class gg.geom.svg.Text extends gg.geom.Render
 
     @applyAttrs enterTexts,
       class: "geom"
-      x: (t) -> t.get('x0')
-      y: (t) -> t.get('y0')
+      x: (t) -> t.get 'x0'
+      y: (t) -> t.get 'y0'
       dx: (t) -> t.get 'dx'
       dy: (t) -> t.get 'dy'
-      "fill-opacity": (t) -> t.get('fill-opacity')
-      fill: (t) -> t.get('fill')
+      "fill-opacity": (t) -> t.get 'fill-opacity'
+      fill: (t) -> t.get 'fill'
     enterTexts
       .text (t) -> t.get 'text'
 
     cssOver =
-      fill: (t) -> d3.rgb(t.get("fill")).darker(2)
+      fill: (t) -> d3.rgb(t.get "fill").darker(2)
       "fill-opacity": 1
     cssOut =
-      fill: (t) -> t.get('fill')
-      "fill-opacity": (t) -> t.get('fill-opacity')
+      fill: (t) -> t.get 'fill'
+      "fill-opacity": (t) -> t.get 'fill-opacity'
 
     _this = @
     texts

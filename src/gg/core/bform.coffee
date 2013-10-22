@@ -2,7 +2,7 @@
 
 # A Barrier Transformation
 #
-class gg.core.BForm extends gg.wf.Barrier
+class gg.core.BForm extends gg.wf.SyncBarrier
   @ggpackage = "gg.core.BForm"
   @log = gg.util.Log.logger @ggpackage, @ggpackage.substr(@ggpackage.lastIndexOf(".")+1)
 
@@ -21,12 +21,16 @@ class gg.core.BForm extends gg.wf.Barrier
     @params.ensure "klassname", [], @constructor.ggpackage
 
     # wrap compute in a verification method
-    compute = @spec.f or @compute.bind(@)
-    log = @log.bind(@)
-    @compute = (datas, params) ->
-      gg.core.FormUtil.multiAddDefaults datas, params, log
-      gg.core.FormUtil.multiValidateInput datas, params
-      compute datas, params
+    f = @spec.f
+    f ?= @compute.bind @
+    FormUtil = gg.core.FormUtil
+    makecompute = (log) ->
+      (pairtable, params) ->
+        pairtable = FormUtil.addDefaults pairtable, params, log
+        FormUtil.validateInput pairtable, params
+        f pairtable, params
+    @params.put 'compute', makecompute(@log)
+    super
 
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?
@@ -38,13 +42,13 @@ class gg.core.BForm extends gg.wf.Barrier
 
 
   # Defaults for optional attributes
-  defaults: (data, params) -> {}
+  defaults: (tableset, params) -> {}
 
   # Required input schema
-  inputSchema: (data, params) -> []
+  inputSchema: (tableset, params) -> []
 
   # Expected output schema
-  outputSchema: (data, params) -> data.table.schema
+  outputSchema: (tableset, params) -> data.table.schema
 
   paneInfo: (args...) -> gg.core.FormUtil.paneInfo args...
   scalesList: (args...) -> gg.core.FormUtil.scalesList args...

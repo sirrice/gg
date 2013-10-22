@@ -11,17 +11,6 @@
 # XForms also define default schema values, which will be used to fill
 # in the input table.
 #
-# Global State
-# ------------
-#
-# XForms are tied to an instance of a layer and has accessors for
-#
-# 1) which facet it belongs to
-# 2) which layer it belongs to
-# 3) the "correct" set of scales for its aesthetics -- this depends on
-#    the stage of the workflow and which scales training has happened
-#
-#
 # Spec:
 # {
 #   f: Compute Function
@@ -32,7 +21,7 @@
 # }
 #
 #
-class gg.core.XForm extends gg.wf.Exec
+class gg.core.XForm extends gg.wf.SyncExec
   @ggpackage = 'gg.core.XForm'
   @log = gg.util.Log.logger @ggpackage, @ggpackage.substr(@ggpackage.lastIndexOf(".")+1)
 
@@ -41,8 +30,6 @@ class gg.core.XForm extends gg.wf.Exec
     super
 
   parseSpec: ->
-    @log "XForm spec: #{JSON.stringify @spec}"
-
     # pre-xform aesthetic mapping
     if _.findGoodAttr(@spec, gg.xform.Mapper.attrs, null)?
       mapSpec = _.clone @spec
@@ -59,12 +46,15 @@ class gg.core.XForm extends gg.wf.Exec
     @params.ensure "klassname", [], @constructor.ggpackage
 
     # wrap compute in a verification method
-    compute = @spec.f or @compute.bind(@)
+    compute = @params.get('compute') or @compute.bind(@)
     log = @log.bind(@)
-    @compute = (data, params) ->
-      gg.core.FormUtil.addDefaults data, params, log
-      gg.core.FormUtil.validateInput data, params, log
-      compute data, params
+    @compute = (pt, params) ->
+      pt = gg.core.FormUtil.addDefaults pt, params, log
+      gg.core.FormUtil.validateInput pt, params, log
+      log "running xform compute"
+      compute pt, params
+
+    super
 
   extractAttr: (attr, spec=null) ->
     spec = @spec unless spec?
@@ -78,19 +68,18 @@ class gg.core.XForm extends gg.wf.Exec
   #
   # Schema verification functions that subclasses can override
   #
+  ensureScales: (pairtable, params) -> gg.core.FormUtil.ensureScales pairtable, params, @log
+
+  scales: (pairtable, params) -> gg.core.FormUtil.scales pairtable, params, @log
 
   # Defaults for optional attributes
-  defaults: (data, params) -> {}
+  defaults: (pt, params) -> {}
 
   # Required input schema
-  inputSchema: (data, params) -> []
+  inputSchema: (pt, params) -> []
 
   # Expected output schema
-  outputSchema: (data, params) -> data.table.schema
-
-
-  paneInfo: (args...) -> gg.core.FormUtil.paneInfo args...
-  scales: (args...) -> gg.core.FormUtil.scales args...
+  outputSchema: (pt, params) -> pt.tableSchema()
 
   compile: ->
     nodes = []

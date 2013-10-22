@@ -1,42 +1,45 @@
 #<< gg/wf/node
+#<< gg/wf/block
 
-class gg.wf.Stdout extends gg.wf.Exec
+class gg.wf.Stdout extends gg.wf.SyncBlock
   @ggpackage = "gg.wf.Stdout"
   @type = "stdout"
 
   constructor: (@spec) ->
     super
-
     @log = gg.util.Log.logger @constructor.ggpackage, "StdOut: #{@name}-#{@id}"
 
   parseSpec: ->
+    super
     @params.ensureAll
+      key: [ [], _.flatten [gg.facet.base.Facets.facetKeys, 'layer'] ]
       n: [ [], null ]
-      aess: [ [], null ]
+      cols: [ ['aess'], null ]
 
-  compute: (data, params) ->
-    env = data.env
-    @log "facetX: #{env.get("facetX")}\tfacetY: #{env.get("facetY")}"
-    gg.wf.Stdout.print data.table, params.get('aess'), params.get('n'), @log
-    data
+  compute: (pairtable, params) ->
+    mdcols = ['layer', 'facet-x', 'facet-y', 'group', 'lc']
+    gg.wf.Stdout.print pairtable.getTable(), params.get('cols'), params.get('n'), @log
+    gg.wf.Stdout.print pairtable.getMD(), mdcols, params.get('n'), @log
+    pairtable
 
-  @print: (table, aess, n, log=null) ->
+
+  @print: (table, cols, n, log=null) ->
     if _.isArray table
-      _.each table, (t) -> gg.wf.Stdout.print t, aess, n, log
+      _.each table, (t) -> gg.wf.Stdout.print t, cols, n, log
 
-    log = gg.util.Log.logger(gg.wf.Stdout.ggpackage, "stdout") unless log?
+    idx = 0
     n = if n? then n else table.nrows()
     blockSize = Math.max(Math.floor(table.nrows() / n), 1)
-    idx = 0
     schema = table.schema
-    if aess?
-      aess = aess.filter (aes) -> schema.contains aes
+    cols ?= schema.cols
+    log ?= gg.util.Log.logger gg.wf.Stdout.ggpackage, "stdout" 
+
     log "# rows: #{table.nrows()}"
-    log "Schema: #{schema.toSimpleString()}"
+    log "Schema: #{schema.toString()}"
     while idx < table.nrows()
-      row = table.get(idx)
-      row = row.project aess if aess?
-      log row.toString()
+      row = table.get idx
+      pairs = _.map cols, (col) -> [col, row.get(col)]
+      log JSON.stringify(pairs)
       idx += blockSize
 
   @printTables: (args...) -> @print args...
@@ -45,28 +48,35 @@ class gg.wf.Stdout extends gg.wf.Exec
 
 
 
-class gg.wf.Scales extends gg.wf.Exec
+class gg.wf.Scales extends gg.wf.SyncBlock
   @ggpackage = "gg.wf.Scales"
   @type = "scaleout"
+  @log = gg.util.Log.logger @ggpackage, "scalesout"
 
   constructor: (@spec) ->
     super
-
     @log = gg.util.Log.logger @constructor.ggpackage, "Scales: #{@name}-#{@id}"
 
-  compute: (data, params) ->
-    layerIdx = data.env.get 'layer'
-    gg.wf.Scales.print data.env.get('scales'), layerIdx,  @log
-    data
+  parseSpec: ->
+    super
+    @params.ensureAll
+      key: [ [], _.flatten [gg.facet.base.Facets.facetKeys, 'layer'] ]
 
-  # @param scales set
+  compute: (pairtable, params) ->
+    md = pairtable.getMD()
+    md.fastEach (row) =>
+      layer = row.get 'layer'
+      scale = row.get 'scales'
+      gg.wf.Scales.print scale, layer, @log
+    pairtable
+
   @print: (scaleset, layerIdx, log=null) ->
-    log = gg.util.Log.logger("scaleout") unless log?
+    log ?= @log 
 
     log "scaleset #{scaleset.id}, #{scaleset.scales}"
-    _.each scaleset.scalesList(), (scale) =>
-      str = scale.toString()
-      log "layer #{layerIdx}, #{str}"
+    _.each scaleset.scales, (map, aes) ->
+      _.each map, (scale, type) ->
+        log "#{scaleset.id} l(#{layerIdx}) t(#{type})\t#{scale.toString()}"
 
 
 

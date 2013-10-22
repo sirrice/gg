@@ -5,7 +5,7 @@ class gg.prov.OPStore extends gg.util.Graph
 
   constructor: (@flow, @op) ->
     super
-    @id (o) -> JSON.stringify op
+    @id (o) -> JSON.stringify "#{@flow.id}-#{@op.id}"
 
   
   writeSchema: (outAttrs, inAttrs) ->

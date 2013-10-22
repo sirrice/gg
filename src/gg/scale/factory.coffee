@@ -11,6 +11,12 @@ class gg.scale.Factory
     sf = new gg.scale.Factory defaults
     sf
 
+  type: (aes) ->
+    if aes of @defaults
+      @defaults[aes].type
+    else
+      gg.data.Schema.unknown
+
   scale: (aes, type) ->
     unless aes?
       throw Error("Factory.scale(): aes was null")

@@ -1,7 +1,8 @@
 #<< gg/wf/node
 
 # This class is a gg.core.XForm in signature only (ala duck typing) --
-# any XForm can have mappers but not the other way around.
+#
+# Any XForm can have mappers but not the other way around.
 #
 # gg.xform.Mapper performs a schema transformation.  It's spec is:
 #
@@ -38,7 +39,7 @@
 # Provenance mappings can be automatically extracted from MAPSPECs 
 # 1-4 and must be foresaken for 5
 #
-class gg.xform.Mapper extends gg.wf.Exec
+class gg.xform.Mapper extends gg.wf.SyncExec
   @ggpackage = "gg.xform.Mapper"
   @log = gg.util.Log.logger @ggpackage, 'map'
   @attrs = [
@@ -46,34 +47,52 @@ class gg.xform.Mapper extends gg.wf.Exec
     "aesthetic", "aesthetics"
   ]
 
-  constructor: ->
-    super
-
   parseSpec: ->
     @params.ensureAll
       mapping: [gg.xform.Mapper.attrs, {}]
       inverse: [[], @spec.inverse or {}]
-
-    @params.putAll
-      inputSchema: @inputSchema
-      outputSchema: @outputSchema
-    @params.ensure 'klassname', [], @constructor.ggpackage
+    #@params.ensure 'klassname', [], @constructor.ggpackage
     super
 
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    mapping = params.get 'mapping'
 
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
-    @log "transform: #{JSON.stringify params.get 'mapping'}"
-    @log "table:     #{JSON.stringify table.colNames()}"
-    @log table.clone()
+    functions = @constructor.mappingToFunctions table, mapping
+    table = gg.data.Transform.transform table, functions
+    pt = new gg.data.PairTable table, pairtable.getMD()
+    if 'group' in _.map(functions, ([col,f,t])->col)
+      pt = pt.ensure ['group']
+    pt
 
-    # resolve aesthetic aliases in mapping
-    functions = _.mappingToFunctions table, params.get('mapping')
-    @log "functions: #{JSON.stringify functions}"
-    table = table.transform functions, yes
-    data.table = table
-    data
+  @mappingToFunctions: (table, mapping) ->
+    @log "transform: #{JSON.stringify mapping}"
+    @log "table:     #{JSON.stringify table.schema.toString()}"
+
+    groupable = null
+    if 'group' of mapping
+      groupable = mapping['group']
+      unless _.isObject groupable
+        groupable = {}
+      mapping = _.omit mapping, 'group'
+    else
+      allcols = _.keys mapping
+      cols = _.filter allcols, (c) -> gg.core.Aes.groupable c
+      if cols.length > 0
+        groupable = _.pick mapping, cols
+    @log "groupable: #{JSON.stringify groupable}"
+
+    functions = _.mappingToFunctions table, mapping
+    if groupable?
+      gFuncs = _.mappingToFunctions table, groupable
+      groupf = ((gf) ->
+        (row, idx) ->
+          _.o2map gf, ([col, f, type]) -> 
+            [col, f(row, idx)]
+        )(gFuncs)
+      functions.push ['group', groupf, gg.data.Schema.object]
+
+    functions
 
   @fromSpec: (spec) ->
     spec = _.clone spec
@@ -83,13 +102,10 @@ class gg.xform.Mapper extends gg.wf.Exec
     unless mapping? and _.size(mapping) > 0
       return null 
 
-
     # aes should be the mapping
     inverse = spec.inverse
     unless spec.inverse?
-      inverse = {}
-      _.each mapping, (val, key) -> 
-        inverse[val] = key
+      inverse = _.o2map mapping, (v,k) -> [v, k]
     spec.params = 
       aes: mapping
       inverse: inverse

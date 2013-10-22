@@ -13,7 +13,7 @@ try
 catch error
   console.log error
 
-class gg.core.Graphic
+class gg.core.Graphic extends events.EventEmitter
   @ggpackage = "gg.core.Graphic"
   @envKeys = [
     'layer'
@@ -51,7 +51,11 @@ class gg.core.Graphic
     @layers = new gg.layer.Layers @, @layerspec
     @scales = new gg.scale.Scales @, @scalespec
     @datas = gg.core.Data.fromSpec @spec.data
+    @map = gg.xform.Mapper.fromSpec 
+      name: "base-aes-map"
+      aes: @aesspec
 
+    
     # connect layer specs with scales config
     _.each @layers.layers, (layer) =>
       @scales.scalesConfig.addLayerDefaults layer
@@ -89,15 +93,10 @@ class gg.core.Graphic
       name: 'core-render'
       params: @params).compile()
 
-
-    #
-    # pre-filter transformations??
-    #
-
     preMulticastNodes = []
     preMulticastNodes.push @datas.data()
     preMulticastNodes.push @setupEnvNode()
-    preMulticastNodes = preMulticastNodes.concat @facets.splitter
+    preMulticastNodes.push @map
     preMulticastNodes = _.compact preMulticastNodes
 
     prev = null
@@ -124,7 +123,7 @@ class gg.core.Graphic
 
       prev = multicast
       for node in nodes
-        unless node.type == 'barrier'
+        unless node.isBarrier()
           wf.connectBridge prev, node
           prev = node
 
@@ -177,7 +176,9 @@ class gg.core.Graphic
       @workflow = optimizer.run @workflow
 
     @log "running workflow"
-    #@workflow.on "done", () => parentSvg.append @svg
+    @workflow.on "done", (debug) => 
+      @emit "done", debug
+      #parentSvg.append @svg
     @workflow.run @options
 
 

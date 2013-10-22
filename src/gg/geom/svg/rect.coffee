@@ -10,7 +10,7 @@ class gg.geom.svg.Rect extends gg.geom.Render
     stroke: "steelblue"
     "stroke-width": 1
     "stroke-opacity": 0.5
-    group: 1
+    group: {}
 
   inputSchema: ->
     ['x0', 'x1', 'y0', 'y1']
@@ -47,7 +47,7 @@ class gg.geom.svg.Rect extends gg.geom.Render
 
 
   render: (table, svg) ->
-    rows = table.asArray()
+    rows = table.getRows()
 
     rects = @agroup(svg, "intervals geoms", rows)
       .selectAll("rect")

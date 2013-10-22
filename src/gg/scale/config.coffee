@@ -74,14 +74,20 @@ class gg.scale.Config
           ret[trueaes] = scale
     ret
 
+  # extract scales config from layer
+  # also extract geom scale type defaults
+  #   e.g., boxplot: x usually ordinal
   addLayerDefaults: (layer) ->
     layerIdx = layer.layerIdx
     layerSpec = layer.spec
-    scalesSpec = layerSpec.scales
-    layerConfig = gg.scale.Config.loadSpec scalesSpec
-    @layerDefaults[layerIdx] = layerConfig
+    
+    scalesSpec = layer.geom.scaleConfigs()
+    _.extend scalesSpec, layerSpec.scales
+    config = gg.scale.Config.loadSpec scalesSpec
+
+    @layerDefaults[layerIdx] = config
     @specs.layerSpecs[layerIdx] = layerSpec
-    @log "addLayer: #{layerConfig}"
+    @log "addLayer: #{JSON.stringify scalesSpec}"
 
 
 

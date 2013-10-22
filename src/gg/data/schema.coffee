@@ -7,307 +7,133 @@ class gg.data.Schema
   @ordinal = 0
   @numeric = 2
   @date = 3
-  @array = 4
-  @nested = 5
+  @object = 4
+  @svg = 5    # environment variable
+  @container = 6
+  @function = 7
   @unknown = -1
 
-  constructor: ->
-    # maps keys -> attribute information (type, schema)
-    @lookup = {}
-
-    # maps attributes to keys 
-    # e.g., if schema is { pts: {x, y} }
-    # attrToKeys is:
-    #   x -> pts
-    #   y -> pts
-    #   pts -> pts
-    @attrToKeys = {}
+  constructor: (@cols=[], @types=[], @defaults={}) ->
+    if @cols.length != @types.length
+      throw Error("len of cols != types #{@cols.length} != #{@types.length}")
 
     @log = gg.data.Schema.log
+    @col2idx = {}
+    _.each @cols, (col, idx) =>
+      @col2idx[col] = idx
 
-  # XXX: if key exists in schema, simply overwrites
-  addColumn: (key, type, schema=null) ->
-    @lookup[key] =
-      type: type
-      schema: schema
+  ncols: -> @cols.length
+  index: (col) -> @col2idx[col]
+  isOrdinal: (col) -> @type(col) is gg.data.Schema.ordinal
+  isNumeric: (col) -> @type(col) is gg.data.Schema.numeric
+  isDate: (col) -> @type(col) is gg.data.Schema.date
+  isObject: (col) -> @type(col) is gg.data.Schema.object
+  isUnknown: (col) -> @type(col) is gg.data.Schema.unknown
+  default: (col) -> @defaults[col]
 
-    @attrToKeys[key] = key
-    if type in [gg.data.Schema.array, gg.data.Schema.nested]
-      _.each schema.attrs(), (attr) =>
-        @attrToKeys[attr] = key
 
-  rmColumn: (col) ->
-    if @contains col
-      key = @attrToKeys[col]
-      if key is col
-        # clean up subkeys if col is a nested or array type
-        if @isArray(col) or @isNested(col)
-          _.each @lookup[key].schema.attrs(), (attr) =>
-            delete @attrToKeys[attr]
+  addColumn: (col, type=gg.data.Schema.unknown) ->
+    unless @has col
+      @cols.push(col)
+      @types.push type
+      @col2idx[col] = @cols.length-1
+      yes
+    else
+      no
 
-        delete @lookup[key]
+  setType: (col, type) ->
+    return if type == @type(col)
+    if @type(col) is gg.data.Schema.unknown
+      @types[@index col] = type
+    else
+      throw Error "can't update #{col} because type not unknown: #{@type col}"
+
+  project: (cols) ->
+    cols = _.compact _.flatten [cols]
+    types = _.map cols, (col) => 
+      unless @has col
+        throw Error("col #{col} not in schema")
+      @types[@index col]
+    new gg.data.Schema(cols, types)
+
+  # removes col, preserves ordering
+  exclude: (rm) ->
+    rm = _.flatten [rm]
+    idxs = _.map rm, (col) => @index col
+    cols = []
+    types = []
+    for col in @cols
+      if @index(col) not in idxs
+        cols.push col
+        types.push @type(col)
+
+    new gg.data.Schema cols, types
+
+  type: (col) -> @types[@index col]
+
+  contains: (col, type=null) -> @has col, type
+  has: (col, type=null) -> 
+    if type?
+      idx = @index col
+      (col of @col2idx) and @types[idx] == type
+    else
+      col of @col2idx
+
+  merge: (other) ->
+    return unless _.isType other, gg.data.Schema
+    for col in other.cols
+      unless @has col
+        @addColumn col, other.type(col)
+    @
+
+  @merge: (schemas) ->
+    schemas = _.flatten arguments
+    schema = null
+    for curschema in schemas
+      unless schema?
+        schema = curschema.clone()
       else
-        # col is within a nesting
-        @lookup[key].schema.rmColumn col
-        if @lookup[key].schema.nkeys() == 0
-          delete @lookup[key]
-
-      delete @attrToKeys[col]
-
-
-
-
-  # promotes all attributes in cols parameter
-  # 1) within nests into raw attributes,
-  # 2) arrays to nests
-  #
-  # e.g., if cols = ['b', 'd']
-  #
-  #  { a:, b: { c: }, d: [ {e:} ] }
-  #
-  # is flattened to:
-  #
-  #  { a:, c:, d: {e:} }
-  #
-  # @param cols list of nested or array attributes to flatten,
-  #        or null to flatten all of them
-  #
-  flatten:(cols=null, recursive=false) ->
-    cols ?= @attrs().filter (attr) => @isArray(attr) or @isNested(attr)
-    cols = [cols] unless _.isArray cols
-
-    schema = new gg.data.Schema
-    _.each @lookup, (type, key) ->
-      if key in cols
-        if not recursive and type.type == gg.data.Schema.array
-          # promote to nested object
-          arrSchema = type.schema
-          schema.addColumn key, gg.data.Schema.nested, arrSchema
-        else
-          if recursive or type.type == gg.data.Schema.nested
-            # promote subkeys to raw keys
-            _.each type.schema.lookup, (subtype, subkey) ->
-              schema.addColumn subkey, subtype.type, subtype.schema
-          else
-            schema.addColumn key, type.type, type.schema
-      else
-        schema.addColumn key, type.type, type.schema
-
-    if no
-      switch type.type
-        when gg.data.Schema.array, gg.data.Schema.nested
-          _.each type.schema.lookup, (subtype, subkey) ->
-            schema.addColumn subkey, subtype.type, subtype.schema
-        else
-          schema.addColumn key, type.type, type.schema
+        for [col, type] in _.zip(curschema.cols, curschema.types)
+          schema.addColumn col, type
     schema
 
-  clone: -> gg.data.Schema.fromSpec @toJSON()
 
-  attrs: -> _.keys @attrToKeys
-
-  # return attributes that contain data (e.g., not containers)
-  leafAttrs: -> 
-    _.filter @attrs(), (attr) =>
-      @isRaw(attr) or @inArray(attr) or @inNested(attr)
-
-  contains: (attr, type=null) ->
-    if attr in @attrs()
-      (type is null) or @isType(attr, type)
-    else
-      false
-
-  nkeys: -> _.size @lookup
-
-  toString: -> JSON.stringify @toJSON()
-
-  toSimpleString: ->
-    arr = _.map @attrs(), (attr) => "#{attr}(#{@type(attr)})"
-    arr.join " "
-
-
-
-
-  type: (attr, schema=null) ->
-    typeObj = @typeObj attr, schema
-    return null unless typeObj?
-    typeObj.type
-
-  typeObj: (attr, schema=null) ->
-    schema = @ unless schema? # schema class object
-    lookup = schema.lookup   # internal schema datastructure
-    key = schema.attrToKeys[attr]
-
-    if lookup[key]?
-      if key is attr
-        if lookup[key].schema
-          json = lookup[key].schema.toJSON()
-        else
-          json = null
-        {
-          type: lookup[key].type
-          schema: json
-        }
-      else
-        type = lookup[key].type
-        subSchema = lookup[key].schema
-        switch type
-          when gg.data.Schema.array, gg.data.Schema.nested
-            if subSchema? and attr of subSchema.lookup
-              subLookup = subSchema.lookup
-              # only allow one level of nesting
-              {
-                type: subLookup[attr].type
-                schema: null
-              }
-            else
-              @log "type: no type for #{attr} (code 1)"
-              null
-          else
-            @log "type: no type for #{attr} (code 2)"
-            null
-    else
-      @log "type: no type for #{attr} (code 3)"
-      null
-
-
-  isKey: (attr) -> attr of @lookup
-  isOrdinal: (attr) -> @isType attr, gg.data.Schema.ordinal
-  isNumeric: (attr) -> @isType attr, gg.data.Schema.numeric
-  isTable: (attr) -> @isType attr, gg.data.Schema.array
-  isArray: (attr) -> @isType attr, gg.data.Schema.array
-  isNested: (attr) -> @isType attr, gg.data.Schema.nested
-  isType: (attr, type) -> @type(attr) == type
-  isRaw: (attr) -> attr == @attrToKeys[attr]
-
-  inArray: (attr) ->
-    key = @attrToKeys[attr]
-    return false if key == attr
-    @type(key) == gg.data.Schema.array
-
-  inNested: (attr) ->
-    key = @attrToKeys[attr]
-    return false if key == attr
-    @type(key) == gg.data.Schema.nested
-
-
-
-
-  # @param newType the new (integer) type
-  setType: (attr, newType) ->
-    schema = @
-    key = schema.attrToKeys[attr]
-    if schema.lookup[key]?
-      if key is attr
-        schema.lookup[key].type = newType
-      else
-        type = schema.lookup[key].type
-        subSchema = schema.lookup[key].schema
-        switch type
-          when gg.data.Schema.array, gg.data.Schema.nested
-            if subSchema?
-              @log @
-              @log schema
-              @log subSchema
-              @log attr
-              subSchema.lookup[attr].type = newType
-
-
-  # @param rawrow a json object with same schema as this object
-  #        e.g., row.raw(), where row.schema == this
-  # @param attr an attribute somewhere in this schema
-  extract: (rawrow, attr) ->
-    return null unless @contains attr
-    key = @attrToKeys[attr]
-    if @lookup[key]?
-      if key is attr
-        rawrow[key]
-      else
-        type = @lookup[key].type
-        subSchema = @lookup[key].schema
-        subObject = rawrow[key]
-
-        switch type
-          when gg.data.Schema.array
-            if subSchema? and attr of subSchema.lookup
-              _.map subObject, (o) -> o[attr]
-          when gg.data.Schema.nested
-            if subSchema? and attr of subSchema.lookup
-              subObject[attr]
-          else
-            null
-    else
-      null
-
-
-
-  # 
   # @return type object { type: , schema:  }
   @type: (v) ->
     if _.isDate v
-      { type: gg.data.Schema.date }
+      gg.data.Schema.date
     else if _.isObject v
-      ret = { }
-      if _.isArray v
-        els = v[0...20]
-        ret.type = gg.data.Schema.array
-      else
-        els = [v]
-        ret.type = gg.data.Schema.nested
-
-      ret.schema = new gg.data.Schema
-      _.each els, (el) ->
-        _.each el, (o, attr) ->
-          type = gg.data.Schema.type o
-          if ret.schema.contains attr
-            # if types not consistent, downcast to ordinal
-            unless ret.schema.isType attr, type.type
-              ret.schema.setType attr, gg.data.Schema.ordinal
-          else
-            ret.schema.addColumn attr, type.type, type.schema
-      ret
+      gg.data.Schema.object
     else if _.isNumber v
-      { type: gg.data.Schema.numeric }
+      gg.data.Schema.numeric
     else
-      { type: gg.data.Schema.ordinal }
+      gg.data.Schema.ordinal 
 
-
+  # @param rows [ {col: val, ..} ]
   @infer: (rows) ->
     schema = new gg.data.Schema
     return schema unless rows? and rows.length > 0
+
     for row in rows[0...50]
-      row = row.raw() if _.isType row, gg.data.Row
-      for k, v of row
-        typeObj = gg.data.Schema.type v
-        schema.addColumn k, typeObj.type, typeObj.schema
-    schema
-
-
-  @fromSpec: (spec) ->
-    schema = new gg.data.Schema
-    _.each spec, (v, k) ->
-      if _.isObject v
-        if v.schema?
-          subSchema = gg.data.Schema.fromSpec v.schema
-          schema.addColumn k, v.type, subSchema
-        else
-          schema.addColumn k, v.type, v.schema
+      if _.isType row, gg.data.Row
+        schema.merge(row.schema) 
       else
-        schema.addColumn k, v
+        for k, v of row
+          schema.addColumn k, @type(v)
     schema
 
-  @fromJSON: (json) -> @fromSpec json
+  clone: -> @project _.clone(@cols)
+  toString: -> JSON.stringify _.zip(@cols, @types)
+  toSimpleString: -> 
+    _.map(_.zip(@cols, @types), ([col, type]) -> "#{col}(#{type})").join " "
+
+  @fromJSON: (json) -> 
+    new gg.data.Schema _.keys(json), _.values(json)
 
   toJSON: ->
-    json = {}
-    _.each @lookup, (v, k) ->
-      switch v.type
-        when gg.data.Schema.nested, gg.data.Schema.array
-          json[k] =
-            type: v.type
-            schema: v.schema.toJSON()
-        else
-          json[k] = v
-    json
+    ret = {}
+    for [col, type] in _.zip(@cols, @types)
+      ret[col] = type
+    ret
 
 

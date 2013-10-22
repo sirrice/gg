@@ -1,36 +1,57 @@
 #<< gg/wf/node
 
 #
-# The nested structure of the data objects is preserved, but 
-# temporarily flattens the @inputs for the @compute function
+# Multiinput -> tableset -> compute -> tableset -> multioutput
 #
-# @compute(tables) -> tables
-# The compute function takes a list of N tables and outputs N tables
-# such that the positions of the input and output tables match up
-#
+# Adds a hidden column (_barrier) to the data to track input and output ports
+# 
 class gg.wf.Barrier extends gg.wf.Node
   @ggpackage = "gg.wf.Barrier"
   @type = "barrier"
 
-
-  compute: (datas, params) -> datas
+  compute: (tableset, params, cb) -> cb null, tableset
 
   run: ->
     throw Error("Node not ready") unless @ready()
+    compute = @params.get('compute') or @compute.bind(@)
 
-    [flat, md] = gg.wf.Inputs.flatten @inputs
-    datas = @compute flat, @params
-    outputs = gg.wf.Inputs.unflatten datas, md
+    pairtables = _.map @inputs, (pt, idx) ->
+      t = pt.getTable()
+      t = t.setColumn '_barrier', idx, gg.data.Schema.numeric
+      md = pt.getMD()
+      md = md.setColumn '_barrier', idx, gg.data.Schema.numeric
+      new gg.data.PairTable t, md
 
-    # XXX: Write provenance.  assume input and output datas 
-    #      1) are the same (number and ids)
-    #      2) retain the same path
-    # XXX: Alternative -- @compute writes provenance
-    pstore = @pstore()
-    gg.wf.Inputs.mapLeaves @inputs, (data, path) ->
-      pstore.writeData path, path
+    tableset = new gg.data.TableSet pairtables
+    compute tableset, @params, (err, tableset) =>
+      if err?
+        throw err
+      ps = gg.data.Transform.partitionJoin tableset.getTable(), tableset.getMD(), '_barrier'
+      for p in ps
+        idx = p['key']
+        result = p['table']
+        t = result.getTable().rmColumn '_barrier'
+        result = new gg.data.PairTable t, result.getMD()
+        @output idx, result
 
-    for output, idx in outputs
-      @output idx, output
-    outputs
+        
+
+class gg.wf.SyncBarrier extends gg.wf.Barrier
+  parseSpec: ->
+    super
+    f = @params.get 'compute'
+    f ?= @compute.bind @
+    name = @name
+    makecompute = (f) ->
+      (pairtable, params, cb) ->
+        try
+          res = f pairtable, params, () ->
+            throw Error "SyncBarrier should not call callback"
+          cb null, res
+        catch err
+          console.log "err in SyncBarrier #{name}"
+          console.log err.toString()
+          cb err, null
+    @params.put 'compute', makecompute(f)
+        
 

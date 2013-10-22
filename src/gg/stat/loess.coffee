@@ -2,8 +2,8 @@
 
 science = require 'science'
 
-class gg.stat.LoessStat extends gg.stat.Stat
-  @ggpackage = "gg.stat.LoessStat"
+class gg.stat.Loess extends gg.stat.Stat
+  @ggpackage = "gg.stat.Loess"
   @aliases = ['loess', 'smooth']
 
   parseSpec: ->
@@ -14,27 +14,27 @@ class gg.stat.LoessStat extends gg.stat.Stat
 
   inputSchema: -> ['x', 'y']
 
-  outputSchema: (data) ->
-    gg.data.Schema.fromSpec
+  outputSchema:  ->
+    gg.data.Schema.fromJSON
       x: gg.data.Schema.numeric
       y: gg.data.Schema.numeric
 
-  schemaMapping: (data) ->
+  schemaMapping: ->
     x: 'x'
     y: 'y'
 
   # The loess function expects an xs and ys array where
   # 1) every value is a finite number
   # 2) xs is monotonically increasing
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
     if table.nrows() <= 1
-      return data
-    @log "nrows: #{table.nrows()}"
-    @log "contains x,y: #{table.contains 'x'}, #{table.contains 'y'}"
-    xs = table.getColumn('x')
-    ys = table.getColumn('y')
+      return pairtable
+
+    @log "nrows:   #{table.nrows()}"
+    @log "schema:  #{table.schema.toString()}"
+    xs = table.getColumn 'x'
+    ys = table.getColumn 'y'
     # remove invald entries
     xys = _.zip(xs, ys)
     xys = xys.filter (xy) -> _.isValid(xy[0]) and _.isValid(xy[1])
@@ -56,19 +56,17 @@ class gg.stat.LoessStat extends gg.stat.Stat
     @log.warn "bw: #{bandwidth}\tacc: #{acc}"
 
     smoothys = loessfunc(xs, ys)
-    @log "#{_.reject(smoothys, _.isValid).length} ys rejected post-loess"
-    rows = []
-    _.times xs.length, (idx) ->
-      # sometimes it interpolates to NaN values
-      if _.isValid(smoothys[idx]) and _.isValid(xs[idx])
-        rows.push
-          x: xs[idx]
-          y: smoothys[idx]
+    prototyperow = table.get(0).raw()
+    rows = _.compact _.map _.zip(xs, smoothys), ([x,y]) ->
+      if _.isValid(y) and _.isValid(x)
+        newrow = _.clone(prototyperow)
+        _.extend newrow, { x: x, y: y } 
+        return newrow
 
+    @log "#{smoothys.length - rows.length} rejected post-loess"
     @log "compute: xs: #{JSON.stringify xs.slice(0,6)}"
     @log "compute: ys: #{JSON.stringify ys.slice(0,6)}"
     @log "compute: smoothys: #{JSON.stringify smoothys.slice(0,6)}"
 
-    schema = params.get('outputSchema') data, params
-    data.table = new gg.data.RowTable schema, rows
-    data
+    table = gg.data.Table.fromArray rows
+    new gg.data.PairTable table, pairtable.getMD()

@@ -20,7 +20,7 @@ class gg.prov.PStore extends gg.util.Graph
   constructor: (@flow) ->
     super()
     @opstores = {}
-    @id (o) -> JSON.stringify o
+    @id (o) -> "op-#{o.id}"#JSON.stringify o
 
   get: (op) ->
     unless op.id of @opstores

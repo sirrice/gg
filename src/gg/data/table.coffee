@@ -19,81 +19,158 @@
 
 class gg.data.Table
   @ggpackage = "gg.data.Table"
+  @log = gg.util.Log.logger @ggpackage, "Table"
+
+  # @param f functiton to run.  takes gg.data.Row, index as input
+  # @param n number of rows
+  each: (f, n=null) ->
+    iter = @iterator()
+    idx = 0
+    ret = []
+    while iter.hasNext()
+      ret.push f(iter.next(), idx)
+      idx +=1 
+      break if n? and idx >= n
+    iter.close()
+    ret
+
+  # read-only each 
+  fastEach: (f, n) -> @each f, n
+
+  # dumb version of an iterator
+  iterator: ->
+    class Iter
+      constructor: (@table) ->
+        @nrows = @table.nrows()
+        @idx = 0
+      reset: -> @idx = 0
+      next: -> 
+        throw Error("no more elements.  idx=#{@idx}") unless @hasNext()
+        @idx += 1
+        @table.get @idx-1
+      hasNext: -> @idx < @nrows
+      close: -> @table = null
+    new Iter(@)
+
+  partition: (cols) ->
+    partitions = gg.data.Transform.split @, cols
+    _.map partitions, (p) -> p['table']
+
+
+  has: (col, type) -> @contains col, type
+  contains: (col, type) -> @schema.has col, type
+  hasCols: (cols, types=null) ->
+    _.all cols, (col, idx) =>
+      type = null
+      type = types[idx] if types? and types.length > idx
+      @has col, type
+  cols: -> @schema.cols
+
+  ncols: -> @schema.ncols()
+  nrows: -> 
+    i = 0
+    @each (row) -> i += 1
+    i
+
+  get: (idx, col=null) -> throw "not implemented"
+  _getColumn: (col) -> throw "not implemented"
+  getCol: (col) -> @getColumn col
+  getColumn: (col) -> 
+    if @has col
+      @_getColumn col
+    else
+      path = col.split '.'
+      if @has path[0]
+        colData = @_getColumn path[0]
+        path = _.rest path
+        colData = _.map colData, (v) -> _.reach(v, path)
+      else
+        throw Error "col #{col} not in schema #{@cols()}"
+  rows: -> @each (row) -> row
+  getRows: -> @each (row) -> row
+  raw: -> throw "not implemented"
+  stats: -> throw "not implemented"
+  klass: -> gg.data.ColTable
+
+
+  # These are the _only_ methods that Change the schema
+  # XXX: No guarantees whether the change happens in place or creates a new table!
+  # @return table with modified schema
+  setColumn: (col, val, type=null) -> 
+    if @has col
+      @log.warn "#{col} already in schema #{@schema.toString()}"
+      # in some modes, throw error
+    vals = _.times(@nrows(), () -> val)
+    @addColumn col, vals, type, yes
+    @
+
+  _addColumn: (col, vals) -> throw Error "not implemented"
+  addColumn: (col, vals, type=null, overwrite=no) ->
+    if vals.length != @nrows()
+      throw Error "values not same length as table: #{vals.length} != #{@nrows()}"
+    if @has(col) and not overwrite
+      throw Error "column already exists: #{col}"
+
+    type ?= gg.data.Schema.type(vals[0]) 
+    @schema.addColumn col, type
+    @_addColumn col, vals
+    @
+
+
+
+  # This is the only method other than addCol that changes the data
+  addRow: (row) -> throw "not implemented"
+
+
+  toJSON: ->
+    schema: @schema.toJSON()
+    data: @raw()
+
+  toString: ->
+    JSON.stringify @raw()
+
+  cloneShallow: -> throw "not implemented"
+  cloneDeep: -> @klass().fromJSON @toJSON()
+  clone: -> @cloneDeep()
+
+
+  @type2class: (tabletype="row") ->
+    switch tabletype
+      when "row"
+        gg.data.RowTable
+      when "col"
+        gg.data.ColTable
+      else
+        null
+
+  # Tries to infer a schema for a list of objects
+  #
+  # @param rows [ { attr: val, .. } ]
+  @fromArray: (rows, schema=null, tabletype="row") ->
+    klass = @type2class tabletype
+    unless klass?
+      throw Error "#{tabletype} doesnt have a class"
+
+    klass.fromArray rows, schema
+
+  @merge: (tables, tabletype="row") ->
+    klass = @type2class tabletype
+    if tables.length is 0
+      schema = new gg.data.Schema()
+      new klass schema
+    else
+      schema = gg.data.Schema.merge _.map(tables, (t) -> t.schema)
+      table = new klass schema
+      for t in tables
+        t.each (row) -> table.addRow row.raw()
+      table
+
+
 
   @reEvalJS = /^{.*}$/
   @reVariable = /^[a-zA-Z]\w*$/
   @reNestedAttr = /^[a-zA-Z]+\.[a-zA-Z]+$/
-  @log = gg.util.Log.logger @ggpackage, "Table"
 
   @isEvalJS: (s) ->@reEvalJS.test s
   @isVariable: (s) -> @reVariable.test s
   @isNestedAttr: (s) -> @reNestedAttr.test s
-
-
-  type: (colname) ->
-      val = @get(0, colname)
-      if val? then typeof val else 'unknown'
-
-  nrows: -> throw "not implemented"
-  ncols: -> throw "not implemented"
-  # XXX: define return value.  currently Array<String>
-  colNames: -> throw "not implemented"
-  contains: (colName) -> colName in @colNames()
-
-  @merge: (tables) -> gg.data.RowTable.merge tables
-
-  each: (f, n=null) ->
-    n = @nrows() unless n?
-    _.map _.range(n), (i) => f @get(i), i
-
-  # XXX: destructive!
-  # updates column values in place
-  # @param {Function or map} fOrName
-  #        must specify colName if fOrMap is a Function
-  #        otherwise, fOrMap is a mapping from colName --> (old val)->new val
-  # @param {String} colName
-  #        is specified if fOrName is a function, otherwise ignored
-  map: (fOrMap, colName=null) -> throw Error("not implemented")
-  clone: -> @cloneDeep()
-  cloneShallow: -> throw "not implemented"
-  cloneDeep: -> throw "not implemented"
-  merge: (table)-> throw "not implemented"
-  split: (gbfunc)-> throw "not implemented"
-  transform: (colname, func)-> throw "not implemented"
-  filter: (f) -> throw Error("not implemented")
-  addConstColumn: (name, val, type=null) -> throw "not implemented"
-  addColumn: (name, vals, type=null) -> throw "not implemented"
-  addRows: (rows) -> _.each rows, (row) => @addRow row
-  addRow: (row) -> throw "not implemented"
-  get: (row, col=null)-> throw "not implemented"
-  # because we may have column stores
-  asArray: -> throw "not implemented"
-
-  # Partition table on a set of table columns
-  # Removes those columns from each partition's tuples
-  partition: (cols) ->
-    cols = _.flatten [cols]
-    cols = _.filter cols, (col) => @schema.contains col
-
-    keys = {}
-    groups = {}
-    @each (row) ->
-      key = _.map cols, (col) -> row.get col
-      jsonKey = JSON.stringify key
-      groups[jsonKey] = [] unless jsonKey of groups
-      groups[jsonKey].push row
-      keys[jsonKey] = key
-
-    ret = []
-    schema = @schema.clone()
-    _.each cols, (col) -> schema.rmColumn col
-    _.each groups, (rows, jsonKey) ->
-      _.each rows, (row) -> row.rmColumns cols
-      partition = new gg.data.RowTable schema, rows
-      ret.push {key: keys[jsonKey], table: partition}
-    ret
-
-
-
-
-

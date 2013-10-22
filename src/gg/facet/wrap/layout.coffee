@@ -70,7 +70,7 @@ class gg.facet.wrap.Layout extends gg.facet.base.Layout
 
     # Compute derived values
     css = { 'font-size': '10pt' }
-    dims = _.textSize @getMaxYText(datas), css
+    dims = _.textSize @getMaxText(datas, 'y'), css
     yAxisW = dims.w + paddingPane
     labelHeight = _.exSize().h + paddingPane
     showXFacet = not(xs.length is 1 and not xs[0]?)

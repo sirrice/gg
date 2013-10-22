@@ -1,35 +1,35 @@
 #<< gg/stat/stat
 
 
-class gg.stat.BoxplotStat extends gg.stat.Stat
-  @ggpackage = "gg.stat.BoxplotStat"
+class gg.stat.Boxplot extends gg.xform.GroupBy
+  @ggpackage = "gg.stat.Boxplot"
   @aliases = ['boxplot', 'quantile']
+
+  parseSpec: ->
+    @params.put 'gbAttrs', 'x'
+    @params.put 'nBins', -1
+    super
 
   defaults: ->
     x: 0
 
-  inputSchema: -> ['x', 'y']#'group']
+  inputSchema: -> ['x', 'y']
 
-  outputSchema: (data) ->
-    table = data.table
-    env = data.env
-    gg.data.Schema.fromSpec
-      #group: gg.data.Schema.ordinal
-      #x: gg.data.Schema.ordinal
-      x: table.schema.type 'x'
-      q1: gg.data.Schema.numeric
-      q3: gg.data.Schema.numeric
-      median: gg.data.Schema.numeric
-      lower: gg.data.Schema.numeric
-      upper: gg.data.Schema.numeric
-      outliers:
-        type: gg.data.Schema.array
-        schema:
-          outlier: gg.data.Schema.numeric
-      min: gg.data.Schema.numeric
-      max: gg.data.Schema.numeric
+  outputSchema: (pairtable) ->
+    Schema = gg.data.Schema
+    schema = pairtable.tableSchema().clone()
+    newschema = Schema.fromJSON
+      q1: Schema.numeric
+      q3: Schema.numeric
+      median: Schema.numeric
+      lower: Schema.numeric
+      upper: Schema.numeric
+      outlier: Schema.numeric
+      min: Schema.numeric
+      max: Schema.numeric
+    schema.merge newschema
 
-  schemaMapping: (data, params) ->
+  schemaMapping: ->
     x: 'x'
     q1: 'y'
     q3: 'y'
@@ -40,7 +40,9 @@ class gg.stat.BoxplotStat extends gg.stat.Stat
     min: 'y'
     max: 'y'
 
-  computeStatistics: (vals) ->
+  udf: (table, params) ->
+    x = table.get 0, 'x'
+    vals = table.getColumn 'y'
     vals.sort d3.ascending
 
     q1 = d3.quantile vals, 0.25
@@ -54,37 +56,22 @@ class gg.stat.BoxplotStat extends gg.stat.Stat
     lower = vals[lowerIdx]
     upper = vals[upperIdx]
     outliers = vals.slice(0, lowerIdx).concat(vals.slice(upperIdx + 1))
+    outliers = [null] unless outliers.length > 0
 
-    outliers = _.map outliers, (v) -> {outlier: v}
-
-    {
-      q1: q1,
-      median: median,
-      q3: q3,
-      lower: lower,
-      upper: upper,
-      outliers: outliers,
-      min: min,
+    boxstats = 
+      q1: q1
+      median: median
+      q3: q3
+      lower: lower
+      upper: upper
+      min: min
       max: max
-    }
+      x: x
+    @log "boxstats: #{JSON.stringify boxstats}"
 
-
-  compute: (data, params) ->
-    table = data.table
-    env = data.env
-    #groups = table.split "group"
-    groups = table.split "x"
-    rows = _.map groups, (groupPair) =>
-      gTable = groupPair.table
-      gKey = groupPair.key
-      vals = gTable.getColumn "y"
-      row = @computeStatistics vals
-      row.x = gKey
-      row
-
-    schema = params.get('outputSchema') data, params
-    data.table = new gg.data.RowTable schema, rows
-    data
-
-
+    rows = _.map outliers, (v) -> 
+      newrow = table.get(0).raw()
+      _.extend newrow, boxstats
+      newrow
+    rows
 

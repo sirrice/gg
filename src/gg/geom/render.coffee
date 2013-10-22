@@ -11,7 +11,7 @@ class gg.geom.Render extends gg.core.XForm
     super
     @params.put "location", "client"
 
-  svg: (data) -> data.env.get('svg').pane
+  svg: (md) -> md.get(0, 'svg').pane
 
   groups: (g, klass, rows) ->
     g.selectAll("g.#{klass}")
@@ -31,9 +31,10 @@ class gg.geom.Render extends gg.core.XForm
     _.each attrs, (val, attr) -> domEl.attr attr, val
     domEl
 
-  compute: (data, params) ->
-    [table, env] = [data.table, data.env]
-    svg = @svg data
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
+    svg = @svg md
     Facets = gg.facet.base.Facets
     gg.wf.Stdout.print table, null, 2, @log
 
@@ -43,9 +44,9 @@ class gg.geom.Render extends gg.core.XForm
     if @log.level == gg.util.Log.DEBUG
       write = (text, opts={}) ->
         _.subSvg(svg, opts, "text").text(text)
-      write env.get(Facets.facetXKey), {dy: "1em"}
-      write env.get(Facets.facetYKey), {dy: "2em"}
-      write env.get(table.nrows()), {dy: "3em"}
+      write md.get(0, 'facet-x'), {dy: "1em"}
+      write md.get(0, 'facet-y'), {dy: "2em"}
+      write md.get(0, table.nrows()), {dy: "3em"}
 
 
     geoms = svg.selectAll(".geom")
@@ -57,11 +58,11 @@ class gg.geom.Render extends gg.core.XForm
         .on("mouseout", () -> )
 
     if @constructor.brush?
-      brushEventName = "brush-#{env.get Facets.facetId}"
-      event = env.get "event"
+      brushEventName = "brush-#{md.get 0, Facets.facetId}"
+      event = md.get 0, "event"
       event.on brushEventName, @constructor.brush(geoms)
 
-    data
+    pairtable
 
   # @override this
   render: (table, rows) -> throw Error("#{@name}.render() not implemented")

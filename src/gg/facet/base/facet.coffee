@@ -16,6 +16,7 @@
 # Spec:
 #
 #   facets: {
+#     desc: "x * y + z"
 #     (x|y): ???
 #     type: grid|wrap,
 #     scales: free|fixed,
@@ -32,9 +33,10 @@
 #
 class gg.facet.base.Facets
   @ggpackage = "gg.facet.base.Facets"
-  @facetXKey = "facet-x"
-  @facetYKey = "facet-y"
-  @facetXYKeys = "facet-xy"
+  #@facetXKey = "facet-x"
+  #@facetYKey = "facet-y"
+  #@facetXYKeys = "facet-xy"
+  @facetKeys = "facet-keys"
   @facetId = "facet-id"
 
   constructor: (@g, @spec={}) ->
@@ -42,7 +44,7 @@ class gg.facet.base.Facets
 
     @parseSpec()
 
-    @splitter = @splitterNodes()
+    @labeler = @labelerNodes()
     @trainer = new gg.scale.train.Master(
       name: 'facet_train').compile()
 
@@ -97,37 +99,42 @@ class gg.facet.base.Facets
       location: "client"
     }
 
-
-
-
-
-  # Return workflow nodes that split the dataset along the
-  # x and y facets
-  splitterNodes: ->
-    # XXX: This implementation is not exactly right, because
-    # it will not result in groups for x/y facetpairs that
-    # don't have any tuples.  this should only be apparent
-    # when using "wrap" (we expect the cross product!)
-    facetXKey = gg.facet.base.Facets.facetXKey
-    facetYKey = gg.facet.base.Facets.facetYKey
-    x = _.flatten [@splitParams.get('x')]
-    y = _.flatten [@splitParams.get('y')]
-    facetXNode = new gg.wf.PartitionCols
-      name: 'facet-x'
-      params:
-        key: facetXKey
-        cols: x
-    facetYNode = new gg.wf.PartitionCols
-      name: 'facet-y'
-      params:
-        key: facetYKey
-        cols: y
-    [facetXNode, facetYNode]
-
-  # This executes on a per-facet-layer basis
-  # Not a barrier
   labelerNodes: ->
-    throw Error("labeler not implemented")
+    log = @log
+    f = (pairtable, params) ->
+      t = pairtable.getTable()
+      md = pairtable.getMD()
+      xcol = params.get 'x'
+      ycol = params.get 'y'
+      log "x/ycols: #{xcol}/#{ycol}" 
+      tmapping = 
+        'facet-x': xcol
+        'facet-y': ycol
+      tmapping = _.mappingToFunctions t, tmapping
+      t = gg.data.Transform.transform t, tmapping
+      pt = new gg.data.PairTable t, md
+      pt = pt.ensure ['facet-x', 'facet-y']
+      md = pt.getMD()
+      mmapping = [
+        [
+          'facet-keys'
+          ((row) -> 
+            "key-#{row.get('facet-x')}-#{row.get('facet-y')}")
+          gg.data.Schema.ordinal
+        ]
+        [
+          'facet-id'
+          ((row) ->
+            "facet-#{row.get('facet-x')}-#{row.get('facet-y')}")
+          gg.data.Schema.ordinal
+        ]
+      ]
+      md = gg.data.Transform.transform md, mmapping
+
+      new gg.data.PairTable pt.getTable(), md
+      
+
+    gg.wf.SyncBarrier.create f, @splitParams, 'facet-labeler'
 
   @fromSpec: (g, spec) ->
     spec.type = spec.type or "grid"

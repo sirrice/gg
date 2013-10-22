@@ -12,13 +12,23 @@
 
 <script>
   var floor500 = function(row) {
-    return Math.floor(row.get('d') / 500) * 500;
+    return Math.floor(row.get('d') / 100.0) * 100;
   };
 
   var spec = {
     opts: { title: "Multi-layer faceted example" },
     facets: {y: "f"},
     layers: [
+    // Boxplot collected into 4 bins
+    {
+      geom: "boxplot",
+      aes: {
+        x: floor500,
+        y: "e",
+        color: floor500 
+      },
+      stat: "boxplot"
+    },
     // Histogram with 10 bins, rendering sum / 100
     {
       geom:{
@@ -29,17 +39,7 @@
         x: "d",
         y: "e"
       },
-      stat: {type:"bin", n:10}
-    },
-    // Boxplot collected into 4 bins
-    {
-      geom: "boxplot",
-      aes: {
-        x: floor500,
-        y: "e",
-        group: { color: floor500 }
-      },
-      stat: "boxplot"
+      stat: {type:"bin"}
     },
     // Smoothed line, grouped and colored by "g" attribute
     // Lines are custom colored and thick
@@ -48,7 +48,7 @@
       aes: {
         x: "d",
         y: "e",
-        group: {color: "g", "stroke-width": 2}
+        color: "g", "stroke-width": 2
       },
       stat: {
         type:"loess", bw: 0.3, acc: 1e-12
@@ -67,10 +67,8 @@
       aes: {
         x: "d",
         y: "e",
-        group: {
-          color: "g",
-          "stroke-opacity": 0.2
-        }
+        color: "g",
+        "stroke-opacity": 0.2
       },
       pos: "stack",
       scales: { "stroke-opacity": "identity" }
@@ -92,7 +90,7 @@
     var gauss = science.stats.distribution.gaussian();
 
 
-    var npts = 5000;
+    var npts = 500;
     bigdata = _.map(_.range(0, npts), function(d) {
       g = Math.floor(Math.random() * 3) + 1;
       f = Math.floor(Math.random() * 2);

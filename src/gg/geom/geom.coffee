@@ -55,6 +55,8 @@ class gg.geom.Geom
   # @return mapping of attribute -> aesthetic
   posMapping: -> {}
 
+  scaleConfigs: -> {}
+
 
   @fromSpec: (layer, spec) ->
     spec = _.clone spec

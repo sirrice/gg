@@ -1,6 +1,6 @@
 #<< gg/core/xform
 
-class gg.pos.Position extends gg.core.XForm
+class gg.pos.Position extends gg.core.BForm
   @ggpackage = "gg.pos.Position"
 
   @klasses: ->
@@ -40,8 +40,4 @@ class gg.pos.Identity extends gg.pos.Position
   @ggpackage = "gg.pos.Identity"
   @aliases = ["identity"]
 
-
-
-
-
-
+  compute: (pairtable, params) -> pairtable

@@ -75,7 +75,6 @@ class gg.scale.Scales
   parseSpec: ->
     @scalesConfig = gg.scale.Config.fromSpec @spec
 
-
   layer: (layerIdx) -> @g.layers.getLayer layerIdx
 
   # return the overall scalesSet for a given facet

@@ -5,10 +5,9 @@ class gg.pos.Bin2D extends gg.xform.GroupBy
   @ggpackage = "gg.pos.Bin2D"
   @aliases = ['2dbin', 'bin2d']
 
-  constructor: (@spec={}) ->
-    params = @spec.params or _.clone(@spec)
-    @spec.params = params 
+  parseSpec: ->
     defaults = 
+      nBins: 20
       gbAttrs: ['x', 'y']
       aggFuncs: 
         count: 
@@ -23,19 +22,9 @@ class gg.pos.Bin2D extends gg.xform.GroupBy
         total: 
           type: 'sum'
           arg: 'z'
-    _.extend @spec.params, defaults
-    @log.debug @spec.params
+    defaults = new gg.util.Params defaults
+    defaults.merge @params
+    @params = defaults
+
     super
-
-
-  getGrouper: (gbAttrs, schema, scales, nBins) ->
-    groupers = _.map gbAttrs, (gbAttr, idx) ->
-      type = schema.type gbAttr
-      scale = scales.scale gbAttr, type
-      domain = scale.range()
-      new gg.xform.SingleKeyGrouper gbAttr, type, domain, nBins[idx]
-    grouper = new gg.xform.MultiKeyGrouper groupers
-    @log "group has #{grouper.nBins} bins"
-    @log "groupBins: #{grouper.groupBins}"
-    grouper
 

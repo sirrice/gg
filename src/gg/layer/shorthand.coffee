@@ -38,7 +38,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @setupPos()
     @setupMap()
     @setupCoord()
-    @setupGroup()
     super
 
 
@@ -48,24 +47,35 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @geom = gg.geom.Geom.fromSpec @, @geomSpec
 
   setupStats: ->
+    globalSpec = @extractSpec 'stat', @g.spec
+    globalSpec = _.flatten [globalSpec]
+    globalStats = _.map globalSpec, (subSpec) ->
+      gg.stat.Stat.fromSpec subSpec
+
     @statSpec = @extractSpec "stat"
-    if _.isArray @statSpec
-      @stats = _.map @statSpec, (@subSpec) ->
-        gg.stat.Stat.fromSpec @subSpec
-    else
-      @stats = [gg.stat.Stat.fromSpec @statSpec]
+    @statSpec = _.flatten [@statSpec]
+    @stats = _.map @statSpec, (subSpec) ->
+      gg.stat.Stat.fromSpec subSpec
+
+    @stats.unshift.apply @stats, globalStats
+    @stats
 
   setupPos: ->
+    globalSpec  = @extractSpec "pos", @g.spec
+    globalSpec = _.flatten [globalSpec]
+    globalPos = _.map globalSpec, (subSpec) ->
+      gg.pos.Position.fromSpec subSpec
+
     @posSpec  = @extractSpec "pos"
-    if _.isArray @posSpec
-      @pos = _.map @posSpec, (@subSpec) ->
-        gg.pos.Position.fromSpec @subSpec
-    else
-      @pos = [gg.pos.Position.fromSpec @posSpec]
+    @posSpec = _.flatten [@posSpec]
+    @pos = _.map @posSpec, (subSpec) ->
+      gg.pos.Position.fromSpec subSpec
+    @pos.unshift.apply @pos, globalPos
+    @pos
 
   setupMap: ->
     mapSpec  = _.findGoodAttr @spec, ['aes', 'aesthetic', 'mapping'], {}
-    mapSpec = _.extend(_.clone(@g.aesspec), mapSpec)
+    #mapSpec = _.extend(_.clone(@g.aesspec), mapSpec)
     @mapSpec = {aes: mapSpec, name: "map-shorthand-#{@layerIdx}"}
     @map = gg.xform.Mapper.fromSpec @mapSpec
 
@@ -73,20 +83,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @coordSpec = @extractSpec "coord"
     @coordSpec.name = "coord-#{@layerIdx}"
     @coord = gg.coord.Coordinate.fromSpec @coordSpec
-
-  setupGroup: ->
-    @groupSpec = "group" if "group" of @mapSpec.aes
-
-    if @groupSpec?
-      @groupby = new gg.wf.PartitionCols
-        name: "group-#{@layerIdx}"
-        params:
-          key: "group"
-          cols: ['group']
-      @groupbymerge = new gg.wf.Merge
-        name: "groupbylabel-#{@layerIdx}"
-        params:
-          key: "group"
 
 
   # extract the geom/stat/pos specific spec from
@@ -124,14 +120,14 @@ class gg.layer.Shorthand extends gg.layer.Layer
       subSpec.aes = _.extend defaultAes, subSpec.aes
       subSpec.param = {} unless subSpec.param?
 
-    subSpec.name = "#{xform}-shorthand-#{@layerIdx}" unless subSpec.name?
+    subSpec.name = "#{xform}-#{subSpec.type}-#{@layerIdx}" unless subSpec.name?
     subSpec
 
   makeStdOut: (name, params) ->
     arg = _.clone params
     params =
       n: 5
-      aess: null
+      cols: ['layer', 'group', 'fill', 'x', 'y']
     _.extend params, arg
     new gg.wf.Stdout
       name: "#{name}-#{@layerIdx}"
@@ -147,19 +143,22 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes = []
 
     # add environment variables
-    nodes.push new gg.xform.EnvPut
-      name: "layer-envput-#{@layerIdx}"
-      params:
-        pairs:
-          layer: @layerIdx
-          posMapping: @geom.posMapping()
-
+    addenv = gg.wf.SyncBlock.create ((pt, params) ->
+      [t, md] = [pt.getTable(), pt.getMD()]
+      layerIdx = params.get 'layer'
+      posMapping = params.get 'posMapping'
+      t = t.setColumn 'layer', layerIdx
+      md = md.setColumn 'layer', layerIdx
+      md = md.setColumn 'posMapping', posMapping
+      new gg.data.PairTable t, md), {
+        layer: @layerIdx
+        posMapping: @geom.posMapping()
+      }, 'layer-labeler'
+    nodes.push addenv
 
     nodes.push @compilePrestats()
+    nodes.push @g.facets.labeler
     nodes.push @compileStats()
-
-    nodes.push @g.facets.labelerNodes()
-    nodes.push @makeStdOut "post-facetLabel-#{@layerIdx}"
 
     nodes.push @compileGeomMap()
     nodes.push new gg.xform.ScalesValidate
@@ -177,40 +176,40 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
 
   compilePrestats: ->
-    nodes = []
+    nodes = [
+      @makeStdOut "init-data"
+      @map
+      @makeStdOut "post-map-#{@layerIdx}"
+      new gg.xform.ScalesSchema
+        name: "scales-schema-#{@layerIdx}"
+        params:
+          config: @g.scales.scalesConfig
+      @makeStdOut "post-scaleschema"
+      @makeScalesOut "post-scaleschema-#{@layerIdx}"
 
-    # pre-stats transforms
-    nodes.push @makeStdOut "init-data"
-    nodes.push @map
-    nodes.push @makeStdOut "post-map-#{@layerIdx}"
-    nodes.push new gg.xform.ScalesSchema
-      name: "scales-schema-#{@layerIdx}"
-      params:
-        config: @g.scales.scalesConfig
-    nodes.push @makeStdOut "post-scaleschema"
+    ]
     nodes
 
   compileStats: ->
     nodes = []
 
-    nodes.push @groupby
-    nodes.push @makeStdOut "post-gb"
-
     # train & filter scales
+    nodes.push @makeStdOut "pre-train"
     nodes.push @g.scales.prestats
+    nodes.push @makeScalesOut "pre-stat-#{@layerIdx}"
     nodes.push @makeStdOut "post-train"
     nodes.push new gg.xform.ScalesFilter
       name: "scalesfilter-#{@layerIdx}"
       params:
         posMapping: @geom.posMapping()
+        config: @g.scales.scalesConfig
     nodes.push @makeStdOut "post-scalefilter-#{@layerIdx}"
     nodes.push @makeScalesOut "pre-stat-#{@layerIdx}"
 
     # run the stat functions
     nodes.push @stats
     nodes.push @makeStdOut "post-stat-#{@layerIdx}"
-    nodes.push @groupbymerge
-    nodes.push @makeStdOut "post-groupby-#{@layerIdx}"
+    nodes.push @makeScalesOut "post-stat-#{@layerIdx}"
     nodes
 
 
@@ -226,6 +225,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     #nodes.push new gg.wf.Stdout {name: "pre-geom-map", n: 1}
     nodes.push @geom.map
     nodes.push @makeStdOut "pre-geomtrain-#{@layerIdx}"
+    nodes.push @makeScalesOut "pre-geomtrain-#{@layerIdx}"
 
 
     #nodes.push new gg.wf.Stdout {name: "post-geom-map", n: 1}

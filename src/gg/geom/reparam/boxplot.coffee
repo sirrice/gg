@@ -10,42 +10,39 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
 
   defaults: ->
     x: 1
-    group: "1"
+    group: {}
 
   # outliers is an array with schema {outlier:}
   inputSchema: ->
     ['x', 'q1', 'median', 'q3', 'lower', 'upper',
-      'outliers', 'min', 'max']
+      'outlier', 'min', 'max']
 
   # outliers is an array with schema {outlier:}
-  outputSchema: (data) ->
-    table = data.table
-    env = data.env
-    gg.data.Schema.fromSpec
-      group: table.schema.typeObj 'group'
-      #x: gg.data.Schema.ordinal
-      x: table.schema.type 'x'
-      x0: table.schema.type 'x'
-      x1: table.schema.type 'x'
-      width: gg.data.Schema.numeric
-      y0: gg.data.Schema.numeric
-      y1: gg.data.Schema.numeric
-      q1: gg.data.Schema.numeric
-      q3: gg.data.Schema.numeric
-      median: gg.data.Schema.numeric
-      lower: gg.data.Schema.numeric
-      upper: gg.data.Schema.numeric
-      outliers:
-        type: gg.data.Schema.array
-        schema:
-          outlier: gg.data.Schema.numeric
-      min: gg.data.Schema.numeric
-      max: gg.data.Schema.numeric
+  outputSchema: (pairtable) ->
+    schema = pairtable.tableSchema()
+    Schema = gg.data.Schema
+    Schema.fromJSON
+      group: schema.type 'group'
+      x: schema.type 'x'
+      x0: schema.type 'x'
+      x1: schema.type 'x'
+      width: Schema.numeric
+      y0: Schema.numeric
+      y1: Schema.numeric
+      q1: Schema.numeric
+      q3: Schema.numeric
+      median: Schema.numeric
+      lower: Schema.numeric
+      upper: Schema.numeric
+      outlier: Schema.numeric
+      min: Schema.numeric
+      max: Schema.numeric
 
 
-  compute: (data, params) ->
-    [table, env] = [data.table, data.env]
-    scales = @scales data
+  compute: (pairtable, params) ->
+    table = pairtable.getTable()
+    md = pairtable.getMD()
+    scales = md.get 0, 'scales'
     yscale = scales.scale 'y', gg.data.Schema.numeric
 
     # XXX: currently assumes xs is numerical!!
@@ -58,15 +55,20 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
     width = mindiff * 0.8
     width = Math.min width, 40
 
-    mapping = 
+    mapping = _.mappingToFunctions table, 
       y0: 'min'
       y1: 'max'
-      x0: (row) -> row.get('x') - width/2.0
-      x1: (row) -> row.get('x') + width/2.0
-      #width: width
+    mapping.push [
+      'x0'
+      (row) -> row.get('x') - width/2.0
+      table.schema.type 'x'
+    ]
+    mapping.push [
+      'x1'
+      (row) -> row.get('x') + width/2.0
+      table.schema.type 'x'
+    ]
 
-    mapping = _.mappingToFunctions table, mapping
-    table.transform mapping, yes
-    table.setSchema params.get('outputSchema') data, params
-    data
+    table = gg.data.Transform.transform table, mapping
+    new gg.data.PairTable table, md
 

@@ -41,7 +41,7 @@ var crazy = {
           "aes": {
                 "x": "d",
                     "y": "e",
-                       group: {color: "g", "stroke-width": 2}
+                       color: "g", "stroke-width": 2
                   },
              stat: {type:"loess", bw: 0.3, acc: 1e-12},
                scales: {
@@ -55,7 +55,7 @@ var crazy = {
           "aes": {
                 "x": "d",
                     "y": "e",
-                       group: {color: "g", "stroke-opacity": 0.2}
+                    color: "g", "stroke-opacity": 0.2
                    }
     }
 
@@ -72,7 +72,7 @@ var geom_boxplot2 =
     "aes": {
       "x": "f",
       "y": "e",
-      "group": { color: "f" }
+      color: "f"
     }, "stats": "boxplot"
   }
   ],
@@ -80,24 +80,28 @@ var geom_boxplot2 =
 };
 
 var geom_area = {
-  geom: {
-    type: "area",
-    aes: {
+  layers: [{
+    geom: {
+      type: "area"
+    }
+    ,aes: {
       x: "d",
       y: "e",
-      group: "{{fill: t, stroke: t}}"
+      fill: 't', stroke: 't'
     }
-  }
-  ,pos: "stack"
-  ,scales: { fill: { type: "color" }}
+    ,pos: "stack"
+    ,stat: 'loess'
+    ,scales: { fill: { type: "color" }}
+  }]
 };
+
 
 var geom_boxplot =  {
   layers: [{
     aes: {
-      group: { color: "t" }
+      color: "g"
       ,y: "d"
-      ,x: "{Math.floor(e/100)*100}"
+      ,x: "{Math.floor(e/200)*200}"
     }
    ,geom: { 
       type: "boxplot"
@@ -115,12 +119,36 @@ var geom_boxplot =  {
 }
 
 var geom_interval = {
-  layers: [{
+  layers: [{geom: 'interval'}, {
     geom: { type:"interval", aes: {y: '{total/(1+count)}'} }
-   ,aes: {x: 'd', y: 'e', 'fill': 'f',  "fill-opacity": 0.9}
    ,stat: "bin"
-  }],
-  facets: {y: 't', x: 'g'}
+  }]
+  ,aes: {x: 'd', y: 'e', 'fill': 'f',  "fill-opacity": 0.9}
+  ,facets: {y: 't', x: 'g'}
+};
+
+var geom_interval = {
+  "layers": [
+    {
+      "geom": "point", aes: {r: 'f',color: 'black'}, scales: {color: 'identity'}
+    },
+    {
+      "geom": {
+        "type": "rect", aes: {y:'avg'}
+      }, pos: "stack",
+      "stat": "bin",scales: {color: 'color'}
+    }
+  ], 
+
+      "aes": {
+        "x": "d", 
+        "y": "e", 
+        "color": "g"
+      }, 
+  "facets": {
+    "y": "t", 
+    "x": "f"
+  }
 };
 
 var geom_point_1 = {
@@ -131,7 +159,7 @@ var geom_point_1 = {
 }
 
 var geom_point_sum = {
-  geom: "point"
+  layers: [{geom: "point"}]
  ,aes: {x: 'd', y: 'e'}
  ,stat: "bin"
 
@@ -139,9 +167,9 @@ var geom_point_sum = {
 
 var geom_point_interval = {
   layers: [{
-    geom: "interval"
+    geom: "line"
    ,pos: "dodge"
-   ,aes: {x: '{Math.floor(d/10.)*10 + "d"}', y: 'e', group: {color: 'g'}}
+   ,aes: {x: '{Math.floor(d/10.)*10 + "d"}', y: 'e', color: 'g'}
    ,stat: "bin"
   }],
   facets: {y: 't'}
@@ -149,14 +177,14 @@ var geom_point_interval = {
 
 
 var geom_point_2 = {
-  geom: "point"
+  layers: [{geom: "point"}]
  ,aes: {x: 'd', y: 'e', r: 'g'}
  ,scales: { r: { range: [2, 10] } }
 
 }
 
 var geom_point_3 = {
-  geom: "point"
+  layers: [{geom: "point"}]
  ,aes: {x: 'd', y: 'e', r: 'g', fill: 'g'}
   ,scales: {
     fill: "color",
@@ -178,10 +206,10 @@ var geom_point_4 = {
 };
 
 var colored_lines = {
-  geom: "line",
+  layers: [{geom: "line", stat: 'loess'}],
   aes: {
     x: 'd',  y: "e",
-    group : {color: "g"}
+    color: "g"
   }
 };
 
@@ -191,12 +219,11 @@ var colored_lines_multi = {
   geom: "line",
   pos: "stack"
   },
-  {geom: "line"
-  }
+  {geom: "area"  }
   ],
   aes: {
     x: 'd',  y: "e",
-    group : {color: "g"}
+    color: "g"
   }
 };
 

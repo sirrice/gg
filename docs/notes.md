@@ -11,6 +11,184 @@ Desired Features
   * ggplot2-like interface
 1. Node-failure tolerance.  If a node throws an exception, dont block workflow on the next barrier, keep going.
 
+   
+    
+    
+Misc Braindump
+-------
+
+
+* scales identified by
+
+    class
+    value type
+    aesthetic
+    
+    get(aes, type) -> 
+
+
+Two tables -- data and metadata.  Implemented the same, equijoins between the two
+
+* Normal Table (T)
+* Metadata Table (MT)
+
+PairedTable
+
+    partition(keys) -> [pairedtable*] 
+    tables -> [table]
+    mdtables -> [table]
+
+TableSet
+    partition(keys) -> pairedtables
+    
+    
+
+Each operator takes a list of PairedTables as input
+
+    class OP
+        compute: (tableset) -> 
+            ps = tableset.partition(keys)
+            ps = map(f, ps)
+            tableset(ps)
+
+    class Train
+        compute: (tableset) ->
+            partitions = tableset.partition(facets.keys + ['layer'])
+            partitions = map(f, partitions)
+            tableset(partitions)
+
+    
+    
+    train:
+        ps = pairedtable.part([fx, fy, layer])
+        for t, mt in ps
+            for row in mt
+                row.scale.train(t)
+            merged = merge([row.scale for row in mt])
+        mergeinto(merged, ps.all_scales)
+            
+    renderFacets
+        for scale in mt.unique('scales')
+            render(scale) 
+        for pane in mt.unique('pane')
+            render(pane)
+        …
+    
+    posTrainScales:
+        ps = pairedtable.part([fx, fy, layer])
+        ps.each(invert scale)
+        ps.each(train)
+        merged = merge(ps.scales)
+        mergeinto(merged, ps.all_scales)            
+        return ps
+
+
+
+* Layers may have tables with different schemas
+    * 
+* Single layer is a single table
+* Table may be internally partitioned e.g., on facets, color, grouping, etc
+
+Holistic functions that operate across layers only update auxilary information (scales, container sizes) or add new tables
+        
+Processing(keys, blockkeys)
+
+    partitions = table.partition(keys)
+    partitions = for t' in partitions
+        [t' = TableSet([t'.partition(blockkeys)])]
+        f(t')
+    merge
+
+Layout([], [facetx, facety])
+        
+
+Data interface
+
+    table/tableset
+    env
+
+Env interface (non data info)
+
+    svgs
+    container info
+    events
+
+Schema interface
+
+Augmented schema interface
+
+    core cols
+    key cols
+
+Table Interface
+
+    iterator
+    each
+    close
+    schema
+    stats
+
+Augmented Table interface
+
+    schema -> augmented schema        
+
+Table operations
+
+    partition(table, cols) -> tableset    
+    project(table, select)
+    filter(table, where)
+    join(t1, t2, on. type)
+
+
+
+Scales training should
+
+    probe each partition for their domains
+    merge with its own
+    merge across scales
+    
+Layout should
+
+    take facet information
+    take scale information(maybe)   
+    take plot spec options (params)
+    create plot containers
+    
+Geom should
+
+    take partition (facet,layer,groupby) as input
+    add reparam geom info (hidden (_x, _y…) or open (x, y)?)
+
+Pos (two types)
+
+    partition on (facet, layer), internally split on groupby
+    partition on (facet, layer, groupby)
+
+Currently stored in env
+
+    svg
+    lc
+    facetx
+    facety
+    layer
+    scalesconfig
+    scales
+    paneC
+    event
+    facetid
+    facet-text
+    facet-size
+    posmapping
+
+Can be stored in table
+
+    facet
+    faceid
+    layer
+    
+    
+
+
 
 Aug 19, 2013
 ---------------
@@ -43,20 +221,20 @@ Developer specifies this model using some language
 
 Provenance store provides the following:
 
-1) models parent/child relationships between provenance objects
-   add/alter model
-2) provides INSERT api
-   new dataset/execution
-   updated data (insert/delete)
-3) provides SELECT api
-   every node has a prev/next semantics to the prev/next object
+1. models parent/child relationships between provenance objects
+   * add/alter model
+2. provides INSERT api
+   * new dataset/execution
+   * updated data (insert/delete)
+3. provides SELECT api
+   * every node has a prev/next semantics to the prev/next object
 
 Some Details
 
-1) Every element has an ID which is the path in this model
-   How does dev construct this path?  Want to cache parent path/define a context.
-2) Materialization, Storage, and Indexing schemes
-3) Needs access to gg runtime for re-execution.
+1. Every element has an ID which is the path in this model
+1. How does dev construct this path?  Want to cache parent path/define a context.
+2. Materialization, Storage, and Indexing schemes
+3. Needs access to gg runtime for re-execution.
 
 
 
@@ -91,18 +269,49 @@ July 9, 2013
 
 Some query attributes
 
-1. Path length
+1. Path length 
 1. Target/final node in query path
 1. Fetch data or just relationship? 
 1. Mid-query Cardinality
 1. Provenance size e.g., data provenance or config/static prov
 1. Result cardinality
-  * similar to boolean result
-  * top k
-  * random sample
-  * sample
+   * similar to boolean result
+   * top k
+   * random sample
+   * sample
 1. Boolean result? e.g., points share source data?
+2. Other results it shares inputs with (for linked brushing)
 1. Granularity e.g., partition/dataset/user/row/column
+2. Given rendered intermediate plots, relationship with end result plot
+    * given intermediate point or bar, what does it effect in the result.
+    * vice versa
+
+### Materialization Tricks
+
+Backward queries
+
+* Annotation: add metadata to the tuples that are materialized
+    * carry input ids
+    * carry subset of input ids (when to filter?)  use fact that intermediates are materialized?
+* Path: store the query graph/workflow
+* Last op results share inputs: track until data is partitioned?
+* Exact existence (A & B share inputs): store compressed sets
+* Approx existence (A & B shared inputs): store bloom filters
+* Separate datastore: 
+    * hashtable (bdb)
+    * indexed
+
+### Points of Materialization
+
+We don't want to materialize or support provenance queries from _anywhere_ in the pipeline, the user
+should specify before hand.
+
+* What operators to initiate queries from
+* What operators will ask provenance _about_
+* What exact queries
+
+
+
 
 ## Provenance
 

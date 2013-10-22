@@ -7,16 +7,15 @@ class gg.core.Render extends gg.core.BForm
     super
     @params.put "location", 'client'
 
-  compute: (datas, params) ->
-    tables = _.map datas, (d) -> d.table
-    envs = _.map datas, (d) -> d.env
-    env = _.first envs
-    svg = env.get('svg').base
-    lc = env.get 'lc'
+  compute: (pairtable, params) ->
+    md = pairtable.getMD()
+    row = md.get 0
+    svg = row.get('svg').base
+    lc = row.get 'lc'
+    throw Error() unless lc?
+
     c = lc.baseC
     options = params.get 'options'
-    lc = _.first(envs).get('lc')
-    throw Error() unless lc?
 
 
     svg
@@ -51,9 +50,7 @@ class gg.core.Render extends gg.core.BForm
     guideC = lc.guideC
 
 
-    # update env variables
-    _.each envs, (env) ->
-      env.get('svg').facets = facetsSvg
-
-
-    datas
+    # update md variables
+    for svg in md.getColumn 'svg'
+      svg.facets = facetsSvg
+    new gg.data.PairTable pairtable.getTable(), md

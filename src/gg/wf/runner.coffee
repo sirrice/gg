@@ -1,6 +1,10 @@
 #<< gg/util/log
 #<< gg/wf/clearinghouse
 
+try
+  timer = performance
+catch err
+  timer = Date
 
 
 # Executes an instantiated workflow
@@ -40,7 +44,14 @@ class gg.wf.Runner extends events.EventEmitter
 
     # every node's output goes through the clearing house
     @flow.graph.bfs (node) =>
-      node.on "output", @ch.push.bind(@ch)
+      node.on "output", (args...) =>
+        if node.id of @debug
+          o = @debug[node.id]
+          o['end'] = timer.now()
+          o['cost'] = o['end'] - o['start']
+        @ch.push args...
+
+    @debug = {}
 
 
   setupQueue: ->
@@ -55,9 +66,9 @@ class gg.wf.Runner extends events.EventEmitter
       cb()
 
     ondrain =  () =>
-      unless _.all(@flow.sinks(), (s) => @done[s.id])
+      if _.all(@flow.sinks(), (s) => @done[s.id])
         @log "done! can you believe it?"
-        @emit 'done', yes
+        @emit 'done', @debug
 
     @queue = new async.queue qworker, 1
     @queue.drain = ondrain
@@ -65,6 +76,10 @@ class gg.wf.Runner extends events.EventEmitter
   runNode: (node) ->
     @log "runNode: #{node.name} in(#{node.inputs.length})
           out(#{node.nChildren}) running"
+    @debug[node.id] = 
+      start: timer.now()
+      name: node.name
+      id: node.id
     node.run()
 
   nodeCanRun: (node) ->
