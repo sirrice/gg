@@ -29,12 +29,12 @@ class gg.stat.CDF extends gg.stat.Stat
     # assumes one y value per x value and that the
     # x dimension is sorted correctly
     cum = 0
-    rows = table.each (row, idx) =>
+    rows = table.fastEach (row, idx) =>
       raw = row.raw()
-      x = raw.x
-      y = raw.y or 0
-      #if y < 0
-      #  throw Error("y values for CDF should not be negative")
+      x = raw.get 'x'
+      y = raw.get('y') or 0
+      if y < 0 and no
+        throw Error("y values for CDF should not be negative")
 
       cum += y
       yp = cum

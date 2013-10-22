@@ -34,6 +34,9 @@ class gg.data.Table
     iter.close()
     ret
 
+  # read-only each 
+  fastEach: (f, n) -> @each f, n
+
   # dumb version of an iterator
   iterator: ->
     class Iter
@@ -159,7 +162,7 @@ class gg.data.Table
       schema = gg.data.Schema.merge _.map(tables, (t) -> t.schema)
       table = new klass schema
       for t in tables
-        t.each (row) -> table.addRow row
+        t.each (row) -> table.addRow row.raw()
       table
 
 

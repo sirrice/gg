@@ -21,18 +21,11 @@ class gg.scale.train.Data extends gg.core.BForm
     for p in partitions
       table = p.getTable()
       md = p.getMD()
-      md.each (row) ->
-        posMapping = row.get 'posMapping'
-        scales = row.get 'scales'
-
-        log "trainOnData: nrows:   #{table.nrows()}"
-        log "trainOnData: cols:    #{table.schema.toSimpleString()}"
-        log "trainOnData: set.id:  #{scales.id}"
-        log "trainOnData: pos:     #{JSON.stringify posMapping}"
-
-        scales.train table, posMapping
-
-        log scales.toString()
+      pms = md.getColumn 'posMapping'
+      sets = md.getColumn 'scales'
+      uniqs = _.uniq(_.zip(pms, sets), false, ([pm, set]) -> set.id)
+      _.each uniqs, ([pm, set]) ->
+        set.train table, pm
 
     pairtable = new gg.data.TableSet partitions
     pairtable = gg.scale.train.Master.train pairtable, params

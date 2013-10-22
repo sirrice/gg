@@ -15,7 +15,7 @@ class gg.xform.Aggregate
 
   compute: (table) ->
     @reset()
-    table.each (row) => @update row
+    table.fastEach (row) => @update row
     @value()
 
   # spec is a agg type or

@@ -56,16 +56,13 @@ class gg.data.Transform
     getkey = (row) -> _.map cols, (col) -> row.get(col)
     ht = {}
     keys = {}
-    iter = t.iterator()
-    while iter.hasNext()
-      row = iter.next()
+    t.fastEach (row) ->
       key = getkey row
       strkey = JSON.stringify key
       # XXX: may need to use toJSON on key
       ht[strkey] = [] unless strkey of ht
-      ht[strkey].push row
+      ht[strkey].push row.raw()
       keys[strkey] = key
-    iter.close()
     [ht, keys]
 
 
@@ -97,11 +94,10 @@ class gg.data.Transform
   # Project, but remove columns instead of projecting them
   @exclude: (table, cols) ->
     cols = _.flatten [cols]
+    schema = table.schema.exclude cols
     keep = _.reject table.schema.cols, (col) -> col in cols
-    mapping = _map keep, (col) ->
-      f = (val) -> val
-      [col, f, table.schema.type(col)]
-    @mapCols table, mapping
+    colDatas = _.map keep, (col) -> table.getColumn(col)
+    new gg.data.ColTable schema, colDatas
 
   # add @param mapping to schema
   #
@@ -127,24 +123,25 @@ class gg.data.Transform
   # where f: (colval, idx) -> newval
   #
   @mapCols: (table, mapping) ->
+    Schema = gg.data.Schema
     mapping = _.map _.compact(mapping), ([col, f, type]) ->
-      type ?= f.type or gg.data.Schema.unknown
+      type ?= f.type or Schema.unknown
       [col, f, type]
 
     schema = table.schema.clone()
     schema = schema.exclude _.map(mapping, ([c,f,t])->c)
-    newSchema = new gg.data.Schema()
+    newSchema = new Schema()
     for [col, f, type] in mapping
       newSchema.addColumn col, type
     schema.merge newSchema
 
     rows = table.each (row, idx) ->
       raw = row.raw()
-      _.map mapping, ([col, f, type]) ->
+      for [col, f, type] in mapping
         v = f raw[col], idx
-        if idx <= 10 and schema.type(col) == gg.data.Schema.unknown
-          schema.setType col, gg.data.Schema.type(v)
         raw[col] = v
+        if idx <= 10 and schema.type(col) == Schema.unknown
+          schema.setType col, Schema.type(v)
       raw
 
     table.klass().fromArray rows, schema
@@ -165,20 +162,15 @@ class gg.data.Transform
     for [col, f, type] in mapping
       schema.addColumn col, type
 
-    iter = table.iterator()
-    idx = 0
-    newrows = []
-    while iter.hasNext()
-      row = iter.next()
-      o = _.o2map mapping, ([col, f, type], idx) ->
+    newrows = table.fastEach (row, idx) ->
+      _.o2map mapping, ([col, f, type], idx) ->
         v = f row, idx
         if idx <= 10
           if schema.type(col) == gg.data.Schema.unknown
             schema.setType col, gg.data.Schema.type(v)
         [col, v]
-      idx += 1
-      newrows.push o
     table.klass().fromArray newrows, schema
+
         
 
     

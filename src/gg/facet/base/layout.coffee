@@ -36,12 +36,10 @@ class gg.facet.base.Layout extends gg.core.BForm
 
   facetVals: (md) ->
     Facets = gg.facet.base.Facets
-    xys = _.uniq md.each (row) ->
-      pair = [row.get(Facets.facetXKey), row.get(Facets.facetYKey())]
-      key = JSON.stringify pair
-      xys[key] = pair
-    @log "xys: #{JSON.stringify xys}"
-    xys
+    _.uniq(
+      _.zip(md.getColumn('facet-x'), md.getColumn('facet-y')),
+      false,
+      JSON.stringify)
 
 
   # layout facets

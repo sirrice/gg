@@ -64,7 +64,7 @@ class gg.wf.Scales extends gg.wf.SyncBlock
 
   compute: (pairtable, params) ->
     md = pairtable.getMD()
-    md.each (row) =>
+    md.fastEach (row) =>
       layer = row.get 'layer'
       scale = row.get 'scales'
       gg.wf.Scales.print scale, layer, @log

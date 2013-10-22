@@ -95,13 +95,11 @@ class gg.facet.base.Render extends gg.core.BForm
       container: plotC.toString()
     }
 
-    # update environment
-    md = gg.data.Transform.mapCols md, [
-      ['svg', ((svg) -> 
-        svg.plot = plotSvg
-        svg), gg.data.Schema.object]]
+    for svg in md.getColumn('svg')
+      svg.plot = plotSvg
 
     md
+
     # render the pane container
     ###
     draw = (c, fill) ->

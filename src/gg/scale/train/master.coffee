@@ -22,14 +22,13 @@ class gg.scale.train.Master extends gg.core.BForm
     md = pairtable.getMD()
 
     if scalesTrain is 'fixed'
-      scalesList = _.uniq(md.getColumn('scales'), false, (s) -> s.id)
-      masterScales = new gg.scale.MergedSet scalesList
+      sets = md.getColumn 'scales'
+      sets = _.uniq sets, false, (set) -> set.id
+      masterSet = new gg.scale.MergedSet sets
       #@expandDomains masterScales
-      md = gg.data.Transform.mapCols md, [
-        ['scales', ((scales) ->
-          scales.merge masterScales
-          scales), gg.data.Schema.object]
-      ]
+
+      for set in sets
+        set.merge masterSet
     else
       md = @trainFreeScales md
 
@@ -54,13 +53,9 @@ class gg.scale.train.Master extends gg.core.BForm
     ps = _.map md.partition(['facet-x', 'facet-y']), (p) ->
       x = p.get 0, xFacet
       y = p.get 0, yFacet
-      gg.data.Transform.mapCols p, [
-        ['scales', ((scales) ->
-          scales.merge xscalesList[x], no
-          scales.merge yscalesList[y], no
-          scales), gg.data.Schema.object
-        ]
-      ]
+      for set in md.getColumn('scales')
+        set.merge xscalesList[x], no
+        set.merge yscalesList[y], no
 
     return new gg.data.MultiTable null, ps
 

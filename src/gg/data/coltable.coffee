@@ -13,6 +13,25 @@ class gg.data.ColTable extends gg.data.Table
     if @colDatas.length == 0 then 0 else @colDatas[0].length
   ncols: -> @colDatas.length
 
+  # more efficient version of each, allocates single
+  # data.Row object for entire iteration and minimizes 
+  # copies
+  # @param f functiton to run.  takes gg.data.Row, index as input
+  # @param n number of rows
+  fastEach: (f, n=null) ->
+    rowidx = 0
+    nrows = @nrows()
+    data = _.times @ncols(), () -> null
+    row = new gg.data.Row @schema, data
+    ret = []
+    while rowidx < nrows
+      for col, colidx in @colDatas
+        data[colidx] = col[rowidx]
+      ret.push f(row, idx)
+      rowidx += 1
+      break if n? and rowidx >= n
+    ret
+
   cloneShallow: ->
     cols = _.map @colDatas, (col) -> _.clone col
     new gg.data.ColTable @schema.clone(), cols

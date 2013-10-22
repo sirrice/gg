@@ -27,6 +27,19 @@ class gg.data.RowTable extends gg.data.Table
     t.rows = rows
     t
 
+
+  # more efficient version of each, allocates single
+  # data.Row object for entire iteration and minimizes 
+  # copies
+  fastEach: (f, n=null) ->
+    row = new gg.data.Row @schema
+    ret = []
+    for raw, idx in @rows
+      row.data = raw
+      ret.push f(row, idx)
+      break if n? and idx >= n
+    ret
+
   # internal method
   _addColumn: (col, vals) ->
     unless @has col
@@ -61,6 +74,7 @@ class gg.data.RowTable extends gg.data.Table
       throw Error "adding null row"
 
     if _.isArray(row)
+      row = _.clone row
       unless row.length == @schema.ncols()
         if row.length > @schema.ncols() or not pad
           throw Error "row len wrong: #{row.length} != #{@schema.length}"

@@ -86,7 +86,7 @@ class gg.data.PairTable
 
 
       if md.nrows() > 0
-        createCopy = () => md.each (row) -> row.clone()
+        createCopy = () => md.fastEach (row) -> row.clone()
       else if @md.nrows() > 0
         createCopy = () => [@md.get(0).clone()]
       else

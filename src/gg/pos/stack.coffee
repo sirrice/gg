@@ -80,7 +80,7 @@ class gg.pos.Stack extends gg.core.XForm
     groups = table.partition "group"
     values = (group, groupidx) ->
       x2row = {}
-      group.each (row) ->
+      group.fastEach (row) ->
         x2row[row.get('x')] =
           x: row.get 'x'
           y: row.get('y1') - (row.get('y0') or 0)
@@ -99,7 +99,7 @@ class gg.pos.Stack extends gg.core.XForm
     _.each groups, (group, idx) ->
       layer = stackedLayers[idx]
       x2row = {}
-      group.each (row) -> x2row[row.get('x')] = row
+      group.fastEach (row) -> x2row[row.get('x')] = row
 
       _.each layer, (pos) ->
         x = pos.x

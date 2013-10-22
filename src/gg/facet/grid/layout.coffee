@@ -71,12 +71,16 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     tmp = tmp.ensure facetKeys
     md = tmp.getMD()
 
+    xTextF = (text) -> {text:text, size: 8}
+    yTextF = (text) -> {text:text, size: 8}
+    ###
     xTextF = gg.util.Textsize.fitMany(
       xs, grid.paneW, labelHeight+paddingPane, 8, {padding: 2}
     )
     yTextF = gg.util.Textsize.fitMany(
       ys, grid.paneH, labelHeight+paddingPane, 8, {padding: 2}
     )
+    ###
 
     # 
     # Update MD:
@@ -94,6 +98,8 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
 
       # 1. add each pane's bounds to their environment
       p = p.setColumn 'paneC', paneC, gg.data.Schema.object
+      p = p.setColumn 'xfacettext-opts', {text:x, size:8}
+      p = p.setColumn 'yfacettext-opts', {text:y, size:8}
 
       # 2. update scale sets to be within drawing container
       xrange = [paddingPane, drawC.w()-2*paddingPane]
