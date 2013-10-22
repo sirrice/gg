@@ -99,7 +99,7 @@ class gg.pos.Stack extends gg.core.XForm
     _.each groups, (group, idx) ->
       layer = stackedLayers[idx]
       x2row = {}
-      group.fastEach (row) -> x2row[row.get('x')] = row
+      group.each (row) -> x2row[row.get('x')] = row
 
       _.each layer, (pos) ->
         x = pos.x

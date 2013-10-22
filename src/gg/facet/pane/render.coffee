@@ -44,7 +44,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
     @renderBg(el, dc) # render this first so it's at the bottom
     # XXX: check if show tick lines but not the labels
     @renderXAxis(el, dc, xac, xscale, {show: paneC.bXAxis})
-    @renderYAxis(el, dc, yac, yscale, {show: paneC.bXAxis})
+    @renderYAxis(el, dc, yac, yscale, {show: paneC.bYAxis})
     @renderXFacet(el, xfc, md) if paneC.bXFacet 
     @renderYFacet(el, yfc, md) if paneC.bYFacet
 
@@ -174,10 +174,10 @@ class gg.facet.pane.Svg extends gg.core.BForm
         for n in _.range(1, 20)
           blocksize = Math.ceil(domain.length / n)
           nblocks = Math.floor(domain.length / blocksize)
-          ticks = _.times nblocks, (block) -> domain[block*blocksize]
+          ticks = _.times nblocks, (block) -> String(domain[block*blocksize])
           ticksizes = _.map ticks, (tick) ->
             gg.util.Textsize.textSize(tick,
-              { class: "axis x"},
+              { class: "axis x", padding: 3},
               xael[0][0]).width
           widthAtTick = _.sum ticksizes
           @log "ticks: #{JSON.stringify ticks}"

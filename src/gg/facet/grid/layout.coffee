@@ -71,16 +71,12 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     tmp = tmp.ensure facetKeys
     md = tmp.getMD()
 
-    xTextF = (text) -> {text:text, size: 8}
-    yTextF = (text) -> {text:text, size: 8}
-    ###
     xTextF = gg.util.Textsize.fitMany(
       xs, grid.paneW, labelHeight+paddingPane, 8, {padding: 2}
     )
     yTextF = gg.util.Textsize.fitMany(
       ys, grid.paneH, labelHeight+paddingPane, 8, {padding: 2}
     )
-    ###
 
     # 
     # Update MD:
