@@ -153,6 +153,7 @@ var selected_geoms = {
         data: debug
       };
       var dplot = gg(dspecs);
+      $("#debug").empty()
       dplot.render(d3.select("#debug").append("span"));
 
     })

@@ -258,8 +258,6 @@ class gg.scale.Scale
   # Assume domain is [min, max] interval
   # Alternative subclasses can override
   mergeDomain: (domain) ->
-    if @frozen
-      @log.warn "frozen: ignoring merge domain #{domain} of #{@toString()}"
     md = @domain()
     unless @domainSet
      if @domainUpdated and md? and md.length == 2
@@ -275,9 +273,6 @@ class gg.scale.Scale
 
   domain: (interval) ->
     if interval?
-      if @frozen
-        @log.warn "frozen: ignoring set domain #{interval} of #{@toString()}"
- 
       if not @domainSet
         @domainUpdated = yes
         @d3Scale.domain interval
@@ -285,8 +280,6 @@ class gg.scale.Scale
 
   range: (interval) ->
     if interval? 
-      if @frozen
-        @log.warn "frozen: ignoring set range #{interval} of #{@toString()}"
 
       if not @rangeSet
         @rangeUpdated = true

@@ -32,8 +32,6 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
 
   domain: (interval) ->
     if interval?
-      if @frozen
-        @log.warn "frozen: ignoring set domain #{interval} of #{@toString()}"
       @invertScale.range interval
     super
 
@@ -46,8 +44,6 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
 
   range: (interval) ->
     if interval? and interval.length > 0 and not @rangeSet
-      if @frozen
-        @log.warn "frozen: ignoring set range #{interval} of #{@toString()}"
 
       #XXX: rangeBand vs range changes depending on if we're rendering
       #     points or rectangles?
@@ -62,8 +58,6 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
     @d3Range()
 
   resetDomain: ->
-    if @frozen
-      @log.warn "frozen: ignoring resetDomain of #{@toString()}"
     @domainUpdated = false
     @domain [] unless @domainSet
     @invertScale.domain [] unless @domainSet

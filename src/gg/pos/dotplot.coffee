@@ -34,8 +34,11 @@ class gg.pos.DotPlot extends gg.wf.SyncExec
 
   compute: (pairtable, params) ->
     t = pairtable.getTable()
+    md = pairtable.getMD()
     r = params.get 'r'
     t.setColumn 'r', r
+    yscale = md.get(0, 'scales').get 'y', gg.data.Schema.numeric
+    miny = yscale.range()[0]
     cmp = (r1, r2) -> r1.get('x') - r2.get('x')
     t = gg.data.Transform.sort t, cmp
 
@@ -53,14 +56,14 @@ class gg.pos.DotPlot extends gg.wf.SyncExec
       if prevx is null or curx-prevx > r*2
         prevx = curx
         xs.push prevx
-        ys.push r
+        ys.push r+miny
         shifted = no
       else if curx != prevx
         xs.push prevx+(r/2.0)
         if shifted
           ys.push (ys[ys.length-1]+r*2)
         else
-          ys.push r
+          ys.push r+miny
           shifted = yes
       else 
         xs.push curx
