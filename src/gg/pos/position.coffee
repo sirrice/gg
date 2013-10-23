@@ -42,3 +42,4 @@ class gg.pos.Identity extends gg.pos.Position
   @aliases = ["identity"]
 
   compute: (pairtable, params) -> pairtable
+  @compile: -> []

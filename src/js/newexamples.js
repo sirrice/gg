@@ -162,7 +162,7 @@ var selected_geoms = {
     var wf = plot.workflow;
     var text = [];
     text.push("digraph G {");
-    text.push("graph [rankdir=LR]");
+    text.push("graph [rankdir=TD]");
     _.each(wf.graph.edges(), function(edge) {
       var n1 = edge[0];
       var n2 = edge[1];
