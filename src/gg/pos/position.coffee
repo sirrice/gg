@@ -12,6 +12,7 @@ class gg.pos.Position extends gg.core.BForm
       gg.pos.Dodge
       gg.pos.Text
       gg.pos.Bin2D
+      gg.pos.DotPlot
     ]
     ret = {}
     _.each klasses, (klass) ->

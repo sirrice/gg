@@ -172,6 +172,7 @@ class gg.core.Graphic extends events.EventEmitter
     if @options.optimize
       optimizer = new gg.wf.Optimizer [
         new gg.wf.rule.RPCify
+        new gg.wf.rule.RmDebug
       ]
       @workflow = optimizer.run @workflow
 

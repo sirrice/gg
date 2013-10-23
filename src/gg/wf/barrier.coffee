@@ -4,6 +4,7 @@
 # Multiinput -> tableset -> compute -> tableset -> multioutput
 #
 # Adds a hidden column (_barrier) to the data to track input and output ports
+#
 # 
 class gg.wf.Barrier extends gg.wf.Node
   @ggpackage = "gg.wf.Barrier"

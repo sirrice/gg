@@ -156,21 +156,21 @@ var selected_geoms = {
 
     })
 
-    return;
+    //return;
 
-    var wf = plot.compile();
+    var wf = plot.workflow;
     var text = [];
     text.push("digraph G {");
     text.push("graph [rankdir=LR]");
     _.each(wf.graph.edges(), function(edge) {
       var n1 = edge[0];
       var n2 = edge[1];
-      var md = edge[2].type;
+      var md = edge[2];
       var color = md=="normal"?"black":"green";
       text.push("\""+n1.name + "\" -> \"" + n2.name + "\" [color=\""+color+"\"];");
     })
     text.push("}");
-    //console.log(text.join("\n"));
+    console.log(text.join("\n"));
   }
 
 
