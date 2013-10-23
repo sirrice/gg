@@ -45,8 +45,6 @@ class gg.facet.pane.Svg extends gg.core.BForm
     # XXX: check if show tick lines but not the labels
     @renderXAxis(el, dc, xac, xscale, {show: paneC.bXAxis})
     @renderYAxis(el, dc, yac, yscale, {show: paneC.bYAxis})
-    @renderXFacet(el, xfc, md) if paneC.bXFacet 
-    @renderYFacet(el, yfc, md) if paneC.bYFacet
 
     dataPaneSvg = _.subSvg el, {
       class: 'data-pane facet-grid'
@@ -63,6 +61,10 @@ class gg.facet.pane.Svg extends gg.core.BForm
       yscale, 
       eventCoordinator,
       eventName)
+
+    @renderXFacet(el, xfc, md) if paneC.bXFacet 
+    @renderYFacet(el, yfc, md) if paneC.bYFacet
+
 
     el
 
@@ -82,7 +84,8 @@ class gg.facet.pane.Svg extends gg.core.BForm
     text = opts.text
     size = opts.size
 
-    xfel = el.insert 'g', ':first-child'
+    #xfel = el.insert 'g', ':first-child'
+    xfel = el.append 'g'
     xfel.attr 
       class: "facet-label x"
       transform: @b2translate container
@@ -95,7 +98,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
     _.subSvg(xfel, {
       x: container.w()/2
       y: container.h()
-      dy: "-.5em"
+      dy: "-.25em"
       "text-anchor": "middle"
     }, "text")
       .text(text)
@@ -106,7 +109,8 @@ class gg.facet.pane.Svg extends gg.core.BForm
     text = opts.text
     size = opts.size
 
-    yfel = el.insert 'g', ':first-child'
+    #yfel = el.insert 'g', ':first-child'
+    yfel = el.append 'g'
     yfel.attr
       class: "facet-label y"
       transform: @b2translate container
@@ -118,7 +122,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
     }, 'rect'
 
     yftext = _.subSvg(yfel, {
-      y: "-.5em"
+      y: "-.25em"
       x: container.h()/2
       "text-anchor": "middle"
       transform: "rotate(90)"
@@ -130,7 +134,8 @@ class gg.facet.pane.Svg extends gg.core.BForm
   renderXAxis: (el, dc, container, xscale, tickOpts={}) ->
 
       xac2 = container.clone()
-      xael = el.insert 'g', ':first-child'
+      #xael = el.insert 'g', ':first-child'
+      xael = el.append 'g'
       xael.attr
         class: 'axis x'
         transform: @b2translate xac2
@@ -196,7 +201,8 @@ class gg.facet.pane.Svg extends gg.core.BForm
   renderYAxis: (el, dc, container, yscale, tickOpts={}) ->
       yac2 = container.clone()
       yac2.d container.w(), 0
-      yael = el.insert 'g', ':first-child'
+      #yael = el.insert 'g', ':first-child'
+      yael = el.append 'g'
       yael.attr
         class: 'axis y'
         transform: @b2translate yac2

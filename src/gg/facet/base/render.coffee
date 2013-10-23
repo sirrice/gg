@@ -36,6 +36,19 @@ class gg.facet.base.Render extends gg.core.BForm
       height: bgC.h()
     }, 'rect'
 
+
+    wRatio = plotC.w() / bgC.w()
+    hRatio = plotC.h() / bgC.h()
+    transform = "#{b2translate plotC}scale(#{wRatio},#{hRatio})"
+    matrix = "#{wRatio},0,0,#{hRatio},#{plotC.x0},#{plotC.y0}"
+    plotSvg = _.subSvg svg, {
+      transform: "matrix(#{matrix})"
+      class: 'graphic-with-margin'
+      container: plotC.toString()
+    }
+
+
+
     # X Facet
     if xflC? and xflC.v()
       _.subSvg(svg, {
@@ -84,16 +97,6 @@ class gg.facet.base.Render extends gg.core.BForm
         dy: "1em"
       }, 'text').text(options.yaxis)
 
-
-    wRatio = plotC.w() / bgC.w()
-    hRatio = plotC.h() / bgC.h()
-    transform = "#{b2translate plotC}scale(#{wRatio},#{hRatio})"
-    matrix = "#{wRatio},0,0,#{hRatio},#{plotC.x0},#{plotC.y0}"
-    plotSvg = _.subSvg svg, {
-      transform: "matrix(#{matrix})"
-      class: 'graphic-with-margin'
-      container: plotC.toString()
-    }
 
     for svg in md.getColumn('svg')
       svg.plot = plotSvg

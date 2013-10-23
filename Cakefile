@@ -49,7 +49,8 @@ release = (callback) ->
   commands.push "cp build/js/prettify.js public/js/"
   commands.push "cp lib/gg.css public/css/"
   commands.push "cp -r build/vendor public/"
-  commands.push "slimerjs vendor/js/rasterize.js http://localhost:8000/html/release.html docs/imgs/screenshot.png"
+  #commands.push "slimerjs vendor/js/rasterize.js http://localhost:8000/html/release.html docs/imgs/screenshot.png"
+  commands.push "slimerjs vendor/js/rasterize.js http://localhost:8000/html/gallery.html docs/imgs/screenshot.png"
 
   async.forEachSeries commands, run, ->
     callback() if callback

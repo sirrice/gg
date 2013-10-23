@@ -86,27 +86,31 @@ class gg.facet.base.Layout extends gg.core.BForm
     nys = ys.length
     showXFacet = not(xs.length is 1 and not xs[0]?)
     showYFacet = not(ys.length is 1 and not ys[0]?)
-
+    showXAxis = params.get 'showXAxis'
+    showYAxis = params.get 'showYAxis'
     paddingPane = params.get 'paddingPane'
 
     unless options.minimal
       titleH = @getTitleHeight(params)
-      em = _.textSize("m", {}).h
+      em = _.textSize("f", {padding: 3}).h
       @log "title size: #{titleH}"
       @log "em size: #{em}"
 
       plotW = w
-      plotW -= (paddingPane + titleH) # yaxis
+      plotW -= (paddingPane + titleH) if showYAxis 
       plotW -= (paddingPane + titleH) if showYFacet
       plotH = h
-      plotH -= (paddingPane + titleH) # xaxis
+      plotH -= (paddingPane + titleH) if showXAxis
       plotH -= (paddingPane + titleH) if showXFacet
 
       toffset = 0
       toffset += paddingPane + titleH if showXFacet
+      yoffset = 0
+      yoffset += paddingPane + titleH if showYAxis
+
 
       plotC = new Bound 0, 0, plotW, plotH
-      plotC.d (paddingPane+titleH), toffset
+      plotC.d yoffset, toffset
       container = new gg.facet.pane.Container plotC,
         0,
         0,
@@ -114,11 +118,12 @@ class gg.facet.base.Layout extends gg.core.BForm
         "",
         showXFacet,
         showYFacet,
-        true,
-        true,
-        em,
-        em,
-        0
+        showXAxis,
+        showYAxis,
+        {
+          labelHeight: em
+          padding: 3
+        }
 
       xFacetLabelC = container.xFacetC()
       xFacetLabelC.d (w-2*titleH)/2, 0
@@ -131,7 +136,7 @@ class gg.facet.base.Layout extends gg.core.BForm
       yFacetLabelC.d -em/2, 0
 
       xAxisLabelC = container.xAxisC()
-      xAxisLabelC.d (w-2*titleH)/2, em
+      xAxisLabelC.d (w-2*titleH)/2, em/2
 
       yAxisLabelC = container.yAxisC()
       yAxisLabelC = new Bound yAxisLabelC.x0,
@@ -139,6 +144,11 @@ class gg.facet.base.Layout extends gg.core.BForm
         yAxisLabelC.x0+yAxisLabelC.w(),
         (plotH/2 + (paddingPane+titleH)) + yAxisLabelC.h()
       @log "yAxisLabelC: #{yAxisLabelC.toString()}"
+
+      xFacetlabelC = null unless showXFacet
+      yFacetlabelC = null unless showYFacet
+      xAxisLabelC = null unless showXAxis
+      yAxisLabelC = null unless showYAxis
 
       plotC = container.drawC()
     else

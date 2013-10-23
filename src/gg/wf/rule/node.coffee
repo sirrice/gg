@@ -17,7 +17,7 @@ class gg.wf.rule.Node extends gg.wf.rule.Rule
   run: (flow) ->
     _.each flow.nodes(), (node) =>
       replacements = @compute node
-      replacements = [replacements] unless _.isArray replacements
+      replacements = _.flatten [replacements]
       replacements = _.compact replacements
 
       gg.wf.rule.Node.replace flow, node, replacements
@@ -40,7 +40,6 @@ class gg.wf.rule.Node extends gg.wf.rule.Rule
     unless @validateReplacement node, replacements
       throw Error("Rule replacement types don't match.
         Expected #{node.type}, got #{_.map replacements (r) -> r.type}")
-    return if replacements.length is 0
     return if replacements.length is 1 and replacements[0] == node
 
     # store node's original input and output edges

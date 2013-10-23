@@ -14,6 +14,7 @@ var geoms = {
   ,multiline: colored_lines_multi
   ,boxplot: geom_boxplot
   ,ptinterval: geom_point_interval
+  ,dotplot: geom_dotplot
 };
 
 var selected_geoms = {

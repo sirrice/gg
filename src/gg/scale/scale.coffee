@@ -91,6 +91,7 @@ class gg.scale.Scale
     # center scale on this value -- only useful for continuous scales
     @center = null
 
+    @frozen = no
 
     @parseSpec()
 
@@ -104,8 +105,6 @@ class gg.scale.Scale
       @range range
       @rangeSet = yes
 
-
-
     attrs = ['domain','limit','limits','lims','lim']
     domain = _.findGoodAttr @spec, attrs, null
     if domain?
@@ -115,6 +114,7 @@ class gg.scale.Scale
     @center = _.findGood [@spec.center, null]
     @domainUpdated = _.findGood [@spec.domainUpdated, false]
     @rangeUpdated = _.findGood [@spec.rangeUpdated, false]
+    @frozen = _.findGood [@spec.frozen, no]
 
     @log = gg.util.Log.logger @ggpackage, "Scale #{@aes}.#{@id} (#{@type},#{@constructor.name})"
 
@@ -164,21 +164,21 @@ class gg.scale.Scale
 
   @defaultFor: (aes, type) ->
     klass = {
-          x: gg.scale.Linear
-          x0: gg.scale.Linear
-          x1: gg.scale.Linear
-          y: gg.scale.Linear
-          y0: gg.scale.Linear
-          y1: gg.scale.Linear
-          color: gg.scale.Color
-          fill: gg.scale.Color
-          stroke: gg.scale.Color
-          "fill-opacity": gg.scale.Linear
-          "opacity": gg.scale.Linear
-          "stroke-opacity": gg.scale.Linear
-          size: gg.scale.Linear
-          text: gg.scale.Text
-          shape: gg.scale.Shape
+      x: gg.scale.Linear
+      x0: gg.scale.Linear
+      x1: gg.scale.Linear
+      y: gg.scale.Linear
+      y0: gg.scale.Linear
+      y1: gg.scale.Linear
+      color: gg.scale.Color
+      fill: gg.scale.Color
+      stroke: gg.scale.Color
+      "fill-opacity": gg.scale.Linear
+      "opacity": gg.scale.Linear
+      "stroke-opacity": gg.scale.Linear
+      size: gg.scale.Linear
+      text: gg.scale.Text
+      shape: gg.scale.Shape
       }[aes] or gg.scale.Identity
 
     if type?
@@ -199,19 +199,6 @@ class gg.scale.Scale
 
   clone: ->
     return gg.scale.Scale.fromJSON @toJSON()
-    klass = @constructor
-    spec = _.clone @spec
-    spec.aes = @aes
-    spec.type = @type
-    spec.domainUpdated = @domainUpdated
-    spec.domainSet = @domainSet
-    spec.rangeUpdated = @rangeUpdated
-    spec.rangeSet = @rangeSet
-    spec.center = @center
-
-    ret = new klass spec
-    ret.d3Scale = @d3Scale.copy() if @d3Scale?
-    ret
 
   toJSON: ->
     spec = _.clone @spec
@@ -222,6 +209,7 @@ class gg.scale.Scale
     spec.rangeUpdated = @rangeUpdated
     spec.rangeSet = @rangeSet
     spec.center = @center
+    spec.frozen = @frozen
 
     spec.ggpackage = @constructor.ggpackage
     spec.domain = @domain()
@@ -245,8 +233,7 @@ class gg.scale.Scale
     clone.rangeUpdated = json.rangeUpdated
     clone.rangeSet = json.rangeSet
     clone.center = json.center
-
-
+    clone.frozen = json.frozen
     clone
 
 
@@ -271,6 +258,8 @@ class gg.scale.Scale
   # Assume domain is [min, max] interval
   # Alternative subclasses can override
   mergeDomain: (domain) ->
+    if @frozen
+      @log.warn "frozen: ignoring merge domain #{domain} of #{@toString()}"
     md = @domain()
     unless @domainSet
      if @domainUpdated and md? and md.length == 2
@@ -285,15 +274,23 @@ class gg.scale.Scale
 
 
   domain: (interval) ->
-    if interval? and not @domainSet
-      @domainUpdated = yes
-      @d3Scale.domain interval
+    if interval?
+      if @frozen
+        @log.warn "frozen: ignoring set domain #{interval} of #{@toString()}"
+ 
+      if not @domainSet
+        @domainUpdated = yes
+        @d3Scale.domain interval
     @d3Scale.domain()
 
   range: (interval) ->
-    if interval? and not @rangeSet
-      @rangeUpdated = true
-      @d3Scale.range interval
+    if interval? 
+      if @frozen
+        @log.warn "frozen: ignoring set range #{interval} of #{@toString()}"
+
+      if not @rangeSet
+        @rangeUpdated = true
+        @d3Scale.range interval
     @d3Scale.range()
 
   #

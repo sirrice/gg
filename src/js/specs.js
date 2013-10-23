@@ -64,6 +64,19 @@ var crazy = {
 }
 
 var f500 = function(row) {return Math.floor(row.get("g")/500)*500;};
+
+var geom_dotplot = {
+  facets: {x:'t'},
+  "layers": [ 
+    {
+      "aes": { "x": "e" }, 
+      "geom": "point", 
+      "pos": { "type": "dot", "r": 4 }
+    }
+  ]
+}
+
+
 var geom_boxplot2 =
 {
   layers:[

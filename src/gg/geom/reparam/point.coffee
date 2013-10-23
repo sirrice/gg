@@ -3,9 +3,11 @@
 class gg.geom.reparam.Point extends gg.core.XForm
   @ggpackage = "gg.geom.reparam.Point"
 
-  defaults:  -> r: 5
+  defaults:  -> 
+    r: 5
+    y: 0
 
-  inputSchema:  -> ['x', 'y']
+  inputSchema:  -> ['x']
 
   outputSchema: (pairtable) ->
     schema = pairtable.tableSchema().clone()

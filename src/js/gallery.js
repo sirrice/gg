@@ -6,7 +6,7 @@ var all_specs = [
   ,geom_point_interval
   ,geom_point_2
   ,geom_point_3
-  ,geom_point_4
+  ,geom_dotplot
   ,colored_lines
   ,colored_lines_multi
   ,geom_boxplot
@@ -27,8 +27,8 @@ var all_specs = [
     };
     specs.data = genData(500);
     if (!specs.opts)  specs.opts = {};
-    specs.opts.w = 400;
-    specs.opts.h = 300;
+    specs.opts.w = 600;
+    specs.opts.h = 400;
     
     var plot = gg(specs);
     plot.render(ex());

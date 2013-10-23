@@ -78,6 +78,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
 
       f = (table, oldscale, aes) ->
         return table if _.isSubclass oldscale, gg.scale.Identity
+        return table if oldscale.frozen
 
         log "#{idx} retrive #{aes}: #{oldscale.aes}\t#{oldscale.type}"
 
@@ -136,6 +137,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
         if scale.type == Schema.ordinal
           log "scale ordinal, skipping: #{aes}"
           return table 
+        return table if scale.frozen
         tabletype = table.schema.type aes
         if oldscaleset.contains (posMapping[aes] or aes), tabletype
           oldScale = oldscaleset.scale aes, tabletype, posMapping
@@ -150,7 +152,8 @@ class gg.scale.train.Pixel extends gg.core.BForm
       scaleset.useScales t, posMapping, rescale
       log "#{idx} #{scaleset.toString()}"
       t = gg.data.Transform.mapCols t, mappingFuncs
-      if t.has 'y'
+
+      if no and t.has 'y'
         ys = t.getColumn 'y'
         yscale = scaleset.get 'y', [t.schema.type('y'), Schema.unknown]
         range = yscale.range()
