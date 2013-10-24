@@ -212,16 +212,15 @@ class gg.wf.Flow extends events.EventEmitter
     root
 
   # Export graph is a DOT formatted string
-  toDot: ->
+  toDot: (rankdir='TD') ->
     text = []
     text.push "digraph G {"
-    text.push "graph [rankdir=LR]"
+    text.push "graph [rankdir=#{rankdir}]"
     _.each @graph.edges(), (edge) =>
       [n1, n2, type, weight] = edge
       color = if type is "normal" then "black" else "green"
       text.push "\"#{n1.name}:#{n1.id}\" -> \"#{n2.name}:#{n2.id}\" [color=\"#{color}\", label=\"#{type}:#{weight}\"];"
     text.push "}"
-
     text.join("\n")
 
 
@@ -239,8 +238,14 @@ class gg.wf.Flow extends events.EventEmitter
   rm: (node) ->
     ps = @parents node
     cs = @children node
-    if @parents(node).length > 1 or @children(node).length > 1
-      throw Error("don't support removing multi-parent/child node")
+    if @parents(node).length > 1
+      @log.err @parents(node)
+      throw Error("don't support removing multi-parent node #{node.name}")
+
+    if @children(node).length > 1
+      @log.err @children(node)
+      throw Error("don't support removing multi-child node #{node.name}")
+
 
     c = p = null
     if ps.length > 0 
@@ -275,11 +280,54 @@ class gg.wf.Flow extends events.EventEmitter
         @connect bp, bc, "bridge", bmd if bp? and bc?
 
 
+  insertAfter: (node, parent, checkChildren=yes) ->
+    if @children(parent).length > 0 and checkChildren
+      for child in @children parent
+        if child?
+          @log "insertAfter calling insert: #{node.name}, #{parent.name}, #{child.name}"
+          @insert node, parent, child
+      return
+
+    if node.isBarrier() == parent.isBarrier()
+      @connect parent, node, 'normal'
+      unless node.isBarrier()
+        @connect parent, node, 'bridge'
+    else
+      b2str = (b) -> if b then "barrier" else "nonbarrier"
+      throw Error "Can't insert #{b2str node.isBarrier()} 
+                   after #{b2str parent.isBarrier()}"
+
+  insertBefore: (node, child, checkParents=yes) ->
+    if @parents(child).length > 0 and checkParents
+      @log "insertBefore #{child.name} has parents"
+      for p in @parents child
+        if p?
+          @log "insertBefore calling insert: #{node.name}, #{p.name}, #{child.name}"
+          @insert node, p, child
+      return
+
+    if node.isBarrier() == child.isBarrier()
+      @connect node, child, 'normal'
+      unless node.isBarrier()
+        @connect node, child, 'bridge'
+    else
+      b2str = (b) -> if b then "barrier" else "nonbarrier"
+      throw Error "Can't insert #{b2str node.isBarrier()} 
+                   before #{b2str child.isBarrier()}"
+
+
   # Insert node between adjacent nodes parent -- child
   insert: (node, parent, child) ->
 
     unless _.any @children(parent), ((pc) -> pc.id is child.id)
       throw Error("parent not parent of child: #{parent.toString()}\t#{child.toString()}")
+
+    if parent? and not child?
+      @insertAfter node, parent, no
+      return
+    if child? and not parent?
+      @insertBefore node, child, no
+      return
 
     if parent.isBarrier() and child.isBarrier()
       if node.isBarrier()
@@ -322,6 +370,8 @@ class gg.wf.Flow extends events.EventEmitter
           md = @disconnect parent, bc, "bridge"
           @connect node, bc, "bridge", md
 
+        @connect parent, node, "bridge", md
+
     if not parent.isBarrier() and not child.isBarrier()
       if node.isBarrier()
         throw Error("Can't insert a barrier between two non-barriers")
@@ -334,6 +384,17 @@ class gg.wf.Flow extends events.EventEmitter
         @connect node, child, "bridge", md
 
 
+  findByClass: (klass) ->
+    @find (n) -> _.isType n, klass
+
+  findOne: (f) -> @find(f)[0]
+
+  find: (f) ->
+    ret = []
+    @graph.dfs (node) ->
+      if f node
+        ret.push node
+    ret
 
   nodeFromId: (id) ->
     nodes = @graph.nodes((node) -> node.id == id)
@@ -346,7 +407,7 @@ class gg.wf.Flow extends events.EventEmitter
   connect: (from, to, type="normal", weight=null) ->
     unless weight?
       if @graph.edgeExists from, to, type
-        weight = 1 + @graph.metadata from, to, type
+        weight = 1 + @graph.metadata(from, to, type)
       else
         weight = 1
     @graph.connect from, to, type, weight
@@ -354,12 +415,13 @@ class gg.wf.Flow extends events.EventEmitter
     @
 
   connectBridge: (from, to) ->
-    throw Error() if from.type == 'barrier'
-    throw Error() if from.type == 'barrier'
+    throw Error() if from.isBarrier()
+    throw Error() if to.isBarrier()
     @connect from, to, "bridge"
     @
 
   disconnect: (from, to, type="normal") ->
+    @log "disconnected #{from.name} -> #{to.name} type #{type}"
     @graph.disconnect from, to, type
 
   edgeWeight: (from, to, type="normal") ->
@@ -370,6 +432,17 @@ class gg.wf.Flow extends events.EventEmitter
 
   parents: (node) -> @graph.parents node, "normal"
   bridgedParents: (node) -> @graph.parents node, "bridge"
+
+  isAncestor: (anc, desc) ->
+    return no if anc == desc
+    found = no
+    f = (n) ->
+      if n == desc
+        found = yes
+
+    @graph.dfs f, anc
+    found
+
 
 
   # Get node's input ports that are mapped to parent's outputs
@@ -425,7 +498,7 @@ class gg.wf.Flow extends events.EventEmitter
   merge: (specOrNode) -> @setChild gg.wf.Merge, specOrNode
   barrier: (specOrNode) -> @setChild gg.wf.Barrier, specOrNode
   multicast: (specOrNode) -> @setChild gg.wf.Multicast, specOrNode
-  extend: (nodes) -> _.each nodes, (node) => @setChild null, node
+  extend: (nodes) -> _.each _.compact(nodes), (node) => @setChild null, node
 
   # Add child to end of workflow
   # @param specOrNode specification of a node or a Node object

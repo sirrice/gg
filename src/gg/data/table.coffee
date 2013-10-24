@@ -15,6 +15,9 @@
 # Attribute resolution
 # 1) check for attributes containing atomic data types
 # 2) check each column that is of type object
+#
+# Methods that start with "_" are update in place and return the same table
+#
 
 
 class gg.data.Table
@@ -116,6 +119,8 @@ class gg.data.Table
     @_addColumn col, vals
     @
 
+  _rmColumn: (col) -> throw Error "not implemented"
+  rmColumn: (col) -> @_rmColumn col
 
 
   # This is the only method other than addCol that changes the data
@@ -124,7 +129,15 @@ class gg.data.Table
 
   toJSON: ->
     schema: @schema.toJSON()
-    data: @raw()
+    data: _.toJSON @raw()
+    klass: @klass().name
+
+  @fromJSON: (json) ->
+    klass = @type2class(json.klass)
+    klass ?= gg.data.ColTable
+    klass.fromJSON json
+
+
 
   toString: ->
     JSON.stringify @raw()
@@ -136,9 +149,9 @@ class gg.data.Table
 
   @type2class: (tabletype="row") ->
     switch tabletype
-      when "row"
+      when "row", "RowTable"
         gg.data.RowTable
-      when "col"
+      when "col", "ColTable"
         gg.data.ColTable
       else
         null

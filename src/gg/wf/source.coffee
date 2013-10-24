@@ -131,3 +131,39 @@ class gg.wf.SQLSource extends gg.wf.Source
         pt = new gg.data.PairTable table, pt.getMD()
         cb null, pt
 
+
+
+class gg.wf.CacheSource extends gg.wf.Source
+  @ggpackage = "gg.wf.CacheSource"
+
+  construtor: ->
+    super
+    @name = "CacheSource"
+
+  parseSpec: ->
+    super
+    unless @params.has 'guid'
+      throw Error("can't run cache source without a guid key")
+
+  compute: (pt, params, cb) ->
+    guid = params.get 'guid'
+    db = gg.wf.Cache.getDB()
+    ntables = parseInt db[guid]
+    partitions = []
+
+    for idx in [0...ntables]
+      keyprefix = "#{guid}-#{idx}"
+      tkey = "#{keyprefix}-table"
+      mdkey = "#{keyprefix}-md"
+      tJson = JSON.parse db[tkey]
+      mdJson = JSON.parse db[mdkey]
+      t = gg.data.Table.fromJSON tJson
+      md = gg.data.Table.fromJSON mdJson
+      partitions.push new gg.data.PairTable(t, md)
+
+    if partitions.length == 1
+      cb null, partitions[0]
+    else
+      cb null, new gg.data.TableSet(partitions)
+
+

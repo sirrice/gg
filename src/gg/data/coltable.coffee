@@ -48,7 +48,7 @@ class gg.data.ColTable extends gg.data.Table
   _getColumn: (col) -> 
     @colDatas[@schema.index col]
 
-  rmColumn: (col) ->
+  _rmColumn: (col) ->
     return @ unless @has col
     idx = @schema.index col
     @colDatas.splice idx, 1
@@ -120,7 +120,8 @@ class gg.data.ColTable extends gg.data.Table
   @fromJSON: (json) ->
     schema = gg.data.Schema.fromJSON json.schema
     t = new gg.data.ColTable schema
-    for raw in json.data
+    raws = _.fromJSON json.data
+    for raw in raws
       t.addRow raw
     t
 

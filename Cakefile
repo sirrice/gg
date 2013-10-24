@@ -63,7 +63,8 @@ build = (callback) ->
 
 
     commands.push 'toaster -dc'
-    commands.push 'cp -r build/compiled/* build/js/'
+    commands.push 'ls build/compiled/*'
+    commands.push 'cp -r build/compiled/ build/js/'
 
     #  commands.push 'cp src/manifest.json build/'
     commands.push 'cp -r src/html build/'
@@ -79,6 +80,7 @@ build = (callback) ->
     commands.push "#{coffeebin} --output test/js --compile  test/gg/*.coffee"
     commands.push 'cp build/js/ggplotjs2.js lib/'
     commands.push "./node_modules/browserify/bin/cmd.js -e lib/ggplotjs2.js >  build/js/gg.js"
+    commands.push "echo 'compiled build/js/gg.js'"
 
 
     # copy final sources into lib/
@@ -96,7 +98,8 @@ clean = (callback) ->
     fs.remove 'build',  ->
         fs.remove 'test/js/*', ->
           fs.remove 'release', ->
-            callback() if callback
+            fs.remove 'lib/gg*.js', ->
+              callback() if callback
 
 
 test = (callback) ->

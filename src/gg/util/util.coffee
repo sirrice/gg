@@ -8,6 +8,13 @@ _ = require 'underscore'
 
 
 class gg.util.Util
+
+  @hashCode: (s) ->
+    f = (a,b)->
+      a=((a<<5)-a)+b.charCodeAt(0)
+      a&a
+    s.split("").reduce(f ,0)
+
   @toJSON: (o, reject=(()->no), path=[]) ->
     if path.length >= 25
       console.log o
@@ -220,6 +227,7 @@ _.mixin
   cross: gg.util.Util.cross
   dateFromISOString: gg.util.Util.dateFromISOString
   reach: gg.util.Util.reach
+  hashCode: gg.util.Util.hashCode
 
 
 Date.prototype.fromISOString = gg.util.Util.dateFromISOString

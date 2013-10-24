@@ -110,6 +110,8 @@ var geom_area = {
 
 
 var geom_boxplot =  {
+  opts: {optimizer: true, guid: "foobar"},
+  debug: {'gg.wf.rule':0, 'gg.wf.flow': 0},
   layers: [{
     aes: {
       color: "g"

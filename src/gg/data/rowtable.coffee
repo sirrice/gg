@@ -53,7 +53,7 @@ class gg.data.RowTable extends gg.data.Table
     idx = @schema.index col
     _.map @rows, (row) -> row[idx]
 
-  rmColumn: (col) ->
+  _rmColumn: (col) ->
     return @ unless @has col
     rmidx = @schema.index col
     for row in @rows
@@ -128,7 +128,7 @@ class gg.data.RowTable extends gg.data.Table
 
   @fromJSON: (json) ->
     schemaJson = json.schema
-    dataJson = json.data
+    dataJson = _.fromJSON json.data
 
     schema = gg.data.Schema.fromJSON schemaJson
     rows = []

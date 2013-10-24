@@ -130,7 +130,9 @@ var selected_geoms = {
       $("#examples").empty();
       return d3.select('#examples').append('span');
     };
+    var guid = gg.util.Util.hashCode(JSON.stringify(specs));
     specs.data = gg.data.Table.fromArray(bigdata, null, 'row')
+    specs.opt = {optimize: true, guid: guid}
     var plot = gg(specs);
     plot.render(ex());
     plot.on("done", function(debug) {

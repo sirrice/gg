@@ -174,6 +174,11 @@ class gg.core.Graphic extends events.EventEmitter
         new gg.wf.rule.RPCify
         new gg.wf.rule.RmDebug
       ]
+      if @options.guid?
+        optimizer.rules.push new gg.wf.rule.Cache
+          params:
+            guid: @options.guid
+
       @workflow = optimizer.run @workflow
 
     @log "running workflow"

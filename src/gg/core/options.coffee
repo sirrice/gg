@@ -16,10 +16,14 @@ class gg.core.Options
 
     # Hide all facets, titles and axes?
     @minimal = _.findGood [@spec.minimal, no]
+
+
     @optimize = _.findGood [@spec.optimize, yes]
+    @guid = _.findGood [@spec.guid, @spec.name, null]
 
     # RPC options
     @serverURI = _.findGood [@spec.server, @spec.uri, "http://localhost:8001"]
+
 
   clone: ->
     new gg.core.Options _.clone(@spec)

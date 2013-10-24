@@ -7,6 +7,10 @@
 class gg.geom.Render extends gg.core.XForm
   @ggpackage = "gg.geom.Render"
 
+  constructor: (@spec={}) ->
+    @spec.name = @spec.name or "render-#{@constructor.name}"
+    super
+
   parseSpec: ->
     super
     @params.put "location", "client"
