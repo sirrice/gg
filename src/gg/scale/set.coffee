@@ -84,6 +84,9 @@ class gg.scale.Set
         ret.push @get(aes, type)
     ret
 
+
+
+
   # @param type.  the only time type should be null is when
   #        retrieving the "master" scale to render for guides
   scale: (aesOrScale, type=null, posMapping={}) ->

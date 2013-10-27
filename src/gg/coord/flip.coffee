@@ -6,7 +6,7 @@ class gg.coord.YFlip extends gg.coord.Coordinate
   @ggpackage = "gg.coord.YFlip"
   @aliases = ["yflip"]
 
-  map: (data) ->
+  compute: (data) ->
     @log "map: noop"
     data
 
@@ -14,15 +14,14 @@ class gg.coord.XFlip extends gg.coord.Coordinate
   @ggpackage = "gg.coord.XFlip"
   @aliases = ["xflip"]
 
-  map: (data, params) ->
-    table = data.table
-    env = data.env
+  compute: (data, params) ->
+    table = data.getTable()
     scales = @scales data, params
 
     inverted = scales.invert table, gg.scale.Scale.xys
     xtype = ytype = gg.data.Schema.unknown
-    xtype = table.schema.type('x') if table.contains 'x'
-    ytype = table.schema.type('y') if table.contains 'y'
+    xtype = table.schema.type('x') if table.has 'x'
+    ytype = table.schema.type('y') if table.has 'y'
 
     # flip the x range
     xScale = scales.scale 'x', xtype
@@ -40,15 +39,13 @@ class gg.coord.XFlip extends gg.coord.Coordinate
 
     table = scales.apply inverted, gg.scale.Scale.xys
 
-    if table.contains('x0') and table.contains('x1')
-      table.each (row) ->
-        x0 = row.get 'x0'
-        x1 = row.get 'x1'
-        row.set('x0', Math.min(x0, x1))
-        row.set('x1', Math.max(x0, x1))
+    if table.has('x0') and table.has('x1')
+      table = gg.data.Transform.transform table, [
+        ['x0', ((row) -> Math.min(row.get('x0'), row.get('x1'))), gg.data.Schema.numeric]
+        ['x1', ((row) -> Math.max(row.get('x0'), row.get('x1'))), gg.data.Schema.numeric]
+      ]
 
-    data.table = table
-    data
+    new gg.data.PairTable table, data.getMD() 
 
 
 
@@ -56,30 +53,28 @@ class gg.coord.Flip extends gg.coord.Coordinate
   @ggpackage = "gg.coord.Flip"
   @aliases = ["flip", 'xyflip']
 
-  map: (data, params) ->
-    table = data.table
-    env = data.env
+  compute: (data, params) ->
+    table = data.getTable()
+    md = data.getMD()
     scales = @scales data, params
+
     inverted = scales.invert table, gg.scale.Scale.xs
+
     type = table.schema.type 'x'
     xscale = scales.scale 'x', type
-
     xRange = xscale.range()
     xscale.range [xRange[1], xRange[0]]
-
     @log "map: xrange: #{xRange}"
 
     table = scales.apply inverted, gg.scale.Scale.xs
 
-    if table.contains('x0') and table.contains('x1')
-      table.each (row) ->
-        x0 = row.get 'x0'
-        x1 = row.get 'x1'
-        row.set('x0', Math.min(x0, x1))
-        row.set('x1', Math.max(x0, x1))
+    if table.has('x0') and table.has('x1')
+      table = gg.data.Transform.transform table, [
+        ['x0', ((row) -> Math.min(row.get('x0'), row.get('x1'))), gg.data.Schema.numeric]
+        ['x1', ((row) -> Math.max(row.get('x0'), row.get('x1'))), gg.data.Schema.numeric]
+      ]
 
-    data.table = table
-    data
+    new gg.data.PairTable table, md
 
 
 

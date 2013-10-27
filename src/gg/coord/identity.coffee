@@ -6,14 +6,14 @@ class gg.coord.Identity extends gg.coord.Coordinate
   @ggpackage = "gg.coord.Identity"
   @aliases = ["identity"]
 
-  map: (data, params) ->
-    [table, env] = [data.table, data.env]
+  compute: (pt, params) ->
+    table = pt.getTable()
+    md = pt.getMD()
     schema = table.schema
-    scales = @scales data, params
+    scales = md.get 0, 'scales'
     ytype = gg.data.Schema.unknown
-    ytype = table.schema.type('y') if table.contains 'y'
+    ytype = schema.type('y') if schema.has 'y'
     yscale = scales.get 'y', ytype
-
 
     origscale = yscale.clone()
     yRange = origscale.range()
@@ -26,16 +26,9 @@ class gg.coord.Identity extends gg.coord.Coordinate
     @log "test transform: 500 -> #{origscale.invert 500} -> #{transform 500}"
 
 
-    yaess = _.filter gg.scale.Scale.ys, (aes) -> table.contains aes
-    table.each (row) ->
-      _.each yaess, (aes) ->
-        vals = row.get aes
-        if _.isArray vals
-          row.set aes, _.map(vals, transform)
-        else
-          row.set aes, transform(vals)
+    yaess = _.filter gg.scale.Scale.ys, (aes) -> schema.has aes
+    mapping = _.map yaess, (col) -> [col, transform, gg.data.Schema.numeric]
+    table = gg.data.Transform.mapCols pt.getTable(), mapping
 
-    gg.wf.Stdout.print table, ['x', 'y'], 5, @log
-    data.table = table
-    data
+    new gg.data.PairTable table, md
 

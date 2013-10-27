@@ -4,11 +4,8 @@ class gg.coord.Coordinate extends gg.core.XForm
   @ggpackage = "gg.coord.Coordinate"
   @log = gg.util.Log.logger @ggpackage
 
-  compute: (data, params) -> 
-    @map data, params
-
-  map: (data, params) -> 
-    throw Error("#{@name}.map() not implemented")
+  compute: (pairtable, params) -> 
+    throw Error("#{@name}.compute() not implemented")
 
   @klasses: ->
     klasses = [
@@ -16,6 +13,7 @@ class gg.coord.Coordinate extends gg.core.XForm
       gg.coord.YFlip
       gg.coord.XFlip
       gg.coord.Flip
+      gg.coord.Swap
     ]
     ret = {}
     _.each klasses, (klass) ->
