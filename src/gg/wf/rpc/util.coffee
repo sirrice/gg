@@ -1,45 +1,38 @@
 class gg.wf.rpc.Util
 
-  @serialize: (inputs, params) ->
+  @serialize: (pairtable, params) ->
     # To prepare the env objects for transport:
     # 1. remove SVG/dom elements
     # 2. reject environments/params that contain functions
     #    or do something smarter?
-    removedEls = gg.wf.Inputs.mapLeaves inputs, (data) ->
-      {
-        svg: data.env.rm('svg')
-        event: daat.env.rm('event')
-      }
+    md = pairtable.getMD()
+    clientCols = ['svg', 'event']
+    removedEls = _.o2map clientCols, (col) ->
+      if md.has col
+        [col, md.getColumn(col)]
 
-    inputsJSONs = _.toJSON inputs
+    for col in clientCols
+      md = md.rmColumn col
+
     paramsJSON = if params? then params.toJSON() else null
 
     payload =
-      inputs: inputsJSONs
+      table: pairtable.getTable().toJSON()
+      md: pairtable.getMD().toJSON()
       params: paramsJSON
 
     [payload, removedEls]
 
 
 
-  @deserialize: (respData, removedEls=null) ->
-    inputs = _.fromJSON respData.inputs
+  @deserialize: (respData, removedEls={}) ->
+    table = gg.data.Table.fromJSON respData.table
+    md = gg.data.Table.fromJSON respData.md
 
-    mergeREs = (arr, res) ->
-      unless _.isArray res
-        gg.wf.Inputs.mapLeaves arr, (data) ->
-          data.env.merge res
-        return
+    for col, colData of removedEls
+      unless colData.length == md.nrows()
+        throw Error("rpc.deserialize: data len (#{md.nrows()}) !=
+          removedEls len (#{colData.length}) on col #{col}")
+      md = md.addColumn col, colData
 
-      if arr.length != res.length
-        throw Error("rpc.deserialize: data len (#{arr.length}) !=
-          removedEls len (#{res.length})")
-
-      for idx in _.range(arr.length)
-        mergeREs arr[idx], res[idx]
-
-    mergeREs inputs, removedEls if removedEls?
-    inputs
-
-
-
+    new gg.data.PairTable table, md

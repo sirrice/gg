@@ -113,6 +113,20 @@ class gg.data.RowTable extends gg.data.Table
         o[col] = r[@schema.index col]
       o
 
+  serialize: ->
+    JSON.stringify
+      data: _.toJSON(@rows)
+      schema: JSON.stringify(@schema.toJSON())
+      type: 'row'
+
+  @deserialize: (json) ->
+    raws = _.fromJSON json.data
+    schema = gg.data.Schema.fromJSON JSON.parse(json.schema)
+    t = new gg.data.RowTable schema
+    t.rows = raws
+    t
+
+
   # Infers a schema from inputs and returns a row table object
   # @param rows list of { } objects
   @fromArray: (rows, schema=null) ->

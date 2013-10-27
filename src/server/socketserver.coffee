@@ -100,23 +100,17 @@ socket.on 'connection', (client) ->
     flowid = payload.flowid
     nodeid = payload.nodeid
     outport = payload.outport
-    console.log payload.inputs
-    inputs = gg.wf.rpc.Util.deserialize payload.inputs
     nonce = payload.nonce
+    pairtable = gg.wf.rpc.Util.deserialize payload.inputs
     nonces[[nodeid, outport]] = nonce
 
-    flat = gg.wf.Inputs.flatten(inputs)[0]
-    env = _.first(flat).env
-    if env? and env.contains("scales")
-      console.log "scales for node #{nodeid} nonce #{nonce}"
-      console.log env.get('scales').toString()
-
-
+    # debugging code
     flow = flows[flowid]
-    runner = runners[flowid]
     node = flow.nodeFromId nodeid
     console.log "runflow called: flow #{flowid}, node #{node.name} id #{nodeid}, port: #{outport}"
-    runner.ch.routeNodeResult nodeid, outport, inputs
+
+    runner = runners[flowid]
+    runner.ch.routeNodeResult nodeid, outport, pairtable
 
 
   client.on 'disconnect', () ->

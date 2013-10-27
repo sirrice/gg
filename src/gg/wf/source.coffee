@@ -155,10 +155,8 @@ class gg.wf.CacheSource extends gg.wf.Source
       keyprefix = "#{guid}-#{idx}"
       tkey = "#{keyprefix}-table"
       mdkey = "#{keyprefix}-md"
-      tJson = JSON.parse db[tkey]
-      mdJson = JSON.parse db[mdkey]
-      t = gg.data.Table.fromJSON tJson
-      md = gg.data.Table.fromJSON mdJson
+      t = gg.data.Table.deserialize db[tkey]
+      md = gg.data.Table.deserialize db[mdkey]
       partitions.push new gg.data.PairTable(t, md)
 
     if partitions.length == 1

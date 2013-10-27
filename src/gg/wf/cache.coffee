@@ -50,10 +50,10 @@ class gg.wf.Cache extends gg.wf.Node
     for pairtable, idx in @inputs
       key = "#{guid}-#{idx}"
       [t, md] = [pairtable.getTable(), pairtable.getMD()]
-      tstr = JSON.stringify(t.toJSON())
+      tstr = t.serialize()
       md = md.clone()
       md.rmColumn 'svg' if md.has('svg')
-      mdstr = JSON.stringify(md.toJSON())
+      mdstr = md.serialize()
 
       db["#{key}-table"] = tstr
       db["#{key}-md"] = mdstr

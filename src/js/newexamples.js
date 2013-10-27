@@ -15,18 +15,20 @@ var geoms = {
   ,boxplot: geom_boxplot
   ,ptinterval: geom_point_interval
   ,dotplot: geom_dotplot
+  ,taxi: geom_taxi
 };
 
 var selected_geoms = {
   area: false,
   point: false,
   interval: false,
-  boxplot:true,
+  boxplot:false,
   radius: false,
   line: false,
   jitter:false,
   multiline: false,
-  ptinterval: false
+  ptinterval: false,
+  taxi: true
 
 };
 
@@ -68,6 +70,7 @@ var selected_geoms = {
       specs = _.flatten([specs]);
       specs = {layers: specs};
     }
+    console.log(specs)
     render(specs);
   }
 
@@ -131,7 +134,10 @@ var selected_geoms = {
       return d3.select('#examples').append('span');
     };
     var guid = gg.util.Util.hashCode(JSON.stringify(specs));
-    specs.data = gg.data.Table.fromArray(bigdata, null, 'row')
+    console.log(specs)
+    if (!specs.data) {
+      specs.data = gg.data.Table.fromArray(bigdata, null, 'row')
+    }
     specs.opt = {optimize: true, guid: guid}
     var plot = gg(specs);
     plot.render(ex());

@@ -60,10 +60,7 @@ class gg.core.Data
     else unless _.isObject spec
       spec = {}
 
-    type = spec.type
-    val = spec.val
     spec.name = spec.name or ""
-
     spec
 
 

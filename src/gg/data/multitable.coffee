@@ -69,6 +69,17 @@ class gg.data.MultiTable extends gg.data.Table
       ret.push.apply ret, t._getColumn(col)
     ret
 
+  serialize: ->
+    JSON.stringify
+      data: JSON.stringify(_.map(@tables, (t) -> t.serialize()))
+      type: 'multi'
+
+  @deserialize: (json) ->
+    data = JSON.parse json.data
+    tables = _.map data, (j) -> gg.data.Table.deserialize(j)
+    new gg.data.MultiTable null, tables
+      
+
   raw: ->
     ret = []
     for t in @tables

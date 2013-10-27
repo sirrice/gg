@@ -112,3 +112,4 @@ class gg.data.PairTable
   getTable: -> @table
   getMD: -> @md
   clone: -> new gg.data.PairTable @getTable().clone(), @getMD().clone()
+

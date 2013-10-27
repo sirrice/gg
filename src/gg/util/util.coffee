@@ -53,7 +53,8 @@ class gg.util.Util
         ret.val[k] = gg.util.Util.toJSON(v, reject, path)
         path.pop()
     else
-      ret = { type: 'primitive', val: o }
+      o = null if _.isUndefined(o)
+      ret = { type: 'primitive', val: JSON.stringify(o) }
     ret
 
   @fromJSON: (json) ->
@@ -70,7 +71,7 @@ class gg.util.Util
           ret[k] = gg.util.Util.fromJSON(vjson)
         ret
       when 'date'
-        ret = Date.parse json.val
+        ret = new Date JSON.parse(json.val)
       when 'object'
         ret = {}
         _.each json.val, (v, k) ->
@@ -86,8 +87,10 @@ class gg.util.Util
         ret
       when 'rejected'
         null
+      when 'primitive'
+        JSON.parse json.val
       else
-        json.val
+        throw Error "unexpected json object: #{json}"
 
 
   # reach into object o using path

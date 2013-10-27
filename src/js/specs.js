@@ -260,4 +260,15 @@ var geom_point_5 = {
 
 
 
-
+var geom_taxi = {
+  debug: {'gg.wf.std': 0},
+  opts: { uri: 'http://localhost:8881' },
+  data: {
+    type: 'jdbc',
+    q: "select date_trunc('hour', pickup_time) as x, count(*) as y from pickups where pickup_time >= '2012-5-1' and pickup_time < '2012-5-3' group by x order by x",
+    uri: "postgresql://localhost/bigdata"
+  },
+  layers: [{geom: "point"}],
+  aes: { x: "{new Date(x)}", y: "{parseInt(y)}" }
+         
+}

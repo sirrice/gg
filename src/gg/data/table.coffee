@@ -156,6 +156,19 @@ class gg.data.Table
       else
         null
 
+  @deserialize: (str) ->
+    json = JSON.parse str
+    switch json.type
+      when 'multi'
+        gg.data.MultiTable.deserialize json
+      when 'col'
+        gg.data.ColTable.deserialize json
+      when 'row'
+        gg.data.RowTable.deserialize json
+      else
+        throw Error "can't deserialize data of type: #{json.type}"
+
+
   # Tries to infer a schema for a list of objects
   #
   # @param rows [ { attr: val, .. } ]

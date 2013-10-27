@@ -100,6 +100,23 @@ class gg.data.ColTable extends gg.data.Table
     _.times @nrows(), (i) => 
       _.o2map @schema.cols, (col) => [col, @colDatas[@schema.index(col)][i]]
 
+  serialize: ->
+    colDatas = _.map @colDatas, (cd) ->
+      _.map cd, _.toJSON
+    JSON.stringify
+      data: JSON.stringify colDatas
+      schema: JSON.stringify(@schema.toJSON())
+      type: 'col'
+
+  @deserialize: (json) ->
+    colDatas = JSON.parse json.data
+    colDatas = _.map colDatas, (cd) ->
+      _.map cd, _.fromJSON
+    schema = gg.data.Schema.fromJSON JSON.parse(json.schema)
+    t = new gg.data.ColTable schema
+    t.colDatas = colDatas
+    t
+
   @fromArray: (rows, schema=null) ->
     schema ?= gg.data.Schema.infer rows
     cols = _.times schema.ncols(), () -> []
