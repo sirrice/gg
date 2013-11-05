@@ -19,7 +19,6 @@ class gg.pos.Stack extends gg.core.XForm
 
 
   defaults: ->
-    group: {}
     y0: 0
     y1: 'y'
     x0: 'x'

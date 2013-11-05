@@ -25,7 +25,8 @@ class gg.geom.reparam.Rect extends gg.core.XForm
       xs = _.uniq(subtable.getColumn("x")).sort (a,b)->a-b
       diffs = _.map _.range(xs.length-1), (idx) ->
         xs[idx+1]-xs[idx]
-      mindiff = _.mmin diffs or 1
+      diffs = [1] unless diffs.length > 0
+      mindiff = _.mmin(diffs) or 1
       mindiff *= padding
       subwidth = Math.max(1,mindiff)
       width = subwidth unless width?

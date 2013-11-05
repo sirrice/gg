@@ -11,7 +11,6 @@ class gg.pos.Interpolate extends gg.pos.Position
 
 
   defaults: ->
-    group: {}
     y0: 0
     x0: 'x'
     x1: 'x'

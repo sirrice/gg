@@ -6,7 +6,6 @@ class gg.geom.svg.Area extends gg.geom.Render
 
 
   defaults:  ->
-    group: {}
     "stroke-width": 1
     stroke: "steelblue"
     fill: "grey"

@@ -6,7 +6,6 @@ class gg.pos.Dodge extends gg.core.XForm
   @aliases = ["dodge"]
 
   defaults: ->
-    group: {}
     x0: 'x'
     x1: 'x'
 

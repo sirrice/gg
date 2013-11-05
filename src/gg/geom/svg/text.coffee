@@ -10,14 +10,13 @@ class gg.geom.svg.Text extends gg.geom.Render
     fill: "steelblue"
     dx: 10
     dy: 10
-    group: 1
 
   inputSchema: ->
     ['x0', 'y0', 'text']
 
   render: (table, svg) ->
-    gg.wf.Stdout.print table, null, 5, @log
-    rows = table.rows()
+    rows = table.getRows()
+    rows = _.uniq(rows, (row) -> JSON.stringify([row.get('x'),row.get('y'),row.get('text')]))
 
     texts = @agroup(svg, "text geoms", rows)
       .selectAll("text")

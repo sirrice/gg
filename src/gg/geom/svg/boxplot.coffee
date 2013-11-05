@@ -10,7 +10,6 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
     stroke: "steelblue"
     fill: d3.rgb("steelblue").brighter(2)
     "fill-opacity": 0.5
-    group: {}
 
   inputSchema: ->
     ['x','q1', 'median', 'q3', 'lower', 'upper',

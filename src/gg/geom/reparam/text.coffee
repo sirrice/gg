@@ -5,8 +5,6 @@ class gg.geom.reparam.Text extends gg.core.XForm
   @ggpackage = "gg.geom.reparam.Text"
 
 
-  defaults: -> group: {}
-
   inputSchema: -> ['x', 'y', 'text']
 
   outputSchema: (pairtable, params) ->
@@ -19,13 +17,20 @@ class gg.geom.reparam.Text extends gg.core.XForm
 
   compute: (pairtable, params) ->
     table = pairtable.getTable()
+    cache = {}
+    getSize = (text) ->
+      len = String(text).length
+      unless len of cache
+        cache[len] = _.textSize(text)
+      return cache[len]
+
 
     cols = ['x', 'y', 'text']
     mapping =
       x0: (row) -> row.get 'x'
-      x1: (row) -> row.get('x') + _.textSize(row.get 'text').w
-      y0: (row) -> row.get 'x'
-      y1: (row) -> row.get 'y' + _.textSize(row.get 'text').h
+      x1: (row) -> row.get('x') + getSize(row.get 'text').w
+      y0: (row) -> row.get 'y'
+      y1: (row) -> row.get 'y' + getSize(row.get 'text').h
     mapping = _.map mapping, (f,k) -> [k,f,gg.data.Schema.numeric]
     table = gg.data.Transform.transform table,mapping 
 

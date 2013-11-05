@@ -10,9 +10,8 @@ class gg.geom.svg.Line extends gg.geom.Render
     "stroke-opacity": 0.7
     stroke: "black"
     fill: "none"
-    group: {}
 
-  inputSchema:  -> ['x', 'y', 'y1', 'group']
+  inputSchema:  -> ['x', 'y', 'y1']
 
   @linesCross: ([x0, y0, x1, y1], [xp0, yp0, xp1, yp1]) ->
     d = xp1*y1 - x1*yp1

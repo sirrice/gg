@@ -16,9 +16,11 @@ class gg.stat.Bin1D extends gg.xform.GroupBy
         y: 'sum'
         total: 'sum'
         avg: 'avg'
-    defaults = new gg.util.Params defaults
-    defaults.merge @params
-    @params = defaults
+    
+    params = new gg.util.Params @spec
+    params.merge(new gg.util.Params defaults)
+    params.merge @params
+    @params = params
     @params.ensure 'nBins', ['n', 'bins', 'nbins'], 20
 
     super
@@ -45,9 +47,11 @@ class gg.stat.Bin2D extends gg.xform.GroupBy
         total: 
           type: 'sum'
           arg: 'z'
-    defaults = new gg.util.Params defaults
-    defaults.merge @params
-    @params = defaults
+
+    params = new gg.util.Params @spec
+    params.merge(new gg.util.Params defaults)
+    params.merge @params
+    @params = params
 
     super
 

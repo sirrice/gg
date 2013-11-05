@@ -7,7 +7,7 @@ class gg.xform.GroupByAnnotate extends gg.core.XForm
     @log @params
     @params.ensureAll
       gbAttrs: [[], []]
-      nBins: [["nbins", "bin", "n", "nbin", "bins"], 20]
+      nBins: [['nBins', "nbins", "bin", "n", "nbin", "bins"], 20]
 
     gbAttrs = @params.get "gbAttrs"
     gbAttrs = _.compact _.flatten [gbAttrs]
@@ -73,8 +73,9 @@ class gg.xform.GroupByAnnotate extends gg.core.XForm
         binRange = (maxD - minD) * 1.0
         binSize = Math.ceil(binRange / nbins)
         toKey = (row) -> 
-          idx = Math.floor((row.get(col)+(binSize/2)-minD) / binSize)
-          (idx * binSize) + minD - (binSize / 2)
+          idx = Math.ceil((row.get(col)-minD) / binSize - 1)
+          idx = Math.max(0, idx)
+          (idx * binSize) + minD + (binSize / 2)
 
       when gg.data.Schema.date
         domain = [domain[0].getTime(), domain[1].getTime()]
@@ -83,7 +84,8 @@ class gg.xform.GroupByAnnotate extends gg.core.XForm
         binSize = Math.ceil(binRange / nbins)
         toKey = (row) ->
           time = row.get(col).getTime()
-          idx = Math.floor((time-minD) / binSize)
+          idx = Math.ceil((time-minD) / binSize - 1)
+          idx = Math.max(0, idx)
           date = (idx * binSize) + minD + binSize/2
           new Date date
 

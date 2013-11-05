@@ -2,6 +2,8 @@
 
 # The swap coordinate needs to flip the y-scale range because
 # SVG and Canvas orgin is in the upper left.
+#
+# TODO: doesn't work for boxplot/rect yet
 class gg.coord.Swap extends gg.coord.Coordinate
   @ggpackage = "gg.coord.Swap"
   @aliases = ["swap"]
@@ -33,12 +35,14 @@ class gg.coord.Swap extends gg.coord.Coordinate
         [y, inverted.getColumn y]
 
     for x, colData of xcols
-      newcol = "y#{x.substr 1}"
-      inverted = inverted.addColumn newcol, colData, xtype, yes
+      if x.search('^x') >= 0
+        newcol = "y#{x.substr 1}"
+        inverted = inverted.addColumn newcol, colData, xtype, yes
 
     for y, colData of ycols
-      newcol = "x#{y.substr 1}"
-      inverted = inverted.addColumn newcol, colData, ytype, yes
+      if y.search('^y') >= 0
+        newcol = "x#{y.substr 1}"
+        inverted = inverted.addColumn newcol, colData, ytype, yes
 
     # now swap the x and y scales
     xScale.range [yRange[1], yRange[0]]

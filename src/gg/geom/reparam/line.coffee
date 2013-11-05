@@ -4,9 +4,6 @@
 class gg.geom.reparam.Line extends gg.core.XForm
   @ggpackage = "gg.geom.reparam.Line"
 
-  defaults: -> 
-    group: {}
-
   inputSchema: -> ['x', 'y']
 
   outputSchema: (pairtable) ->

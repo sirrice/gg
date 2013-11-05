@@ -83,7 +83,7 @@ class gg.wf.CsvSource extends gg.wf.Source
   compute: (pt, params, cb) ->
     url = params.get 'url'
     tabletype = params.get 'tabletype'
-    d3.csv url, (arr) ->
+    d3.csv url, (err, arr) ->
       table = gg.data.Table.fromArray arr, null, tabletype
       pt = new gg.data.PairTable table, pt.getMD()
       cb null, pt

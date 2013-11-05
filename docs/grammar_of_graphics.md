@@ -66,8 +66,8 @@ The rendering jobs are separated into:
 
 1. Rendering title, subtitle, legends
 2. Rendering facets, which allocates space for each subplot
-1. Rendering geometries in the layers of a subplot (e.g., lines, points)
-2. Rendering axes for each subplot
+3. Rendering geometries in the layers of a subplot (e.g., lines, points)
+4. Rendering axes for each subplot
 
 The bulk of the work lies in (4), which needs to transform data, compute statistics, and render geometric objects.  In the process, it also *trains the scales*, meaning it computes the domains and ranges of each aesthetic component (e.g., the domain of the x,y variables), which is necessary to know how to render the axes and legends.  This is implemented with a generic workflow that is compiled from high level specifications.  The workflow is presented next.
 
