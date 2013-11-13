@@ -11,11 +11,12 @@ class gg.stat.CDF extends gg.stat.Stat
 
   outputSchema: (pairtable, params) ->
     schema = pairtable.tableSchema()
-    gg.data.Schema.fromJSON
+    newschema = gg.data.Schema.fromJSON
       x: schema.type 'x'
       y: gg.data.Schema.numeric
       perc: gg.data.Schema.numeric
       total: gg.data.Schema.numeric
+    schema.merge newschema
 
   schemaMapping: ->
     x: 'x'
