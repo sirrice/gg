@@ -14,6 +14,10 @@ class gg.wf.Exec extends gg.wf.Node
 
   compute: (pairtable, params, cb) -> cb null, pairtable
 
+  # partition by set of attributes
+  # run UDF on each partition
+  # merge partitions
+  #
   # @return emits to single child node
   run: ->
     throw Error("node not ready") unless @ready()
@@ -23,7 +27,13 @@ class gg.wf.Exec extends gg.wf.Node
     pstore = @pstore()
     log = @log
 
-    tableset = new gg.data.TableSet @inputs
+    pstore.store_params @params
+    # connect input rows to partitions and rows
+    # subclass connects input partition rows to output partition rows
+    # connect output to partition rows
+
+    tableset = @inputs[0]
+    #tableset = new gg.data.TableSet @inputs
     keys = params.get 'keys'
     if keys?
       @log "partitioning on custom cols: #{keys}"
