@@ -44,6 +44,7 @@ class gg.wf.rule.Cache extends gg.wf.rule.Rule
   addCachers: (flow, guid) ->
     @log "addCachers with guid: #{guid}"
     renderers = flow.find (n) -> n.name == 'core-render'
+    return flow unless renderers.length == 1
     renderer = renderers[0]
     @log "adding cacher before #{renderer.name}"
     flow.insertBefore @getCacher(guid), renderer
@@ -57,12 +58,12 @@ class gg.wf.rule.Cache extends gg.wf.rule.Rule
     source = @getCacherSource guid
     start = flow.findOne (n) -> _.isType n, gg.wf.Start
     setup = flow.findOne (n) -> n.name == 'graphic-setupenv'
-    multi = new gg.wf.NoCopyMulticast {name: 'nc-multicast'}
     corerender = flow.findOne (n) -> n.name == 'core-render'
     facetrender = flow.findOne (n) -> n.name == 'facet-render'
     panerender = flow.findOne (n) -> n.name == 'render-panes'
     geomrenders = flow.find (n) -> 
       n.constructor.ggpackage.search("^gg.geom.svg") >= 0
+    multi = new gg.wf.NoCopyMulticast {name: 'nc-multicast'}
 
     nodes = _.compact [
       start

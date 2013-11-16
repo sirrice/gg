@@ -173,6 +173,7 @@ class gg.core.Graphic extends events.EventEmitter
       optimizer = new gg.wf.Optimizer [
         new gg.wf.rule.RPCify
         new gg.wf.rule.RmDebug
+        new gg.wf.rule.MergeBarrier
       ]
       if @options.guid?
         optimizer.rules.push new gg.wf.rule.Cache

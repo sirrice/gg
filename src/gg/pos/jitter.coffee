@@ -1,6 +1,14 @@
 #<< gg/pos/position
 
 
+#
+# Adds x and y jitter as a percentage of the x/y axis domains
+#
+# new gg.pos.Jitter
+#   params:
+#      xscale: 0.2
+#      yscale: 0.5
+#
 class gg.pos.Jitter extends gg.core.XForm
   @ggpackage = "gg.pos.Jitter"
   @aliases = "jitter"

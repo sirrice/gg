@@ -42,6 +42,7 @@ class gg.pos.DotPlot extends gg.wf.SyncExec
     cmp = (r1, r2) -> r1.get('x') - r2.get('x')
     t = gg.data.Transform.sort t, cmp
 
+    # new x and y values for each data tuple
     xs = []
     ys = []
     prevx = null

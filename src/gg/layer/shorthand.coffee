@@ -46,6 +46,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @geomSpec.name = "#{@geomSpec.name}-#{@layerIdx}"
     @geom = gg.geom.Geom.fromSpec @, @geomSpec
 
+  # globalSpec is the position spec external to the
+  # layers: statement
   setupStats: ->
     globalSpec = @extractSpec 'stat', @g.spec
     globalSpec = _.flatten [globalSpec]
@@ -60,6 +62,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @stats.unshift.apply @stats, globalStats
     @stats
 
+  # globalSpec is the position spec external to the
+  # layers: statement
   setupPos: ->
     globalSpec  = @extractSpec "pos", @g.spec
     globalSpec = _.flatten [globalSpec]

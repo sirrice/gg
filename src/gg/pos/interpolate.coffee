@@ -1,7 +1,9 @@
 #<< gg/pos/position
 
 
-class gg.pos.Interpolate extends gg.pos.Position
+# This is not actually used as an operator
+# only @interpolate() is called as a static function
+class gg.pos.Interpolate extends gg.pos.XForm
   @ggpackage = "gg.pos.Interpolate"
   @aliases = ["interpolate"]
 

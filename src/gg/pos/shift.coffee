@@ -1,7 +1,7 @@
 #<< gg/pos/position
 
 
-class gg.pos.Shift extends gg.pos.Position
+class gg.pos.Shift extends gg.pos.XForm
   @ggpackage = "gg.pos.Shift"
   @aliases = ["shift"]
 

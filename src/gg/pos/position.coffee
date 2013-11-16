@@ -1,6 +1,6 @@
 #<< gg/core/xform
 
-class gg.pos.Position extends gg.core.BForm
+class gg.pos.Position 
   @ggpackage = "gg.pos.Position"
 
   @klasses: ->
@@ -37,7 +37,7 @@ class gg.pos.Position extends gg.core.BForm
     ret = new klass spec
     ret
 
-class gg.pos.Identity extends gg.pos.Position
+class gg.pos.Identity extends gg.pos.XForm
   @ggpackage = "gg.pos.Identity"
   @aliases = ["identity"]
 

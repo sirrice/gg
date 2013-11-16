@@ -317,6 +317,7 @@ class gg.wf.Flow extends events.EventEmitter
 
 
   # Insert node between adjacent nodes parent -- child
+  # Completely disconnects edges (even if weight > 1)
   insert: (node, parent, child) ->
 
     unless _.any @children(parent), ((pc) -> pc.id is child.id)
@@ -341,7 +342,7 @@ class gg.wf.Flow extends events.EventEmitter
       if node.isBarrier()
         totalWeight = _.sum @children(parent), (c) => @edgeWeight parent, c
         for bc in @children parent
-          md = @disconnect parent, node, "normal"
+          md = @disconnect parent, bc, "normal"
           @connect node, bc, "normal", md
         @connect parent, node, "normal", totalWeight
       else
@@ -411,7 +412,7 @@ class gg.wf.Flow extends events.EventEmitter
       else
         weight = 1
     @graph.connect from, to, type, weight
-    @log "connected #{from.name} -> #{to.name} type #{type}"
+    @log "connected #{from.name} -> #{to.name} type #{type} w #{weight}"
     @
 
   connectBridge: (from, to) ->
@@ -420,8 +421,9 @@ class gg.wf.Flow extends events.EventEmitter
     @connect from, to, "bridge"
     @
 
+  # @return metadata of disconnected edge
   disconnect: (from, to, type="normal") ->
-    @log "disconnected #{from.name} -> #{to.name} type #{type}"
+    @log "disconnected #{from.name} -> #{to.name} type #{type}  w #{@graph.metadata(from, to, type)}"
     @graph.disconnect from, to, type
 
   edgeWeight: (from, to, type="normal") ->
