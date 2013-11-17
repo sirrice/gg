@@ -1,6 +1,6 @@
 #<< gg/pos/position
 
-class gg.pos.Text extends gg.pos.XForm
+class gg.pos.Text extends gg.core.XForm
   @ggpackage = "gg.pos.Text"
   @aliases = ["text"]
 

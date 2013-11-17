@@ -37,7 +37,7 @@ class gg.pos.Position
     ret = new klass spec
     ret
 
-class gg.pos.Identity extends gg.pos.XForm
+class gg.pos.Identity extends gg.core.XForm
   @ggpackage = "gg.pos.Identity"
   @aliases = ["identity"]
 

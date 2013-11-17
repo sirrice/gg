@@ -3,7 +3,7 @@
 
 # This is not actually used as an operator
 # only @interpolate() is called as a static function
-class gg.pos.Interpolate extends gg.pos.XForm
+class gg.pos.Interpolate extends gg.core.XForm
   @ggpackage = "gg.pos.Interpolate"
   @aliases = ["interpolate"]
 
