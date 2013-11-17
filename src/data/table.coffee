@@ -167,10 +167,17 @@ class data.Table
       else
         new data.ops.EquiHashJoin @, table, cols
 
-  project: (schema, mappings) ->
-    new data.ops.Project schema, @, mappings
+
+  project: (mappings) ->
+    new data.ops.Project @, mappings
 
   partition: (cols) ->
     new data.ops.Partition @, cols
 
+  aggregate: (aggs) ->
+    new data.ops.Aggregate @, aggs
 
+  groupby: (cols, aggs) ->
+    new data.ops.Aggregate(
+      @partition(cols),
+      aggs)

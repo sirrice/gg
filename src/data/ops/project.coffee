@@ -5,21 +5,30 @@ class data.ops.Project extends data.Table
   # @param mappings dictionary of
   #    col: 
   #      f: (row) ->  or (colval) ->
-  #      type: (default: "row") | "col"
-  #      cols: [ list of cols accessed ]
+  #      type: schema type (default: schema.object)
+  #      cols: [ list of cols accessed ] | "*" to pass in row
   #
-  constructor: (@schema, @table, @mappings) ->
-    @mappings = _.o2map @mappings, (desc, col) ->
-      if desc.type == 'col'
-        desc.f = ((f) ->
-          (row, idx) -> f row.get(col, idx)
-        )(desc.f)
-        desc.cols = [col]
+  constructor: (@table, @mappings) ->
+    @mappings = _.o2map @mappings, (desc, col) =>
+      desc.cols ?= '*'
+      desc.type ?= data.Schema.object
+
+      if desc.cols != '*' and _.isArray desc.cols
+        desc.cols = _.flatten [desc.cols]
+        desc.f = ((f, cols) ->
+          (row, idx) ->
+            args = _.map cols, (col) -> row.get(col)
+            f.apply f, args
+          )(desc.f, desc.cols)
       else
-        desc.type = 'row'
-      desc.cols = _.flatten [desc.cols]
+        desc.cols = _.clone @table.schema.cols
+
+
       [col, desc]
 
+    cols = _.keys @mappings
+    types = _.map _.values(@mappings), (desc) -> desc.type
+    @schema = new data.Schema cols, types
 
   iterator: ->
     class Iter

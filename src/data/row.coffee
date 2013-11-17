@@ -18,7 +18,12 @@ class data.Row
   get: (col) -> @data[@schema.index(col)]
   set: (col, v) -> @data[@schema.index(col)] = v
   project: (cols) ->
-    schema = @schema.project cols
+    if _.isType cols, data.Schema
+      schema = cols
+      cols = schema.cols
+    else
+      cols = _.flatten [cols]
+      schema = @schema.project cols
     rowData = _.map cols, (col) => @get col
     new data.Row schema, rowData
 
