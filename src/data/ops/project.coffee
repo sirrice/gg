@@ -2,16 +2,26 @@
 
 
 class data.ops.Project extends data.Table
-  # @param mappings dictionary of
-  #    col: 
+  # @param mappings list of
+  #      alias: colname | [col, col..]
   #      f: (row) ->  or (colval) ->
   #      type: schema type (default: schema.object)
   #      cols: [ list of cols accessed ] | "*" to pass in row
   #
+  #   if alias is a list, then f is expected to return a dictionary 
+  #
   constructor: (@table, @mappings) ->
-    @mappings = _.o2map @mappings, (desc, col) =>
+    @mappings = _.map @mappings, (desc) =>
+      throw Error("mapping must has an alias: #{desc}") unless desc.alias?
       desc.cols ?= '*'
+      desc.cols = _.flatten [desc.cols] unless desc.cols == '*'
       desc.type ?= data.Schema.object
+      if _.isArray desc.alias
+        if _.isArray desc.type
+          unless desc.type.lenghth == desc.alias.length
+            throw Error "alias and type lens don't match: #{desc.alias} != #{desc.type}"
+        else
+          desc.type = _.times desc.alias.length, () -> desc.type
 
       if desc.cols != '*' and _.isArray desc.cols
         desc.cols = _.flatten [desc.cols]
@@ -23,11 +33,10 @@ class data.ops.Project extends data.Table
       else
         desc.cols = _.clone @table.schema.cols
 
+      desc
 
-      [col, desc]
-
-    cols = _.keys @mappings
-    types = _.map _.values(@mappings), (desc) -> desc.type
+    cols = _.flatten _.map(@mappings, (desc) -> desc.alias)
+    types = _.flatten _.map(@mappings, (desc) -> desc.type)
     @schema = new data.Schema cols, types
 
   iterator: ->
@@ -44,9 +53,14 @@ class data.ops.Project extends data.Table
         @idx += 1
         row = @iter.next()
         newrow = new data.Row @schema
-        _.each @mappings, (desc, col) ->
-          val = desc.f row, @idx
-          newrow.set col, val
+        for desc in @mappings
+          if _.isArray desc.alias
+            o = desc.f row, @idx
+            for col in desc.alias
+              newrow.set col, o[col]
+          else
+            val = desc.f row, @idx
+            newrow.set desc.alias, val
         newrow
 
       hasNext: -> @iter.hasNext()

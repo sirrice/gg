@@ -8,7 +8,7 @@ class data.ops.EquiHashJoin extends data.Table
     @schema.addColumn 'left', data.Schema.object
     @schema.addColumn 'right', data.Schema.object
     @getkey = (row) -> _.map cols, (col) -> row.get(col)
-    @ht = data.ops.Partition.buildHT @t2, @cols
+    @ht = data.ops.Util.buildHT @t2, @cols
 
 
   iterator: ->
