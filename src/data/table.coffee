@@ -27,7 +27,6 @@ class data.Table
   # Required methods
   #
 
-
   iterator: -> throw Error("iterator not implemented")
 
   # is this columnar or row
@@ -160,10 +159,48 @@ class data.Table
     tables = _.compact _.flatten tables
     new data.ops.Union @, tables
 
+  cross: (table) ->
+    new data.ops.HashJoin @, table, [], 'outer'
+
   join: (table, cols, type="outer") ->
     new data.ops.HashJoin @, table, cols, type
 
+  exclude: (cols) ->
+    keep = _.reject @cols(), (col) -> col in cols
+    mappings = _.map keep, (col) =>
+      alias: col
+      type: @schema.type col
+      cols: col
+      f: _.identity
+    @project mappings
+
+  # Transforms individual columns
+  #
+  # @param mappings list of 
+  #  { 
+  #    alias:, 
+  #    f:, 
+  #    type: (default: sceham.object)
+  #  }
+  mapCols: (mappings) ->
+    mappings = _.map mappings, (desc) ->
+      desc.cols = desc.alias
+    @project mappings
+
   project: (mappings) ->
+    mappings = _.map mappings, (desc) =>
+      if _.isString desc
+        unless @has desc
+          throw Error("project: #{desc} not in table. schema: #{@schema.cols}")
+        {
+          alias: desc
+          f: _.identity
+          type: @schema.type desc
+          cols: desc
+        }
+      else
+        desc
+
     new data.ops.Project @, mappings
 
   partition: (cols) ->
@@ -176,3 +213,8 @@ class data.Table
     new data.ops.Aggregate(
       @partition(cols),
       aggs)
+
+  partitionJoin: (table, cols, type="outer") ->
+    partition1 = @partition cols
+    partition2 = table.partition cols
+    partition1.join partition2, cols, type

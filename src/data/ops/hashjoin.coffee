@@ -2,17 +2,28 @@
 
 class data.ops.HashJoin extends data.Table
 
-  constructor: (@t1, @t2, @cols, @jointype) ->
+  # @param leftf/rightf methods to generate default rows 
+  #        if left or right arrays are empty. default:
+  #
+  #          () -> new data.Row(t1.schema/t2.schema)
+  #
+  constructor: (@t1, @t2, @cols, @jointype, @leftf=null, @rightf=null) ->
     @schema = @t1.schema.clone()
     @schema.merge @t2.schema.clone()
     @getkey = (row) -> _.map cols, (col) -> row.get(col)
     @ht1 = data.ops.Util.buildHT @t1, @cols
     @ht2 = data.ops.Util.buildHT @t2, @cols
 
+    # methods to create dummy rows for outer/left/right joins
+    schema1 = @t1.schema.clone()
+    schema2 = @t2.schema.clone()
+    @leftf ?= -> new data.Row schema1
+    @rightf ?= -> new data.Row schema2
+
 
   iterator: ->
     class Iter
-      constructor: (@ht1, @ht2, @jointype) ->
+      constructor: (@ht1, @ht2, @jointype, @leftf, @rightf) ->
         keys1 = _.keys @ht1
         keys2 = _.keys @ht2
         switch @jointype
@@ -49,7 +60,12 @@ class data.ops.HashJoin extends data.Table
           left = right = []
           left = @ht1[@key].table if @key of @ht1
           right = @ht2[@key].table if @key of @ht2
-          @iter = data.ops.Util.arrayjoinIterator left, right, @jointype
+          @iter = data.ops.Util.arrayjoinIterator(
+            left, right, 
+            @jointype,
+            @leftf,
+            @rightf
+          )
           break if @iter.hasNext()
           @iter = null
 
@@ -60,4 +76,4 @@ class data.ops.HashJoin extends data.Table
         @iter.close() if @iter?
         @iter = null
 
-    new Iter @ht1, @ht2, @jointype
+    new Iter @ht1, @ht2, @jointype, @leftf, @rightf

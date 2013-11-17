@@ -3,12 +3,21 @@
 
 class data.ops.Project extends data.Table
   # @param mappings list of
-  #      alias: colname | [col, col..]
-  #      f: (row) ->  or (colval) ->
-  #      type: schema type (default: schema.object)
-  #      cols: [ list of cols accessed ] | "*" to pass in row
+  #    alias: colname | [col, col..]
   #
-  #   if alias is a list, then f is expected to return a dictionary 
+  #         if alias is a list, then f is expected to return a dictionary 
+  #         with alias keys, or null if absent
+  #
+  #    f: (row) ->  |  (col, ...) ->
+  #
+  #    type: schema type     (default: schema.object)
+  #
+  #    cols: '*' | [list of col args to f ] 
+  #
+  #         '*'  : f accepts row as argument (default)
+  #         [..] : f accepts a list of column values as args
+  #
+  #   
   #
   constructor: (@table, @mappings) ->
     @mappings = _.map @mappings, (desc) =>

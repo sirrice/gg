@@ -4,6 +4,7 @@ _ = require 'underscore'
 
 
 class data.util.Util
+  @isValid: (v) -> not(_.isNull(v) or _.isNaN(v) or _.isUndefined(v))
 
   @hashCode: (s) ->
     f = (a,b)->
@@ -143,4 +144,5 @@ _.mixin
   isType: data.util.Util.isSubclass
   reach: data.util.Util.reach
   hashCode: data.util.Util.hashCode
+  isValid: data.util.Util.isValid
 

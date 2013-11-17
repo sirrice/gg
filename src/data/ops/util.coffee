@@ -28,9 +28,10 @@ class data.ops.Util
 
 
 
-  # @param leftf, rightf methods to generate default rows if left or right arrays are empty
+  # @param leftf/rightf methods to generate default rows 
+  #        if left or right arrays are empty
   #        defaults to: () -> new data.Row(new data.Schema)
-  @arrayjoinIterator: (left, right, jointype, leftf=null, rightf=null) ->
+  @arrayjoinIterator: (left, right, jointype, leftf, rightf) ->
     class Iter
       constructor: (@left, @right) ->
         @idx1 = 0
