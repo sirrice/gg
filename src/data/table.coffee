@@ -160,7 +160,7 @@ class data.Table
     new data.ops.Union @, tables
 
   cross: (table) ->
-    new data.ops.HashJoin @, table, [], 'outer'
+    new data.ops.Cross @, table, 'outer'
 
   join: (table, cols, type="outer") ->
     new data.ops.HashJoin @, table, cols, type

@@ -24,6 +24,7 @@ checks =
       t.filter (row) -> row.get('x') < 4
     "has 4 rows": (t) ->
       assert.equal t.nrows(), 4
+
   
   "partition on a":
     topic: (t) -> t.partition(['a'])
@@ -89,10 +90,20 @@ checks =
       t2 = data.Table.fromArray rows
       [t, t2]
 
+    "cross product via .cross()":
+      topic: ([t1, t2]) -> t1.cross t2
+      "has 100 rows": (t) ->
+        assert.equal t.nrows(), 100
+
+    "cross product via join":
+      topic: ([t1, t2]) -> t1.join t2, []
+      "has 100 rows": (t) ->
+        assert.equal t.nrows(), 100
+
     "outer join on x":
       topic: ([t1, t2]) -> t1.join t2, ['x']
       "has 15 rows": (t) ->
-        assert.equal t.nrows(), 16
+        assert.equal t.nrows(), 15
 
     "left join on x":
       topic: ([t1, t2]) -> t1.join t2, ['x'], "left"

@@ -27,6 +27,12 @@ class data.Row
     rowData = _.map cols, (col) => @get col
     new data.Row schema, rowData
 
+  # This is not performant within a tight loop because it infers the 
+  # merged schema
+  #
+  # XXX: assumes null value means col value not set. e.g., 
+  #      {x: 1}.merge({x:null}) returns {x: 1}
+  #
   # @param cols columns to merge into this row.  if null, merges all
   merge: (row, cols=null) ->
     unless _.isType row, data.Row
@@ -38,7 +44,9 @@ class data.Row
     for col in @schema.cols
       ret.set col, @get(col)
     for col in cols
-      ret.set col, row.get(col)
+      v = row.get(col)
+      ret.set col, v if v?
+        
     ret
 
   clone: ->

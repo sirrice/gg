@@ -20,7 +20,6 @@ class data.ops.HashJoin extends data.Table
     @leftf ?= -> new data.Row schema1
     @rightf ?= -> new data.Row schema2
 
-
   iterator: ->
     class Iter
       constructor: (@ht1, @ht2, @jointype, @leftf, @rightf) ->
@@ -60,12 +59,15 @@ class data.ops.HashJoin extends data.Table
           left = right = []
           left = @ht1[@key].table if @key of @ht1
           right = @ht2[@key].table if @key of @ht2
-          @iter = data.ops.Util.arrayjoinIterator(
-            left, right, 
+          left = data.Table.fromArray left unless _.isType left, data.Table
+          right = data.Table.fromArray right unless _.isType right, data.Table
+          cross = new data.ops.Cross(
+            left, right,
             @jointype,
             @leftf,
             @rightf
           )
+          @iter = cross.iterator()
           break if @iter.hasNext()
           @iter = null
 

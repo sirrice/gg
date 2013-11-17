@@ -15,19 +15,26 @@ class data.ops.Aggregate extends data.Table
     unless @schema.has 'table', data.Schema.table
       throw Error "Aggregate doesn't have table column"
     @schema = @schema.exclude 'table'
-    _.each @aggs, (agg) =>
-      agg.type ?= data.Schema.object
-      if _.isArray agg.alias
-        if _.isArray agg.type
-          unless agg.alias.length  == agg.type.length
-            throw Error "alias and type lens don't match: #{desc.alias} != #{desc.type}"
-        else
-          agg.type = _.times agg.alias.length, () -> agg.type
+    @aggs = data.ops.Aggregate.parseAggs @aggs, @schema
 
-        for col, idx in agg.alias
-          @schema.addColumn col, agg.type[idx]
+  @parseAggs: (aggs, schema) ->
+    _.map aggs, (agg) ->
+      data.ops.Aggregate.normalizeAgg agg, schema
+
+  @normalizeAgg: (agg, schema) ->
+    agg.type ?= data.Schema.object
+    if _.isArray agg.alias
+      if _.isArray agg.type
+        unless agg.alias.length  == agg.type.length
+          throw Error "alias.len != type.len: #{desc.alias} != #{desc.type}"
       else
-        @schema.addColumn agg.alias, agg.type
+        agg.type = _.times agg.alias.length, () -> agg.type
+      for col, idx in agg.alias
+        schema.addColumn col, agg.type[idx]
+    else
+      schema.addColumn agg.alias, agg.type
+    agg
+
 
   iterator: ->
     class Iter
@@ -88,6 +95,24 @@ class data.ops.Aggregate extends data.Table
       alias.push "sum#{alias.length}"
     _.map cols, (col, idx) ->
       data.ops.Aggregate.sum col, alias[idx]
+
+  # @param col column name of list of column names
+  @sum: (col, alias='sum') ->
+
+    f = (arr) ->
+      sum = 0
+      for row in arr
+        v = row.get col
+        if _.isValid v
+          sum += v
+      sum
+    {
+      alias: alias
+      f: f
+      type: data.Schema.numeric
+      col: col
+    }
+        
 
   # @param col column name of list of column names
   @sum: (col, alias='sum') ->
