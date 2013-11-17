@@ -160,13 +160,8 @@ class data.Table
     tables = _.compact _.flatten tables
     new data.ops.Union @, tables
 
-  join: (table, cols, type="hash") ->
-    switch type
-      when "hash"
-        new data.ops.EquiHashJoin @, table, cols
-      else
-        new data.ops.EquiHashJoin @, table, cols
-
+  join: (table, cols, type="outer") ->
+    new data.ops.HashJoin @, table, cols, type
 
   project: (mappings) ->
     new data.ops.Project @, mappings
