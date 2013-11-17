@@ -2,6 +2,7 @@
 
 class gg.pos.Position 
   @ggpackage = "gg.pos.Position"
+  @log = gg.util.Log.logger @ggpackage, "position"
 
   @klasses: ->
     klasses = [

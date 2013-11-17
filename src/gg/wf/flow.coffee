@@ -264,8 +264,10 @@ class gg.wf.Flow extends events.EventEmitter
       else
         bps = @bridgedParents node
         bcs = @bridgedChildren node
-        if bps.length > 1 or bcs.length > 1
-          throw Error()
+        if bps.length > 1
+          throw Error "#{node.name}.bridgeparents  #{bps.length} > 1"
+        if bcs.length > 1
+          throw Error "#{node.name}.bridgechildren #{bcs.length} > 1"
 
         bmd = bp = bc = null
         if bps.length > 0
@@ -416,8 +418,8 @@ class gg.wf.Flow extends events.EventEmitter
     @
 
   connectBridge: (from, to) ->
-    throw Error() if from.isBarrier()
-    throw Error() if to.isBarrier()
+    throw Error("connectBridge: from #{from.name} is barrier") if from.isBarrier()
+    throw Error("connectBridge: to #{to.name} is barrier") if to.isBarrier()
     @connect from, to, "bridge"
     @
 

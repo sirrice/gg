@@ -72,10 +72,10 @@ class gg.wf.rule.MergeBarrier extends gg.wf.rule.Rule
           md = flow.disconnect last, c, "normal"
           flow.connect newnode, c, "normal", md
 
-      flow.graph.rm.apply flow.graph, path
+      _.each(path, flow.graph.rm.bind(flow.graph))
 
 
-    console.log flow.toDot()
+    @log flow.toDot()
     flow
 
   mergeNodes: (path) ->
