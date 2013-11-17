@@ -1,6 +1,4 @@
-#<< gg/data/schema
-#<< gg/data/row
-
+#<< data/util/log
 
 #
 # The data model consists of a list of tuples (rows)
@@ -20,65 +18,61 @@
 #
 
 
-class gg.data.Table
-  @ggpackage = "gg.data.Table"
-  @log = gg.util.Log.logger @ggpackage, "Table"
+class data.Table
+  @ggpackage = "data.Table"
+  @log = data.util.Log.logger @ggpackage, "Table"
 
-  # @param f functiton to run.  takes gg.data.Row, index as input
-  # @param n number of rows
-  each: (f, n=null) ->
-    iter = @iterator()
-    idx = 0
-    ret = []
-    while iter.hasNext()
-      ret.push f(iter.next(), idx)
-      idx +=1 
-      break if n? and idx >= n
-    iter.close()
-    ret
 
-  # read-only each 
-  fastEach: (f, n) -> @each f, n
+  # 
+  # Required methods
+  #
+
 
   iterator: -> throw Error("iterator not implemented")
 
-  partition: (cols) ->
-    partitions = gg.data.Transform.split @, cols
-    _.map partitions, (p) -> p['table']
+  # is this columnar or row
+  tabletype: -> "col"
 
+
+  # 
+  # schema related methods
+  #
 
   has: (col, type) -> @contains col, type
+
   contains: (col, type) -> @schema.has col, type
+
   hasCols: (cols, types=null) ->
     _.all cols, (col, idx) =>
       type = null
       type = types[idx] if types? and types.length > idx
       @has col, type
+
   cols: -> @schema.cols
 
   ncols: -> @schema.ncols()
+
+  # @override
   nrows: -> 
     i = 0
     @each (row) -> i += 1
     i
 
-  rows: -> @each (row) -> row
-  getRows: -> @each (row) -> row
-  raw: -> throw "not implemented"
-  stats: -> throw "not implemented"
-  klass: -> gg.data.ColTable
 
-  # This is the only method other than addCol that changes the data
-  addRow: (row) -> throw "not implemented"
+  # actually iterate through the iterator and create the rows
+  getRows: -> @each (row) -> row
+
+  raw: -> @each (row) -> row.raw()
+
 
   toJSON: ->
     schema: @schema.toJSON()
     data: _.toJSON @raw()
-    klass: @klass().name
+    tabletype: @tabletype()
 
   @fromJSON: (json) ->
-    klass = @type2class(json.klass)
-    klass ?= gg.data.ColTable
+    klass = @type2class(json.tabletype)
+    klass ?= data.ColTable
     klass.fromJSON json
 
   toString: ->
@@ -88,21 +82,19 @@ class gg.data.Table
   @type2class: (tabletype="row") ->
     switch tabletype
       when "row", "RowTable"
-        gg.data.RowTable
+        data.RowTable
       when "col", "ColTable"
-        gg.data.ColTable
+        data.ColTable
       else
         null
 
   @deserialize: (str) ->
     json = JSON.parse str
     switch json.type
-      when 'multi'
-        gg.data.MultiTable.deserialize json
       when 'col'
-        gg.data.ColTable.deserialize json
+        data.ColTable.deserialize json
       when 'row'
-        gg.data.RowTable.deserialize json
+        data.RowTable.deserialize json
       else
         throw Error "can't deserialize data of type: #{json.type}"
 
@@ -117,20 +109,6 @@ class gg.data.Table
 
     klass.fromArray rows, schema
 
-  @merge: (tables, tabletype="row") ->
-    klass = @type2class tabletype
-    if tables.length is 0
-      schema = new gg.data.Schema()
-      new klass schema
-    else
-      schema = gg.data.Schema.merge _.map(tables, (t) -> t.schema)
-      table = new klass schema
-      for t in tables
-        t.each (row) -> table.addRow row.raw()
-      table
-
-
-
   @reEvalJS = /^{.*}$/
   @reVariable = /^[a-zA-Z]\w*$/
   @reNestedAttr = /^[a-zA-Z]+\.[a-zA-Z]+$/
@@ -138,3 +116,61 @@ class gg.data.Table
   @isEvalJS: (s) ->@reEvalJS.test s
   @isVariable: (s) -> @reVariable.test s
   @isNestedAttr: (s) -> @reNestedAttr.test s
+
+
+
+  #
+  # Convenience methods that wrap operators
+  #
+
+  # @param f functiton to run.  takes data.Row, index as input
+  # @param n number of rows
+  each: (f, n=null) ->
+    iter = @iterator()
+    idx = 0
+    ret = []
+    while iter.hasNext()
+      ret.push f(iter.next(), idx)
+      idx +=1 
+      break if n? and idx >= n
+    iter.close()
+    ret
+
+  fastEach: (f, n) -> @each f, n
+
+  limit: (n) ->
+    new data.ops.Limit @, n
+
+  offset: (n) ->
+    new data.ops.Offset @, n
+
+  sort: (cols, reverse=no) ->
+    @orderby cols, reverse
+
+  orderby: (cols, reverse=no) ->
+    new data.ops.OrderBy @, cols, reverse
+
+  filter: (f) ->
+    new data.ops.Filter @, f
+
+  cache: ->
+    new data.ops.Cache @
+
+  union: (tables...) ->
+    tables = _.compact _.flatten tables
+    new data.ops.Union @, tables
+
+  join: (table, cols, type="hash") ->
+    switch type
+      when "hash"
+        new data.ops.EquiHashJoin @, table, cols
+      else
+        new data.ops.EquiHashJoin @, table, cols
+
+  project: (schema, mappings) ->
+    new data.ops.Project schema, @, mappings
+
+  partition: (cols) ->
+    new data.ops.Partition @, cols
+
+

@@ -1,6 +1,6 @@
 _ = require("underscore")
 
-class gg.util.Log
+class data.util.Log
   @DEBUG = 0
   @INFO = 1
   @WARN = 2
@@ -37,17 +37,17 @@ class gg.util.Log
 
 
 
-  @logger: (logname="", prefix, level=gg.util.Log.ERROR) ->
+  @logger: (logname="", prefix, level=data.util.Log.ERROR) ->
     prefix = logname unless prefix?
-    loggers = gg.util.Log.loggers
+    loggers = data.util.Log.loggers
     level = @lookupLevel logname, level
     loggers[logname] = {} unless logname of loggers
     unless prefix of loggers[logname]
-      logger = new gg.util.Log logname, prefix, level
+      logger = new data.util.Log logname, prefix, level
       loggers[logname][prefix] = logger
     return loggers[logname][prefix]
 
-  constructor: (@logname, @prefix, @level=gg.util.Log.ERROR) ->
+  constructor: (@logname, @prefix, @level=data.util.Log.ERROR) ->
     @prefix = @logname unless @prefix?
     callable = (args...) -> callable.debug args...
     _.extend callable, @
@@ -60,10 +60,10 @@ class gg.util.Log
   logLevel: (level, args...) ->
     if level >= @level
       prefix = switch level
-        when gg.util.Log.DEBUG then "D"
-        when gg.util.Log.DEBUG then "I"
-        when gg.util.Log.WARN then "W"
-        when gg.util.Log.ERROR then "E"
+        when data.util.Log.DEBUG then "D"
+        when data.util.Log.DEBUG then "I"
+        when data.util.Log.WARN then "W"
+        when data.util.Log.ERROR then "E"
         else "?"
       prefix = "#{prefix} "
       if @prefix != ""
@@ -71,11 +71,11 @@ class gg.util.Log
       args.unshift prefix
       console.log args...
 
-  debug: (args...) -> @logLevel gg.util.Log.DEBUG, args...
-  info: (args...) -> @logLevel gg.util.Log.INFO, args...
-  warn: (args...) -> @logLevel gg.util.Log.WARN, args...
-  err: (args...) -> @logLevel gg.util.Log.ERROR, args...
-  error: (args...) -> @logLevel gg.util.Log.ERROR, args...
+  debug: (args...) -> @logLevel data.util.Log.DEBUG, args...
+  info: (args...) -> @logLevel data.util.Log.INFO, args...
+  warn: (args...) -> @logLevel data.util.Log.WARN, args...
+  err: (args...) -> @logLevel data.util.Log.ERROR, args...
+  error: (args...) -> @logLevel data.util.Log.ERROR, args...
 
 
 

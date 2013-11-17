@@ -38,7 +38,8 @@
 		"pg": ">=2.0.0",
     "science": "git+ssh://git@github.com:jasondavies/science.js.git#v1.9.1",
     "express": ">=3.x",
-    "jsdom": ">=0.7.0"
+    "jsdom": ">=0.7.0",
+    "events": ">=0.050"
   },
   "directories": {
     "doc": "doc",

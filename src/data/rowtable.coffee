@@ -1,18 +1,18 @@
-#<< gg/data/table
+#<< data/table
 
 # stores table as a list of arrays and a schema
-class gg.data.RowTable extends gg.data.Table
-  @ggpackage = "gg.data.RowTable"
+class data.RowTable extends data.Table
+  @ggpackage = "data.RowTable"
 
   constructor: (@schema, rows=[]) ->
     throw Error("schema not present") unless @schema?
     rows ?= []
     @rows = []
     _.each rows, (row) => @addRow row
-    @log = gg.data.Table.log
+    @log = data.Table.log
 
   nrows: -> @rows.length
-  klass: -> gg.data.RowTable
+  tabletype: -> "row"
 
   iterator: ->
     class Iter
@@ -24,7 +24,7 @@ class gg.data.RowTable extends gg.data.Table
       next: ->
         throw Error("no more elements.  idx=#{@idx}") unless @hasNext()
         @idx += 1
-        new gg.data.Row @schema, @table.rows[idx]
+        new data.Row @schema, @table.rows[@idx-1]
       hasNext: -> @idx < @nrows
       close: -> @table = @schema = null
     new Iter @
@@ -34,7 +34,7 @@ class gg.data.RowTable extends gg.data.Table
   # data.Row object for entire iteration and minimizes 
   # copies
   fastEach: (f, n=null) ->
-    row = new gg.data.Row @schema
+    row = new data.Row @schema
     ret = []
     for raw, idx in @rows
       row.data = raw
@@ -42,32 +42,9 @@ class gg.data.RowTable extends gg.data.Table
       break if n? and idx >= n
     ret
 
-  # internal method
-  _addColumn: (col, vals) ->
-    unless @has col
-      throw Error("col should be in the schema: #{col}")
-    colidx = @schema.index col
-    for row, rowidx in @rows
-      row[colidx] = vals[rowidx]
-    @
-
-  _getColumn: (col) ->
-    idx = @schema.index col
-    _.map @rows, (row) -> row[idx]
-
-  _rmColumn: (col) ->
-    return @ unless @has col
-    rmidx = @schema.index col
-    for row in @rows
-      row.splice rmidx, 1
-
-    @schema = @schema.exclude col
-    @
-
-
   # Adds array, {}, or Row object as a row in this table
   #
-  # @param row { } object or a gg.data.Row
+  # @param row { } object or a data.Row
   # @param pad if argument is an array of value, should we pad the end with nulls
   #        if not enough values
   # @return self
@@ -83,7 +60,7 @@ class gg.data.RowTable extends gg.data.Table
         else
           for i in [0...(@schema.ncols()-row.length)]
             row.push null
-    else if _.isType row, gg.data.Row
+    else if _.isType row, data.Row
       row = _.map @cols(), (col) -> row.get(col)
     else if _.isObject row
       row = _.map @cols(), (col) -> row[col]
@@ -93,24 +70,21 @@ class gg.data.RowTable extends gg.data.Table
     @rows.push row
     @
 
-  # return a list of {} objects
-  raw: -> 
-    _.map @rows, (r) => 
-      o = {}
-      for col in @schema.cols
-        o[col] = r[@schema.index col]
-      o
 
-  serialize: ->
+  #
+  # Static Instantiation Methods
+  #
+
+  @serialize: (rowtable) ->
     JSON.stringify
-      data: _.toJSON(@rows)
-      schema: JSON.stringify(@schema.toJSON())
+      data: _.toJSON(rowtable.rows)
+      schema: JSON.stringify(rowtable.schema.toJSON())
       type: 'row'
 
   @deserialize: (json) ->
     raws = _.fromJSON json.data
-    schema = gg.data.Schema.fromJSON JSON.parse(json.schema)
-    t = new gg.data.RowTable schema
+    schema = data.Schema.fromJSON JSON.parse(json.schema)
+    t = new data.RowTable schema
     t.rows = raws
     t
 
@@ -118,25 +92,25 @@ class gg.data.RowTable extends gg.data.Table
   # Infers a schema from inputs and returns a row table object
   # @param rows list of { } objects
   @fromArray: (rows, schema=null) ->
-    schema ?= gg.data.Schema.infer rows
-    if rows? and _.isType(rows[0], gg.data.Row)
+    schema ?= data.Schema.infer rows
+    if rows? and _.isType(rows[0], data.Row)
       rows = _.map rows, (row) ->
         _.map schema.cols, (col) -> row.get(col)
     else
       rows = _.map rows, (o) ->
         _.map schema.cols, (col) -> o[col]
-    new gg.data.RowTable schema, rows
+    new data.RowTable schema, rows
 
 
   @fromJSON: (json) ->
     schemaJson = json.schema
     dataJson = _.fromJSON json.data
 
-    schema = gg.data.Schema.fromJSON schemaJson
+    schema = data.Schema.fromJSON schemaJson
     rows = []
     for raw in dataJson
-      rows.push(gg.data.Row.toRow raw, schema)
-    new gg.data.RowTable schema, rows
+      rows.push(data.Row.toRow raw, schema)
+    new data.RowTable schema, rows
 
 
 

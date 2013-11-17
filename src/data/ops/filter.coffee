@@ -1,6 +1,8 @@
+#<< data/table
 
-class gg.data.Filter extends gg.data.Table
+class data.ops.Filter extends data.Table
   constructor: (@table, @f) ->
+    @schema = @table.schema
 
   iterator: ->
     class Iter
@@ -9,20 +11,21 @@ class gg.data.Filter extends gg.data.Table
         @iter = @table.iterator()
         @_next = null
 
-      reset: -> @table.reset()
+      reset: -> @iter.reset()
       next: -> 
-        throw Error("iterator has no more elements") unless @_next?
+        throw Error("iterator has no more elements") unless @hasNext()?
         ret = @_next
         @_next = null
         ret
 
       hasNext: -> 
+        return true if @_next?
         while @iter.hasNext()
           row = @iter.next()
           if @f row
             @_next = row
-            return true
-        false
+            break
+        @_next?
 
       close: -> 
         @table = null

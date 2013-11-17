@@ -21,6 +21,11 @@ coffeebin = "coffee" #"node_modules/coffee-script/bin/coffee"
 unless fs.existsSync
   fs.existsSync = (filePath) -> path.existsSync filePath
 
+task 'data', ->
+  vendor ->
+    builddata()
+
+
 
 task 'build', ->
   vendor ->
@@ -54,6 +59,8 @@ release = (callback) ->
 
   async.forEachSeries commands, run, ->
     callback() if callback
+
+
 
 
 build = (callback) ->
@@ -92,6 +99,19 @@ build = (callback) ->
 
     async.forEachSeries commands, run, ->
       callback() if callback
+
+builddata = (callback) ->
+    create_build_dirs()
+
+    commands = []
+    commands.push 'toaster -f datatoaster.coffee -dc'
+    commands.push 'ls build/compiled/*'
+    commands.push "#{coffeebin} --output test/js --compile  test/data/*.coffee"
+    commands.push 'cp build/compiled/ggdata.js lib/'
+
+    async.forEachSeries commands, run, ->
+      callback() if callback
+
 
 
 clean = (callback) ->

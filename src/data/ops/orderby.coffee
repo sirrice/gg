@@ -1,5 +1,9 @@
-class gg.data.OrderBy extends gg.data.Table
+#<< data/table
+
+class data.ops.OrderBy extends data.Table
+
   constructor: (@table, @cols, @reverse=no) ->
+    @schema = @table.schema
     cols = _.flatten [@cols]
     reverse = if @reverse then -1 else 1
     @cmp = (r1, r2) ->

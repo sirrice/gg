@@ -1,37 +1,37 @@
-class gg.data.Partition extends gg.data.Table
+#<< data/table
+
+class data.ops.Partition extends data.Table
 
   constructor: (@table, @cols) ->
+    @cols = _.flatten [@cols]
     @schema = @table.schema.project @cols
-    @schema.addColumn '_val', gg.data.Schema.object
+    @schema.addColumn 'table', data.Schema.table
 
   iterator: ->
     class Iter
       constructor: (@schema, @table, @cols) ->
-        @iter = @table.iterator()
         @idx = 0
 
       reset: -> 
-        @iter.reset()
         @idx = 0
 
       next: -> 
         throw Error("iterator has no more elements") unless @hasNext()
-        row = new gg.data.Row @schema
+        row = new data.Row @schema
         htrow = @ht[@idx]
         @idx += 1
-        for col in @cols
-          row.set col, htrow.key[col]
-        row.set '_val', htrow.table
+        for col, idx in @cols
+          row.set col, htrow.key[idx]
+        row.set 'table', htrow.table
         row
 
       hasNext: -> 
         unless @ht?
-          @ht = _.values(gg.data.Partition.buildHT @table, @cols)
+          @ht = _.values(data.ops.Partition.buildHT @table, @cols)
         @idx < @ht.length
 
       close: -> 
         @table = null
-        @iter.close()
 
     new Iter @schema, @table, @cols
 
@@ -42,16 +42,17 @@ class gg.data.Partition extends gg.data.Table
   #   ht = JSON.stringify(key) -> rows
   #   keys: JSON.stringify(key) -> key
   @buildHT: (t, cols) ->
+    iter = t.iterator()
     getkey = (row) -> _.map cols, (col) -> row.get(col)
     ht = {}
     keys = {}
-    while t.hasNext()
-      row = t.row()
+    while iter.hasNext()
+      row = iter.next()
       key = getkey row
       strkey = JSON.stringify key
       # XXX: may need to use toJSON on key
       ht[strkey] = [] unless strkey of ht
-      ht[strkey].push row.raw()
+      ht[strkey].push row
       keys[strkey] = key
     _.o2map ht, (rows, keystr) ->
       [ keystr,

@@ -1,8 +1,5 @@
-#<< gg/util/log
-
-class gg.data.Schema
-  @ggpackage = "gg.data.Schema"
-  @log = gg.util.Log.logger @ggpackage, "Schema"
+class data.Schema
+  @ggpackage = "data.Schema"
 
   @ordinal = 0
   @numeric = 2
@@ -11,28 +8,29 @@ class gg.data.Schema
   @svg = 5    # environment variable
   @container = 6
   @function = 7
+  @table = 8
   @unknown = -1
+
 
   constructor: (@cols=[], @types=[], @defaults={}) ->
     if @cols.length != @types.length
       throw Error("len of cols != types #{@cols.length} != #{@types.length}")
 
-    @log = gg.data.Schema.log
     @col2idx = {}
     _.each @cols, (col, idx) =>
       @col2idx[col] = idx
 
   ncols: -> @cols.length
   index: (col) -> @col2idx[col]
-  isOrdinal: (col) -> @type(col) is gg.data.Schema.ordinal
-  isNumeric: (col) -> @type(col) is gg.data.Schema.numeric
-  isDate: (col) -> @type(col) is gg.data.Schema.date
-  isObject: (col) -> @type(col) is gg.data.Schema.object
-  isUnknown: (col) -> @type(col) is gg.data.Schema.unknown
+
+  isOrdinal: (col) -> @type(col) is data.Schema.ordinal
+  isNumeric: (col) -> @type(col) is data.Schema.numeric
+  isDate: (col) -> @type(col) is data.Schema.date
+  isObject: (col) -> @type(col) is data.Schema.object
+  isUnknown: (col) -> @type(col) is data.Schema.unknown
   default: (col) -> @defaults[col]
 
-
-  addColumn: (col, type=gg.data.Schema.unknown) ->
+  addColumn: (col, type=data.Schema.unknown) ->
     unless @has col
       @cols.push(col)
       @types.push type
@@ -43,7 +41,7 @@ class gg.data.Schema
 
   setType: (col, type) ->
     return if type == @type(col)
-    if @type(col) is gg.data.Schema.unknown
+    if @type(col) is data.Schema.unknown
       @types[@index col] = type
     else
       throw Error "can't update #{col} because type not unknown: #{@type col}"
@@ -54,7 +52,7 @@ class gg.data.Schema
       unless @has col
         throw Error("col #{col} not in schema")
       @types[@index col]
-    new gg.data.Schema(cols, types)
+    new data.Schema(cols, types)
 
   # removes col, preserves ordering
   exclude: (rm) ->
@@ -67,7 +65,7 @@ class gg.data.Schema
         cols.push col
         types.push @type(col)
 
-    new gg.data.Schema cols, types
+    new data.Schema cols, types
 
   type: (col) -> @types[@index col]
 
@@ -80,11 +78,22 @@ class gg.data.Schema
       col of @col2idx
 
   merge: (other) ->
-    return unless _.isType other, gg.data.Schema
+    return unless _.isType other, data.Schema
     for col in other.cols
       unless @has col
         @addColumn col, other.type(col)
     @
+
+  equals: (schema) ->
+    for col in @cols
+      unless schema.has col, @type(col)
+        return no
+    for col in schema.cols
+      unless @has col, schema.type(col)
+        return no
+    yes
+
+
 
   @merge: (schemas) ->
     schemas = _.flatten arguments
@@ -101,21 +110,21 @@ class gg.data.Schema
   # @return type object { type: , schema:  }
   @type: (v) ->
     if _.isDate v
-      gg.data.Schema.date
+      data.Schema.date
     else if _.isObject v
-      gg.data.Schema.object
+      data.Schema.object
     else if _.isNumber v
-      gg.data.Schema.numeric
+      data.Schema.numeric
     else
-      gg.data.Schema.ordinal 
+      data.Schema.ordinal 
 
   # @param rows [ {col: val, ..} ]
   @infer: (rows) ->
-    schema = new gg.data.Schema
+    schema = new data.Schema
     return schema unless rows? and rows.length > 0
 
     for row in rows[0...50]
-      if _.isType row, gg.data.Row
+      if _.isType row, data.Row
         schema.merge(row.schema) 
       else
         for k, v of row
@@ -123,7 +132,7 @@ class gg.data.Schema
     schema
 
   @intersect: (s1, s2) ->
-    ret = new gg.data.Schema
+    ret = new data.Schema
     for col in s1.cols
       if s2.has col, s1.type(col)
         ret.addColumn col, s1.type(col)
@@ -136,7 +145,7 @@ class gg.data.Schema
     _.map(_.zip(@cols, @types), ([col, type]) -> "#{col}(#{type})").join " "
 
   @fromJSON: (json) -> 
-    new gg.data.Schema _.keys(json), _.values(json)
+    new data.Schema _.keys(json), _.values(json)
 
   toJSON: ->
     ret = {}

@@ -1,6 +1,5 @@
-#<< gg/data/schema
 
-class gg.data.Transform
+class data.ops.Transform
 
   # Creates a table that's cross product of the attrs
   # @param cols { attr1: [ values], ... }

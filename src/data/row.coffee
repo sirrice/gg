@@ -1,10 +1,6 @@
-#<< gg/util/log
-#<< gg/data/schema
-
 # Stores data as an array of values + schema
-class gg.data.Row
-  @ggpackage = "gg.data.Row"
-  @log = gg.util.Log.logger @ggpackage, "row"
+class data.Row
+  @ggpackage = "data.Row"
 
   # @param data [ value,... ]
   # @param schema 
@@ -14,8 +10,7 @@ class gg.data.Row
     
     @data ?= _.times @schema.ncols(), () -> null
     unless @data.length == @schema.ncols()
-      @log = gg.data.Row.log
-      @log.warn "ncols in row != schema  #{@data.length} != #{@schema.ncols()}"
+      console.log "[W] Row: ncols in row != schema  #{@data.length} != #{@schema.ncols()}"
 
   cols: -> @schema.cols
   has: (col, type=null) -> @schema.has col, type
@@ -24,17 +19,17 @@ class gg.data.Row
   set: (col, v) -> @data[@schema.index(col)] = v
   project: (cols) ->
     schema = @schema.project cols
-    data = _.map cols, (col) => @get col
-    new gg.data.Row schema, data
+    rowData = _.map cols, (col) => @get col
+    new data.Row schema, rowData
 
   # @param cols columns to merge into this row.  if null, merges all
   merge: (row, cols=null) ->
-    unless _.isType row, gg.data.Row
+    unless _.isType row, data.Row
       throw Error "can't merge non row"
     cols ?= row.schema.cols
     schema = @schema.clone()
     schema.merge row.schema
-    ret = new gg.data.Row schema
+    ret = new data.Row schema
     for col in @schema.cols
       ret.set col, @get(col)
     for col in cols
@@ -42,32 +37,32 @@ class gg.data.Row
     ret
 
   clone: ->
-    data = _.map @data, (v) ->
+    rowData = _.map @data, (v) ->
       if v? and v.clone?
         v.clone()
       else
         v
-    new gg.data.Row @schema, data
+    new data.Row @schema, rowData
 
 
   toJSON: -> _.o2map @schema.cols, (col) => [col, @get col]
   raw: -> @toJSON()
   toString: -> JSON.stringify(@toJSON())
 
-  # turns an { } object into a gg.data.Row
+  # turns an { } object into a data.Row
   @toRow: (o, schema=null) ->
-    return o if _.isType o, gg.data.Row
+    return o if _.isType o, data.Row
 
     unless schema?
-      schema = new gg.data.Schema 
+      schema = new data.Schema 
       for k,v of o
-        schema.addColumn k, gg.data.Schema.type(v)
+        schema.addColumn k, data.Schema.type(v)
 
-    data = []
+    rowData = []
     for col in schema.cols
       idx = schema.index col
-      data[idx] = o[col]
-    new gg.data.Row schema, data
+      rowData[idx] = o[col]
+    new data.Row schema, rowData
 
 
 
