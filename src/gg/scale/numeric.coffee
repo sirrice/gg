@@ -1,5 +1,4 @@
 #<< gg/scale/scale
-#<< gg/data/schema
 
 
 class gg.scale.Linear extends gg.scale.Scale
@@ -7,7 +6,7 @@ class gg.scale.Linear extends gg.scale.Scale
   @aliases = "linear"
   constructor: (@spec) ->
     @d3Scale = d3.scale.linear()
-    @type = gg.data.Schema.numeric
+    @type = data.Schema.numeric
     super
 
 
@@ -16,7 +15,7 @@ class gg.scale.Time extends gg.scale.Scale
   @aliases = "time"
   constructor: (@spec) ->
       @d3Scale = d3.time.scale()
-      @type = gg.data.Schema.date
+      @type = data.Schema.date
       super
 
 class gg.scale.Log extends gg.scale.Scale
@@ -24,7 +23,7 @@ class gg.scale.Log extends gg.scale.Scale
   @aliases = "log"
   constructor: (@spec) ->
       @d3Scale = d3.scale.log()
-      @type = gg.data.Schema.numeric
+      @type = data.Schema.numeric
       super
 
   valid: (v) ->

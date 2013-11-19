@@ -37,7 +37,7 @@ class gg.facet.base.Layout extends gg.core.BForm
   facetVals: (md) ->
     Facets = gg.facet.base.Facets
     _.uniq(
-      _.zip(md.getColumn('facet-x'), md.getColumn('facet-y')),
+      _.zip(md.all('facet-x'), md.all('facet-y')),
       false,
       JSON.stringify)
 
@@ -55,9 +55,9 @@ class gg.facet.base.Layout extends gg.core.BForm
   getMaxText: (md, aes) ->
     text = '100'
     formatter = d3.format ',.0f'
-    for set in md.getColumn('scales')
-      scale = set.scale aes, gg.data.Schema.unknown
-      if scale.type == gg.data.Schema.numeric
+    for set in md.all('scales')
+      scale = set.scale aes, data.Schema.unknown
+      if scale.type == data.Schema.numeric
         for v in scale.domain()
           if _.isNumber v
             _text = formatter v
@@ -80,8 +80,8 @@ class gg.facet.base.Layout extends gg.core.BForm
     [w, h] = [container.w(), container.h()]
     Bound = gg.core.Bound
 
-    xs = _.uniq md.getColumn 'facet-x'
-    ys = _.uniq md.getColumn 'facet-y'
+    xs = _.uniq md.all 'facet-x'
+    ys = _.uniq md.all 'facet-y'
     nxs = xs.length
     nys = ys.length
     showXFacet = not(xs.length is 1 and not xs[0]?)
@@ -221,16 +221,14 @@ class gg.facet.base.Layout extends gg.core.BForm
   addPanesToEnv: (md, grid, paddingPane) ->
     # 1. add each pane's bounds to their environment
     # 2. update scale sets to be within drawing container
-    md = gg.data.Transform.transform md, [
-      [ 'paneC'
-        ((row) ->
-          x = row.get 'facet-x'
-          y = row.get 'facet-y'
-          paneC = grid[x][y]
-          paneC)
-        gg.data.Schema.object
-      ]
-    ]
+    md = md.project [
+      {
+        alias: 'paneC'
+        f: (fx, fy) -> grid[fx][fy]
+        type: data.Schema.object
+        cols: ['facet-x', 'facet-y']
+      }
+    ], yes
 
     md.each (row) ->
       x = row.get 'facet-x'
@@ -252,7 +250,7 @@ class gg.facet.base.Layout extends gg.core.BForm
         for type in scaleSet.types(aes)
           scaleSet.scale(aes, type).range yrange
 
-    set = md.get 0, 'scales'
+    set = md.any 'scales'
     @log "grid layout scale set"
     @log set.toString()
 
@@ -271,17 +269,18 @@ class gg.facet.base.Layout extends gg.core.BForm
 
   # @param xfonts font object for each non-null grid item
   setOptimalFacetFonts: (pairtable, grid, xfonts, yfonts) ->
-    md = pairtable.getMD()
+    md = pairtable.right()
     partitions = md.partition ['facet-x', 'facet-y']
-    partitions = _.map partitions, (p, idx) ->
-      x = p.get 0, 'facet-x'
-      y = p.get 0, 'facet-y'
+    partitions.each (row, idx) ->
+      p = row.get 'table'
+      x = row.get 'facet-x'
+      y = row.get 'facet-y'
       xfont = xfonts[idx]
       yfont = yfonts[idx]
-      p = p.setColumn "xfacet-text", xfont.text
-      p = p.setColumn "xfacet-size", xfont.size
-      p = p.setColumn "yfacet-text", yfont.text
-      p = p.setColumn "yfacet-size", yfont.size
+      p = p.setColVal "xfacet-text", xfont.text
+      p = p.setColVal "xfacet-size", xfont.size
+      p = p.setColVal "yfacet-text", yfont.text
+      p = p.setColVal "yfacet-size", yfont.size
       p
 
   # augments layout container (lc) with additional
@@ -298,16 +297,13 @@ class gg.facet.base.Layout extends gg.core.BForm
     #
 
     pairtable = pairtable.ensure ['facet-x', 'facet-y']
-    md = pairtable.getMD()
-    lc = md.get 0, 'lc'
+    md = pairtable.right()
+    lc = md.any 'lc'
 
     md = @layoutLabels md, params, lc
     md = @layoutPanes md, params, lc
 
-    new gg.data.PairTable pairtable.getTable(), md
-
-
-
-
+    pairtable.right md
+    pairtable
 
 

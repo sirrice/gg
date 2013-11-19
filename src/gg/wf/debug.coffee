@@ -18,8 +18,8 @@ class gg.wf.Stdout extends gg.wf.SyncBlock
 
   compute: (pairtable, params) ->
     mdcols = ['layer', 'facet-x', 'facet-y', 'group', 'lc']
-    gg.wf.Stdout.print pairtable.getTable(), params.get('cols'), params.get('n'), @log
-    gg.wf.Stdout.print pairtable.getMD(), mdcols, params.get('n'), @log
+    gg.wf.Stdout.print pairtable.left(), params.get('cols'), params.get('n'), @log
+    gg.wf.Stdout.print pairtable.right(), mdcols, params.get('n'), @log
     pairtable
 
 
@@ -36,11 +36,10 @@ class gg.wf.Stdout extends gg.wf.SyncBlock
 
     log "# rows: #{table.nrows()}"
     log "Schema: #{schema.toString()}"
-    while idx < table.nrows()
-      row = table.get idx
-      pairs = _.map cols, (col) -> [col, row.get(col)]
-      log JSON.stringify(pairs)
-      idx += blockSize
+    table.each (row, idx) ->
+      if idx % blockSize == 0
+        pairs = _.map cols, (col) -> [col, row.get(col)]
+        log JSON.stringify(pairs)
 
   @printTables: (args...) -> @print args...
 
@@ -63,7 +62,7 @@ class gg.wf.Scales extends gg.wf.SyncBlock
       key: [ [], _.flatten [gg.facet.base.Facets.facetKeys, 'layer'] ]
 
   compute: (pairtable, params) ->
-    md = pairtable.getMD()
+    md = pairtable.right()
     md.fastEach (row) =>
       layer = row.get 'layer'
       scale = row.get 'scales'

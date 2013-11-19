@@ -1,5 +1,6 @@
 "use strict"
 
+data = require 'ggdata'
 events = require 'events'
 # this is a problem because of how node deals with _
 _ = require 'underscore'

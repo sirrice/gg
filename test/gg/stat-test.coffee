@@ -13,7 +13,7 @@ runTest = (node, table) ->
   promise = new events.EventEmitter
   node.on 'output', (id, idx, pt) ->
     promise.emit 'success', pt
-  pt = new gg.data.PairTable table
+  pt = new data.PairTable table
   pt = pt.ensure()
   node.setInput 0, pt
   node.run()
@@ -26,7 +26,7 @@ suite.addBatch
     topic: ->
       rows = _.times 10, (i) ->
         { x: i, y: i + Math.random()*4 };
-      gg.data.Table.fromArray rows
+      data.Table.fromArray rows
 
     "when smoothed": 
       topic: (table) ->
@@ -34,14 +34,14 @@ suite.addBatch
         runTest node, table
 
       "doesnt crash": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           assert row?
 
   "Boxplot":
     topic: ->
       rows = _.times 30, (i) ->
         { x: i % 3, y: (i%3)*5 + Math.random()*5 };
-      gg.data.Table.fromArray rows
+      data.Table.fromArray rows
 
     "when smoothed": 
       topic: (table) ->
@@ -49,14 +49,14 @@ suite.addBatch
         runTest node, table
 
       "doesnt crash": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           assert row?
 
   "CDF":
     topic: ->
       rows = _.times 30, (i) ->
         { x: i, y: i }
-      gg.data.Table.fromArray rows
+      data.Table.fromArray rows
 
     "when smoothed": 
       topic: (table) ->
@@ -65,7 +65,7 @@ suite.addBatch
 
       "doesnt crash": (pt) ->
         cum = 0
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           cum += row.get 'x'
           assert.equal row.get('y'), cum
 
@@ -74,7 +74,7 @@ suite.addBatch
     topic: ->
       rows = _.times 30, (i) ->
         { x: 30-i, y: i }
-      gg.data.Table.fromArray rows
+      data.Table.fromArray rows
 
     "when smoothed": 
       topic: (table) ->
@@ -84,7 +84,7 @@ suite.addBatch
 
       "doesnt crash": (pt) ->
         prev = -1
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           assert.lt prev, row.get('x')
 
 

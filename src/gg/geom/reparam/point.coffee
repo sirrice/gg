@@ -10,7 +10,7 @@ class gg.geom.reparam.Point extends gg.core.XForm
   inputSchema:  -> ['x']
 
   outputSchema: (pairtable) ->
-    schema = pairtable.tableSchema().clone()
+    schema = pairtable.leftSchema().clone()
 
     xtype = schema.type 'x'
     ytype = schema.type 'y'
@@ -23,17 +23,38 @@ class gg.geom.reparam.Point extends gg.core.XForm
     schema
 
   compute: (pairtable, params) ->
-    table = pairtable.getTable()
-    md = pairtable.getMD()
+    table = pairtable.left()
+    md = pairtable.right()
     schema = params.get('outputSchema') pairtable
-    mapping = 
-      'y1': (row) -> if row.has('y1') then row.get('y1') else row.get('y')
-      'y0': (row) -> if row.has('y0') then row.get('y0') else 0
-      'x0': (row) -> if row.has('x0') then row.get('x0') else row.get('x')-row.get('r')
-      'x1': (row) -> if row.has('y1') then row.get('x1') else row.get('x')+row.get('r')
-    mapping = _.map mapping, (f, k) -> [k, f, gg.data.Schema.numeric]
-    table = gg.data.Transform.transform table, mapping
-    new gg.data.PairTable table, md
+    mapping = [
+      { 
+        alias: 'y1'
+        f: (y1, y, r) -> if y1? then y1 else y+r
+        type: data.Schema.numeric
+        cols: ['y1', 'y', 'r']
+      }
+      { 
+        alias: 'y0'
+        f: (y0, y, r) -> if y0? then y0 else y-r
+        type: data.Schema.numeric
+        cols: ['y0', 'y', 'r']
+      }
+      { 
+        alias: 'x1'
+        f: (x1, x, r) -> if x1? then x1 else x+r
+        type: data.Schema.numeric
+        cols: ['x1', 'x', 'r']
+      }
+      { 
+        alias: 'x0'
+        f: (x0, x, r) -> if x0? then x0 else x-r
+        type: data.Schema.numeric
+        cols: ['x0', 'x', 'r']
+      }
+    ]
+    table = table.project mapping, yes
+    pairtable.left table
+    pairtable
 
 
 

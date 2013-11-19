@@ -15,8 +15,7 @@ class gg.geom.svg.Text extends gg.geom.Render
     ['x0', 'y0', 'text']
 
   render: (table, svg) ->
-    rows = table.getRows()
-    rows = _.uniq(rows, (row) -> JSON.stringify([row.get('x'),row.get('y'),row.get('text')]))
+    rows = table.distinct(['x', 'y', 'text']).all()
 
     texts = @agroup(svg, "text geoms", rows)
       .selectAll("text")

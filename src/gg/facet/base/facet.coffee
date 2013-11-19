@@ -102,8 +102,8 @@ class gg.facet.base.Facets
   labelerNodes: ->
     log = @log
     f = (pairtable, params) ->
-      t = pairtable.getTable()
-      md = pairtable.getMD()
+      t = pairtable.left()
+      md = pairtable.right()
       xcol = params.get 'x'
       ycol = params.get 'y'
       log "x/ycols: #{xcol}/#{ycol}" 
@@ -111,28 +111,25 @@ class gg.facet.base.Facets
         'facet-x': xcol
         'facet-y': ycol
       tmapping = _.mappingToFunctions t, tmapping
-      t = gg.data.Transform.transform t, tmapping
-      pt = new gg.data.PairTable t, md
-      pt = pt.ensure ['facet-x', 'facet-y']
-      md = pt.getMD()
-      mmapping = [
-        [
-          'facet-keys'
-          ((row) -> 
-            "key-#{row.get('facet-x')}-#{row.get('facet-y')}")
-          gg.data.Schema.ordinal
-        ]
-        [
-          'facet-id'
-          ((row) ->
-            "facet-#{row.get('facet-x')}-#{row.get('facet-y')}")
-          gg.data.Schema.ordinal
-        ]
-      ]
-      md = gg.data.Transform.transform md, mmapping
+      t = t.project tmapping, yes
 
-      new gg.data.PairTable pt.getTable(), md
-      
+      pt.left t
+      pt = pt.ensure ['facet-x' ,'facet-y']
+      md = pt.right()
+
+      mmapping = [
+        {
+          alias: ['facet-keys', 'facet-id']
+          f: (xfacet, yfacet) -> 
+            'facet-keys': "key-#{xfacet}-#{yfacet}"
+            'facet-id': "facet-#{xfacet}-#{yfacet}"
+          type: data.Schema.ordinal
+          cols: ['facet-x', 'facet-y']
+        }
+      ]
+      md = md.project mmapping, yes
+      pt.right md
+      pt
 
     gg.wf.SyncBarrier.create f, @splitParams, 'facet-labeler'
 

@@ -18,8 +18,7 @@ class gg.wf.Block extends gg.wf.Node
     pstore = @pstore()
     compute = @params.get('compute') or @compute.bind(@)
 
-    tset = new gg.data.TableSet [@inputs[0]]
-    compute tset, params, (err, pairtable) =>
+    compute @inputs[0], params, (err, pairtable) =>
       throw Error(err) if err?
       @output 0, pairtable
 

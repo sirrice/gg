@@ -10,7 +10,7 @@ class gg.scale.Shape extends gg.scale.BaseCategorical
       @d3Scale = d3.scale.ordinal().range @symbolTypes
       @invertScale = d3.scale.ordinal().domain @d3Scale.range()
       @symbScale = d3.svg.symbol()
-      @type = gg.data.Schema.ordinal
+      @type = data.Schema.ordinal
       super
 
   range: (interval) -> # not allowed

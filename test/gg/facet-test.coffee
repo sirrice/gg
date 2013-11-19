@@ -25,17 +25,17 @@ makeTable = ->
     {'facet-x': 2, 'facet-y': 2, x:5, y:10 }
     {'facet-x': 2, 'facet-y': 3, x:5, y:10 }
   ]
-  table = gg.data.Table.fromArray rows
-  pt = new gg.data.PairTable table
+  table = data.Table.fromArray rows
+  pt = new data.PairTable table
   pt = pt.ensure ['facet-x', 'facet-y']
   lc = 
     titleC: new gg.core.Bound
     facetC: new gg.core.Bound 0, 0, 500, 500
     baseC: new gg.core.Bound 0, 0, 500, 500
-  md = pt.getMD()
-  md.setColumn 'lc', lc
-  md.setColumn 'svg', 0
-  pt = new gg.data.PairTable pt.getTable(), md
+  md = pt.right()
+  md = md.setColVal 'lc', lc
+  md = md.setColVal 'svg', 0
+  pt = new data.PairTable pt.left(), md
   gg.core.FormUtil.ensureScales pt, null, gg.util.Log.logger('test')
 
 suite.addBatch
@@ -49,13 +49,11 @@ suite.addBatch
         runTest node, pt
 
       "doesn't have _barrier": (pt) ->
-        assert (not pt.tableSchema().has('_barrier'))
+        assert (not pt.leftSchema().has('_barrier'))
 
       "has panes": (pt) ->
-        md = pt.getMD()
+        md = pt.right()
         md.each (row) ->
-          console.log [row.get('facet-x'), row.get('facet-y')]
-          console.log row.get('paneC').c
-          console.log row.get('svg')
+          assert row?
 
 suite.export module

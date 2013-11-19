@@ -14,12 +14,10 @@ class gg.pos.Shift extends gg.pos.Position
       yShift: _.findGood [@spec.y, @spec.amount, 10]
 
   compute: (pairtable, params) ->
-    map =
-      x: (v) -> v + params.get('xShift')
-      y: (v) -> v + params.get('yShift')
-    map = _.map map, (f,k) -> [k,f,gg.data.Schema.numeric]
-    table = pairtable.getTable()
-    table = gg.data.Transform.mapCols table, map
-    new gg.data.PairTable table, pairtable.getMD()
-
-
+    map = [
+      {alias: 'x', f: (v) -> v + params.get('xShift')}
+      {alias: 'y', f: (v) -> v + params.get('yShift')}
+    ]
+    table = pairtable.left().mapCols map
+    pairtable.left table
+    pairtable

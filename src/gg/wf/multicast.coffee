@@ -16,8 +16,7 @@ class gg.wf.Multicast extends gg.wf.Node
     pairtable = @inputs[0]
     pstore = @pstore()
     for idx in [0...@nChildren]
-      result = if idx is 0 then pairtable else pairtable.clone()
-      @output idx, result
+      @output idx, new data.PairTable(pairtable.left(), pairtable.right())
 
 
 # Creates a clone of its inputs for each child
@@ -34,7 +33,9 @@ class gg.wf.NoCopyMulticast extends gg.wf.Node
 
     pairtable = @inputs[0]
     pstore = @pstore()
-    ps = pairtable.partition 'layer'
+    #ps = pairtable.partition 'layer'
 
-    for p, idx in ps
-      @output idx, p
+    for idx in [0...@nChildren]
+      @output idx, pairtable
+      #for p, idx in ps
+      #@output idx, p

@@ -58,7 +58,7 @@ class gg.geom.svg.Line extends gg.geom.Render
 
 
   render: (table, svg) ->
-    linetables = table.partition 'group'
+    linetables = table.partition('group', 'table').all('table')
 
     lines = @groups(svg, 'line', linetables)
       .selectAll('path')
@@ -71,23 +71,23 @@ class gg.geom.svg.Line extends gg.geom.Render
         .x((d) -> d.get 'x')
         .y((d) -> d.get 'y1')
 
-    @log "stroke is #{table.get 0, "stroke"}"
+    @log "stroke is #{table.any "stroke"}"
 
     cssNormal =
-      "stroke": (g) -> g.get(0, 'stroke')
-      "stroke-width": (g) -> g.get(0, "stroke-width")
-      "stroke-opacity": (g) -> g.get(0, "stroke-opacity")
+      "stroke": (g) -> g.any('stroke')
+      "stroke-width": (g) -> g.any("stroke-width")
+      "stroke-opacity": (g) -> g.any("stroke-opacity")
       "fill": "none"
 
     cssOver =
-      stroke: (g) -> d3.rgb(g.get(0, "fill")).darker(2)
-      "stroke-width": (g) -> g.get(0, 'stroke-width') + 1
+      stroke: (g) -> d3.rgb(g.any("fill")).darker(2)
+      "stroke-width": (g) -> g.any('stroke-width') + 1
       "stroke-opacity": 1
 
 
     @applyAttrs enterLines,
       class: "geom"
-      d: (d) -> liner(d.getRows())
+      d: (d) -> liner(d.all())
 
     @applyAttrs enterLines, cssNormal
 

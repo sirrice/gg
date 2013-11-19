@@ -18,11 +18,11 @@ class gg.scale.train.Master extends gg.core.BForm
   @train: (pairtable, params) ->
     scalesTrain = params.get('scalesTrain') or 'fixed'
 
-    table = pairtable.getTable()
-    md = pairtable.getMD()
+    table = pairtable.left()
+    md = pairtable.right()
 
     if scalesTrain is 'fixed'
-      sets = md.getColumn 'scales'
+      sets = md.all 'scales'
       sets = _.uniq sets, false, (set) -> set.id
       masterSet = new gg.scale.MergedSet sets
       #@expandDomains masterScales
@@ -32,7 +32,8 @@ class gg.scale.train.Master extends gg.core.BForm
     else
       md = @trainFreeScales md
 
-    new gg.data.PairTable table, md
+    pairtable.right md
+    pairtable
 
 
   @trainFreeScales: (md, xs, ys) ->
@@ -40,31 +41,33 @@ class gg.scale.train.Master extends gg.core.BForm
     xFacet = 'facet-x'
     yFacet = 'facet-y'
 
-    xscalesList = _.o2map md.partition(xFacet), (p) ->
-      key = p.get 0, xFacet
-      scales = new gg.scale.MergedSet p.getColumn('scales')
-      [key, scales.exclude(gg.scale.Scale.ys)]
 
-    yscalesList = _.o2map md.partition(yFacet), (p) ->
-      key = p.get 0, yFacet
-      scales = new gg.scale.MergedSet p.getColumn('scales')
-      [key, scales.exclude(gg.scale.Scale.xs)]
+    xscalesList = {}
+    md.partition(xFacet).each (p) ->
+      key = p.get xFacet
+      scales = new gg.scale.MergedSet p.get('table').all('scales')
+      xscalesList[key] = scales.exclude(gg.scale.Scale.ys)
 
-    ps = _.map md.partition(['facet-x', 'facet-y']), (p) ->
-      x = p.get 0, xFacet
-      y = p.get 0, yFacet
-      for set in md.getColumn('scales')
+    yscalesList = {}
+    md.partition(yFacet).each (p) ->
+      key = p.get yFacet
+      scales = new gg.scale.MergedSet p.get('table').all('scales')
+      yscalesList[key] =  scales.exclude(gg.scale.Scale.xs)
+
+    md.distinct(xFacet, yFacet).each (row) ->
+      x = row.get xFacet
+      y = row.get yFacet
+      for set in row.get('scales')
         set.merge xscalesList[x]
         set.merge yscalesList[y]
-      p
 
-    return new gg.data.MultiTable null, ps
+    md
 
   expandDomains: (scalesSet) ->
     return scalesSet
 
     _.each scalesSet.scalesList(), (scale) =>
-      return unless scale.type is gg.data.Schema.numeric
+      return unless scale.type is data.Schema.numeric
 
       [mind, maxd] = scale.domain()
       extra = if mind == maxd then 1 else Math.abs(maxd-mind) * 0.05

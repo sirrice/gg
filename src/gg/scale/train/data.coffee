@@ -19,18 +19,18 @@ class gg.scale.train.Data extends gg.core.BForm
     partitions = pairtable.fullPartition()
 
     for p in partitions
-      table = p.getTable()
-      md = p.getMD()
+      table = p.left()
+      md = p.right()
       if md.has 'posMapping'
-        pms = md.getColumn 'posMapping'
+        pms = md.all 'posMapping'
       else
         pms = _.times md.nrows(), ()->null
-      sets = md.getColumn 'scales'
+      sets = md.all 'scales'
       uniqs = _.uniq(_.zip(pms, sets), false, ([pm, set]) -> set.id)
       _.each uniqs, ([pm, set]) ->
         set.train table, pm
 
-    pairtable = new gg.data.TableSet partitions
+    pairtable = data.PairTable.union partitions
     pairtable = gg.scale.train.Master.train pairtable, params
     pairtable
 

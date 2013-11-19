@@ -4,7 +4,7 @@ class gg.scale.Text extends gg.scale.Scale
   @ggpackage = 'gg.scale.Text'
   @aliases = "text"
   constructor: () ->
-      @type = gg.data.Schema.ordinal
+      @type = data.Schema.ordinal
       super
 
   scale: (v) ->

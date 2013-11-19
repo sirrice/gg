@@ -8,8 +8,8 @@ class gg.core.Render extends gg.core.BForm
     @params.put "location", 'client'
 
   compute: (pairtable, params) ->
-    md = pairtable.getMD()
-    row = md.get 0
+    md = pairtable.right()
+    row = md.any()
     svg = row.get('svg').base
     lc = row.get 'lc'
     throw Error() unless lc?
@@ -51,6 +51,10 @@ class gg.core.Render extends gg.core.BForm
 
 
     # update md variables
-    for svg in md.getColumn 'svg'
+    f = (svg) ->
       svg.facets = facetsSvg
-    new gg.data.PairTable pairtable.getTable(), md
+      svg
+    md.project [{alias: 'svg', cols: 'svg', f: f}]
+    pairtable.right md
+    pairtable
+    #new data.PairTable pairtable.left(), md

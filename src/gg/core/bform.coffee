@@ -42,18 +42,12 @@ class gg.core.BForm extends gg.wf.SyncBarrier
 
 
   # Defaults for optional attributes
-  defaults: (tableset, params) -> {}
+  defaults: (pairtable, params) -> {}
 
   # Required input schema
-  inputSchema: (tableset, params) -> []
+  inputSchema: (pairtable, params) -> []
 
   # Expected output schema
-  outputSchema: (tableset, params) -> data.table.schema
-
-  paneInfo: (args...) -> gg.core.FormUtil.paneInfo args...
-  scalesList: (args...) -> gg.core.FormUtil.scalesList args...
-  scales: (args...) -> gg.core.FormUtil.scales args...
-  facetEnvs: (args...) -> gg.core.FormUtil.facetEnvs args...
-  pick: (args...) -> gg.core.FormUtil.pick args...
+  outputSchema: (pairtable, params) -> pairtable.left().schema
 
 

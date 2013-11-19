@@ -21,12 +21,6 @@ coffeebin = "coffee" #"node_modules/coffee-script/bin/coffee"
 unless fs.existsSync
   fs.existsSync = (filePath) -> path.existsSync filePath
 
-task 'data', ->
-  vendor ->
-    builddata()
-
-
-
 task 'build', ->
   vendor ->
     build()
@@ -76,7 +70,6 @@ build = (callback) ->
     #  commands.push 'cp src/manifest.json build/'
     commands.push 'cp -r src/html build/'
     commands.push 'cp -r src/js build/'
-    commands.push 'cp -r src/data build/'
     # TODO: consider optipng
     #commands.push 'cp -r src/images build/'
 
@@ -100,17 +93,6 @@ build = (callback) ->
     async.forEachSeries commands, run, ->
       callback() if callback
 
-builddata = (callback) ->
-    create_build_dirs()
-
-    commands = []
-    commands.push 'toaster -f datatoaster.coffee -dc'
-    commands.push 'ls build/compiled/*'
-    commands.push "#{coffeebin} --output test/js --compile  test/data/*.coffee"
-    commands.push 'cp build/compiled/ggdata.js lib/'
-
-    async.forEachSeries commands, run, ->
-      callback() if callback
 
 
 
@@ -124,7 +106,7 @@ clean = (callback) ->
 
 test = (callback) ->
     commands = []
-    commands.push "node_modules/vows/bin/vows"
+    commands.push "node_modules/vows/bin/vows ./test/gg/*"
     async.forEachSeries commands, run, ->
 
 vendor = (callback) ->
@@ -207,7 +189,6 @@ vendor = (callback) ->
 create_build_dirs = ->
   for dir in [
       'build',
-      'build/data',
       'build/compiled',
       'build/css',
       'build/font',

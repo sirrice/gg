@@ -1,5 +1,4 @@
 #<< gg/util/util
-#<< gg/data/schema
 
 
 
@@ -183,12 +182,12 @@ class gg.scale.Scale
 
     if type?
       if klass.name == gg.scale.Color
-        unless type is gg.data.Schema.ordinal
+        unless type is data.Schema.ordinal
           klass = gg.scale.ColorCont
       else if klass == gg.scale.Linear
-        if type is gg.data.Schema.ordinal
+        if type is data.Schema.ordinal
           klass = gg.scale.Ordinal
-        else if type is gg.data.Schema.date
+        else if type is data.Schema.date
           klass = gg.scale.Time
       
 

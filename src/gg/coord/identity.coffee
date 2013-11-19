@@ -7,11 +7,11 @@ class gg.coord.Identity extends gg.coord.Coordinate
   @aliases = ["identity"]
 
   compute: (pt, params) ->
-    table = pt.getTable()
-    md = pt.getMD()
+    table = pt.left()
+    md = pt.right()
     schema = table.schema
-    scales = md.get 0, 'scales'
-    ytype = gg.data.Schema.unknown
+    scales = md.any 'scales'
+    ytype = data.Schema.unknown
     ytype = schema.type('y') if schema.has 'y'
     yscale = scales.get 'y', ytype
 
@@ -27,8 +27,13 @@ class gg.coord.Identity extends gg.coord.Coordinate
 
 
     yaess = _.filter gg.scale.Scale.ys, (aes) -> schema.has aes
-    mapping = _.map yaess, (col) -> [col, transform, gg.data.Schema.numeric]
-    table = gg.data.Transform.mapCols pt.getTable(), mapping
-
-    new gg.data.PairTable table, md
+    mapping = _.map yaess, (col) -> {
+      alias: col,
+      f: transform
+      type: data.Schema.numeric
+      col: col
+    }
+    table = table.project mapping, yes
+    pt.left table
+    pt
 

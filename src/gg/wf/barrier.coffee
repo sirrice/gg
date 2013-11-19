@@ -10,31 +10,40 @@ class gg.wf.Barrier extends gg.wf.Node
   @ggpackage = "gg.wf.Barrier"
   @type = "barrier"
 
-  compute: (tableset, params, cb) -> cb null, tableset
+  compute: (pt, params, cb) -> cb null, pt
 
   run: ->
     throw Error("Node not ready") unless @ready()
     compute = @params.get('compute') or @compute.bind(@)
 
-    pairtables = _.map @inputs, (pt, idx) ->
-      t = pt.getTable()
-      t = t.setColumn '_barrier', idx, gg.data.Schema.numeric
-      md = pt.getMD()
-      md = md.setColumn '_barrier', idx, gg.data.Schema.numeric
-      new gg.data.PairTable t, md
+    tables = _.map @inputs, (pt, idx) ->
+      t = pt.left()
+      t.setColVal '_barrier', idx
+    mds = _.map @inputs, (pt, idx) ->
+      md = pt.right()
+      md.setColVal '_barrier', idx
 
-    tableset = new gg.data.TableSet pairtables
+    table = new data.ops.Union tables
+    md = new data.ops.Union mds
+    tableset = new data.PairTable table, md
+
     compute tableset, @params, (err, tableset) =>
-      if err?
-        throw err
-      ps = gg.data.Transform.partitionJoin tableset.getTable(), tableset.getMD(), '_barrier'
-      for p in ps
-        idx = p['key']
-        result = p['table']
-        t = result.getTable().rmColumn '_barrier'
-        result = new gg.data.PairTable t, result.getMD()
-        @output idx, result
+      throw err if err?
+      table = tableset.left()
+      md = tableset.right()
+      table = table.partition '_barrier', 'table'
+      md = md.partition '_barrier', 'md'
+      console.log md.raw()
 
+      pairtable = table.join md, '_barrier' # schema: table, md, _barrier
+      pairtable.each (row) =>
+        table = row.get('table')
+        md = row.get('md') or null
+        table = table.exclude('_barrier') if table?
+        md = md.exclude('_barrier') if md?
+        idx = row.get '_barrier'
+        console.log "outputing with md.nrows = #{md.nrows()}" if md?
+        @output idx, new data.PairTable(table, md)
         
 
 class gg.wf.SyncBarrier extends gg.wf.Barrier

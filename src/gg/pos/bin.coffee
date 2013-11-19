@@ -8,20 +8,20 @@ class gg.pos.Bin2D extends gg.xform.GroupBy
   parseSpec: ->
     defaults = 
       nBins: 20
-      gbAttrs: ['x', 'y']
-      aggFuncs: 
+      cols: ['x', 'y']
+      aggs: 
         count: 
           type: 'count'
-          arg: 'z'
+          col: 'z'
         sum: 
           type: 'sum'
-          arg: 'z'
+          col: 'z'
         r: 
           type: 'count'
-          arg: 'z'
+          col: 'z'
         total: 
           type: 'sum'
-          arg: 'z'
+          col: 'z'
     defaults = new gg.util.Params defaults
     defaults.merge @params
     @params = defaults

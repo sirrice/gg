@@ -79,7 +79,7 @@ class gg.core.XForm extends gg.wf.SyncExec
   inputSchema: (pt, params) -> []
 
   # Expected output schema
-  outputSchema: (pt, params) -> pt.tableSchema()
+  outputSchema: (pt, params) -> pt.leftSchema()
 
   compile: ->
     nodes = []

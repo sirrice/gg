@@ -2,6 +2,9 @@
 #<< gg/facet/base/layout
 
 
+# @deprecated for now
+# XXX: whole mess of problems!!
+#
 class gg.facet.wrap.Layout extends gg.facet.base.Layout
   @ggpackage = "gg.facet.wrap.Layout"
 

@@ -36,21 +36,14 @@ class gg.pos.Stack extends gg.core.XForm
   # y1: position of layer's ceiling
   # group: layer's group key
   outputSchema: (pairtable) ->
-    schema = pairtable.tableSchema()
-    gg.data.Schema.fromJSON
-      group: schema.type "group"
-      x: schema.type 'x'
-      y: schema.type 'y'
-      y0: schema.type 'y'
-      y1: schema.type 'y'
-    schema.clone()
+    pairtable.leftSchema().clone()
 
   baselines: (table) ->
     # collect sorted list of x coords
     baselines = {}  # y0 values
-    xs = table.getColumn 'x'
+    xs = table.all 'x'
     if table.has 'y0'
-      y0s = table.getColumn 'y0'
+      y0s = table.all 'y0'
       _.times xs.length, (idx) -> baselines[xs[idx]] = y0s[idx]
       @log "y0s: #{y0s[0..10]}"
     xs = _.uniq xs
@@ -63,27 +56,20 @@ class gg.pos.Stack extends gg.core.XForm
   # 1) compute all X values
   # 2) compute y0 baseline for the layers,
   #
-  # Unfortunately the data model isn't very good so we need to special case
-  # when the x,y values are nested in arrays, or in the top level of the table
-  #
-  # e.g., if the schema is:
-  #
-  # 1) { x, y } or
-  # 2) { points: { x, y } }
-  #
   compute: (pairtable, params) ->
-    table = pairtable.getTable()
+    table = pairtable.left()
     [baselines, xs] = @baselines table
 
     layers = []
-    groups = table.partition "group"
+    groups = table.partition("group").all('table')
     values = (group, groupidx) ->
       x2row = {}
-      group.fastEach (row) ->
-        x2row[row.get('x')] =
+      group.each (row) ->
+        x2row[row.get 'x'] = {
           x: row.get 'x'
           y: row.get('y1') - (row.get('y0') or 0)
           y0: 0
+        }
 
       rows = _.map xs, (x) ->
         if x of x2row then x2row[x] else {x:x, y:0, y0:0}
@@ -98,7 +84,8 @@ class gg.pos.Stack extends gg.core.XForm
     _.each groups, (group, idx) ->
       layer = stackedLayers[idx]
       x2row = {}
-      group.each (row) -> x2row[row.get('x')] = row
+      group.each (row) ->
+        x2row[row.get 'x'] = row
 
       _.each layer, (pos) ->
         x = pos.x
@@ -110,7 +97,7 @@ class gg.pos.Stack extends gg.core.XForm
           newrows.push row
 
     schema = params.get('outputSchema') pairtable, params
-    table = gg.data.Table.fromArray newrows
+    table = data.Table.fromArray newrows, schema
     gg.wf.Stdout.print table, null, 5, @log
-    new gg.data.PairTable table, pairtable.getMD()
-
+    pairtable.left table
+    pairtable

@@ -15,7 +15,7 @@ class gg.geom.Render extends gg.core.XForm
     super
     @params.put "location", "client"
 
-  svg: (md) -> md.get(0, 'svg').pane
+  svg: (md) -> md.any('svg').pane
 
   groups: (g, klass, rows) ->
     g.selectAll("g.#{klass}")
@@ -36,8 +36,8 @@ class gg.geom.Render extends gg.core.XForm
     domEl
 
   compute: (pairtable, params) ->
-    table = pairtable.getTable()
-    md = pairtable.getMD()
+    table = pairtable.left()
+    md = pairtable.right()
     svg = @svg md
     Facets = gg.facet.base.Facets
     gg.wf.Stdout.print table, null, 2, @log
@@ -48,9 +48,9 @@ class gg.geom.Render extends gg.core.XForm
     if @log.level == gg.util.Log.DEBUG
       write = (text, opts={}) ->
         _.subSvg(svg, opts, "text").text(text)
-      write md.get(0, 'facet-x'), {dy: "1em"}
-      write md.get(0, 'facet-y'), {dy: "2em"}
-      write md.get(0, table.nrows()), {dy: "3em"}
+      write md.any('facet-x'), {dy: "1em"}
+      write md.any('facet-y'), {dy: "2em"}
+      write md.any(table.nrows()), {dy: "3em"}
 
 
     geoms = svg.selectAll(".geom")

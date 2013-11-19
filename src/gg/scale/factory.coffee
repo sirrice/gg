@@ -15,7 +15,7 @@ class gg.scale.Factory
     if aes of @defaults
       @defaults[aes].type
     else
-      gg.data.Schema.unknown
+      data.Schema.unknown
 
   scale: (aes, type) ->
     unless aes?

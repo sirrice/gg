@@ -6,22 +6,21 @@ assert = require "assert"
 
 
 suite = vows.describe "exec.js"
-Schema = gg.data.Schema
-Transform = gg.data.Transform
-Table = gg.data.Table
+Schema = data.Schema
+Table = data.Table
 
 check = 
   "when executed": 
     topic: (node) ->
       promise = new events.EventEmitter
-      table1 = gg.data.Table.fromArray(
+      table1 = data.Table.fromArray(
         _.times(10, (i) -> {a: i, b: 2})
       )
-      table2 = gg.data.Table.fromArray(
+      table2 = data.Table.fromArray(
         _.times(10, (i) -> {a: i, b: 5})
       )
-      pt1 = new gg.data.PairTable table1
-      pt2 = new gg.data.PairTable table2
+      pt1 = new data.PairTable table1
+      pt2 = new data.PairTable table2
       node.setInput 0, pt1
       node.setInput 1, pt2
       results = []
@@ -34,25 +33,28 @@ check =
       node.run()
       promise
 
-    "'c' = 'a' * 'b'": (tsets) ->
+    "'c' = 'a' x 'b'": (tsets) ->
       for tset in tsets
-        tset.getTable().each (row) ->
+        tset.left().each (row) ->
           assert.equal row.get('c'), (row.get('a')*row.get('b'))
 
     "_barrier doesn't exist": (tsets) ->
       for tset in tsets
-        assert.false tset.getTable().has('_barrier')
+        assert.false tset.left().has('_barrier')
 
 
 
 barrier = 
   topic: ->
     gg.wf.Barrier.create (tset, params, cb) ->
-      t = tset.getTable()
-      t = gg.data.Transform.transform t, [ 
-        ['c', ((row) -> row.get('a')*row.get('b')), gg.data.Schema.numeric]
-      ]
-      tset = new gg.data.PairTable t, tset.getMD()
+      t = tset.left()
+      t = t.project [{
+        alias: 'c',
+        f: (a, b) -> a*b
+        cols: ['a', 'b']
+        type: data.Schema.numeric
+      }], yes
+      tset = new data.PairTable t, tset.right()
       cb null, tset
 _.extend barrier, check
 

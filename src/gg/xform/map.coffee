@@ -54,14 +54,14 @@ class gg.xform.Mapper extends gg.wf.SyncExec
     #@params.ensure 'klassname', [], @constructor.ggpackage
     super
 
-  compute: (pairtable, params) ->
-    table = pairtable.getTable()
+  compute: (pt, params) ->
+    table = pt.left()
     mapping = params.get 'mapping'
 
     functions = @constructor.mappingToFunctions table, mapping
-    table = gg.data.Transform.transform table, functions
-    pt = new gg.data.PairTable table, pairtable.getMD()
-    if 'group' in _.map(functions, ([col,f,t])->col)
+    table = table.project functions, yes
+    pt.left table
+    if 'group' in _.map(functions, (desc)->desc.alias)
       pt = pt.ensure ['group']
     pt
 
@@ -83,14 +83,22 @@ class gg.xform.Mapper extends gg.wf.SyncExec
     @log "groupable: #{JSON.stringify groupable}"
 
     functions = _.mappingToFunctions table, mapping
+
     if groupable?
       gFuncs = _.mappingToFunctions table, groupable
+      gFuncs = data.ops.Project.normalizeMappings gFuncs, table.cols()
       groupf = ((gf) ->
         (row, idx) ->
-          _.o2map gf, ([col, f, type]) -> 
-            [col, f(row, idx)]
+          _.o2map gf, (desc) -> 
+            v = desc.f row, idx
+            [desc.alias, v]
         )(gFuncs)
-      functions.push ['group', groupf, gg.data.Schema.object]
+      functions.push {
+        alias: 'group'
+        f: groupf
+        type: data.Schema.object
+        cols: '*'
+      }
 
     functions
 

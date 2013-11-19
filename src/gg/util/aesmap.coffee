@@ -1,5 +1,3 @@
-#<< gg/data/table
-
 class gg.util.Aesmap
   @log = gg.util.Log.logger "gg.util.Aesmap", "Aesmap"
 
@@ -20,18 +18,22 @@ class gg.util.Aesmap
         ret = val row
         opstore.writeSchema [key], row.accessed
         ret
-      [key, f, gg.data.Schema.unknown]
+      {alias: key, f: f, type: data.Schema.unknown, cols: '*'}
+
     else if table.has val
       opstore.writeSchema key, val
-      f = (row) -> row.get val
-      [key, f, table.schema.type val]
+      f = (v) -> v
+      {alias: key, f: f, type: table.schema.type(val), cols: val}
+
     else if _.isObject val
       if 'f' of val and 'args' of val
         args = val.args
         f = val.f
-        [key, f, val.type or gg.data.Schema.unknown]
-        unless f.length == args.length
-          throw Error()
+        unless f.length > args.length
+          throw Error "f requires more arguments than specified: #{f.length}>#{args.length}"
+        unless _.all(args, (col) -> table.has col)
+          throw Error "table doesn't contain all args"
+        {alias: key, f: f, cols: args}
       else
         funcs = _.mappingToFunctions table, val
         f = (row) ->
@@ -39,23 +41,25 @@ class gg.util.Aesmap
           _.each funcs, (f, subkey) ->
             ret[subkey] = f row
           return ret
-        [key, f, gg.data.Schema.object]
-    else if key isnt 'text' and gg.data.Table.reEvalJS.test val
+        {alias: key, f:f, cols: '*'}
+
+    else if key isnt 'text' and data.Table.reEvalJS.test val
       userCode = val[1...val.length-1]
       varFunc = (k) ->
-        if gg.data.Table.reVariable.test k
+        if data.Table.reVariable.test k
           "var #{k} = row.get('#{k}');"
 
       cmds = _.compact _.map(table.schema.cols, varFunc)
       cmds.push "return #{userCode};"
       cmd = cmds.join ''
       f = Function("row", cmd)
-      [key, f, gg.data.Schema.unknown]
+      {alias: key, f: f, type: data.Schema.object, cols: '*'}
+
     else
       # for constants (e.g., date, number)
       gg.util.Aesmap.log "mapToFunction: const:  f(#{key})->#{val}"
       f = (row) -> val
-      [key, f, gg.data.Schema.type val]
+      {alias: key, f: f, type: data.Schema.object, cols: '*'}
 
 
 class gg.util.RowWrapper

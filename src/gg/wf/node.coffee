@@ -1,5 +1,4 @@
 #<< gg/util/*
-#<< gg/data/*
 
 try
   events = require 'events'
@@ -77,7 +76,7 @@ class gg.wf.Node extends events.EventEmitter
     # this block is all debugging code
     #
     listeners = @listeners outidx
-    @log.info "output: port(#{outidx}), sizes: #{tableset.getTable().nrows()}"
+    @log.info "output: port(#{outidx}), sizes: #{tableset.left().nrows()}"
     #@log tableset
 
 

@@ -46,7 +46,7 @@ class gg.geom.svg.Rect extends gg.geom.Render
 
 
   render: (table, svg) ->
-    rows = table.getRows()
+    rows = table.all()
 
     rects = @agroup(svg, "intervals geoms", rows)
       .selectAll("rect")

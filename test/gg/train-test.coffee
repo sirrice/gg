@@ -4,7 +4,7 @@ assert = require "assert"
 events = require 'events'
 
 suite = vows.describe "train.coffee"
-Schema = gg.data.Schema
+Schema = data.Schema
 
 #gg.util.Log.setDefaults {'gg.scale.train': 0}
 
@@ -26,14 +26,14 @@ suite.addBatch
           x: i * ((i % 2) + 1)
           y: i*10
         }
-      table = gg.data.Table.fromArray rows
-      pt = new gg.data.PairTable table
+      table = data.Table.fromArray rows
+      pt = new data.PairTable table
       pt = pt.ensure ['facet-x', 'facet-y']
       gg.core.FormUtil.ensureScales pt, null, gg.util.Log.logger('test')
 
     "full partition has diff ids": (pt) ->
       ps = pt.fullPartition()
-      ids = _.map ps, (p) -> p.getMD().get(0, 'scales').id
+      ids = _.map ps, (p) -> p.right().any('scales').id
       ids = _.uniq ids
       assert.equal ps.length, ids.length
 
@@ -43,14 +43,12 @@ suite.addBatch
         runTest node, pt
 
       "doesn't have _barrier": (pt) ->
-        assert (not pt.tableSchema().has('_barrier'))
+        assert (not pt.leftSchema().has('_barrier'))
 
       "returns trained scales": (pt) ->
-        md = pt.getMD()
+        md = pt.right()
         md.each (row) ->
           scales = row.get 'scales'
-          #console.log scales.id
-          #console.log scales.scale('x', gg.data.Schema.unknown).toString()
 
   "dataset":
     topic: ->
@@ -61,8 +59,8 @@ suite.addBatch
           x: i * ((i % 2) + 1)
           y: i*10
         }
-      table = gg.data.Table.fromArray rows
-      pt = new gg.data.PairTable table
+      table = data.Table.fromArray rows
+      pt = new data.PairTable table
       pt = pt.ensure ['facet-x', 'facet-y']
       pt = gg.core.FormUtil.ensureScales pt, null, gg.util.Log.logger('test')
       pt = gg.scale.train.Data.train pt, new gg.util.Params({scalesTrain:'free'}), () ->
@@ -75,11 +73,9 @@ suite.addBatch
         runTest node, pt
 
       "doesnt crash": (pt) ->
-        md = pt.getMD()
-        console.log md.schema.toString()
+        md = pt.right()
         md.each (row) ->
           scales = row.get 'scales'
-          console.log scales.scale('x', gg.data.Schema.unknown).toString()
 
   "repositioned data":
     topic: ->
@@ -90,32 +86,32 @@ suite.addBatch
           x: (i%3)*50
           y: (i%3)*50
         }
-      table = gg.data.Table.fromArray rows
-      pt = new gg.data.PairTable table
+      table = data.Table.fromArray rows
+      pt = new data.PairTable table
       pt = pt.ensure ['facet-x', 'facet-y']
       pt = gg.core.FormUtil.ensureScales pt, null, gg.util.Log.logger('test')
       pt = gg.scale.train.Data.train pt, new gg.util.Params({scalesTrain:'free'}), () ->
-      t = gg.data.Transform.mapCols pt.getTable(), [
-        ['x', ((x, idx) -> if idx % 2 == 0 then 200 else 0), Schema.numeric]
-        ['y', ((y, idx) -> if idx % 2 == 0 then 200 else 0), Schema.numeric]
+      t =  pt.left().mapCols [
+        { alias: 'x', f:(x, idx) -> if idx % 2 == 0 then 200 else 0 }
+        { alias: 'y', f:(y, idx) -> if idx % 2 == 0 then 200 else 0 }
       ]
-      pt = new gg.data.PairTable t, pt.getMD()
+      pt = new data.PairTable t, pt.right()
       pt
 
     "pixel train":
       topic: (pt) ->
         node = new gg.scale.train.Pixel
-        pt.getMD().each (row) ->
+        pt.right().each (row) ->
           s = row.get('scales')
-          s.scale('x', gg.data.Schema.unknown).range([0, 100])
-          s.scale('y', gg.data.Schema.unknown).range([0, 100])
+          s.scale('x', data.Schema.unknown).range([0, 100])
+          s.scale('y', data.Schema.unknown).range([0, 100])
           s
         runTest node, pt
 
       "runs": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           console.log row.raw()
-        console.log pt.getMD().get(0, 'scales').toString()
+        console.log pt.right().any('scales').toString()
 
 
 suite.export module

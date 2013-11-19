@@ -1,7 +1,6 @@
 #<< gg/core/options
 #<< gg/core/data
 #<< gg/wf/*
-#<< gg/data/*
 #<< gg/facet/base/facet
 #<< gg/layer/layers
 #<< gg/scale/scales
@@ -145,14 +144,14 @@ class gg.core.Graphic extends events.EventEmitter
 
   inputToTable: (input, cb) ->
     if _.isArray input
-      table = gg.data.RowTable.fromArray input
+      table = data.RowTable.fromArray input
       cb table
-    else if _.isSubclass input, gg.data.Table
+    else if _.isSubclass input, data.Table
       table = input
       cb table
     else if _.isString input
       d3.csv input, (arr) ->
-        table = gg.data.RowTable arr
+        table = data.RowTable arr
         cb(table)
 
 

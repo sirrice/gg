@@ -34,7 +34,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
   @train: (pairtable, params, log) ->
 
     fOldScales = (pt, idx) ->
-      s = pt.getMD().get(0, 'scales').clone()
+      s = pt.right().any('scales').clone()
       log "#{idx} origScales: #{s.toString()}"
       s
 
@@ -46,7 +46,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
     # 1) compute new scales
     fMergeDomain = @createMergeDomain log
     partitions = _.map args, fMergeDomain
-    tset = new gg.data.TableSet partitions
+    tset = data.PairTable.union partitions
 
     # 2) retrain scales across facets/layers and expand domains
     #    must be done before rescaling!
@@ -58,8 +58,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
     fRescale = @createRescale log
     partitions = _.map args, fRescale
 
-    new gg.data.TableSet partitions
-
+    data.PairTable.union partitions
 
 
     # 1. use old scales to invert column value
@@ -68,11 +67,11 @@ class gg.scale.train.Pixel extends gg.core.BForm
     #    - preserve ordinal scales
     # 3. preserve existing ranges
   @createMergeDomain: (log) ->
-    Schema = gg.data.Schema
+    Schema = data.Schema
     ([pt, oldscaleset], idx) ->
-      t = pt.getTable()
-      md = pt.getMD()
-      posMapping = md.get(0, 'posMapping') or {}
+      t = pt.left()
+      md = pt.right()
+      posMapping = md.any('posMapping') or {}
       newscaleset = oldscaleset.clone()
       seen = {}
 
@@ -89,7 +88,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
         else
           newscale = oldscale.clone()
           newscaleset.scale newscale
-        col = table.getColumn(aes).filter _.isValid
+        col = table.all(aes).filter _.isValid
 
         unless col? and col.length > 0
           log "#{idx} mergeDomain: aes #{aes} #{col? and col.length>0}"
@@ -117,19 +116,21 @@ class gg.scale.train.Pixel extends gg.core.BForm
         table
 
       t = oldscaleset.useScales t, posMapping, f
-      md = md.setColumn 'scales', newscaleset
-      new gg.data.PairTable t, md
+      md = md.setColVal 'scales', newscaleset
+      pt.left t
+      pt.right md
+      pt
 
 
 
   @createRescale: (log) ->
-    Schema = gg.data.Schema
+    Schema = data.Schema
     ([pt, oldscaleset], idx ) ->
-      t = pt.getTable()
-      md = pt.getMD()
-      scaleset = md.get 0, 'scales'
-      posMapping = md.get(0, 'posMapping') or {}
-      layer = md.get 0, 'layer'
+      t = pt.left()
+      md = pt.right()
+      scaleset = md.any 'scales'
+      posMapping = md.any('posMapping') or {}
+      layer = md.any 'layer'
       mappingFuncs = []
       log "#{idx} fRescale called layer: #{layer}"
 
@@ -144,17 +145,21 @@ class gg.scale.train.Pixel extends gg.core.BForm
         else
           oldScale = oldscaleset.scale aes, Schema.unknown, posMapping
         g = (v) -> scale.scale oldScale.invert(v)
-        mappingFuncs.push [aes, g, gg.data.Schema.unknown]
+        mappingFuncs.push {
+          alias: aes
+          f: g
+          type: data.Schema.unknown
+        }
         log "#{idx} rescale: old: #{oldScale.toString()}"
         log "#{idx} rescale: new: #{scale.toString()}"
         table
 
       scaleset.useScales t, posMapping, rescale
       log "#{idx} #{scaleset.toString()}"
-      t = gg.data.Transform.mapCols t, mappingFuncs
+      t = t.mapCols mappingFuncs
 
       if no and t.has 'y'
-        ys = t.getColumn 'y'
+        ys = t.all 'y'
         yscale = scaleset.get 'y', [t.schema.type('y'), Schema.unknown]
         range = yscale.range()
         [miny, maxy] = [_.min(ys), _.max(ys)]
@@ -165,6 +170,8 @@ class gg.scale.train.Pixel extends gg.core.BForm
           console.log(yscale.toString())
           throw Error("shit, rescaled y(#{maxy}) is > range(#{range[1]})")
 
-      new gg.data.PairTable t, md
+      pt.left t
+      pt.right md
+      pt
 
 

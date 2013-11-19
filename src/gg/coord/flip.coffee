@@ -6,20 +6,20 @@ class gg.coord.YFlip extends gg.coord.Coordinate
   @ggpackage = "gg.coord.YFlip"
   @aliases = ["yflip"]
 
-  compute: (data) ->
+  compute: (pt) ->
     @log "map: noop"
-    data
+    pt
 
 class gg.coord.XFlip extends gg.coord.Coordinate
   @ggpackage = "gg.coord.XFlip"
   @aliases = ["xflip"]
 
-  compute: (data, params) ->
-    table = data.getTable()
-    scales = @scales data, params
+  compute: (pt, params) ->
+    table = pt.left()
+    scales = @scales pt, params
 
     inverted = scales.invert table, gg.scale.Scale.xys
-    xtype = ytype = gg.data.Schema.unknown
+    xtype = ytype = data.Schema.unknown
     xtype = table.schema.type('x') if table.has 'x'
     ytype = table.schema.type('y') if table.has 'y'
 
@@ -40,12 +40,23 @@ class gg.coord.XFlip extends gg.coord.Coordinate
     table = scales.apply inverted, gg.scale.Scale.xys
 
     if table.has('x0') and table.has('x1')
-      table = gg.data.Transform.transform table, [
-        ['x0', ((row) -> Math.min(row.get('x0'), row.get('x1'))), gg.data.Schema.numeric]
-        ['x1', ((row) -> Math.max(row.get('x0'), row.get('x1'))), gg.data.Schema.numeric]
-      ]
+      table = table.project [
+        {
+          alias: 'x0'
+          f: Math.min
+          type: data.Schema.numeric
+          cols: ['x0', 'x1']
+        }
+        {
+          alias: 'x1'
+          f: Math.max
+          type: data.Schema.numeric
+          cols: ['x0', 'x1']
+        }
+      ], yes
 
-    new gg.data.PairTable table, data.getMD() 
+    pt.left table
+    pt
 
 
 
@@ -53,10 +64,10 @@ class gg.coord.Flip extends gg.coord.Coordinate
   @ggpackage = "gg.coord.Flip"
   @aliases = ["flip", 'xyflip']
 
-  compute: (data, params) ->
-    table = data.getTable()
-    md = data.getMD()
-    scales = @scales data, params
+  compute: (pt, params) ->
+    table = pt.left()
+    md = pt.right()
+    scales = @scales pt, params
 
     inverted = scales.invert table, gg.scale.Scale.xs
 
@@ -69,12 +80,21 @@ class gg.coord.Flip extends gg.coord.Coordinate
     table = scales.apply inverted, gg.scale.Scale.xs
 
     if table.has('x0') and table.has('x1')
-      table = gg.data.Transform.transform table, [
-        ['x0', ((row) -> Math.min(row.get('x0'), row.get('x1'))), gg.data.Schema.numeric]
-        ['x1', ((row) -> Math.max(row.get('x0'), row.get('x1'))), gg.data.Schema.numeric]
-      ]
+      table = table.project [
+        {
+          alias: 'x0'
+          f: Math.min
+          type: data.Schema.numeric
+          cols: ['x0', 'x1']
+        }
+        {
+          alias: 'x1'
+          f: Math.max
+          type: data.Schema.numeric
+          cols: ['x0', 'x1']
+        }
+      ], yes
 
-    new gg.data.PairTable table, md
-
-
+    pt.left table
+    pt 
 

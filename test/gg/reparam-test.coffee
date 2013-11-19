@@ -22,7 +22,7 @@ makeTable = ->
     max: i
 
 
-  table = gg.data.Table.fromArray rows
+  table = data.Table.fromArray rows
 
   config = gg.scale.Config.fromSpec
     x: 
@@ -34,8 +34,8 @@ makeTable = ->
       domain: [0, 10]
       range: [0, 1000]
 
-  md = gg.data.Table.fromArray [ {scalesconfig: config} ]
-  pt = new gg.data.PairTable table, md
+  md = data.Table.fromArray [ {scalesconfig: config} ]
+  pt = new data.PairTable table, md
   pt = pt.ensure([])
   pt = gg.core.FormUtil.ensureScales pt, {}, gg.util.Log.logger("")
 
@@ -59,7 +59,7 @@ suite.addBatch
         runOnTable node, pt
 
       "the md has scales": (pt) ->
-        table = pt.getTable()
+        table = pt.left()
         assert table.has('x0')
         assert table.has('x1')
         assert table.has('y0')
@@ -75,7 +75,7 @@ suite.addBatch
         runOnTable node, pt
 
       "the md has scales": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
   
   "Point Reparam":
     topic: ->
@@ -87,7 +87,7 @@ suite.addBatch
         runOnTable node, pt
 
       "table as reparamed cols": (pt) ->
-        table = pt.getTable()
+        table = pt.left()
         assert table.has('x0')
         assert table.has('x1')
         assert table.has('y0')
@@ -109,8 +109,7 @@ suite.addBatch
         runOnTable node, pt
 
       "table as reparamed cols": (pt) ->
-        table = pt.getTable()
-        assert table.has('group'), "table doesn't have group"
+        table = pt.left()
         assert table.has('y0'), 'table should have y0'
         assert table.has('y1'), 'table should have y1'
         table.each (row) ->

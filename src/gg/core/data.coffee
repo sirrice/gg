@@ -1,5 +1,4 @@
 #<< gg/util/log
-#<< gg/data/*
 
 # Data spec:
 #
@@ -11,11 +10,11 @@
 #     val: TABLE | DATASTRING | FUNCTION
 #   }
 #
-#   TABLE = gg.data.Table object | Array of dictionaries
+#   TABLE = data.Table object | Array of dictionaries
 #
 #   DATASTRING = "*.csv" | "postgresql://*"
 #
-#   FUNCTION = () -> gg.data.Table | array
+#   FUNCTION = () -> data.Table | array
 #
 class gg.core.Data
   @ggpackage = "gg.core.Data"
@@ -41,7 +40,7 @@ class gg.core.Data
   @loadSpec: (spec) ->
     return {} unless spec?
 
-    if _.isType spec, gg.data.Table
+    if _.isType spec, data.Table
       spec =
         type: "table"
         val: spec

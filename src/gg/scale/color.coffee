@@ -29,7 +29,7 @@ class gg.scale.Color extends gg.scale.BaseCategorical
     @d3Scale = d3.scale.category10() unless @rangeSet
     @invertScale = d3.scale.ordinal()
     @invertScale.domain(@d3Scale.range()).range(@d3Scale.domain())
-    @type = gg.data.Schema.ordinal
+    @type = data.Schema.ordinal
 
 
   invert: (v) -> @invertScale v

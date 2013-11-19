@@ -12,9 +12,9 @@ makeTable = (nrows=100) ->
       d: d%5
       e: d%10
     }
-  gg.data.Table.fromArray rows
+  data.Table.fromArray rows
 
-Schema = gg.data.Schema
+Schema = data.Schema
 
 
 suite.addBatch
@@ -189,7 +189,7 @@ suite.addBatch
       "when trained on small table":
         topic: (scales) ->
           scales = scales.clone()
-          table = gg.data.RowTable.fromArray _.map(_.range(10), (i) -> {a:i})
+          table = data.RowTable.fromArray _.map(_.range(10), (i) -> {a:i})
           scales.train table
           scales
 
@@ -200,7 +200,7 @@ suite.addBatch
       "when trained on big numeric table":
         topic: (scales) ->
           scales = scales.clone()
-          table = gg.data.RowTable.fromArray _.map(_.range(50), (i) -> {a:i})
+          table = data.RowTable.fromArray _.map(_.range(50), (i) -> {a:i})
           scales.train table
           scales
 
@@ -210,7 +210,7 @@ suite.addBatch
       "when trained on small string table":
         topic: (scales) ->
           scales = scales.clone()
-          table = gg.data.RowTable.fromArray _.map(_.range(5), (v) -> {a: ""+v})
+          table = data.RowTable.fromArray _.map(_.range(5), (v) -> {a: ""+v})
           scales.train table
           scales
 
@@ -226,7 +226,7 @@ suite.addBatch
         range: [10, 0]
 
     "inverse works": (sf) ->
-      table = gg.data.RowTable.fromArray _.map(_.range(10), (i)->{a:i*10})
+      table = data.RowTable.fromArray _.map(_.range(10), (i)->{a:i*10})
       scales = sf.scales(['a'])
       scales.train table
       newTable = scales.invert table

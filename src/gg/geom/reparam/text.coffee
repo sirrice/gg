@@ -1,5 +1,4 @@
 #<< gg/core/xform
-#<< gg/data/schema
 
 class gg.geom.reparam.Text extends gg.core.XForm
   @ggpackage = "gg.geom.reparam.Text"
@@ -8,7 +7,7 @@ class gg.geom.reparam.Text extends gg.core.XForm
   inputSchema: -> ['x', 'y', 'text']
 
   outputSchema: (pairtable, params) ->
-    table = pairtable.getTable()
+    table = pairtable.left()
     schema = table.schema.clone()
     _.each ["x0", "x1", "y0", "y1"], (col) ->
       unless schema.has col
@@ -16,7 +15,7 @@ class gg.geom.reparam.Text extends gg.core.XForm
     schema
 
   compute: (pairtable, params) ->
-    table = pairtable.getTable()
+    table = pairtable.left()
     cache = {}
     getSize = (text) ->
       len = String(text).length
@@ -26,14 +25,33 @@ class gg.geom.reparam.Text extends gg.core.XForm
 
 
     cols = ['x', 'y', 'text']
-    mapping =
-      x0: (row) -> row.get 'x'
-      x1: (row) -> row.get('x') + getSize(row.get 'text').w
-      y0: (row) -> row.get 'y'
-      y1: (row) -> row.get 'y' + getSize(row.get 'text').h
-    mapping = _.map mapping, (f,k) -> [k,f,gg.data.Schema.numeric]
-    table = gg.data.Transform.transform table,mapping 
-
-    new gg.data.PairTable table, pairtable.getMD()
-
+    mapping = [
+      {
+        alias: 'x0'
+        f: _.identity
+        type: data.Schema.numeric
+        cols: 'x'
+      }
+      {
+        alias: 'x1'
+        f: (x, text) -> x + getSize(text).w
+        type: data.Schema.numeric
+        cols: ['x', 'text']
+      }
+      {
+        alias: 'y0'
+        f: _.identity
+        type: data.Schema.numeric
+        cols: 'y'
+      }
+      {
+        alias: 'y1'
+        f: (y, text) -> y + getSize(text).h
+        type: data.Schema.numeric
+        cols: ['y', 'text']
+      }
+    ]
+    table = table.project mapping
+    pairtable.left table
+    pairtable
 

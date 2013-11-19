@@ -15,9 +15,9 @@ class gg.stat.Loess extends gg.stat.Stat
   inputSchema: -> ['x', 'y']
 
   outputSchema:  ->
-    gg.data.Schema.fromJSON
-      x: gg.data.Schema.numeric
-      y: gg.data.Schema.numeric
+    data.Schema.fromJSON
+      x: data.Schema.numeric
+      y: data.Schema.numeric
 
   schemaMapping: ->
     x: 'x'
@@ -27,14 +27,14 @@ class gg.stat.Loess extends gg.stat.Stat
   # 1) every value is a finite number
   # 2) xs is monotonically increasing
   compute: (pairtable, params) ->
-    table = pairtable.getTable()
+    table = pairtable.left()
     if table.nrows() <= 1
       return pairtable
 
     @log "nrows:   #{table.nrows()}"
     @log "schema:  #{table.schema.toString()}"
-    xs = table.getColumn 'x'
-    ys = table.getColumn 'y'
+    xs = table.all 'x'
+    ys = table.all 'y'
     # remove invald entries
     xys = _.zip(xs, ys)
     xys = xys.filter (xy) -> _.isValid(xy[0]) and _.isValid(xy[1])
@@ -56,7 +56,7 @@ class gg.stat.Loess extends gg.stat.Stat
     @log.warn "bw: #{bandwidth}\tacc: #{acc}"
 
     smoothys = loessfunc(xs, ys)
-    prototyperow = table.get(0).raw()
+    prototyperow = table.any().raw()
     rows = _.compact _.map _.zip(xs, smoothys), ([x,y]) ->
       if _.isValid(y) and _.isValid(x)
         newrow = _.clone(prototyperow)
@@ -68,5 +68,6 @@ class gg.stat.Loess extends gg.stat.Stat
     @log "compute: ys: #{JSON.stringify ys.slice(0,6)}"
     @log "compute: smoothys: #{JSON.stringify smoothys.slice(0,6)}"
 
-    table = gg.data.Table.fromArray rows
-    new gg.data.PairTable table, pairtable.getMD()
+    table = data.Table.fromArray rows
+    pairtable.left table
+    pairtable

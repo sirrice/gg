@@ -41,7 +41,7 @@ class gg.geom.svg.Point extends gg.geom.Render
   render: (table, svg) ->
     gg.wf.Stdout.print table, ['x', 'fill'], 5, @log
 
-    rows = table.getRows()
+    rows = table.all()
     circles = svg.append('g').classed('circles geoms', true)
       .selectAll("circle")
       .data(rows)

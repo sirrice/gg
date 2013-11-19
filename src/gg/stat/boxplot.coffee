@@ -6,8 +6,14 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
   @aliases = ['boxplot', 'quantile']
 
   parseSpec: ->
-    @params.put 'gbAttrs', 'x'
+    @params.put 'cols', 'x'
     @params.put 'nBins', -1
+    @params.put 'aggs', [{
+      alias: ['q1', 'q3', 'median', 'lower', 'upper', 'min', 'max', 'outlier']
+      f: gg.stat.Boxplot.udf
+      type: data.Schema.numeric
+      col: 'y'
+    }]
     super
 
   defaults: ->
@@ -16,17 +22,18 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
   inputSchema: -> ['x', 'y']
 
   outputSchema: (pairtable) ->
-    Schema = gg.data.Schema
-    schema = pairtable.tableSchema().clone()
+    Schema = data.Schema
+    schema = pairtable.leftSchema().clone()
     newschema = Schema.fromJSON
       q1: Schema.numeric
       q3: Schema.numeric
       median: Schema.numeric
       lower: Schema.numeric
       upper: Schema.numeric
-      outlier: Schema.numeric
       min: Schema.numeric
       max: Schema.numeric
+      outlier: Schema.table
+
     schema.merge newschema
 
   schemaMapping: ->
@@ -40,9 +47,9 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
     min: 'y'
     max: 'y'
 
-  udf: (table, params) ->
-    x = table.get 0, 'x'
-    vals = table.getColumn 'y'
+  @udf: (table) ->
+    x = table.any 'x'
+    vals = table.all 'y'
     vals.sort d3.ascending
 
     q1 = d3.quantile vals, 0.25
@@ -57,6 +64,8 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
     upper = vals[upperIdx]
     outliers = vals.slice(0, lowerIdx).concat(vals.slice(upperIdx + 1))
     outliers = [null] unless outliers.length > 0
+    outliers = _.o2map outliers, (v) -> ['outlier', v]
+    outliers = data.Table.fromArray outliers
 
     boxstats = 
       q1: q1
@@ -67,11 +76,16 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
       min: min
       max: max
       x: x
+      outlier: outliers
+    boxstats
+
+    ###
     @log "boxstats: #{JSON.stringify boxstats}"
 
     rows = _.map outliers, (v) -> 
-      newrow = table.get(0).raw()
+      newrow = table.any().raw()
       _.extend newrow, boxstats
       newrow
     rows
+    ###
 

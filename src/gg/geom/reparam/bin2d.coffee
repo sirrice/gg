@@ -1,5 +1,4 @@
 #<< gg/geom/reparam/rect
-#<< gg/data/schema
 
 class gg.geom.reparam.Bin2D extends gg.geom.reparam.Rect
   @ggpackage = "gg.geom.reparam.Bin2D"
@@ -7,20 +6,20 @@ class gg.geom.reparam.Bin2D extends gg.geom.reparam.Rect
   inputSchema: -> ['x', 'y', 'z']
 
   compute: (pairtable, params) ->
-    table = pairtable.getTable()
-    md = pairtable.getMD()
-    scales = md.get 0, 'scales'
-    yscale = scales.scale 'y', gg.data.Schema.numeric
+    table = pairtable.left()
+    md = pairtable.right()
+    scales = md.any 'scales'
+    yscale = scales.scale 'y', data.Schema.numeric
     padding = 1.0 - params.get("padding")
 
-    groups = table.partition ['group']
+    groups = table.partition 'group'
     width = null
     mindiff = null
     _.each groups, (group) ->
-      subtable = group.getTable()
+      subtable = group.left()
 
       # XXX: assume xs is numerical!!
-      xs = _.uniq(subtable.getColumn("x")).sort (a,b)->a-b
+      xs = _.uniq(subtable.all("x")).sort (a,b)->a-b
       diffs = _.map _.range(xs.length-1), (idx) ->
         xs[idx+1]-xs[idx]
       mindiff = _.mmin diffs or 1
@@ -34,19 +33,25 @@ class gg.geom.reparam.Bin2D extends gg.geom.reparam.Rect
     getHeight = (row) -> 
       yscale.scale(Math.abs(yscale.invert(row.get('y')) - minY))
     @log "mindiff: #{mindiff}\twidth: #{width}"
+    minY = yscale.scale minY
 
+    mapping = {
+      alias: ['x', 'y', 'r', 'x0', 'x1', 'y0', 'y1']
+      f: (row) ->
+        x = row.get 'x'
+        y = row.get 'y'
+        {
+          x: x
+          y: y
+          r: row.get 'r'
+          x0: row.get('x0') or (x - width/2.0)
+          x1: row.get('x1') or (x + width/2.0)
+          y0: row.get('y0') or Math.min(minY, y)
+          y1: row.get('y1') or Math.max(minY, y)
+        }
+      type: data.Schema.numeric
+      cols: '*'
+    }
 
-    mapping =
-      x: 'x'
-      y: 'y'
-      r: 'r'
-      x0: (row) -> row.get('x0') or row.get('x') - width/2.0
-      x1: (row) -> row.get('x1') or row.get('x') + width/2.0
-      y0: (row) -> row.get('y0') or Math.min(yscale.scale(minY), row.get('y'))
-      y1: (row) -> row.get('y1') or Math.max(yscale.scale(minY), row.get('y'))
-
-    mapping = _.mappingToFunctions table, mapping
-    table.transform mapping, yes
-    data
-
+    table = table.project mapping, no
 

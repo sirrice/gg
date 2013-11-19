@@ -6,8 +6,8 @@ assert = require "assert"
 
 
 suite = vows.describe "pairtable.js"
-Schema = gg.data.Schema
-Table = gg.data.Table
+Schema = data.Schema
+Table = data.Table
 
 check =
   "when run": 
@@ -17,17 +17,17 @@ check =
         promise.emit 'success', tset
       node.on 'error', (errmsg) ->
         promise.emit 'error', errmsg
-      node.setInput 0, new gg.data.PairTable()
+      node.setInput 0, new data.PairTable()
       node.run()
       promise
 
     "is not null": (result) ->
       assert result?
     "is a pairtable": (result) ->
-      assert.instanceOf result, gg.data.PairTable
+      assert.instanceOf result, data.PairTable
     "# rows correct": (result) ->
-      assert.equal 10, result.getTable().nrows()
-      assert.equal 0, result.getMD().nrows()
+      assert.equal 10, result.left().nrows()
+      assert.equal 0, result.right().nrows()
 
 
 
@@ -35,7 +35,7 @@ check =
 tablesource = 
   topic: ->
     rows = _.times 10, (i) -> {a: i, b: i}
-    table = gg.data.Table.fromArray rows
+    table = data.Table.fromArray rows
 
     new gg.wf.TableSource
       params:

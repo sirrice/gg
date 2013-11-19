@@ -8,6 +8,39 @@ events = require 'events'
 suite = vows.describe "position.coffee"
 
 suite.addBatch {
+  "dotplot": 
+    topic: ->
+      rows = _.times 10, (i) ->
+        { 
+          x: i + Math.random() * 1
+        }
+      p1 = data.Table.fromArray rows
+
+      config = gg.scale.Config.fromSpec { x: 'linear', y: 'linear' }
+      set = config.scales(['x', 'y'])
+      set.get('x', data.Schema.unknown).range([0, 10])
+      set.get('y', data.Schema.unknown).range([0, 10])
+      p2 = data.Table.fromArray [{scales: set}]
+      new data.PairTable p1, p2
+
+    "when run": 
+      topic: (pt) ->
+        promise = new events.EventEmitter
+        pos = new gg.pos.DotPlot
+          params:
+            r: 3
+        pos.on 'output', (id, idx, pt) ->
+          promise.emit 'success', pt
+        pos.setInput 0, pt
+        pos.run()
+        promise
+
+      # XXX: relies internal implementation to add a '_base' column to table
+      "is correct": (pt) ->
+        pt.left().each (row) ->
+          assert row?
+
+
   "dodge":
     topic: ->
       rows = _.times 10, (i) ->
@@ -19,7 +52,7 @@ suite.addBatch {
           x1: j*10+4, 
           '_base': [j*10-4, j*10+4] 
         }
-      gg.data.Table.fromArray rows
+      data.Table.fromArray rows
 
 
     "when dodged": 
@@ -28,7 +61,7 @@ suite.addBatch {
         pos = new gg.pos.Dodge
         pos.on 'output', (id, idx, pt) ->
           promise.emit 'success', pt
-        pt = new gg.data.PairTable table
+        pt = new data.PairTable table
         pt = pt.ensure()
         pos.setInput 0, pt
         pos.run()
@@ -36,7 +69,7 @@ suite.addBatch {
 
       # XXX: relies internal implementation to add a '_base' column to table
       "is correct": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           base = row.get '_base'
           x0 = row.get 'x0'
           x1 = row.get 'x1'
@@ -49,7 +82,7 @@ suite.addBatch {
     topic: ->
       rows = _.times 10, (i) ->
         { x: i, y: i, z: i }
-      gg.data.Table.fromArray rows
+      data.Table.fromArray rows
 
 
     "when shifted": 
@@ -61,14 +94,14 @@ suite.addBatch {
 
         pos.on 'output', (id, idx, pt) ->
           promise.emit 'success', pt
-        pt = new gg.data.PairTable table
+        pt = new data.PairTable table
         pt = pt.ensure()
         pos.setInput 0, pt
         pos.run()
         promise
 
       "is correct": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           assert.equal row.get('y'), row.get('z')+10
           assert.equal row.get('x'), row.get('z')+10
 
@@ -83,7 +116,7 @@ suite.addBatch {
         {group: 1, z:25,  x: 20, y: 25,y1: 25}
       ]
 
-      gg.data.Table.fromArray rows
+      data.Table.fromArray rows
 
     "when stacked": 
       topic: (table) ->
@@ -91,14 +124,14 @@ suite.addBatch {
         pos = new gg.pos.Stack
         pos.on 'output', (id, idx, pt) ->
           promise.emit 'success', pt
-        pt = new gg.data.PairTable table
+        pt = new data.PairTable table
         pt = pt.ensure()
         pos.setInput 0, pt
         pos.run()
         promise
 
       "result": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           if row.get('group') == 0
             assert.equal row.get('z'), row.get('y')
           else

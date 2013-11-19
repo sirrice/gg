@@ -3,6 +3,7 @@ vows = require "vows"
 assert = require "assert"
 events = require 'events'
 
+#gg.util.Log.setDefaults { '': 0 }
 
 
 suite = vows.describe "groupby.coffee"
@@ -29,9 +30,9 @@ makeTable = ->
         x: i%5
         z: Math.floor(Math.random()*20)
         y: (i+1)%2}
-  table = gg.data.Table.fromArray rows
-  md = gg.data.Table.fromArray [{scales: set}]
-  new gg.data.PairTable table, md
+  table = data.Table.fromArray rows
+  md = data.Table.fromArray [{scales: set}]
+  new data.PairTable table, md
 
 
   #gg.util.Log.setDefaults {'': 0}
@@ -41,15 +42,14 @@ suite.addBatch
       gb = new gg.xform.GroupBy 
         params:
           n: 5
-          gbAttrs: ["x", "z"]
-          aggFuncs: 
+          cols: ["x", "z"]
+          aggs: 
             "avg": "avg"
             'count': 'count'
             "sum": "sum"
             q1: 
               type: 'quantile'
-              params:
-                k: .5
+              args: [.5]
       gb
 
     "when run": 
@@ -62,13 +62,13 @@ suite.addBatch
         promise
 
       "produces correct results": (res) ->
-        res.getTable().each (row) ->
+        console.log res
+        res.left().each (row) ->
           avg = row.get('avg')
           count = row.get('count')
           sum = row.get('sum')
-          console.log [avg, row.get('q1')]
           if _.isFinite avg
-            assert.equal avg, (sum/count)
+            assert.lt Math.abs(avg-(sum/count)), 0.000001
 
 
   "bin2d":
@@ -85,7 +85,7 @@ suite.addBatch
         promise
 
       "produces correct results": (res) ->
-        res.getTable().each (row) ->
+        res.left().each (row) ->
           avg = row.get('avg')
           count = row.get('count')
           sum = row.get('sum')

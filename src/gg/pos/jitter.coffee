@@ -23,32 +23,33 @@ class gg.pos.Jitter extends gg.core.XForm
       yScale: yScale
 
   compute: (pairtable, params) ->
-    table = pairtable.getTable()
-    md = pairtable.getMD()
-    scales = md.get 0, 'scales'
+    table = pairtable.left()
+    md = pairtable.right()
+    scales = md.any 'scales'
     schema = table.schema
     map = [] 
-    Schema = gg.data.Schema
+    Schema = data.Schema
 
     if schema.type('x') is Schema.numeric
       xRange = scales.scale("x", Schema.unknown).range()
       xScale = (xRange[1] - xRange[0]) * params.get('xScale')
-      map.push [
-        'x'
-        (v) -> v + (0.5 - Math.random()) * xScale
-        Schema.numeric
-      ]
+      map.push {
+        alias: 'x'
+        col: 'x'
+        f: (v) -> v + (0.5 - Math.random()) * xScale
+      }
 
     if schema.type('y') is Schema.numeric
       yRange = scales.scale("y", Schema.unknown).range()
       yScale = (yRange[1] - yRange[0]) * params.get('yScale')
-      map.push [
-        'y'
-        ((v) -> v + (0.5 - Math.random()) * yScale),
-        Schema.numeric
-      ]
+      map.push {
+        alias: 'y'
+        col: 'y'
+        f: (v) -> v + (0.5 - Math.random()) * yScale
+      }
 
-    table = gg.data.Transform.mapCols table, map 
-    new gg.data.PairTable table, md
+    table = table.project map, yes
+    pairtable.left table
+    pairtable
 
 

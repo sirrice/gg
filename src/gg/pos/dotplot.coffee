@@ -12,7 +12,7 @@
 #  direction: center? each group of points or bottom at 0?
 #
 #
-class gg.pos.DotPlot extends gg.wf.SyncExec
+class gg.pos.DotPlot extends gg.core.XForm
   @ggpackage = 'gg.pos.DotPlot'
   @aliases = ['dot', 'dotplot']
 
@@ -26,21 +26,21 @@ class gg.pos.DotPlot extends gg.wf.SyncExec
     ['x']
 
   outputSchema: (pairtable, params) ->
-    schema = pairtable.tableSchema().clone()
-    newSchema = gg.data.Schema.fromJSON
-      y: gg.data.Schema.numeric
-      r: gg.data.Schema.numeric
+    schema = pairtable.leftSchema().clone()
+    newSchema = data.Schema.fromJSON
+      y: data.Schema.numeric
+      r: data.Schema.numeric
     schema.merge newSchema
 
   compute: (pairtable, params) ->
-    t = pairtable.getTable()
-    md = pairtable.getMD()
+    t = pairtable.left()
+    md = pairtable.right()
     r = params.get 'r'
-    t.setColumn 'r', r
-    yscale = md.get(0, 'scales').get 'y', gg.data.Schema.numeric
+    t = t.setColVal 'r', r unless t.has('r')
+    yscale = md.any('scales').get 'y', data.Schema.numeric
     miny = yscale.range()[0]
     cmp = (r1, r2) -> r1.get('x') - r2.get('x')
-    t = gg.data.Transform.sort t, cmp
+    t = t.orderby 'x'
 
     xs = []
     ys = []
@@ -74,20 +74,21 @@ class gg.pos.DotPlot extends gg.wf.SyncExec
     y1s = _.map ys, (y) -> y + r
     x0s = _.map xs, (x) -> x - r
     x1s = _.map xs, (x) -> x + r
-    t = t.addColumn 'x', xs, gg.data.Schema.numeric, yes
-    t = t.addColumn 'x0', x0s, gg.data.Schema.numeric, yes
-    t = t.addColumn 'x1', x1s, gg.data.Schema.numeric, yes
-    t = t.addColumn 'y', ys, gg.data.Schema.numeric, yes
-    t = t.addColumn 'y0', y0s, gg.data.Schema.numeric, yes
-    t = t.addColumn 'y1', y1s, gg.data.Schema.numeric, yes
+    t = t.setCol 'x', xs, data.Schema.numeric, yes
+    t = t.setCol 'x0', x0s, data.Schema.numeric, yes
+    t = t.setCol 'x1', x1s, data.Schema.numeric, yes
+    t = t.setCol 'y', ys, data.Schema.numeric, yes
+    t = t.setCol 'y0', y0s, data.Schema.numeric, yes
+    t = t.setCol 'y1', y1s, data.Schema.numeric, yes
 
     domain = [_.min(y0s), _.max(y1s)]
-    sets = _.uniq pairtable.getMD().getColumn 'scales'
+    sets = _.uniq pairtable.right().all 'scales'
     for set in sets
-      s = set.get 'y', gg.data.Schema.numeric
+      s = set.get 'y', data.Schema.numeric
       s.domain domain
       s.range [Math.max(domain[0], s.range()[0]), Math.min(domain[1], s.range()[1])]
       s.frozen = yes
 
-    new gg.data.PairTable(t, pairtable.getMD())
+    pairtable.left t
+    pairtable
 

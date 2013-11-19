@@ -1,24 +1,24 @@
 #<< gg/core/xform
 
-class gg.xform.GroupByAnnotate extends gg.core.XForm
-  @ggpackage = "gg.xform.GroupByAnnotate"
+class gg.xform.Quantize extends gg.wf.SyncExec
+  @ggpackage = "gg.xform.Quantize"
 
   parseSpec: ->
     @log @params
     @params.ensureAll
-      gbAttrs: [[], []]
+      cols: [[], []]
       nBins: [['nBins', "nbins", "bin", "n", "nbin", "bins"], 20]
 
-    gbAttrs = @params.get "gbAttrs"
-    gbAttrs = _.compact _.flatten [gbAttrs]
-    throw Error() if gbAttrs.length is 0
+    cols = @params.get "cols"
+    cols = _.compact _.flatten [cols]
+    throw Error "need >0 cols to group on" if cols.length is 0
 
     # nBins keeps track of the number of distinct values for each
     # gbAttr attribute
     nBins = @params.get "nBins"
-    nBins = _.times gbAttrs.length, () -> nBins if _.isNumber nBins
-    unless nBins.length == gbAttrs.length
-      throw Error "nBins length #{nBins.length} != gbAttrs length #{gbAttrs.length}"
+    nBins = _.times(cols.length, () -> nBins) if _.isNumber nBins
+    unless nBins.length == cols.length
+      throw Error "nBins length #{nBins.length} != cols length #{cols.length}"
 
     @params.put "nBins", nBins
     @log "nBins now #{JSON.stringify nBins}"
@@ -26,49 +26,57 @@ class gg.xform.GroupByAnnotate extends gg.core.XForm
 
 
   compute: (pairtable, params) ->
-    table = pairtable.getTable()
-    md = pairtable.getMD()
-    origSchema = table.schema
+    table = pairtable.left()
+    md = pairtable.right()
     return pairtable if table.nrows() == 0
 
-    scales = md.get 0, 'scales'
-    gbAttrs = params.get "gbAttrs"
+    schema = table.schema
+    scales = md.any 'scales'
+    cols = params.get "cols"
     nBins = params.get "nBins"
-    Transform = gg.data.Transform
-
-
+    return pairtable unless cols.length > 0
     @log "scales: #{scales.toString()}"
-    @log "get mapping functions on #{gbAttrs}, #{nBins}"
-    mapping = @constructor.getHashFuncs(
-      gbAttrs, origSchema, nBins, scales
+    @log "get mapping functions on #{cols}, #{nBins}"
+
+    mapping = @constructor.getQuantizers(
+      cols, schema, nBins, scales
     )
-    if _.size(mapping) > 0
-      table = Transform.transform table, mapping
-    new gg.data.PairTable table, md
+    @log mapping
+    table = table.project mapping, yes
+    pairtable.left table
+    pairtable
 
 
   # Create hash functions 
-  @getHashFuncs: (gbAttrs, schema, nBins, scales) ->
-    _.map gbAttrs, (gbAttr, idx) ->
-      type = schema.type gbAttr
-      scale = scales.scale gbAttr, type
+  @getQuantizers: (cols, schema, nBins, scales) ->
+    _.map cols, (col, idx) ->
+      type = schema.type col
+      scale = scales.scale col, type
       domain = scale.domain()
-      keyF = gg.xform.GroupByAnnotate.getHashFunc(
-        gbAttr, type, nBins[idx], domain)
-      [gbAttr, keyF, type]
+      f = gg.xform.Quantize.quantizer(
+        col, type, nBins[idx], domain
+      )
+      {
+        alias: col
+        f
+        type
+        cols
+      }
 
-  # Given a table column and its scale, return hash function
-  # that produces the correct number of buckets
-  @getHashFunc = (col, type, nbins, domain) ->
+
+
+  # Given a table column and its domain, return hash function
+  # that maps value in the domain to a bucket index
+  @quantizer: (col, type, nbins, domain) ->
     toKey = (row) -> row.get col
     if nbins == -1
-      type = gg.data.Schema.ordinal
+      type = data.Schema.ordinal
 
     switch type
-      when gg.data.Schema.ordinal
+      when data.Schema.ordinal
         toKey = (row) -> row.get col
 
-      when gg.data.Schema.numeric
+      when data.Schema.numeric
         [minD, maxD] = [domain[0], domain[1]]
         binRange = (maxD - minD) * 1.0
         binSize = Math.ceil(binRange / nbins)
@@ -77,7 +85,7 @@ class gg.xform.GroupByAnnotate extends gg.core.XForm
           idx = Math.max(0, idx)
           (idx * binSize) + minD + (binSize / 2)
 
-      when gg.data.Schema.date
+      when data.Schema.date
         domain = [domain[0].getTime(), domain[1].getTime()]
         [minD, maxD] = [domain[0], domain[1]]
         binRange = (maxD - minD) * 1.0
@@ -95,6 +103,8 @@ class gg.xform.GroupByAnnotate extends gg.core.XForm
     toKey
 
 
+
+
 # Implements
 #
 #   SELECT   agg1(), .., aggN(), gbkeys
@@ -103,9 +113,10 @@ class gg.xform.GroupByAnnotate extends gg.core.XForm
 #
 # Params:
 #
-# gbAttrs: list of column names to group on
-# aggFuncs: map of aggregate name -> aggregate function
-#           the function takes a gg.data.Table as input and outputs a value
+# cols: list of column names to group on
+# aggs: map of aggregate name -> aggregate function spec
+#       or
+#       list of data.ops.aggregate aggregation descs
 #
 #
 # Create group by attributes, functions understand how to create
@@ -122,64 +133,60 @@ class gg.xform.GroupBy extends gg.core.XForm
   parseSpec: ->
     @log @params
     @params.ensureAll
-      gbAttrs: [[], []]
-      aggFuncs: [["agg", "aggs"], {}]
+      cols: [[], []]
+      aggs: [["agg", "aggs"], {}]
       nBins: [["nbins", "bin", "n", "nbin", "bins"], 20]
 
-    @annotate = new gg.xform.GroupByAnnotate 
-      name: "#{@name}-anno"
+    @annotate = new gg.xform.Quantize
+      name: "#{@name}-quantize"
       params: 
-        gbAttrs: @params.get('gbAttrs')
+        cols: @params.get('cols')
         nBins: @params.get('nBins')
 
+    # turn aggs into actual aggregate specs for table.aggregate
+    aggs = @params.get 'aggs'
+    aggs = _.map aggs, (spec, name) ->
+      if spec? and spec.alias? and spec.f? and _.isFunction spec.f
+        return spec
+      type = spec.type unless _.isString spec
+      type = spec if _.isString spec
+      col = spec.col
+      col ?= 'y'
+      args = []
+      args = spec.args if spec.args?
+      data.ops.Aggregate.agg type, name, col, args...
+    @params.put 'aggs', aggs
+
     super
+
+  inputSchema: (pairtable, params) ->
+    params.get("cols")
+
+  outputSchema: (pairtable, params) ->
+    cols = params.get "cols"
+    aggs = params.get "aggs"
+    schema = pairtable.leftSchema().clone()
+
+    # XXX: assume that the aggregate functions output numeric types
+    spec = {}
+    for aggName, agg of aggFuncs
+      spec[aggName] =  data.Schema.numeric
+    newSchema = data.Schema.fromJSON spec
+    schema.merge newSchema
+
+  compute: (pairtable, params) ->
+    table = pairtable.left()
+    md = pairtable.right()
+
+    cols = params.get 'cols'
+    aggs = params.get 'aggs'
+    table = table.groupby cols, aggs
+    table = table.flatten()
+    pairtable.left table
+    pairtable
+
 
   compile: ->
     nodes = super
     nodes.unshift @annotate.compile()
     nodes
-
-  inputSchema: (pairtable, params) ->
-    params.get("gbAttrs")
-
-  outputSchema: (pairtable, params) ->
-    gbAttrs = params.get "gbAttrs"
-    aggFuncs = params.get "aggFuncs"
-    schema = pairtable.tableSchema().clone()
-
-    # XXX: assume that the aggregate functions output numeric types
-    spec = {}
-    for aggName, agg of aggFuncs
-      spec[aggName] =  gg.data.Schema.numeric
-    newSchema = gg.data.Schema.fromJSON spec
-    schema.merge newSchema
-
-  compute: (pairtable, params) ->
-    table = pairtable.getTable()
-    md = pairtable.getMD()
-
-    gbAttrs = params.get "gbAttrs"
-    partitions = table.partition gbAttrs
-    rows = []
-    for p in partitions
-      rows.push.apply rows, @udf(p, params)
-
-    outputSchema = params.get('outputSchema') pairtable, params
-    newtable = gg.data.Table.fromArray rows, outputSchema
-    new gg.data.PairTable newtable, md
-
-  udf: (table, params) ->
-    aggFuncs = params.get 'aggFuncs'
-    gg.xform.GroupBy.aggregatePartition aggFuncs, table
-
-  @aggregatePartition: (aggFuncs, table) ->
-    aggVals = _.o2map aggFuncs, (spec, name) ->
-      agg = gg.xform.Aggregate.fromSpec spec
-      v = agg.compute table
-      [name, v]
-    row = table.get(0).raw()
-    _.extend row, aggVals
-    [row]
-
-
-

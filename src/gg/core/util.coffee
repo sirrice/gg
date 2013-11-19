@@ -7,7 +7,7 @@ class gg.core.FormUtil
 
   # throws exception if inputs don't validate with schema
   @validateInput: (pt, params, log) ->
-    table = pt.getTable()
+    table = pt.left()
     return yes unless table.nrows() > 0
     iSchema = params.get "inputSchema", pt, params
     return unless iSchema?
@@ -24,7 +24,7 @@ class gg.core.FormUtil
   # adds default values for non-existent attributes in
   # data table.
   @addDefaults: (pt, params, log) ->
-    table = pt.getTable()
+    table = pt.left()
     defaults = params.get "defaults", pt, params
     if log?
       log "table schema: #{table.schema.toString()}"
@@ -35,11 +35,15 @@ class gg.core.FormUtil
         unless _.isObject v
           throw Error "group default value should be object: #{v}"
         log "adding:  #{k} -> #{v}"
-        f = (row) ->
+        f = (group, idx) ->
           newv = _.clone v
-          _.extend newv, row.get('group') if row.has 'group'
+          _.extend newv, group if group?
           newv
-        return [k, f, gg.data.Schema.object]
+        return {
+          alias: k
+          f: f
+          cols: 'group'
+        }
 
       if table.has k
         return null
@@ -47,77 +51,49 @@ class gg.core.FormUtil
         log "adding:  #{k} -> #{v}"
         return _.mapToFunction table, k, v
     mapping = _.compact mapping
-    table = gg.data.Transform.transform table, mapping
-    new gg.data.PairTable table, pt.getMD()
+    table = table.project mapping, yes
+    pt.left table
+    pt
 
-
-  @ensureScales: (pairtable, params, log) ->
-    md = pairtable.getMD()
+  @ensureScales: (pt, params, log) ->
+    md = pt.right()
     unless md.nrows() <= 1
       log "@scales called with multiple rows: #{md.nrows()}"
     if md.nrows() == 0 
       log "@scales called with no md rows"
-      log pairtable.getTable()
+      log pt.left()
       throw Error "@scales called with no md rows"
     unless md.has 'scalesconfig'
-      md = md.setColumn 'scalesconfig', gg.scale.Config.fromSpec({})
+      md = md.setColVal 'scalesconfig', gg.scale.Config.fromSpec({})
     unless md.has 'scales'
       f = (row) ->
         layer = row.get 'layer'
         config = row.get 'scalesconfig'
         config.scales(layer)
 
-      md = gg.data.Transform.transform md, [
-        ['scales', f, gg.data.Schema.object]
-      ]
-      new gg.data.PairTable pairtable.getTable(), md
+      md = md.project [ { alias: 'scales', f: f, type: data.Schema.object } ]
+      pt.right md
+      pt
     else
-      pairtable
+      pt
 
 
-
-  @scales: (pairtable, params, log) ->
-    md = pairtable.getMD()
+  @scales: (pt, params, log) ->
+    md = pt.right()
     unless md.nrows() <= 1
       log.warn "@scales called with multiple rows: #{md.raw()}"
+
     if md.nrows() == 0 
       throw Error "@scales called with no md rows"
     if md.has 'scales'
-      md.get 0, 'scales'
+      md.any 'scales'
     else
-      layer = md.get 0, 'layer'
-      config = md.get 0, 'scalesconfig'
+      row = md.any()
+      layer = row.get 'layer'
+      config = row.get 'scalesconfig'
       scaleset = config.scales layer
-      md = md.setColumn 'scales', scaleset
+      md = md.setColVal 'scales', scaleset
+      pt.right md
       scaleset
-
-  #
-  # Multi-data methods
-  #
-
-  @scalesList: (datas) ->
-    _.map datas, (data) -> data.env.get 'scales'
-
-  # Return the Data objects that match the x/y facet
-  @facetDatas: (datas, xFacet, yFacet) ->
-    Facets = gg.facet.base.Facets
-    _.filter datas, (data) ->
-        (data.env.get(Facets.facetXKey) is xFacet and
-         data.env.get(Facets.facetYKey) is yFacet)
-
-  @facetEnvs: (datas, xFacet, yFacet) ->
-    _.map @facetDatas(datas, xFacet, yFacet), (data) -> data.env
-
-  @facetTables: (datas, xFacet, yFacet) ->
-    _.map @facetDatas(datas, xFacet, yFacet), (data) -> data.table
-
-  # pick "key" from list of env objects.
-  @pick: (datas, key) ->
-    vals = []
-    for data in datas 
-      vals.push data.env.get(key)
-    vals = _.uniq vals
-    vals.sort()
-    vals
 
 

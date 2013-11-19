@@ -6,17 +6,16 @@ assert = require "assert"
 
 
 suite = vows.describe "exec.js"
-Schema = gg.data.Schema
-Transform = gg.data.Transform
-Table = gg.data.Table
+Schema = data.Schema
+Table = data.Table
 
 check = 
   "when executed": 
     topic: (node) ->
       promise = new events.EventEmitter
       rows = _.times 10, (i) -> {a: i%2, b: i}
-      table = gg.data.Table.fromArray rows
-      pt = new gg.data.PairTable table
+      table = data.Table.fromArray rows
+      pt = new data.PairTable table
       pt = pt.ensure []
       node.on 'output', (id, idx, pt) ->
         promise.emit "success", pt
@@ -25,10 +24,10 @@ check =
       promise
 
     "has 10 results": (pt) ->
-      assert.equal pt.getTable().nrows(), 10
+      assert.equal pt.left().nrows(), 10
 
     "has correct 'attr1'": (pt) ->
-      pt.getTable().each (row) ->
+      pt.left().each (row) ->
         v = row.get 'attr1'
         assert.lte v, 0, "attr1 #{v} should be <= 0"
 
@@ -37,10 +36,12 @@ check =
 createdexec = 
   topic: ->
     gg.wf.Exec.create (pairtable, params, cb) ->
-      table = gg.data.Transform.map pairtable.getTable(), [
-        ['attr1', ((row) -> row.get('a') * -1), Schema.numeric]
-      ]
-      pairtable = new gg.data.PairTable table, pairtable.getMD()
+      table = pairtable.left().project {
+        alias: 'attr1'
+        f: (a) -> -a
+        cols: 'a'
+      }
+      pairtable = new data.PairTable table, pairtable.right()
       cb null, pairtable
 _.extend createdexec, check
 
@@ -48,32 +49,34 @@ extendedexec =
   topic: ->
     klass = class ExecKlass extends gg.wf.Exec
       compute: (pairtable, params, cb) ->
-        table = pairtable.getTable()
-        table = gg.data.Transform.map table, [
-          ['attr1', ((row) -> row.get('a') * -1), Schema.numeric]
-        ]
-        pairtable = new gg.data.PairTable table, pairtable.getMD()
+        table = pairtable.left()
+        table = pairtable.left().project {
+          alias: 'attr1'
+          f: (a) -> -a
+          cols: 'a'
+        }
+        pairtable = new data.PairTable table, pairtable.right()
         cb null, pairtable
     new klass
 _.extend extendedexec, check
 
 createAggExec = ->
   gg.wf.Exec.create ((pairtable, params, cb) ->
-    t = pairtable.getTable()
-    bcol = t.getCol 'b'
+    t = pairtable.left()
+    bcol = t.all 'b'
     total = _.sum bcol
     schema = t.schema.project 'a'
-    schema.addColumn 'b', gg.data.Schema.numeric
-    row = { a:t.get(0,'a'), b: total}
+    schema.addColumn 'b', data.Schema.numeric
+    row = { a:t.any('a'), b: total}
 
-    t = t.constructor.fromArray [row], schema
-    pairtable = new gg.data.PairTable t, pairtable.getMD()
+    t = data.Table.fromArray [row], schema
+    pairtable = new data.PairTable t, pairtable.right()
     cb null, pairtable), {key: 'a'} 
 
 createSyncExec = ->
   gg.wf.SyncExec.create  (pt, params) ->
-    t = pt.getTable().setColumn 'z', 99
-    new gg.data.PairTable t, pt.getMD()
+    t = pt.left().setColVal 'z', 99
+    new data.PairTable t, pt.right()
 
 syncExec = 
   topic: createSyncExec
@@ -81,9 +84,9 @@ syncExec =
     topic: (node) ->
       promise = new events.EventEmitter
       rows = _.times 10, (i) -> {a: i%2, b: i}
-      left = gg.data.Table.fromArray rows
-      right = gg.data.Table.fromArray [{a: 0}, {a: 1}]
-      pt = new gg.data.PairTable left, right
+      left = data.Table.fromArray rows
+      right = data.Table.fromArray [{a: 0}, {a: 1}]
+      pt = new data.PairTable left, right
       node.on 'output', (id, idx, pt) ->
         promise.emit 'success', pt
       node.setInput 0, pt
@@ -91,7 +94,7 @@ syncExec =
       promise
 
     "has z column": (pt) ->
-      pt.getTable().each (row) ->
+      pt.left().each (row) ->
         assert.equal row.get('z'), 99
 
 
@@ -102,8 +105,8 @@ aggexecPairTable =
     topic: (node) ->
       promise = new events.EventEmitter
       rows = _.times 10, (i) -> {a: i%2, b: i}
-      table = gg.data.Table.fromArray rows
-      pt = new gg.data.PairTable table
+      table = data.Table.fromArray rows
+      pt = new data.PairTable table
       node.on 'output', (id, idx, pt) ->
         promise.emit "success", pt
       node.setInput 0, pt
@@ -111,27 +114,28 @@ aggexecPairTable =
       promise
 
     "has 2 rows": (pt) ->
-      assert.equal pt.getTable().nrows(), 2
+      assert.equal pt.left().nrows(), 2
 
     "b totals": (pt) ->
-      t = pt.getTable()
-      assert.equal t.get(0, 'b'), 20
-      assert.equal t.get(1, 'b'), 25
+      t = pt.left()
+      rows = t.all()
+      assert.equal rows[0].get('b'), 20
+      assert.equal rows[1].get('b'), 25
 
 aggexecTSet = 
   topic: createAggExec
   "when executed on tableset": 
     topic: (node) ->
       promise = new events.EventEmitter
-      left = gg.data.Table.fromArray(_.times 5, (i) ->
+      left = data.Table.fromArray(_.times 5, (i) ->
         {a: i%2, b: i})
-      right = gg.data.Table.fromArray [{a:0}]
-      pt1 = new gg.data.PairTable left, right
+      right = data.Table.fromArray [{a:0}]
+      pt1 = new data.PairTable left, right
       rows = _.times 5, (i) -> {a: (i+5)%2, b: (i+5)}
-      left = gg.data.Table.fromArray rows
-      right = gg.data.Table.fromArray [{a:1}]
-      pt2 = new gg.data.PairTable left, right
-      tset = new gg.data.TableSet [pt1, pt2]
+      left = data.Table.fromArray rows
+      right = data.Table.fromArray [{a:1}]
+      pt2 = new data.PairTable left, right
+      tset = data.PairTable.union pt1, pt2
       tset = tset.ensure()
 
       node.on 'output', (id, idx, pt) ->
@@ -141,12 +145,13 @@ aggexecTSet =
       promise
 
     "has 2 rows": (pt) ->
-      assert.equal pt.getTable().nrows(), 2
+      assert.equal pt.left().nrows(), 2
 
     "b totals": (pt) ->
-      t = pt.getTable()
-      assert.equal t.get(0, 'b'), 20
-      assert.equal t.get(1, 'b'), 25
+      t = pt.left()
+      rows = t.all()
+      assert.equal rows[0].get('b'), 20
+      assert.equal rows[1].get('b'), 25
 
 
 suite.addBatch 

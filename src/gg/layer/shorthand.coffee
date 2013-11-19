@@ -144,13 +144,13 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
     # add environment variables
     addenv = gg.wf.SyncBlock.create ((pt, params) ->
-      [t, md] = [pt.getTable(), pt.getMD()]
+      [t, md] = [pt.left(), pt.right()]
       layerIdx = params.get 'layer'
       posMapping = params.get 'posMapping'
-      t = t.setColumn 'layer', layerIdx
-      md = md.setColumn 'layer', layerIdx
-      md = md.setColumn 'posMapping', posMapping
-      new gg.data.PairTable t, md), {
+      t = t.setColVal 'layer', layerIdx
+      md = md.setColVal 'layer', layerIdx
+      md = md.setColVal 'posMapping', posMapping
+      new data.PairTable t, md), {
         layer: @layerIdx
         posMapping: @geom.posMapping()
       }, 'layer-labeler'

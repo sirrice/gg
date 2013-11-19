@@ -3,7 +3,7 @@ vows = require "vows"
 assert = require "assert"
 events = require 'events'
 
-
+#gg.util.Log.setDefaults { 'gg.xform.scaless': 0 }
 
 suite = vows.describe "xform.scale.coffee"
 
@@ -29,9 +29,9 @@ makeTable = ->
         x: i%100
         z: Math.floor(Math.random()*200)
         y: (i+1)%2}
-  table = gg.data.Table.fromArray rows
-  md = gg.data.Table.fromArray [{scales: set}]
-  new gg.data.PairTable table, md
+  table = data.Table.fromArray rows
+  md = data.Table.fromArray [{scales: set}]
+  new data.PairTable table, md
 
 
   #gg.util.Log.setDefaults {'': 0}
@@ -57,8 +57,8 @@ suite.addBatch
         rows = _.times 10, (i) ->
           a: i
           x: i
-        table = gg.data.Table.fromArray rows
-        md = gg.data.Table.fromArray [
+        table = data.Table.fromArray rows
+        md = data.Table.fromArray [
           {
             scalesconfig: gg.scale.Config.fromSpec({
               x: 
@@ -66,13 +66,13 @@ suite.addBatch
                 range: [0, 100]
             })
           }]
-        pt = new gg.data.PairTable table, md
+        pt = new data.PairTable table, md
         pt = pt.ensure([])
         runOnTable node, pt
 
       "the md has scales": (pt) ->
-        md = pt.getMD()
-        ss = md.get 0, 'scales'
+        md = pt.right()
+        ss = md.any 'scales'
   
   "ScalesApply":
     topic: ->
@@ -84,7 +84,7 @@ suite.addBatch
           a: i
           y: i
           x: i
-        table = gg.data.Table.fromArray rows
+        table = data.Table.fromArray rows
         config = gg.scale.Config.fromSpec
           x: 
             type: 'linear'
@@ -95,15 +95,15 @@ suite.addBatch
             domain: [0, 10]
             range: [0, 1000]
 
-        md = gg.data.Table.fromArray [
+        md = data.Table.fromArray [
           { scalesconfig: config }]
-        pt = new gg.data.PairTable table, md
+        pt = new data.PairTable table, md
         pt = pt.ensure([])
         pt = gg.core.FormUtil.ensureScales pt
         runOnTable node, pt
 
       "is correct": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           a = row.get 'a'
           x = row.get 'x'
           y = row.get 'y'
@@ -120,7 +120,7 @@ suite.addBatch
           a: i
           y: i*100
           x: i*10
-        table = gg.data.Table.fromArray rows
+        table = data.Table.fromArray rows
         config = gg.scale.Config.fromSpec
           x: 
             type: 'linear'
@@ -131,15 +131,15 @@ suite.addBatch
             domain: [0, 10]
             range: [0, 1000]
 
-        md = gg.data.Table.fromArray [
+        md = data.Table.fromArray [
           { scalesconfig: config }]
-        pt = new gg.data.PairTable table, md
+        pt = new data.PairTable table, md
         pt = pt.ensure([])
         pt = gg.core.FormUtil.ensureScales pt
         runOnTable node, pt
 
       "results are correct": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           a = row.get 'a'
           x = row.get 'x'
           y = row.get 'y'
@@ -158,7 +158,7 @@ suite.addBatch
           y: i*100
           x: i*10
           z: i
-        table = gg.data.Table.fromArray rows
+        table = data.Table.fromArray rows
         config = gg.scale.Config.fromSpec
           x: 
             type: 'linear'
@@ -169,15 +169,15 @@ suite.addBatch
             domain: [0, 10]
             range: [0, 1000]
 
-        md = gg.data.Table.fromArray [
+        md = data.Table.fromArray [
           { scalesconfig: config }]
-        pt = new gg.data.PairTable table, md
+        pt = new data.PairTable table, md
         pt = pt.ensure([])
         pt = gg.core.FormUtil.ensureScales pt
         runOnTable node, pt
 
       "results are correct": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           a = row.get 'a'
           x = row.get 'x'
           y = row.get 'y'
@@ -201,7 +201,7 @@ suite.addBatch
             x: i*10
             y: y
           }
-        table = gg.data.Table.fromArray rows
+        table = data.Table.fromArray rows
         config = gg.scale.Config.fromSpec
           x: 
             type: 'linear'
@@ -212,15 +212,15 @@ suite.addBatch
             domain: [0, 10]
             range: [0, 1000]
 
-        md = gg.data.Table.fromArray [
+        md = data.Table.fromArray [
           { scalesconfig: config }]
-        pt = new gg.data.PairTable table, md
+        pt = new data.PairTable table, md
         pt = pt.ensure([])
         pt = gg.core.FormUtil.ensureScales pt
         runOnTable node, pt
 
       "results are correct": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           a = row.get 'a'
           x = row.get 'x'
           y = row.get 'y'

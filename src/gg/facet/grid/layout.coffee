@@ -28,8 +28,8 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     container = lc.plotC
     [w,h] = [container.w(), container.h()]
 
-    xs = _.uniq md.getColumn(xFacet)
-    ys = _.uniq md.getColumn(yFacet)
+    xs = _.uniq md.all(xFacet)
+    ys = _.uniq md.all(yFacet)
     nxs = xs.length
     nys = ys.length
 
@@ -64,12 +64,12 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
 
 
     # make sure we have a MD row for every facet
-    xytable = gg.data.Transform.cross 
+    xytable = data.ops.Util.cross
       'facet-x': xs
       'facet-y': ys
-    tmp = new gg.data.PairTable xytable, md
+    tmp = new data.PairTable xytable, md
     tmp = tmp.ensure facetKeys
-    md = tmp.getMD()
+    md = tmp.right()
 
     xTextF = gg.util.Textsize.fitMany(
       xs, grid.paneW, labelHeight+paddingPane, 8, {padding: 2}
@@ -85,34 +85,37 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     # 3. update facet text opts
     #
 
-    partitions = md.partition facetKeys
-    partitions = _.map partitions, (p) ->
-      x = p.get 0, xFacet
-      y = p.get 0, yFacet
-      paneC = grid.getByVal x, y
-      drawC = paneC.drawC()
-
-      # 1. add each pane's bounds to their environment
-      p = p.setColumn 'paneC', paneC, gg.data.Schema.object
-      p = p.setColumn 'xfacettext-opts', {text:x, size:8}
-      p = p.setColumn 'yfacettext-opts', {text:y, size:8}
-
-      # 2. update scale sets to be within drawing container
-      xrange = [paddingPane, drawC.w()-2*paddingPane]
-      yrange = [paddingPane, drawC.h()-2*paddingPane]
-      for set in p.getColumn 'scales'
-        for s in set.getAll gg.scale.Scale.xs
-          s.range xrange
-        for s in set.getAll gg.scale.Scale.ys
-          s.range yrange
-
-      xopts = xTextF x
-      yopts = yTextF y
-      p = p.setColumn 'xfacettext-opts', xopts
-      p = p.setColumn 'yfacettext-opts', yopts
-      p
+    mapping = [{
+      alias: ['paneC', 'xfacettext-opts', 'yfacettext-opts']
+      cols: [xFacet, yFacet, 'scales']
+      f: (x, y, set) ->
+        paneC = grid.getByVal x, y
+        drawC = paneC.drawC()
 
 
+        if set?
+          xrange = [paddingPane, drawC.w()-2*paddingPane]
+          yrange = [paddingPane, drawC.h()-2*paddingPane]
+          for s in set.getAll gg.scale.Scale.xs
+            s.range xrange
+          for s in set.getAll gg.scale.Scale.ys
+            s.range yrange
+        else
+          console.log "[W] facet #{x}, #{y} has no scaleset"
+
+        xopts = { text: x, size: 8 }
+        yopts = { text: y, size: 8 }
+        xopts = xTextF x
+        yopts = yTextF y
+
+        {
+          'paneC': paneC
+          'xfacettext-opts': xopts
+          'yfacettext-opts': yopts
+        }
+    }]
+    md = md.project mapping, yes
+    md
 
     ###
     # Compute font sizes and add to md
@@ -154,4 +157,3 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
       p
     ###
 
-    new gg.data.MultiTable null, partitions

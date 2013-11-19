@@ -41,7 +41,7 @@ class gg.wf.TableSource extends gg.wf.Source
         throw Error("TableSource needs a table as parameter")
 
   compute: (pt, params, cb) ->
-    pt = new gg.data.PairTable params.get('table'), pt.getMD()
+    pt = new data.PairTable params.get('table'), pt.right()
     cb(null, pt)
 
 class gg.wf.RowSource extends gg.wf.Source
@@ -60,11 +60,11 @@ class gg.wf.RowSource extends gg.wf.Source
       throw Error "RowSource needs a table as parameter"
 
   compute: (pt, params, cb) ->
-    table = gg.data.Table.fromArray(
+    table = data.Table.fromArray(
       params.get('rows'), 
       null, 
       params.get('tabletype'))
-    pt = new gg.data.PairTable table, pt.getMD()
+    pt = new data.PairTable table, pt.right()
     cb null, pt
 
 
@@ -84,8 +84,8 @@ class gg.wf.CsvSource extends gg.wf.Source
     url = params.get 'url'
     tabletype = params.get 'tabletype'
     d3.csv url, (err, arr) ->
-      table = gg.data.Table.fromArray arr, null, tabletype
-      pt = new gg.data.PairTable table, pt.getMD()
+      table = data.Table.fromArray arr, null, tabletype
+      pt = new data.PairTable table, pt.right()
       cb null, pt
 
 class gg.wf.SQLSource extends gg.wf.Source
@@ -127,8 +127,8 @@ class gg.wf.SQLSource extends gg.wf.Source
         rows = result.rows
         client.end()
 
-        table = gg.data.Table.fromArray rows, null, tabletype
-        pt = new gg.data.PairTable table, pt.getMD()
+        table = data.Table.fromArray rows, null, tabletype
+        pt = new data.PairTable table, pt.right()
         cb null, pt
 
 
@@ -155,13 +155,13 @@ class gg.wf.CacheSource extends gg.wf.Source
       keyprefix = "#{guid}-#{idx}"
       tkey = "#{keyprefix}-table"
       mdkey = "#{keyprefix}-md"
-      t = gg.data.Table.deserialize db[tkey]
-      md = gg.data.Table.deserialize db[mdkey]
-      partitions.push new gg.data.PairTable(t, md)
+      t = data.Table.deserialize db[tkey]
+      md = data.Table.deserialize db[mdkey]
+      partitions.push new data.PairTable(t, md)
 
     if partitions.length == 1
       cb null, partitions[0]
     else
-      cb null, new gg.data.TableSet(partitions)
+      cb null, new data.TableSet(partitions)
 
 

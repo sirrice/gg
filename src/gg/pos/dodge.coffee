@@ -18,33 +18,52 @@ class gg.pos.Dodge extends gg.core.XForm
 
 
   compute: (pairtable, params) ->
-    table = pairtable.getTable()
-    partitions = table.partition ['x0', 'x1']
+    table = pairtable.left()
+    console.log table.raw()
 
-    nrows = _.map(partitions, (p) -> p.nrows())
+    counts = table.groupby ['x0', 'x1'], data.ops.Aggregate.count('count')
+    nrows = counts.all 'count'
     maxGroup = _.max(nrows)
-    groupcol = _.uniq _.map(table.getColumn('group'), JSON.stringify)
-    ngroups = groupcol.length
+    console.log maxGroup
+
     groups = table.partition 'group'
+    ngroups = groups.nrows()
     padding = params.get 'padding'
     
-    groups = _.map groups, (group, idx) ->
-      neww =(row) -> 
-        width = row.get('x1') - row.get('x0')
-        width / ngroups
- 
-      newx = (row) -> 
-        width = row.get('x1') - row.get('x0')
+    groups = groups.each (row, idx) ->
+      group = row.get 'table'
+
+      neww = (x1, x0) -> (x1 - x0) / ngroups
+      newx = (x1, x0, x) -> 
+        width = x1 - x0
         newWidth = width / ngroups
-        row.get('x') - width/2 + idx*newWidth + newWidth/2
+        x - width/2 + idx*newWidth + newWidth/2
 
-      mapping =
-        x: newx
-        x0: (row) -> newx(row) - (1.0-padding)*neww(row)/2
-        x1: (row) -> newx(row) + (1.0-padding)*neww(row)/2
-      mapping = _.map mapping, (f,k) -> [k,f,gg.data.Schema.numeric]
-      gg.data.Transform.transform group, mapping
+      mapping = [
+        { 
+          alias: 'x'
+          f: newx
+          type: data.Schema.numeric 
+          cols: ['x1', 'x0', 'x']
+        }
+        { 
+          alias: 'x0'
+          f: (x1, x0, x) ->
+            newx(x1, x0, x) - (1.0 - padding)*neww(x1, x0)/2
+          type: data.Schema.numeric
+          cols: ['x1', 'x0', 'x']
+        }
+        { 
+          alias: 'x1'
+          f: (x1, x0, x) ->
+            newx(x1, x0, x) + (1.0 - padding)*neww(x1, x0)/2
+          type: data.Schema.numeric
+          cols: ['x1', 'x0', 'x']
+        }
+      ]
+      group.project mapping, yes
 
-    table = new gg.data.MultiTable null, groups
-    new gg.data.PairTable table, pairtable.getMD()
+    table = new data.ops.Union groups
+    pairtable.left table
+    pairtable
 

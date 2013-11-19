@@ -4,7 +4,7 @@ assert = require "assert"
 
 makeTable = (nrows=100) ->
     rows = _.map _.range(nrows), (i) -> {a:1+i, b:i%10, c: i%2, id:i}
-    gg.data.RowTable.fromArray (rows)
+    data.RowTable.fromArray (rows)
 
 
 

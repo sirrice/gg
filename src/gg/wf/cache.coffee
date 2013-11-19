@@ -49,7 +49,7 @@ class gg.wf.Cache extends gg.wf.Node
     db[guid] = @inputs.length
     for pairtable, idx in @inputs
       key = "#{guid}-#{idx}"
-      [t, md] = [pairtable.getTable(), pairtable.getMD()]
+      [t, md] = [pairtable.left(), pairtable.right()]
       tstr = t.serialize()
       md = md.clone()
       md.rmColumn 'svg' if md.has('svg')

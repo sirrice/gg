@@ -58,7 +58,7 @@ class gg.scale.Set
       unless type?
         return true
       unless _.size(@scales[aes]) > 0
-        unless type is gg.data.Schema.unknown
+        unless type is data.Schema.unknown
           return true
       if type of @scales[aes]
         return true
@@ -96,7 +96,7 @@ class gg.scale.Set
       @set aesOrScale
 
   set: (scale) ->
-    if scale.type is gg.data.Schema.unknown
+    if scale.type is data.Schema.unknown
       throw Error("Storing scale type unknown: #{scale.toString()}")
     aes = scale.aes
     @scales[aes] = {} unless aes of @scales
@@ -127,7 +127,7 @@ class gg.scale.Set
     type ?= _.last types
 
 
-    if type is gg.data.Schema.unknown
+    if type is data.Schema.unknown
       vals = _.values @scales[aes]
       if vals.length > 0
         vals[0]
@@ -139,7 +139,7 @@ class gg.scale.Set
 
     else
       udt = @userdefinedType aes
-      if (udt != type) and (udt != gg.data.Schema.unknown) and _.size(@scales[aes]) > 0
+      if (udt != type) and (udt != data.Schema.unknown) and _.size(@scales[aes]) > 0
         @log.warn "downcasting requested scale type from #{type} -> #{@userdefinedType aes} because user defined"
         _.values(@scales[aes])[0]
       else
@@ -182,7 +182,7 @@ class gg.scale.Set
       if @contains col, null, posMapping
         truecol = posMapping[col] or col
         tabletype = table.schema.type col
-        unknown = gg.data.Schema.unknown
+        unknown = data.Schema.unknown
         scale = @scale col, [tabletype, unknown], posMapping
       else
         tabletype = table.schema.type col
@@ -211,7 +211,7 @@ class gg.scale.Set
         @log "scale is identity."
         return table
 
-      colData = table.getColumn col
+      colData = table.all col
       unless colData?
         throw Error("Set.train: attr #{col} does not exist in table")
 
@@ -231,7 +231,7 @@ class gg.scale.Set
 
         scale.mergeDomain newDomain
 
-        if scale.type is gg.data.Schema.numeric
+        if scale.type is data.Schema.numeric
           @log "train: #{col}(#{scale.id})\t#{oldDomain} merged with #{newDomain} to #{scale.domain()}"
         else
           @log "train: #{col}(#{scale.id})\t#{scale}"
@@ -247,14 +247,15 @@ class gg.scale.Set
   apply: (table,  posMapping={}) ->
     f = (table, scale, col) =>
       str = scale.toString()
-      mapping = [] 
-      mapping.push [
-        col
-        ((v) -> scale.scale v)
-        gg.data.Schema.unknown
+      mapping = [
+        {
+          alias: col
+          f: (v) -> scale.scale v
+          type: data.Schema.unknown
+        }
       ]
       if table.has col
-        table = gg.data.Transform.mapCols table, mapping
+        table = table.mapCols mapping
       @log "apply: #{col}(#{scale.id}):\t#{str}\t#{table.nrows()} rows"
       table
 
@@ -292,7 +293,7 @@ class gg.scale.Set
           return no
       yes
 
-    table = gg.data.Transform.filter table, g
+    table = table.filter g
     @log "filter: removed #{nRejected}.  #{table.nrows()} rows left"
     table
 
@@ -305,20 +306,20 @@ class gg.scale.Set
   invert: (table, posMapping={}) ->
     f = (table, scale, col) =>
       mapping = [
-        [
-          col
-          (v) -> if v? then scale.invert(v) else null
-          gg.data.Schema.unknown
-        ]
+        {
+          alias: col
+          f: (v) -> if v? then scale.invert(v) else null
+          type: data.Schema.unknown
+        }
       ]
 
-      origDomain = scale.defaultDomain table.getColumn(col)
+      origDomain = scale.defaultDomain table.all(col)
       newDomain = null
       if table.has col
-        table = gg.data.Transform.mapCols table, mapping
-        newDomain = scale.defaultDomain table.getColumn(col)
+        table = table.mapCols mapping 
 
       if scale.domain()?
+        newDomain = scale.defaultDomain table.all(col)
         @log "invert: #{col}(#{scale.id};#{scale.domain()}):\t#{origDomain} --> #{newDomain}"
       table
 

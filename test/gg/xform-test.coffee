@@ -4,13 +4,13 @@ assert = require "assert"
 events = require 'events'
 
 suite = vows.describe "xform.coffee"
-Schema = gg.data.Schema
+Schema = data.Schema
 
 
 makeTable = (nrows=100) ->
   rows = _.times nrows, (i) -> {a:1+i, b:i%10, id:i}
-  table = gg.data.Table.fromArray rows
-  pt = new gg.data.PairTable table
+  table = data.Table.fromArray rows
+  pt = new data.PairTable table
   pt.ensure []
 
 
@@ -18,7 +18,7 @@ genCheckRows = (check) ->
   (node) ->
     promise = new events.EventEmitter()
     node.on 'output', (id, idx, pt) ->
-      pt.getTable().each check
+      pt.left().each check
       promise.emit 'success', pt
 
     d = makeTable 10
@@ -45,14 +45,12 @@ suite.addBatch
     topic: new gg.wf.Exec
       params:
         f: (pt) ->
-          t = pt.getTable()
-          t = gg.data.Transform.transform t, [
-            ['a', ((row) -> -row.get('a')), Schema.numeric]
-          ]
-          new gg.data.PairTable t, pt.getMD()
+          t = pt.left()
+          t = t.mapCols { alias: 'a', f: (a)->-a }
+          new data.PairTable t, pt.right()
 
     "runs compute correctly": genCheckTable  (pt) ->
-      assert.equal 10, pt.getTable().nrows()
+      assert.equal 10, pt.left().nrows()
 
     "outputs properly": genCheckRows (row) ->
       assert.lt row.get('a'), 0, "#{row.get 'a'} !< 0"
@@ -71,19 +69,19 @@ suite.addBatch
       rows = _.times 100, (i) -> {a:1+i, b:i%10, id:i}
       new gg.wf.TableSource 
         params: 
-          table: gg.data.Table.fromArray rows
+          table: data.Table.fromArray rows
 
     "outputs a single table": 
       topic: (node) ->
         promise = new events.EventEmitter
         node.on 'output', (id, idx, pt) ->
           promise.emit "success", pt
-        node.setInput 0, new gg.data.PairTable()
+        node.setInput 0, new data.PairTable()
         node.run()
         promise
 
       "correct": (pt) ->
-        table = pt.getTable()
+        table = pt.left()
         assert.equal table.nrows(), 100
 
 

@@ -26,16 +26,7 @@ class gg.pos.Interpolate extends gg.pos.Position
   # y0: position of layer's base
   # y1: position of layer's ceiling
   # group: layer's group key
-  outputSchema: (data, env) ->
-    table = data.table
-    gg.data.Schema.fromSpec
-      group: table.schema.typeObj "group"
-      x: table.schema.type 'x'
-      y: table.schema.type 'y'
-      y0: table.schema.type 'y'
-      y1: table.schema.type 'y'
-    table.schema.clone()
-
+  outputSchema: (pt, env) -> pt.leftSchema().clone()
 
   #
   # @param xs sorted list of x values

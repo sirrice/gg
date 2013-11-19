@@ -1,5 +1,4 @@
 #<< gg/core/xform
-#<< gg/data/*
 
 
 # reparameterization needs to separate the original data
@@ -18,8 +17,8 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
 
   # outliers is an array with schema {outlier:}
   outputSchema: (pairtable) ->
-    schema = pairtable.tableSchema()
-    Schema = gg.data.Schema
+    schema = pairtable.leftSchema()
+    Schema = data.Schema
     Schema.fromJSON
       group: schema.type 'group'
       x: schema.type 'x'
@@ -39,14 +38,14 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
 
 
   compute: (pairtable, params) ->
-    table = pairtable.getTable()
-    md = pairtable.getMD()
-    scales = md.get 0, 'scales'
-    yscale = scales.scale 'y', gg.data.Schema.numeric
+    table = pairtable.left()
+    md = pairtable.right()
+    scales = md.any 'scales'
+    yscale = scales.scale 'y', data.Schema.numeric
 
     # XXX: currently assumes xs is numerical!!
     #      xs should always be pixel values (numerical)
-    xs = _.uniq(table.getColumn("x")).sort d3.ascending
+    xs = _.uniq(table.all("x")).sort d3.ascending
     @log "xs: #{xs}"
     diffs = _.map _.range(xs.length-1), (idx) ->
       xs[idx+1]-xs[idx]
@@ -57,17 +56,20 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
     mapping = _.mappingToFunctions table, 
       y0: 'min'
       y1: 'max'
-    mapping.push [
-      'x0'
-      (row) -> row.get('x') - width/2.0
-      table.schema.type 'x'
-    ]
-    mapping.push [
-      'x1'
-      (row) -> row.get('x') + width/2.0
-      table.schema.type 'x'
-    ]
+    mapping.push {
+      alias: 'x0'
+      f: (x) -> x - width/2.0
+      cols: 'x'
+      type: table.schema.type 'x'
+    }
+    mapping.push {
+      alias: 'x1'
+      f: (x) -> x + width/2.0
+      type: table.schema.type 'x'
+      cols: 'x'
+    }
 
-    table = gg.data.Transform.transform table, mapping
-    new gg.data.PairTable table, md
+    table = table.project mapping, yes
+    pairtable.left table
+    pairtable
 

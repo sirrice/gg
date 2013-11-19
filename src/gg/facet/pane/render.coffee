@@ -11,21 +11,22 @@ class gg.facet.pane.Svg extends gg.core.BForm
   b2translate: (b) -> @constructor.b2translate b
 
   renderFacetPane: (md, params) ->
-    svg = md.get(0, 'svg').plot
-    paneC = md.get 0, 'paneC'
-    eventCoordinator = md.get 0, 'event'
-    facetId = md.get 0, 'facet-id'
+    row = md.any()
+    svg = row.get('svg').plot
+    paneC = row.get 'paneC'
+    eventCoordinator = row.get 'event'
+    facetId = row.get 'facet-id'
     return null unless paneC?
 
-    layerIdx = md.get 0, 'layer'
-    scaleSet = md.get 0, 'scales'
+    layerIdx = row.get 'layer'
+    scaleSet = row.get 'scales'
     dc = paneC.drawC()
     xfc = paneC.xFacetC()
     yfc = paneC.yFacetC()
     xac = paneC.xAxisC()
     yac = paneC.yAxisC()
-    xscale = scaleSet.scale 'x', gg.data.Schema.unknown
-    yscale = scaleSet.scale 'y', gg.data.Schema.unknown
+    xscale = scaleSet.scale 'x', data.Schema.unknown
+    yscale = scaleSet.scale 'y', data.Schema.unknown
 
     @log "panec: #{paneC.toString()}"
     @log "bound: #{paneC.bound().toString()}"
@@ -80,7 +81,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
     bg
 
   renderXFacet: (el, container, md) ->
-    opts = md.get 0, 'xfacettext-opts'
+    opts = md.any 'xfacettext-opts'
     text = opts.text
     size = opts.size
 
@@ -105,7 +106,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
       .style("font-size", "#{size}pt")
 
   renderYFacet: (el, container, md) ->
-    opts = md.get 0, 'yfacettext-opts'
+    opts = md.any 'yfacettext-opts'
     text = opts.text
     size = opts.size
 
@@ -149,7 +150,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
       d3scale = xscale.d3()
       domain = d3scale.domain()
 
-      if xscale.type in [gg.data.Schema.numeric, xscale.type is gg.data.Schema.date]
+      if xscale.type in [data.Schema.numeric, xscale.type is data.Schema.date]
         fmtr = axis.tickFormat or d3scale.tickFormat
         if fmtr? and _.isFunction fmtr
           fmtr = fmtr()
@@ -175,7 +176,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
             else
               break
 
-      else if xscale.type is gg.data.Schema.ordinal
+      else if xscale.type is data.Schema.ordinal
         for n in _.range(1, 20)
           blocksize = Math.ceil(domain.length / n)
           nblocks = Math.floor(domain.length / blocksize)
@@ -218,7 +219,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
 
       # compute number of ticks to show
 
-      if yscale.type is gg.data.Schema.numeric
+      if yscale.type is data.Schema.numeric
         em = _.textSize("m", {padding: 2, class: "axis y"}, yael[0][0])
         nticks = Math.min(5, Math.ceil(dc.h() / em.h))
         axis.ticks(nticks, d3.format(',.0f'), 5)
@@ -256,15 +257,17 @@ class gg.facet.pane.Svg extends gg.core.BForm
       
 
   compute: (pairtable, params) ->
-    md = pairtable.getMD()
+    md = pairtable.right()
 
     # 
     # 1st pass to create panes, which includes g.data-pane.  
     # This is where geoms in each layer will be rendered
     #
     els = {}
-    els = _.o2map md.partition('facet-id'), (p) => 
-      facetid = p.get 0, 'facet-id'
+    partitions = md.partition('facet-id').all('table')
+    els = _.o2map partitions, (p) => 
+      p = data.Table.fromArray p, md.schema.clone()
+      facetid = p.any 'facet-id'
       svg = @renderFacetPane p, params
       if svg? 
         [facetid, svg] 
@@ -273,10 +276,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
     # Second pass sets ['svg'].paneSvg for each data
     # and adds g.layer-pane for each layer
     #
-    f = (row) ->
-      paneC = row.get 'paneC'
-      facetId = row.get 'facet-id'
-      layerIdx = row.get 'layer'
+    f = (paneC, facetId, layerIdx, svg) ->
       dc = paneC.drawC()
       el = els[facetId]
 
@@ -288,14 +288,17 @@ class gg.facet.pane.Svg extends gg.core.BForm
         id: "facet-grid-#{paneC.xidx}-#{paneC.yidx}-#{layerIdx}"
         container: gg.facet.pane.Svg.b2translate(paneC.bound())
       }
-      svg = row.get 'svg'
       svg = _.o2map svg, (v, k) -> [k,v]
       svg.pane = paneSvg
       svg
 
-    md = gg.data.Transform.transform md, [
-      ['svg', f, gg.data.Schema.object]
-    ]
-    new gg.data.PairTable pairtable.getTable(), md
+    md = md.project [{
+      alias: 'svg'
+      cols: ['paneC', 'facet-id', 'layer', 'svg']
+      f: f
+      type: data.Schema.object
+    }]
+    pairtable.right md
+    pairtable
 
 

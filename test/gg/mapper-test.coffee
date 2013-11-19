@@ -2,7 +2,7 @@ require "../env"
 vows = require "vows"
 assert = require "assert"
 events = require 'events'
-#gg.util.Log.setDefaults {'': 0}
+#gg.util.Log.setDefaults {'gg.xform.m': 0}
 
 
 
@@ -31,14 +31,14 @@ suite.addBatch
         rows = _.times 10, (i) ->
           x: i
           y: i
-        table = gg.data.Table.fromArray rows
+        table = data.Table.fromArray rows
 
-        pt = new gg.data.PairTable table
+        pt = new data.PairTable table
         pt = pt.ensure([])
         runOnTable node, pt
 
       "the md has scales": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           assert.equal row.get('x2'), row.get('x')*2
           assert.equal row.get('z'), row.get('y')
   
@@ -54,14 +54,14 @@ suite.addBatch
         rows = _.times 10, (i) ->
           x: i
           y: i
-        table = gg.data.Table.fromArray rows
+        table = data.Table.fromArray rows
 
-        pt = new gg.data.PairTable table
+        pt = new data.PairTable table
         pt = pt.ensure([])
         runOnTable node, pt
 
       "the group is correct": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           assert.deepEqual row.get('group'), {}
          
   "Mapper with explicit group":
@@ -77,15 +77,14 @@ suite.addBatch
         rows = _.times 10, (i) ->
           x: i
           y: i
-        table = gg.data.Table.fromArray rows
+        table = data.Table.fromArray rows
 
-        pt = new gg.data.PairTable table
+        pt = new data.PairTable table
         pt = pt.ensure([])
         runOnTable node, pt
 
       "the group is correct": (pt) ->
-        pt.getTable().each (row) ->
-          console.log row.get('group')
+        pt.left().each (row) ->
           assert.equal row.get('group').stroke, row.get('x')
  
 
@@ -101,14 +100,14 @@ suite.addBatch
         rows = _.times 10, (i) ->
           x: i
           y: i
-        table = gg.data.Table.fromArray rows
+        table = data.Table.fromArray rows
 
-        pt = new gg.data.PairTable table
+        pt = new data.PairTable table
         pt = pt.ensure([])
         runOnTable node, pt
 
       "the group is correct": (pt) ->
-        pt.getTable().each (row) ->
+        pt.left().each (row) ->
           assert.equal row.get('group').stroke, row.get('x')
           assert.equal row.get('stroke'), row.get('x')
   

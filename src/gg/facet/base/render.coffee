@@ -18,7 +18,7 @@ class gg.facet.base.Render extends gg.core.BForm
     options = params.get 'options'
     fXLabel = params.get 'fXLabel'
     fYLabel = params.get 'fYLabel'
-    svg = md.get(0, 'svg').facets
+    svg = md.any('svg').facets
     bgC = lc.background
     xflC = lc.xFacetLabelC
     yflC = lc.yFacetLabelC
@@ -98,7 +98,7 @@ class gg.facet.base.Render extends gg.core.BForm
       }, 'text').text(options.yaxis)
 
 
-    for svg in md.getColumn('svg')
+    for svg in md.all('svg')
       svg.plot = plotSvg
 
     md
@@ -129,11 +129,12 @@ class gg.facet.base.Render extends gg.core.BForm
 
 
   compute: (pairtable, params) ->
-    md = pairtable.getMD()
-    lc = md.get 0, 'lc'
+    md = pairtable.right()
+    lc = md.any 'lc'
     md = @renderLabels md, params, lc
-    md = md.setColumn 'lc', lc
-    new gg.data.PairTable pairtable.getTable(), md
+    md = md.setColVal 'lc', lc
+    pairtable.right md
+    pairtable
 
   @fromSpec: (spec) ->
     new gg.facet.grid.Render spec

@@ -5,9 +5,9 @@ assert = require "assert"
 
 
 suite = vows.describe "debug.js"
-Schema = gg.data.Schema
-Transform = gg.data.Transform
-Table = gg.data.Table
+Schema = data.Schema
+Transform = data.Transform
+Table = data.Table
 
 
 createSimplePairTable = -> 
@@ -24,7 +24,7 @@ createSimplePairTable = ->
     { x: 2, l: 1, z: 3 }
   ]
 
-  new gg.data.PairTable left, right
+  new data.PairTable left, right
 
 createSimpleTableSet = ->
   left = Table.fromArray [
@@ -35,7 +35,7 @@ createSimpleTableSet = ->
     { x: 1, l: 1, z: 0 }
     { x: 1, l: 3, z: 1 }
   ]
-  pt1 = new gg.data.PairTable left, right
+  pt1 = new data.PairTable left, right
 
   left = Table.fromArray [
     { x: 2, y: 2, l: 3}
@@ -45,9 +45,8 @@ createSimpleTableSet = ->
     { x: 2, l: 2, z: 2 }
     { x: 2, l: 1, z: 3 }
   ]
-  pt2 = new gg.data.PairTable left, right
-
-  new gg.data.TableSet [pt1, pt2]
+  pt2 = new data.PairTable left, right
+  data.PairTable.union pt1, pt2
 
 
 log = (text) ->
@@ -68,13 +67,13 @@ suite.addBatch
     "on pairtable":
       topic: createSimplePairTable
       "is correct": (pairtable) ->
-        console.log pairtable.getTable().nrows()
-        gg.wf.Stdout.print pairtable.getTable(), null, 10, log
+        console.log pairtable.left().nrows()
+        gg.wf.Stdout.print pairtable.left(), null, 10, log
 
 
     "on tableset":
       topic: createSimpleTableSet
       "is correct": (pairtable) ->
-        gg.wf.Stdout.print pairtable.getTable(), null, 10, log
+        gg.wf.Stdout.print pairtable.left(), null, 10, log
 
 suite.export module

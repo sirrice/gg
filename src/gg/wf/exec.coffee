@@ -27,14 +27,25 @@ class gg.wf.Exec extends gg.wf.Node
     pstore = @pstore()
     log = @log
 
-    pstore.store_params @params
+    #pstore.store_params @params
     # connect input rows to partitions and rows
     # subclass connects input partition rows to output partition rows
     # connect output to partition rows
 
     tableset = @inputs[0]
-    #tableset = new gg.data.TableSet @inputs
     keys = params.get 'keys'
+    keys ?= tableset.sharedCols()
+    partitions = tableset.partition(keys)
+
+    iterator = (pt, cb) ->
+      try
+        compute pt, params, cb
+      catch err
+        console.log err.message
+        cb err, null
+
+
+    ###
     if keys?
       @log "partitioning on custom cols: #{keys}"
       partitions = tableset.partition keys
@@ -42,25 +53,21 @@ class gg.wf.Exec extends gg.wf.Node
       keys = tableset.sharedCols()
       partitions = tableset.fullPartition()
     @log "created #{partitions.length} partitions on cols #{keys}"
-
-    iterator = (pairtable, cb) ->
-      try
-        compute pairtable, params, cb
-      catch err
-        cb err, null
+    ###
 
     async.map partitions, iterator, (err, pairtables) =>
       throw Error(err) if err?
       pairtables = _.map pairtables, (pt) ->
-        md = pt.getMD()
-        t = pt.getTable()
+        md = pt.right()
+        t = pt.left()
         for col in keys
-          v = md.get 0, col
-          t = t.setColumn col, v
-        new gg.data.PairTable t, md
+          v = md.any col
+          t = t.setColVal col, v
+        new data.PairTable t, md
 
-      result = new gg.data.TableSet pairtables
-      @output 0, result
+      table = new data.ops.Union _.map(pairtables, (pt) -> pt.left())
+      md = new data.ops.Union _.map(pairtables, (pt) -> pt.right())
+      @output 0, new data.PairTable(table, md)
 
 
 
@@ -86,7 +93,7 @@ class gg.wf.SyncExec extends gg.wf.Exec
         cb null, res
       catch err
         console.log("error in syncexec: #{name}")
-        console.log(err.toString())
+        console.log(err.message)
         cb err, null
     @params.put 'compute', compute
 

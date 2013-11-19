@@ -7,15 +7,15 @@ class gg.stat.CDF extends gg.stat.Stat
   @aliases = ['cdf', 'cumulative']
 
 
-  inputSchema: (data, params) -> ['x', 'y']
+  inputSchema: (pt, params) -> ['x', 'y']
 
   outputSchema: (pairtable, params) ->
-    schema = pairtable.tableSchema()
-    newschema = gg.data.Schema.fromJSON
+    schema = pairtable.leftSchema()
+    newschema = data.Schema.fromJSON
       x: schema.type 'x'
-      y: gg.data.Schema.numeric
-      perc: gg.data.Schema.numeric
-      total: gg.data.Schema.numeric
+      y: data.Schema.numeric
+      perc: data.Schema.numeric
+      total: data.Schema.numeric
     schema.merge newschema
 
   schemaMapping: ->
@@ -25,32 +25,40 @@ class gg.stat.CDF extends gg.stat.Stat
     total: 'y'
 
   compute: (pairtable, params) ->
-    table = pairtable.getTable()
+    table = pairtable.left()
 
     # assumes one y value per x value and that the
     # x dimension is sorted correctly
     cum = 0
-    rows = table.fastEach (row, idx) =>
-      raw = row.raw()
-      x = raw.x
-      y = raw.y or 0
+    f = (x, y) ->
       if y < 0 and no
         throw Error("y values for CDF should not be negative")
-
       cum += y
       yp = cum
-      raw.y = yp
-      raw.total = yp
-      raw.perc = 0.0
-      raw
+      {
+        y: yp
+        total: yp
+        perc: 0.0
+      }
+
+    table = table.project [{
+      alias: ['y', 'total', 'perc']
+      f: f
+      type: data.Schema.numeric
+      cols: ['x', 'y']
+    }], yes
 
     @log "cumulative value: #{cum}"
 
     if cum != 0
-      for row in rows
-        row.perc = (row.y / cum)
+      table = table.project [{
+        alias: 'perc'
+        f: (y) -> y / cum
+        cols: 'y'
+        type: data.Schema.nueric
+      }]
 
 
-    table = gg.data.Table.fromArray rows, @outputSchema(pairtable, params)
-    new gg.data.PairTable table, pairtable.getMD()
+    pairtable.left table
+    pairtable
 

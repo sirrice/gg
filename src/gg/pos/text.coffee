@@ -19,8 +19,8 @@ class gg.pos.Text extends gg.pos.Position
 
 
   compute: (pairtable, params) ->
-    table = pairtable.getTable()
-    md = pairtable.getMD()
+    table = pairtable.left()
+    md = pairtable.right()
     attrs = ['x', 'y', 'text']
 
     # box: [[x0, x1], [y0, y1]]
@@ -39,17 +39,23 @@ class gg.pos.Text extends gg.pos.Position
     @log.debug "got #{boxes.length} boxes from annealing"
     @log.debug "took #{Date.now()-start} ms"
 
-    Schema = gg.data.Schema
-    table = gg.data.Transform.transform table, [
-      ['x0', ((row, idx) -> boxes[idx][0][0]), Schema.numeric]
-      ['x1', ((row, idx) -> boxes[idx][0][1]), Schema.numeric]
-      ['y0', ((row, idx) -> boxes[idx][1][0]), Schema.numeric]
-      ['y1', ((row, idx) -> boxes[idx][1][1]), Schema.numeric]
+    Schema = data.Schema
+    mapping = [
+      ['x0', ((x0, x1, y0, y1, idx) -> boxes[idx][0][0])]
+      ['x1', ((x0, x1, y0, y1, idx) -> boxes[idx][0][1])]
+      ['y0', ((x0, x1, y0, y1, idx) -> boxes[idx][1][0])]
+      ['y1', ((x0, x1, y0, y1, idx) -> boxes[idx][1][1])]
     ]
-
-    new gg.data.PairTable table, pairtable.getMD()
-
-
+    mapping = _.map mapping, (map) ->
+      {
+        alias: map[0]
+        f: map[1]
+        type: Schema.numeric
+        cols: ['x0', 'x1', 'y0', 'y1']
+      }
+    table = table.project mapping, yes
+    pairtable.left table
+    pairtable
 
 
   # @param boxes list of [ [x0, x1], [y0, y1] ] arrays

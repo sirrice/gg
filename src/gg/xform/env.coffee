@@ -9,7 +9,7 @@ class gg.xform.EnvPut extends gg.core.XForm
     # data is a mapping of key -> val where
     # key:  label name in environment
     # val:  label value or a function with signature
-    #       (data) -> value
+    #       (pt) -> value
     #
     # note: if function, it will be evaluated when the key
     #       is accessed
@@ -17,12 +17,12 @@ class gg.xform.EnvPut extends gg.core.XForm
     @params.ensure 'pairs', [], {}
 
   compute: (pairtable, params) ->
-    md = pairtable.getMD()
+    md = pairtable.right()
     pairs = params.get 'pairs'
     for k, v of pairs
-      md = md.setColumn k, v
-    ret = new gg.data.PairTable pairtable.getTable(), md
-    ret
+      md = md.setColVal k, v
+    pairtable.right md
+    pairtable
 
 
 

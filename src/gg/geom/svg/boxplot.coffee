@@ -17,7 +17,7 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
 
   render: (table, svg) ->
     nonoutliers = table.schema.exclude 'outlier'
-    boxtables = table.partition nonoutliers.cols
+    boxtables = table.partition(nonoutliers.cols, 'table').all('table')
 
     # attributes should be imported in bulk using
     # .attr( {} ) where {} is @attrs
@@ -28,12 +28,12 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
       .append("g")
       .attr("class", "boxplot")
 
-    y = (t) -> Math.min(t.get(0, 'y0'), t.get(0, 'y1'))
-    height = (t) -> Math.abs(t.get(0, 'y1') - t.get(0, 'y0'))
-    width = (t) -> t.get(0, 'x1') - t.get(0, 'x0')
+    y = (t) -> Math.min(t.any('y0'), t.any('y1'))
+    height = (t) -> Math.abs(t.any('y1') - t.any('y0'))
+    width = (t) -> t.any('x1') - t.any('x0')
     #width = (t) -> t.get('width')
-    x0 = (t) -> t.get 0, 'x0'
-    x1 = (t) -> t.get 0, 'x1'
+    x0 = (t) -> t.any 'x0'
+    x1 = (t) -> t.any 'x1'
     #x0 = (t) -> t.get('x') - t.get('width') / 2.0
     #x1 = (t) -> t.get('x') + t.get('width') / 2.0
 
@@ -44,54 +44,54 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
     iqr = @applyAttrs enter.append('rect'),
       class: "boxplot iqr"
       x: x0
-      y: (t) -> Math.min(t.get(0, 'q3'), t.get(0, 'q1'))
+      y: (t) -> Math.min(t.any('q3'), t.any('q1'))
       width: width
-      height: (t) -> Math.abs(t.get(0, 'q1') - t.get(0, 'q3'))
+      height: (t) -> Math.abs(t.any('q1') - t.any('q3'))
 
     median = @applyAttrs enter.append('line'),
       class: "boxplot median"
       x1: x0
       x2: x1
-      y1: (t) -> t.get 0, 'median'
-      y2: (t) -> t.get 0, 'median'
+      y1: (t) -> t.any 'median'
+      y2: (t) -> t.any 'median'
 
     # upper whisker
     upperw = @applyAttrs enter.append("line"),
       class: "boxplot whisker"
-      x1: (t) -> t.get 0, 'x'
-      x2: (t) -> t.get 0, 'x'
-      y1: (t) -> t.get 0, 'q3'
-      y2: (t) -> t.get 0, 'upper'
+      x1: (t) -> t.any 'x'
+      x2: (t) -> t.any 'x'
+      y1: (t) -> t.any 'q3'
+      y2: (t) -> t.any 'upper'
 
     # upper tick
     uppert = @applyAttrs enter.append("line"),
       class: "boxplot whisker"
-      x1: (t) -> t.get(0, 'x')-width(t)*0.2
-      x2: (t) -> t.get(0, 'x')+width(t)*0.2
-      y1: (t) -> t.get 0, 'upper'
-      y2: (t) -> t.get 0, 'upper'
+      x1: (t) -> t.any('x')-width(t)*0.2
+      x2: (t) -> t.any('x')+width(t)*0.2
+      y1: (t) -> t.any 'upper'
+      y2: (t) -> t.any 'upper'
 
 
     # lower whisker
     lowerw = @applyAttrs enter.append("line"),
       class: "boxplot whisker"
-      x1: (t) -> t.get 0, 'x'
-      x2: (t) -> t.get 0, 'x'
-      y1: (t) -> t.get 0, 'q1'
-      y2: (t) -> t.get 0, 'lower'
+      x1: (t) -> t.any 'x'
+      x2: (t) -> t.any 'x'
+      y1: (t) -> t.any 'q1'
+      y2: (t) -> t.any 'lower'
 
 
     # lower tick
     lowert = @applyAttrs enter.append("line"),
       class: "boxplot whisker"
-      x1: (t) -> t.get(0, 'x')-width(t)*0.2
-      x2: (t) -> t.get(0, 'x')+width(t)*0.2
-      y1: (t) -> t.get 0, 'lower'
-      y2: (t) -> t.get 0, 'lower'
+      x1: (t) -> t.any('x')-width(t)*0.2
+      x2: (t) -> t.any('x')+width(t)*0.2
+      y1: (t) -> t.any 'lower'
+      y2: (t) -> t.any 'lower'
 
     circles = enter.selectAll("circle")
       .data((d) -> 
-        d.getRows().filter (row) -> 
+        d.all().filter (row) -> 
           _.isValid(row.get('outlier')))
     enterCircles = circles.enter().append("circle")
 
@@ -106,16 +106,16 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
       cssOver =
         "fill-opacity": 1
         "stroke-opacity": 1
-        fill: (t) -> d3.rgb(t.get(0, 'fill')).darker(1)
-        stroke: (t) -> d3.rgb(t.get 0, "stroke").darker(2)
-        "stroke-width": (t) -> t.get(0, "stroke-width") + 0.5
+        fill: (t) -> d3.rgb(t.any('fill')).darker(1)
+        stroke: (t) -> d3.rgb(t.any "stroke").darker(2)
+        "stroke-width": (t) -> t.any("stroke-width") + 0.5
 
       cssOut =
-        "fill-opacity": (t) -> t.get(0, 'fill-opacity')
-        "stroke-opacity": (t) -> t.get(0, "stroke-opacity")
-        fill: (t) -> t.get(0, 'fill')
-        stroke: (t) -> t.get 0, "stroke"
-        "stroke-width": (t) -> t.get 0, "stroke-width"
+        "fill-opacity": (t) -> t.any('fill-opacity')
+        "stroke-opacity": (t) -> t.any("stroke-opacity")
+        fill: (t) -> t.any('fill')
+        stroke: (t) -> t.any "stroke"
+        "stroke-width": (t) -> t.any "stroke-width"
 
       @applyAttrs g, cssOut
       _this = @
