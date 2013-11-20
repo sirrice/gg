@@ -142,7 +142,7 @@ class gg.wf.Flow extends events.EventEmitter
   #         ]
   #
   toJSON: () ->
-    id2idx = _.list2map @nodes(), (node, idx) -> [node.id, idx]
+    id2idx = _.o2map @nodes(), (node, idx) -> [node.id, idx]
     node2json = (node) ->
       node.toJSON()
     edge2json = (from, to, type, md) ->
@@ -504,7 +504,7 @@ class gg.wf.Flow extends events.EventEmitter
   # @param specOrNode specification of a node or a Node object
   setChild: (klass, specOrNode) ->
     specOrNode = {} unless specOrNode?
-    if _.isSubclass specOrNode, gg.wf.Node
+    if _.isType specOrNode, gg.wf.Node
       node = specOrNode
     else if _.isFunction specOrNode
       node = new klass 

@@ -32,21 +32,21 @@ class gg.geom.svg.Area extends gg.geom.Render
 
     @applyAttrs enterAreas,
       class: "path"
-      d: area
-      "stroke": (g) -> g[0].get('stroke')
-      "stroke-width": (g) -> g[0].get('stroke-width')
-      "stroke-opacity": (g) -> g[0].get("stroke-opacity")
-      fill: (g) -> g[0].get('fill')
-      "fill-opacity": (g) -> g[0].get('fill-opacity')
+      d: (g) -> area g.all()
+      "stroke": (g) -> g.any('stroke')
+      "stroke-width": (g) -> g.any('stroke-width')
+      "stroke-opacity": (g) -> g.any("stroke-opacity")
+      fill: (g) -> g.any('fill')
+      "fill-opacity": (g) -> g.any('fill-opacity')
 
 
     cssOver =
-      fill: (g) -> d3.rgb(g[0].get("fill")).darker(2)
+      fill: (g) -> d3.rgb(g.any("fill")).darker(2)
       "fill-opacity": 1
 
     cssOut =
-      fill: (g) -> g[0].get('fill')
-      "fill-opacity": (g) -> g[0].get('fill-opacity')
+      fill: (g) -> g.any('fill')
+      "fill-opacity": (g) -> g.any('fill-opacity')
 
     _this = @
     areas

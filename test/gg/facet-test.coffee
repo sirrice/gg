@@ -49,11 +49,12 @@ suite.addBatch
         runTest node, pt
 
       "doesn't have _barrier": (pt) ->
-        assert (not pt.leftSchema().has('_barrier'))
+        assert (not pt.left().has('_barrier'))
 
       "has panes": (pt) ->
         md = pt.right()
-        md.each (row) ->
-          assert row?
+        md.each (row, idx) ->
+          assert row?, "row #{idx} does not exist"
+          assert row.get('paneC')?, "paneC not found"
 
 suite.export module

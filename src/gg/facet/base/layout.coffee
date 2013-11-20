@@ -270,18 +270,28 @@ class gg.facet.base.Layout extends gg.core.BForm
   # @param xfonts font object for each non-null grid item
   setOptimalFacetFonts: (pairtable, grid, xfonts, yfonts) ->
     md = pairtable.right()
-    partitions = md.partition ['facet-x', 'facet-y']
-    partitions.each (row, idx) ->
-      p = row.get 'table'
-      x = row.get 'facet-x'
-      y = row.get 'facet-y'
-      xfont = xfonts[idx]
-      yfont = yfonts[idx]
-      p = p.setColVal "xfacet-text", xfont.text
-      p = p.setColVal "xfacet-size", xfont.size
-      p = p.setColVal "yfacet-text", yfont.text
-      p = p.setColVal "yfacet-size", yfont.size
-      p
+    md = md.project [
+      {
+        alias: ['xfacet-size', 'yfacet-size']
+        f: (x, y) ->
+          {
+            'xfacet-size': xfonts[idx].size
+            'yfacet-size': yfonts[idx].size
+          }
+        type: data.Schema.numeric
+        cols: ['facet-x', 'facet-y']
+      }
+      {
+        alias: ['xfacet-text', 'yfacet-text']
+        f: (x, y) ->
+          {
+            'xfacet-text': xfonts[idx].text
+            'yfacet-text': yfonts[idx].text
+          }
+        type: data.Schema.ordinal
+        cols: ['facet-x', 'facet-y']
+      }
+    ]
 
   # augments layout container (lc) with additional
   # containers.

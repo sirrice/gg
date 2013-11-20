@@ -1,7 +1,6 @@
 #<< gg/util/util
 #<< gg/layer/layer
 #<< gg/layer/shorthand
-#<< gg/layer/array
 
 class gg.layer.Layers
   @ggpackage = "gg.layer.Layers"
@@ -31,7 +30,7 @@ class gg.layer.Layers
   addLayer: (layerOrSpec) ->
     layerIdx = @layers.length
 
-    if _.isSubclass layerOrSpec, gg.layer.Layer
+    if _.isType layerOrSpec, gg.layer.Layer
       layer = layerOrSpec
     else
       spec = _.clone layerOrSpec

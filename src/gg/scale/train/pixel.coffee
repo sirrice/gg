@@ -32,7 +32,6 @@ class gg.scale.train.Pixel extends gg.core.BForm
     gg.scale.train.Pixel.train pairtable, params, @log
 
   @train: (pairtable, params, log) ->
-
     fOldScales = (pt, idx) ->
       s = pt.right().any('scales').clone()
       log "#{idx} origScales: #{s.toString()}"
@@ -76,7 +75,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
       seen = {}
 
       f = (table, oldscale, aes) ->
-        return table if _.isSubclass oldscale, gg.scale.Identity
+        return table if _.isType oldscale, gg.scale.Identity
         return table if oldscale.frozen
 
         log "#{idx} retrive #{aes}: #{oldscale.aes}\t#{oldscale.type}"
@@ -94,7 +93,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
           log "#{idx} mergeDomain: aes #{aes} #{col? and col.length>0}"
           log "#{idx} mergeDomain: #{newscale.toString()}"
           return table
-        if _.isSubclass oldscale, gg.scale.BaseCategorical
+        if _.isType oldscale, gg.scale.BaseCategorical
           log "#{idx} mergeDomain: categorical.  skipping"
           log "#{idx} mergeDomain: #{newscale.toString()}"
           return table

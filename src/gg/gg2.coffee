@@ -1,6 +1,7 @@
 "use strict"
 
 data = require 'ggdata'
+ggutil = require 'ggutil'
 events = require 'events'
 # this is a problem because of how node deals with _
 _ = require 'underscore'
@@ -46,6 +47,7 @@ renderArray = (array, domEl, userSpec={}) ->
 
 @gg = fromSpec
 _.extend @gg, gg
+@gg.data = data
 @gg.renderArray = renderArray
 @gg.io = io
 @gg.log = gg.util.Log

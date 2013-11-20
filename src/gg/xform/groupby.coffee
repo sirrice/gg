@@ -68,20 +68,20 @@ class gg.xform.Quantize extends gg.wf.SyncExec
   # Given a table column and its domain, return hash function
   # that maps value in the domain to a bucket index
   @quantizer: (col, type, nbins, domain) ->
-    toKey = (row) -> row.get col
+    toKey = _.identity
     if nbins == -1
       type = data.Schema.ordinal
 
     switch type
       when data.Schema.ordinal
-        toKey = (row) -> row.get col
+        toKey = _.identity
 
       when data.Schema.numeric
         [minD, maxD] = [domain[0], domain[1]]
         binRange = (maxD - minD) * 1.0
         binSize = Math.ceil(binRange / nbins)
-        toKey = (row) -> 
-          idx = Math.ceil((row.get(col)-minD) / binSize - 1)
+        toKey = (v) -> 
+          idx = Math.ceil((v-minD) / binSize - 1)
           idx = Math.max(0, idx)
           (idx * binSize) + minD + (binSize / 2)
 
@@ -90,8 +90,8 @@ class gg.xform.Quantize extends gg.wf.SyncExec
         [minD, maxD] = [domain[0], domain[1]]
         binRange = (maxD - minD) * 1.0
         binSize = Math.ceil(binRange / nbins)
-        toKey = (row) ->
-          time = row.get(col).getTime()
+        toKey = (v) ->
+          time = v.getTime()
           idx = Math.ceil((time-minD) / binSize - 1)
           idx = Math.max(0, idx)
           date = (idx * binSize) + minD + binSize/2
@@ -137,6 +137,7 @@ class gg.xform.GroupBy extends gg.core.XForm
       aggs: [["agg", "aggs"], {}]
       nBins: [["nbins", "bin", "n", "nbin", "bins"], 20]
 
+
     @annotate = new gg.xform.Quantize
       name: "#{@name}-quantize"
       params: 
@@ -180,6 +181,7 @@ class gg.xform.GroupBy extends gg.core.XForm
 
     cols = params.get 'cols'
     aggs = params.get 'aggs'
+
     table = table.groupby cols, aggs
     table = table.flatten()
     pairtable.left table

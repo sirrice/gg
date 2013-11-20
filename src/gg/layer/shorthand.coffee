@@ -311,7 +311,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
   compileNodes: (nodes) ->
     nodes = _.map _.compact(_.flatten nodes), (node) ->
-      if _.isSubclass node, gg.core.XForm
+      if node.compile?
         node.compile()
       else
         node

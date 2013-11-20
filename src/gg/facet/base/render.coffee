@@ -101,6 +101,7 @@ class gg.facet.base.Render extends gg.core.BForm
     for svg in md.all('svg')
       svg.plot = plotSvg
 
+    
     md
 
     # render the pane container

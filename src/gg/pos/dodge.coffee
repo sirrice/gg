@@ -19,18 +19,16 @@ class gg.pos.Dodge extends gg.core.XForm
 
   compute: (pairtable, params) ->
     table = pairtable.left()
-    console.log table.raw()
 
     counts = table.groupby ['x0', 'x1'], data.ops.Aggregate.count('count')
     nrows = counts.all 'count'
     maxGroup = _.max(nrows)
-    console.log maxGroup
 
     groups = table.partition 'group'
     ngroups = groups.nrows()
     padding = params.get 'padding'
     
-    groups = groups.each (row, idx) ->
+    groups = groups.map (row, idx) ->
       group = row.get 'table'
 
       neww = (x1, x0) -> (x1 - x0) / ngroups

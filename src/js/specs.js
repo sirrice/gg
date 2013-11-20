@@ -145,12 +145,9 @@ var geom_interval = {
 var geom_interval = {
   "layers": [
     {
-      "geom": "point", aes: {r: 'f',color: 'black'}, scales: {color: 'identity'}
-    },
-    {
       "geom": {
         "type": "rect", aes: {y:'avg'}
-      }, pos: "stack",
+      }, 
       "stat": "bin",scales: {color: 'color'}
     }
   ], 

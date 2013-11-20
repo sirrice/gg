@@ -63,6 +63,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     grid.layout w, h
 
 
+    console.log md.all '_barrier'
     # make sure we have a MD row for every facet
     xytable = data.ops.Util.cross
       'facet-x': xs
@@ -91,7 +92,6 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
       f: (x, y, set) ->
         paneC = grid.getByVal x, y
         drawC = paneC.drawC()
-
 
         if set?
           xrange = [paddingPane, drawC.w()-2*paddingPane]

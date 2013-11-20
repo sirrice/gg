@@ -71,3 +71,8 @@ class gg.util.RowWrapper
     @row.get attr
 
   has: (col, type) -> @row.has col, type
+
+
+_.mixin
+  mapToFunction: gg.util.Aesmap.mapToFunction
+  mappingToFunctions: gg.util.Aesmap.mappingToFunctions

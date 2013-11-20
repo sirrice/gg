@@ -1,4 +1,3 @@
-#<< gg/util/log
 
 # Data spec:
 #

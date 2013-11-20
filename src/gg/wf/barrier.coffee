@@ -16,34 +16,36 @@ class gg.wf.Barrier extends gg.wf.Node
     throw Error("Node not ready") unless @ready()
     compute = @params.get('compute') or @compute.bind(@)
 
-    tables = _.map @inputs, (pt, idx) ->
-      t = pt.left()
-      t.setColVal '_barrier', idx
-    mds = _.map @inputs, (pt, idx) ->
-      md = pt.right()
-      md.setColVal '_barrier', idx
+    try
+      tables = _.map @inputs, (pt, idx) ->
+        t = pt.left()
+        t.setColVal '_barrier', idx
+      mds = _.map @inputs, (pt, idx) ->
+        md = pt.right()
+        md.setColVal '_barrier', idx
 
-    table = new data.ops.Union tables
-    md = new data.ops.Union mds
-    tableset = new data.PairTable table, md
+      table = new data.ops.Union tables
+      md = new data.ops.Union mds
+      tableset = new data.PairTable table, md
 
-    compute tableset, @params, (err, tableset) =>
-      throw err if err?
-      table = tableset.left()
-      md = tableset.right()
-      table = table.partition '_barrier', 'table'
-      md = md.partition '_barrier', 'md'
-      console.log md.raw()
+      compute tableset, @params, (err, tableset) =>
+        throw err if err?
+        table = tableset.left()
+        md = tableset.right()
+        table = table.partition '_barrier', 'table'
+        md = md.partition '_barrier', 'md'
 
-      pairtable = table.join md, '_barrier' # schema: table, md, _barrier
-      pairtable.each (row) =>
-        table = row.get('table')
-        md = row.get('md') or null
-        table = table.exclude('_barrier') if table?
-        md = md.exclude('_barrier') if md?
-        idx = row.get '_barrier'
-        console.log "outputing with md.nrows = #{md.nrows()}" if md?
-        @output idx, new data.PairTable(table, md)
+        pairtable = table.join md, '_barrier' # schema: table, md, _barrier
+        pairtable.each (row) =>
+          table = row.get('table')
+          md = row.get('md') or null
+          table = table.exclude('_barrier') if table?
+          md = md.exclude('_barrier') if md?
+          idx = row.get '_barrier'
+          @output idx, new data.PairTable(table, md)
+    catch err
+      console.log err.stack
+      throw Error(err)
         
 
 class gg.wf.SyncBarrier extends gg.wf.Barrier
@@ -60,7 +62,7 @@ class gg.wf.SyncBarrier extends gg.wf.Barrier
           cb null, res
         catch err
           console.log "err in SyncBarrier #{name}"
-          console.log err.toString()
+          console.log err.stack
           cb err, null
     @params.put 'compute', makecompute(f)
         

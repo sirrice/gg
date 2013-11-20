@@ -21,14 +21,15 @@ var geoms = {
 var selected_geoms = {
   area: false,
   point: false,
-  interval: false,
+  interval: true,
   boxplot:false,
+  color: false,
   radius: false,
   line: false,
   jitter:false,
   multiline: false,
   ptinterval: false,
-  taxi: true
+  taxi: false
 
 };
 
@@ -138,7 +139,7 @@ var selected_geoms = {
     if (!specs.data) {
       specs.data = gg.data.Table.fromArray(bigdata, null, 'row')
     }
-    specs.opt = {optimize: true, guid: guid}
+    //specs.opt = {optimize: true, guid: guid}
     var plot = gg(specs);
     plot.render(ex());
     plot.on("done", function(debug) {
@@ -195,7 +196,7 @@ var selected_geoms = {
     //
     // Generate random data with float attributes: d, r, g, f, t
     //
-    var npts = 500;
+    var npts = 50;
     bigdata = _.map(_.range(0, npts), function(d) {
       g = d % 3//Math.floor(Math.random() * 3) + 1;
       f = Math.floor(Math.random() * 3);

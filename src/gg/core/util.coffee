@@ -61,7 +61,7 @@ class gg.core.FormUtil
       log "@scales called with multiple rows: #{md.nrows()}"
     if md.nrows() == 0 
       log "@scales called with no md rows"
-      log pt.left()
+      log pt.left().raw()
       throw Error "@scales called with no md rows"
     unless md.has 'scalesconfig'
       md = md.setColVal 'scalesconfig', gg.scale.Config.fromSpec({})

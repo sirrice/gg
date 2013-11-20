@@ -1,7 +1,7 @@
 #<< gg/pos/position
 
 
-class gg.pos.Interpolate extends gg.pos.Position
+class gg.pos.Interpolate extends gg.core.XForm
   @ggpackage = "gg.pos.Interpolate"
   @aliases = ["interpolate"]
 

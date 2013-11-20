@@ -40,7 +40,8 @@
     "express": ">=3.x",
     "jsdom": ">=0.7.0",
     "events": ">=0.5.0",
-    "ggdata": ">=0.0.5"
+    "ggdata": ">=0.0.5",
+    "ggutil": ">=0.0.1"
   },
   "directories": {
     "doc": "doc",

@@ -107,29 +107,23 @@ class gg.facet.base.Facets
       xcol = params.get 'x'
       ycol = params.get 'y'
       log "x/ycols: #{xcol}/#{ycol}" 
-      tmapping = 
-        'facet-x': xcol
-        'facet-y': ycol
-      tmapping = _.mappingToFunctions t, tmapping
-      t = t.project tmapping, yes
-
-      pt.left t
-      pt = pt.ensure ['facet-x' ,'facet-y']
-      md = pt.right()
-
-      mmapping = [
+      mapping = [
         {
-          alias: ['facet-keys', 'facet-id']
+          alias: ['facet-keys', 'facet-id', 'facet-x', 'facet-y']
           f: (xfacet, yfacet) -> 
+            'facet-x': xfacet
+            'facet-y': yfacet
             'facet-keys': "key-#{xfacet}-#{yfacet}"
             'facet-id': "facet-#{xfacet}-#{yfacet}"
           type: data.Schema.ordinal
-          cols: ['facet-x', 'facet-y']
+          cols: [xcol, ycol]
         }
       ]
-      md = md.project mmapping, yes
-      pt.right md
-      pt
+      t = t.project mapping, yes
+
+      pairtable.left t
+      pairtable = pairtable.ensure ['facet-x' ,'facet-y', 'facet-id', 'facet-keys']
+      pairtable
 
     gg.wf.SyncBarrier.create f, @splitParams, 'facet-labeler'
 

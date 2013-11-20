@@ -37,7 +37,7 @@ class gg.wf.Stdout extends gg.wf.SyncBlock
     log "# rows: #{table.nrows()}"
     log "Schema: #{schema.toString()}"
     table.each (row, idx) ->
-      if idx % blockSize == 0
+      if (idx % blockSize) == 0
         pairs = _.map cols, (col) -> [col, row.get(col)]
         log JSON.stringify(pairs)
 
@@ -63,7 +63,7 @@ class gg.wf.Scales extends gg.wf.SyncBlock
 
   compute: (pairtable, params) ->
     md = pairtable.right()
-    md.fastEach (row) =>
+    md.each (row) =>
       layer = row.get 'layer'
       scale = row.get 'scales'
       gg.wf.Scales.print scale, layer, @log

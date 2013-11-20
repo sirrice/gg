@@ -22,8 +22,7 @@ class gg.scale.train.Master extends gg.core.BForm
     md = pairtable.right()
 
     if scalesTrain is 'fixed'
-      sets = md.all 'scales'
-      sets = _.uniq sets, false, (set) -> set.id
+      sets = _.uniq md.all 'scales'
       masterSet = new gg.scale.MergedSet sets
       #@expandDomains masterScales
 

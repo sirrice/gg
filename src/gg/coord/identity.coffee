@@ -31,7 +31,7 @@ class gg.coord.Identity extends gg.coord.Coordinate
       alias: col,
       f: transform
       type: data.Schema.numeric
-      col: col
+      cols: col
     }
     table = table.project mapping, yes
     pt.left table

@@ -1,6 +1,6 @@
-#<< gg/core/xform
+#<< gg/core/bform
 
-class gg.geom.reparam.Rect extends gg.core.XForm
+class gg.geom.reparam.Rect extends gg.core.BForm
   @ggpackage = "gg.geom.reparam.Rect"
 
   parseSpec: ->
@@ -14,18 +14,19 @@ class gg.geom.reparam.Rect extends gg.core.XForm
     md = pairtable.right()
     scales = md.any 'scales'
     yscale = scales.scale 'y', data.Schema.numeric
+    xscale = scales.scale 'x', data.Schema.unknown
     padding = 1.0 - params.get 'padding'
 
-    groups = table.partition 'group'
-    width = null
+    groups = table.partition ['facet-id', 'group', 'layer']
+    width = xscale.range()[1] - xscale.range()[0]
     mindiff = null
     groups.each (row) ->
       # XXX: assume xs is numerical!!
-      array = row.get 'table'
-      xs = _.uniq(_.map(array, (o) -> o['x'])).sort ((a,b) -> a-b)
+      xs = row.get('table').all('x')
+      xs = _.uniq(xs).sort ((a,b) -> a-b)
       diffs = _.map _.range(xs.length-1), (idx) ->
         xs[idx+1]-xs[idx]
-      diffs = [1] unless diffs.length > 0
+      return unless diffs.length > 0
       mindiff = _.mmin(diffs) or 1
       mindiff *= padding
       subwidth = Math.max(1,mindiff)
@@ -40,6 +41,12 @@ class gg.geom.reparam.Rect extends gg.core.XForm
 
 
     mapping = [
+      {
+        alias: 'width'
+        f: -> width
+        type: data.Schema.numeric
+        cols: []
+      }
       {
         alias: 'x0'
         f: (x0, x) -> if x0? then x0 else x-width/2.0

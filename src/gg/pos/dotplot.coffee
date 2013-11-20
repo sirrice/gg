@@ -47,7 +47,7 @@ class gg.pos.DotPlot extends gg.core.XForm
     prevx = null
     shifted = no
 
-    t.fastEach (row) ->
+    t.each (row) ->
       curx = row.get 'x'
       unless _.isValid curx
         xs.push curx

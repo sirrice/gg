@@ -139,13 +139,13 @@ class gg.scale.Set
 
     else
       udt = @userdefinedType aes
-      if (udt != type) and (udt != data.Schema.unknown) and _.size(@scales[aes]) > 0
+      if (udt != type) and (udt != data.Schema.unknown)
         @log.warn "downcasting requested scale type from #{type} -> #{@userdefinedType aes} because user defined"
-        _.values(@scales[aes])[0]
-      else
-        unless type of @scales[aes]
-          @scales[aes][type] = @factory.scale aes, type
-        @scales[aes][type]
+        type = udt
+
+      unless type of @scales[aes]
+        @scales[aes][type] = @factory.scale aes, type
+      @scales[aes][type]
 
 
   scalesList: ->
@@ -207,7 +207,7 @@ class gg.scale.Set
         @log "col #{col} not in table"
         return table
 
-      if _.isSubclass scale, gg.scale.Identity
+      if _.isType scale, gg.scale.Identity
         @log "scale is identity."
         return table
 
@@ -246,7 +246,6 @@ class gg.scale.Set
   #        e.g., median, q1, q3 should use 'y' position scale
   apply: (table,  posMapping={}) ->
     f = (table, scale, col) =>
-      str = scale.toString()
       mapping = [
         {
           alias: col
@@ -256,6 +255,8 @@ class gg.scale.Set
       ]
       if table.has col
         table = table.mapCols mapping
+
+      str = scale.toString()
       @log "apply: #{col}(#{scale.id}):\t#{str}\t#{table.nrows()} rows"
       table
 

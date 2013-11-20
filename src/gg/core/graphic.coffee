@@ -146,7 +146,7 @@ class gg.core.Graphic extends events.EventEmitter
     if _.isArray input
       table = data.RowTable.fromArray input
       cb table
-    else if _.isSubclass input, data.Table
+    else if _.isType input, data.Table
       table = input
       cb table
     else if _.isString input
@@ -171,7 +171,7 @@ class gg.core.Graphic extends events.EventEmitter
     if @options.optimize
       optimizer = new gg.wf.Optimizer [
         new gg.wf.rule.RPCify
-        new gg.wf.rule.RmDebug
+        #new gg.wf.rule.RmDebug
       ]
       if @options.guid?
         optimizer.rules.push new gg.wf.rule.Cache

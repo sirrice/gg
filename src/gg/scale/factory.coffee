@@ -29,7 +29,7 @@ class gg.scale.Factory
       else
         gg.scale.Scale.defaultFor aes, type
 
-    scale.type = type if _.isSubclass scale, gg.scale.Identity
+    scale.type = type if _.isType scale, gg.scale.Identity
     scale
 
   scales: (layerIdx) -> new gg.scale.Set @

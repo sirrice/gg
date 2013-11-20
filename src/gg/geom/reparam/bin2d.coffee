@@ -12,7 +12,7 @@ class gg.geom.reparam.Bin2D extends gg.geom.reparam.Rect
     yscale = scales.scale 'y', data.Schema.numeric
     padding = 1.0 - params.get("padding")
 
-    groups = table.partition 'group'
+    groups = table.partition ['facetid', 'layer', 'group']
     width = null
     mindiff = null
     _.each groups, (group) ->

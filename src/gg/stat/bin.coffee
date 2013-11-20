@@ -29,7 +29,6 @@ class gg.stat.Bin2D extends gg.xform.GroupBy
   @ggpackage = "gg.stat.Bin2D"
   @aliases = ['2dbin', 'bin2d']
 
-
   parseSpec: ->
     defaults = 
       nBins: 20

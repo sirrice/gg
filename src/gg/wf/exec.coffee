@@ -32,42 +32,36 @@ class gg.wf.Exec extends gg.wf.Node
     # subclass connects input partition rows to output partition rows
     # connect output to partition rows
 
-    tableset = @inputs[0]
-    keys = params.get 'keys'
-    keys ?= tableset.sharedCols()
-    partitions = tableset.partition(keys)
+    try
+      tableset = @inputs[0]
+      keys = params.get 'keys'
+      keys ?= tableset.sharedCols()
+      tableset = tableset.ensure keys
+      partitions = tableset.partition(keys)
 
-    iterator = (pt, cb) ->
-      try
-        compute pt, params, cb
-      catch err
-        console.log err.message
-        cb err, null
+      iterator = (pt, cb) ->
+        try
+          compute pt, params, cb
+        catch err
+          console.log err.message
+          cb err, null
 
+      async.map partitions, iterator, (err, pairtables) =>
+        throw Error(err) if err?
+        pairtables = _.map pairtables, (pt) ->
+          md = pt.right()
+          t = pt.left()
+          for col in keys
+            v = md.any col
+            t = t.setColVal col, v
+          new data.PairTable t, md
 
-    ###
-    if keys?
-      @log "partitioning on custom cols: #{keys}"
-      partitions = tableset.partition keys
-    else
-      keys = tableset.sharedCols()
-      partitions = tableset.fullPartition()
-    @log "created #{partitions.length} partitions on cols #{keys}"
-    ###
-
-    async.map partitions, iterator, (err, pairtables) =>
-      throw Error(err) if err?
-      pairtables = _.map pairtables, (pt) ->
-        md = pt.right()
-        t = pt.left()
-        for col in keys
-          v = md.any col
-          t = t.setColVal col, v
-        new data.PairTable t, md
-
-      table = new data.ops.Union _.map(pairtables, (pt) -> pt.left())
-      md = new data.ops.Union _.map(pairtables, (pt) -> pt.right())
-      @output 0, new data.PairTable(table, md)
+        table = new data.ops.Union _.map(pairtables, (pt) -> pt.left())
+        md = new data.ops.Union _.map(pairtables, (pt) -> pt.right())
+        @output 0, new data.PairTable(table, md)
+    catch err
+      console.log err.stack
+      throw Error(err)
 
 
 
@@ -93,7 +87,7 @@ class gg.wf.SyncExec extends gg.wf.Exec
         cb null, res
       catch err
         console.log("error in syncexec: #{name}")
-        console.log(err.message)
+        console.log err.stack
         cb err, null
     @params.put 'compute', compute
 

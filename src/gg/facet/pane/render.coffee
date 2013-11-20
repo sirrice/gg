@@ -266,11 +266,13 @@ class gg.facet.pane.Svg extends gg.core.BForm
     els = {}
     partitions = md.partition('facet-id').all('table')
     els = _.o2map partitions, (p) => 
-      p = data.Table.fromArray p, md.schema.clone()
       facetid = p.any 'facet-id'
       svg = @renderFacetPane p, params
       if svg? 
         [facetid, svg] 
+    start = Date.now()
+    console.log md.raw()
+    console.log "cost = #{Date.now() - start}"
 
     #
     # Second pass sets ['svg'].paneSvg for each data

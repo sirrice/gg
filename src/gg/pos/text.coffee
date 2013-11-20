@@ -1,6 +1,6 @@
 #<< gg/pos/position
 
-class gg.pos.Text extends gg.pos.Position
+class gg.pos.Text extends gg.core.XForm
   @ggpackage = "gg.pos.Text"
   @aliases = ["text"]
 
@@ -24,7 +24,7 @@ class gg.pos.Text extends gg.pos.Position
     attrs = ['x', 'y', 'text']
 
     # box: [[x0, x1], [y0, y1]]
-    boxes = table.fastEach (row) ->
+    boxes = table.each (row) ->
       [
         [row.get('x0'), row.get('x1')]
         [row.get('y0'), row.get('y1')]

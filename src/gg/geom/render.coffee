@@ -52,7 +52,6 @@ class gg.geom.Render extends gg.core.XForm
       write md.any('facet-y'), {dy: "2em"}
       write md.any(table.nrows()), {dy: "3em"}
 
-
     geoms = svg.selectAll(".geom")
 
     # Connect events
@@ -62,8 +61,8 @@ class gg.geom.Render extends gg.core.XForm
         .on("mouseout", () -> )
 
     if @constructor.brush?
-      brushEventName = "brush-#{md.get 0, Facets.facetId}"
-      event = md.get 0, "event"
+      brushEventName = "brush-#{md.any Facets.facetId}"
+      event = md.any "event"
       event.on brushEventName, @constructor.brush(geoms)
 
     pairtable
