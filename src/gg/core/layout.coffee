@@ -5,13 +5,13 @@ class gg.core.Layout extends gg.core.BForm
 
   compute: (pt, params) ->
     options = params.get 'options'
-    c = new gg.core.Bound 0, 0, options.w, options.h
+    c = new gg.util.Bound 0, 0, options.w, options.h
     [w,h] = [c.w(), c.h()]
     fw = w
     fh = h
     titleH = 0
     titleC = null
-    facetC = new gg.core.Bound 0, 0, w, h
+    facetC = new gg.util.Bound 0, 0, w, h
 
 
     @log options
@@ -22,7 +22,7 @@ class gg.core.Layout extends gg.core.BForm
           class: "graphic-title"
           padding: 2
         titleH = textSize.h * 1.1
-        titleC = new gg.core.Bound w / 2, 0, w/2, titleH
+        titleC = new gg.util.Bound w / 2, 0, w/2, titleH
         facetC.y0 += titleH
 
     # TODO: layout guides

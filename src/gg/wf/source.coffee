@@ -21,6 +21,7 @@ class gg.wf.Source extends gg.wf.Node
 
     compute pt, params, (err, pairtable) =>
       @error err if err?
+      pairtable = pairtable.ensure []
       @output 0, pairtable
 
 

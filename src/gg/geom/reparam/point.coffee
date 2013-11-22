@@ -52,6 +52,7 @@ class gg.geom.reparam.Point extends gg.core.XForm
         cols: ['x0', 'x', 'r']
       }
     ]
+    mapping = _.reject mapping, (desc) -> table.has desc.alias
     table = table.project mapping, yes
     pairtable.left table
     pairtable

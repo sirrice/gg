@@ -29,14 +29,19 @@ makeTable = ->
   pt = new data.PairTable table
   pt = pt.ensure ['facet-x', 'facet-y']
   lc = 
-    titleC: new gg.core.Bound
-    facetC: new gg.core.Bound 0, 0, 500, 500
-    baseC: new gg.core.Bound 0, 0, 500, 500
+    titleC: new gg.util.Bound
+    facetC: new gg.util.Bound 0, 0, 500, 500
+    baseC: new gg.util.Bound 0, 0, 500, 500
+
   md = pt.right()
   md = md.setColVal 'lc', lc
   md = md.setColVal 'svg', 0
   pt = new data.PairTable pt.left(), md
-  gg.core.FormUtil.ensureScales pt, null, gg.util.Log.logger('test')
+  try
+    pt = gg.core.FormUtil.ensureScales pt, null, gg.util.Log.logger('test')
+    pt
+  catch err
+    console.log err.stack
 
 suite.addBatch
   "Grid Layout":

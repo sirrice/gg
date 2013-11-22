@@ -14,7 +14,6 @@ class gg.wf.Multicast extends gg.wf.Node
     throw Error("Node not ready") unless @ready()
 
     pairtable = @inputs[0]
-    pstore = @pstore()
     for idx in [0...@nChildren]
       @output idx, new data.PairTable(pairtable.left(), pairtable.right())
 
@@ -32,7 +31,6 @@ class gg.wf.NoCopyMulticast extends gg.wf.Node
     throw Error("Node not ready") unless @ready()
 
     pairtable = @inputs[0]
-    pstore = @pstore()
     #ps = pairtable.partition 'layer'
 
     for idx in [0...@nChildren]

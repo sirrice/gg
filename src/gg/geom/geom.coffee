@@ -5,9 +5,6 @@
 
 
 
-
-
-
 # Geoms are a holding house for tree types of XForms (not an XForm itself):
 #
 # 1) Schema Mapping -- from stats outputs to geometry-expected schemas
@@ -49,29 +46,22 @@ class gg.geom.Geom
 
   # { type:, aes:, param:}
   parseSpec: ->
-    @render = gg.geom.Render.fromSpec @spec.type
+    @render = gg.geom.Render.fromSpec @spec
     @map = gg.xform.Mapper.fromSpec @spec
 
   # @return mapping of attribute -> aesthetic
+  # this should be deprecated once prov "works"
   posMapping: -> {}
-
-  scaleConfigs: -> {}
-
 
   @fromSpec: (layer, spec) ->
     spec = _.clone spec
-
     klasses = @getKlasses()
+    unless spec.type of klasses
+      throw Error "geom #{spec.type} not found"
 
-    klass = klasses[spec.type] or gg.geom.Point
-    @log "fromSpec\t#{JSON.stringify spec}"
-    @log "fromSpec: klass: #{spec.type} -> #{klass.name}"
-
+    klass = klasses[spec.type] 
     spec.name = klass.name unless spec.name?
-    geom = new klass layer, spec
-
-    geom
-
+    new klass layer, spec
 
 
   @klasses = []
@@ -80,7 +70,7 @@ class gg.geom.Geom
     @klasses.push klass
 
   @getKlasses: ->
-    klasses = @klasses.concat [
+    klasses = _.compact @klasses.concat [
         gg.geom.Point
         gg.geom.Line
         gg.geom.Path

@@ -1,10 +1,11 @@
 #<< gg/scale/factory
 #
 
+# Scales specify how table columns should be
+# interpreted.
 #
-#
-# Manage a graphic/pane/layer's set of scales
-# a Wrapper around {aes -> {type -> scale} } + utility functions
+# Any given layer/facet should have a single scale
+# This manages a set of scales { aes -> scale } + utility functions
 #
 # lazily instantiates scale objects as they are requests.
 # uses internal scalesFactory for creation
@@ -15,7 +16,6 @@ class gg.scale.Set
   constructor: (@factory=null) ->
     @factory ?= new gg.scale.Factory
     @scales = {}
-    @spec = {}
     @id = gg.scale.Set::_id
     gg.scale.Set::_id += 1
 
@@ -24,7 +24,6 @@ class gg.scale.Set
 
   clone: () ->
     ret = new gg.scale.Set @factory
-    ret.spec = _.clone @spec
     for s in @scalesList()
       ret.set s.clone()
     ret
@@ -32,7 +31,6 @@ class gg.scale.Set
   toJSON: ->
     factory: _.toJSON @factory
     scales: _.toJSON @scales
-    spec: _.toJSON @spec
 
   @fromJSON: (json) ->
     factory = _.fromJSON json.factory
@@ -42,120 +40,54 @@ class gg.scale.Set
     set
 
 
-  exclude: (aesthetics) ->
-    _.each aesthetics, (aes) =>
-      if aes of @scales
-        delete @scales[aes]
-    @
+  cols: -> _.keys @scales
 
-  aesthetics: ->
-    keys = _.keys @scales
-    _.uniq _.compact _.flatten keys
+  all: -> _.values @scales
 
   contains: (aes, type=null, posMapping={}) ->
     aes = posMapping[aes] or aes
-    if aes of @scales
-      unless type?
-        return true
-      unless _.size(@scales[aes]) > 0
-        unless type is data.Schema.unknown
-          return true
-      if type of @scales[aes]
-        return true
-    false
+    aes of @scales
   has: (aes, type, posMapping) -> @contains aes, type, posMapping
 
-  types: (aes, posMapping={}) ->
+  type: (aes, posMapping={}) ->
     aes = posMapping[aes] or aes
     if aes of @scales
-      types = _.keys(@scales[aes])
-      types = _.map types, (v) -> parseInt(v)
-      types.filter (t) -> _.isNumber(t) and not _.isNaN(t)
-      types
+      @scales[aes].type
     else
       []
 
   userdefinedType: (aes) -> @factory.type aes
 
-  getAll: (aess, posMapping={}) ->
-    ret = []
-    for aes in aess
-      for type in @types aes, posMapping
-        ret.push @get(aes, type)
-    ret
-
-
-
 
   # @param type.  the only time type should be null is when
   #        retrieving the "master" scale to render for guides
-  scale: (aesOrScale, type=null, posMapping={}) ->
+  scale: (aesOrScale, type, posMapping={}) ->
     if _.isString aesOrScale
-      @get aesOrScale, type, posMapping
+      @get aesOrScale, posMapping
     else if aesOrScale?
       @set aesOrScale
 
   set: (scale) ->
-    if scale.type is data.Schema.unknown
+    if scale.type is data.Schema.unknown and not _.isType(scale, gg.scale.Identity)
       throw Error("Storing scale type unknown: #{scale.toString()}")
-    aes = scale.aes
-    @scales[aes] = {} unless aes of @scales
-    @scales[aes][scale.type] = scale
+    @scales[scale.aes] = scale
     scale
 
 
   # Combines fetching and creating scales
   #
-  get: (aes, types, posMapping={}) ->
-    unless types?
-      throw Error("type cannot be null: #{aes}")
-    types = _.reject _.flatten([types]), _.isNull
-    unless types.length > 0
-      throw Error("type cannot be empty: #{aes}")
-
-
+  get: (aes, type, posMapping={}) ->
     aes = 'x' if aes in gg.scale.Scale.xs
     aes = 'y' if aes in gg.scale.Scale.ys
     aes = posMapping[aes] or aes
-    @scales[aes] = {} unless aes of @scales
 
-    type = null
-    for t in types
-      if @has aes, t
-        type = t
-        break
-    type ?= _.last types
-
-
-    if type is data.Schema.unknown
-      vals = _.values @scales[aes]
-      if vals.length > 0
-        vals[0]
-      else
-        @log "get: creating new scale #{aes} #{type}"
-        # in the future, return default scale?
-        @set @factory.scale aes, type
-        #throw Error("gg.ScaleSet.get(#{aes}) doesn't have any scales")
-
-    else
+    unless aes of @scales
       udt = @userdefinedType aes
-      if (udt != type) and (udt != data.Schema.unknown)
-        @log.warn "downcasting requested scale type from #{type} -> #{@userdefinedType aes} because user defined"
-        type = udt
+      type = udt if udt?
+      @scales[aes] = @factory.scale aes, type
+    @scales[aes]
 
-      unless type of @scales[aes]
-        @scales[aes][type] = @factory.scale aes, type
-      @scales[aes][type]
-
-
-  scalesList: ->
-    _.flatten _.map(@scales, (map, aes) -> _.values(map))
-
-
-  resetDomain: ->
-    _.each @scalesList(), (scale) =>
-      @log "resetDomain #{scale.toString()}"
-      scale.resetDomain()
+  scalesList: -> _.values @scales
 
   # for scales in this set, merge any that can be found
   # in scales argument
@@ -163,27 +95,36 @@ class gg.scale.Set
   # @param scales a gg.scale.Set or gg.scale.MergedSet object
   #
   merge: (scales) ->
-    for col, colscales of @scales
+    for col, s of @scales
       continue if col is 'text'
+      continue unless scales.contains col, s.type, s.constructor.name
+      continue if _.isType s, gg.scale.Identity
 
-      for type, s of colscales
-        continue unless scales.contains(col, type, s.constructor.name)
-        continue if _.isType s, gg.scale.Identity
-
-        other = scales.get col, type, s.constructor.name
-        oldd = s.domain()
-        s.mergeDomain other.domain()
-        @log "merge: #{s.domainUpdated} #{col}.#{s.id}:#{type}: #{oldd} + #{other.domain()} -> #{s.domain()}"
+      other = scales.get col, s.type, s.constructor.name
+      d = s.domain()
+      s.mergeDomain other.domain()
+      @log "merge: #{s.domainUpdated} #{col}.#{s.id}:#{s.type}: #{d} + #{other.domain()} -> #{s.domain()}"
 
     @
 
+
+
+
+
+  #############################################################################
+  #
+  # The following are methods to _apply_ a scale set to a data table
+  #
+  #############################################################################
+
+
+
+  # general framework.  for each column in a table, get or create its scale and call 
+  # a user defined function
   useScales: (table, posMapping={}, f) ->
     for col in table.cols()
-      if @contains col, null, posMapping
-        truecol = posMapping[col] or col
-        tabletype = table.schema.type col
-        unknown = data.Schema.unknown
-        scale = @scale col, [tabletype, unknown], posMapping
+      if @has col, null, posMapping
+        scale = @scale col, null, posMapping
       else
         tabletype = table.schema.type col
         @log "scaleset doesn't contain #{col} creating using type #{tabletype}"
@@ -246,13 +187,12 @@ class gg.scale.Set
   #        e.g., median, q1, q3 should use 'y' position scale
   apply: (table,  posMapping={}) ->
     f = (table, scale, col) =>
-      mapping = [
-        {
-          alias: col
-          f: (v) -> scale.scale v
-          type: data.Schema.unknown
-        }
-      ]
+      mapping = [ {
+        alias: col
+        f: (v) -> scale.scale v
+        type: data.Schema.unknown
+      } ]
+
       if table.has col
         table = table.mapCols mapping
 
@@ -330,8 +270,7 @@ class gg.scale.Set
   labelFor: -> null
 
   toString: (prefix="") ->
-    arr = _.flatten _.map @scales, (map, col) =>
-      _.map map, (scale, type) => "#{prefix}#{col}: #{scale.toString()}"
+    arr = _.map @scales, (s, col) -> "#{prefix}#{col}: #{s.toString()}"
     arr.join('\n')
 
 

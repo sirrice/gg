@@ -4,7 +4,7 @@ class gg.pos.Position
   @ggpackage = "gg.pos.Position"
 
   @klasses: ->
-    klasses = [
+    klasses = _.compact [
       gg.pos.Identity
       gg.pos.Shift
       gg.pos.Jitter
@@ -16,30 +16,12 @@ class gg.pos.Position
     ]
     ret = {}
     _.each klasses, (klass) ->
-      if _.isArray klass.aliases
-        _.each klass.aliases, (alias) -> ret[alias] = klass
-      else
-        ret[klass.aliases] = klass
+      for alias in _.flatten [klass.aliases]
+        ret[alias] = klass
     ret
 
   @fromSpec: (spec) ->
     klasses = gg.pos.Position.klasses()
-    if _.isString spec
-      type = spec
-      spec = {}
-    else
-      type = _.findGood [spec.type, spec.pos, "identity"]
+    klass = klasses[spec.type]
+    new klass spec
 
-    klass = klasses[type] or gg.pos.Identity
-
-    @log "fromSpec: #{klass.name}\tspec: #{JSON.stringify spec}"
-
-    ret = new klass spec
-    ret
-
-class gg.pos.Identity extends gg.core.XForm
-  @ggpackage = "gg.pos.Identity"
-  @aliases = ["identity"]
-
-  compute: (pairtable, params) -> pairtable
-  @compile: -> []

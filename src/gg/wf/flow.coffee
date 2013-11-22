@@ -66,7 +66,6 @@ class gg.wf.Flow extends events.EventEmitter
     inportsMap = _.o2map @nodes(), (node) -> [node.id, 0]
     outportsMap =_.o2map @nodes(), (node) -> [node.id, 0]
     @portGraph = new gg.util.Graph (o) -> "#{o.n.id}-#{o.p}"
-    pstore = gg.prov.PStore.get @
 
     # add a nonbarrier -> barrier* -> nonbarrier path to the port graph
     connectPath = (path) =>
@@ -79,7 +78,6 @@ class gg.wf.Flow extends events.EventEmitter
           f = {n: from, p: outport}
           t = {n: to, p: inport}
           @portGraph.connect f, t
-          pstore.connect f, t
 
           outportsMap[from.id] += 1
           inportsMap[to.id] += 1

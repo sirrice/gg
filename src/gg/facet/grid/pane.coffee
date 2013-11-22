@@ -31,7 +31,7 @@ class gg.facet.grid.PaneGrid
         bXAxis = showXAxis and yidx >= nys-1
         bYAxis = showYAxis and xidx is 0
         new gg.facet.pane.Container(
-          gg.core.Bound.empty(),
+          gg.util.Bound.empty(),
           xidx,
           yidx,
           x,

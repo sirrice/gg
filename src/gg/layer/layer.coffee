@@ -8,16 +8,12 @@ class gg.layer.Layer
 
 
   constructor: (@g, @spec={}) ->
-    # which index in the specification
     @layerIdx = @spec.layerIdx if @spec.layerIdx?
-    @type = "layer"
-    @name = _.findGood [@spec.name, "node-#{@id}"]
-
     @log = gg.util.Log.logger @constructor.ggpackage, "Layer-#{@layerIdx}"
 
     @parseSpec()
 
-  parseSpec: -> null
+  parseSpec: -> 
 
   @fromSpec: (g, spec) ->
     if _.isArray spec

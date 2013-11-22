@@ -1,44 +1,6 @@
 #<< gg/wf/node
 
-# This class is a gg.core.XForm in signature only (ala duck typing) --
-#
-# Any XForm can have mappers but not the other way around.
-#
-# gg.xform.Mapper performs a schema transformation.  It's spec is:
-#
-# {
-#   name: STRING
-#   aes: {
-#     target-col-name: MAPSPEC
-#   }
-# }
-#
-# or 
-# 
-# { 
-#   name: STRING
-#   params:
-#     aes: 
-#       target-col-name: MAPSPEC
-#  }
-#
-# MAPSPEC is:
-#
-# 1) attribute name
-# 2) object of [target-col-name: MAPSPEC] pairs
-# 3) function: (row) -> object
-# 4) annotated function: 
-#    {
-#     f: (args...) ->
-#     args: ["attr", ...., "attr"]
-#    }
-#    args is a list of table columns passed as arguments to f
-# 5) "{ ECMAPSCRIPT }" will use eval() to transform into function
-#
-# 
-# Provenance mappings can be automatically extracted from MAPSPECs 
-# 1-4 and must be foresaken for 5
-#
+
 class gg.xform.Mapper extends gg.wf.SyncExec
   @ggpackage = "gg.xform.Mapper"
   @log = gg.util.Log.logger @ggpackage, 'map'
@@ -48,76 +10,49 @@ class gg.xform.Mapper extends gg.wf.SyncExec
   ]
 
   parseSpec: ->
-    @params.ensureAll
-      mapping: [gg.xform.Mapper.attrs, {}]
-      inverse: [[], @spec.inverse or {}]
-    #@params.ensure 'klassname', [], @constructor.ggpackage
+    @params.put 'aes', @spec.aes
     super
 
   compute: (pt, params) ->
     table = pt.left()
-    mapping = params.get 'mapping'
+    aes = params.get 'aes'
 
-    functions = @constructor.mappingToFunctions table, mapping
+    functions = _.mappingToFunctions table, aes
     table = table.project functions, yes
     pt.left table
+
     if 'group' in _.map(functions, (desc)->desc.alias)
       pt = pt.ensure ['group']
     pt
 
-  @mappingToFunctions: (table, mapping) ->
-    @log "transform: #{JSON.stringify mapping}"
-    @log "table:     #{JSON.stringify table.schema.toString()}"
+  # extract/infer spec for grouping
+  #
+  # e.g., if "group" is not specified but "fill" is mapped and is of type categorical or identity, 
+  #       then infer as a group
+  #
+  @groupSpec: (aes) ->
+    keys = []
+    desc = null
+    groupable = {}
 
-    groupable = null
-    if 'group' of mapping
-      groupable = mapping['group']
-      unless _.isObject groupable
-        groupable = {}
-      mapping = _.omit mapping, 'group'
+    if 'group' of aes 
+      groupable = aes['group']
+      keys = ['group']
     else
-      allcols = _.keys mapping
-      cols = _.filter allcols, (c) -> gg.core.Aes.groupable c
-      if cols.length > 0
-        groupable = _.pick mapping, cols
-    @log "groupable: #{JSON.stringify groupable}"
+      keys = _.filter _.keys(aes), gg.core.Aes.groupable
+      if keys.length > 0
+        groupable = _.pick aes, keys
 
-    functions = _.mappingToFunctions table, mapping
-
-    if groupable?
-      gFuncs = _.mappingToFunctions table, groupable
-      gFuncs = data.ops.Project.normalizeMappings gFuncs, table.cols()
-      groupf = ((gf) ->
-        (row, idx) ->
-          _.o2map gf, (desc) -> 
-            v = desc.f row, idx
-            [desc.alias, v]
-        )(gFuncs)
-      functions.push {
-        alias: 'group'
-        f: groupf
-        type: data.Schema.object
-        cols: '*'
-      }
-
-    functions
+    {
+      group: groupable
+      cols: keys
+    }
 
   @fromSpec: (spec) ->
-    spec = _.clone spec
-    mapping = _.findGoodAttr spec, gg.xform.Mapper.attrs, null
-    @log "fromSpec: #{JSON.stringify mapping}"
-
-    unless mapping? and _.size(mapping) > 0
-      return null 
-
-    # aes should be the mapping
-    inverse = spec.inverse
-    unless spec.inverse?
-      inverse = _.o2map mapping, (v,k) -> [v, k]
-    spec.params = 
-      aes: mapping
-      inverse: inverse
-
+    aes = spec.aes
+    @log "fromSpec: #{JSON.stringify aes}"
+    unless aes? and _.size(aes) > 0
+      return null
 
     new gg.xform.Mapper spec
 

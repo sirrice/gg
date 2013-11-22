@@ -14,10 +14,19 @@ class gg.pos.Shift extends gg.core.XForm
       yShift: _.findGood [@spec.y, @spec.amount, 10]
 
   compute: (pairtable, params) ->
-    map = [
-      {alias: 'x', f: (v) -> v + params.get('xShift')}
-      {alias: 'y', f: (v) -> v + params.get('yShift')}
-    ]
+    table = pairtable.left()
+    xshift = params.get 'xShift'
+    yshift = params.get 'yShift'
+    xcols = _.filter gg.scale.Scale.xs, (col) -> table.has col
+    ycols = _.filter gg.scale.Scale.ys, (col) -> table.has col
+    map = []
+    map.concat _.map(xcols, (col) ->
+      {alias: col, f: (v) -> v + xshift}
+    )
+    map.concat _.map(ycols, (col) ->
+      {alias: col, f: (v) -> v + yshift}
+    )
+
     table = pairtable.left().mapCols map
     pairtable.left table
     pairtable

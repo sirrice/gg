@@ -11,9 +11,7 @@ class gg.coord.Identity extends gg.coord.Coordinate
     md = pt.right()
     schema = table.schema
     scales = md.any 'scales'
-    ytype = data.Schema.unknown
-    ytype = schema.type('y') if schema.has 'y'
-    yscale = scales.get 'y', ytype
+    yscale = scales.get 'y'
 
     origscale = yscale.clone()
     yRange = origscale.range()

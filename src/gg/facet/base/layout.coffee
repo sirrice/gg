@@ -33,24 +33,11 @@ class gg.facet.base.Layout extends gg.core.BForm
       options: [[], {}]
 
 
-
-  facetVals: (md) ->
-    Facets = gg.facet.base.Facets
-    _.uniq(
-      _.zip(md.all('facet-x'), md.all('facet-y')),
-      false,
-      JSON.stringify)
-
-
   # layout facets
   # layout panes
-  getTitleHeight: (params) ->
-    css = {}
-    _.exSize(css).h# + params.get('paddingPane')
-
+  getTitleHeight: (params, css={}) -> _.exSize(css).h
   getMaxYText: (md) -> @getMaxText md, 'y'
   getMaxYText: (md) -> @getMaxText md, 'y'
-
 
   getMaxText: (md, aes) ->
     text = '100'
@@ -78,7 +65,7 @@ class gg.facet.base.Layout extends gg.core.BForm
     options = params.get 'options'
     container = lc.facetC
     [w, h] = [container.w(), container.h()]
-    Bound = gg.core.Bound
+    Bound = gg.util.Bound
 
     xs = _.uniq md.all 'facet-x'
     ys = _.uniq md.all 'facet-y'
@@ -156,7 +143,7 @@ class gg.facet.base.Layout extends gg.core.BForm
       yFacetLabelC = null
       xAxisLabelC = null
       yAxisLabelC = null
-      plotC = new gg.core.Bound 0, 0, w, h
+      plotC = new Bound 0, 0, w, h
 
     lc.background = container.clone()
     lc.xFacetLabelC = xFacetLabelC
@@ -171,141 +158,11 @@ class gg.facet.base.Layout extends gg.core.BForm
     md
 
 
-  # compute actual pane sizes
-  # constraints:
-  # 1) label and axis heights are fixed (labelHeight)
-  # 2) panes all have same height and width
-  # 3) total height/width of panes + paddings + label + axes
-  #    is equal to container.w()/h()
-  computePaneSizes: (grid, w, h, nxs, nys) ->
-    # compute available w/h space for panes
-    nonPaneWs = _.times nys, ()->0
-    nonPaneHs = _.times nxs, ()->0
-    _.each grid, (paneCol, xidx) ->
-      _.each paneCol, (pane, yidx) ->
-        return unless pane?
-        dx = pane.labelHeight*pane.bYFacet+pane.yAxisW*pane.bYAxis
-        dy = pane.labelHeight*(pane.bXFacet+pane.bXAxis)
-        nonPaneWs[yidx] += dx
-        nonPaneHs[xidx] += dy
-
-    # facet, axis width and height
-    nonPaneW = _.mmax nonPaneWs
-    nonPaneH = _.mmax nonPaneHs
-    # total amount of width/height for panes
-    paneW = (w - nonPaneW) / nxs
-    paneH = (h - nonPaneH) / nys
-
-    [paneW, paneH]
-
-  setPaneBounds: (grid, paneW, paneH) ->
-    # create bounds objects for each pane
-    @log "creating bounds objects for each pane"
-    _.each grid, (paneCol, xidx) =>
-      _.each paneCol, (pane, yidx) =>
-        return unless pane?
-        c = pane.c
-        pane.c.x1 = paneW
-        pane.c.y1 = paneH
-        dx = _.sum _.times xidx, (pxidx) -> grid[pxidx][yidx].w()
-        dy = _.sum _.times yidx, (pyidx) -> grid[xidx][pyidx].h()
-        @log "pane at #{pane.xidx}x#{pane.yidx} has dx,dy #{dx}, #{dy}"
-        @log "pane(#{pane.x},#{pane.y}) before: #{c.w()} x #{c.h()}"
-        pane.c.d dx, dy
-        c = pane.drawC()
-        @log "pane(#{pane.x},#{pane.y}) after: #{c.w()} x #{c.h()}"
-        @log pane
-        pane.c.d pane.yAxisC().w(), pane.xFacetC().h()
-
-
-  addPanesToEnv: (md, grid, paddingPane) ->
-    # 1. add each pane's bounds to their environment
-    # 2. update scale sets to be within drawing container
-    md = md.project [
-      {
-        alias: 'paneC'
-        f: (fx, fy) -> grid[fx][fy]
-        type: data.Schema.object
-        cols: ['facet-x', 'facet-y']
-      }
-    ], yes
-
-    md.each (row) ->
-      x = row.get 'facet-x'
-      y = row.get 'facet-y'
-      paneC = grid[x][y]
-  
-      # add in padding to compute actual ranges
-      drawC = paneC.drawC()
-      xrange = [paddingPane, drawC.w()-2*paddingPane]
-      yrange = [paddingPane, drawC.h()-2*paddingPane]
-
-      # update the scales
-      scaleSet = gg.core.FormUtil.scales fdata
-      for aes in gg.scale.Scale.xs
-        for type in scaleSet.types(aes)
-          scaleSet.scale(aes, type).range xrange
-
-      for aes in gg.scale.Scale.ys
-        for type in scaleSet.types(aes)
-          scaleSet.scale(aes, type).range yrange
-
-    set = md.any 'scales'
-    @log "grid layout scale set"
-    @log set.toString()
-
-  
-  optimizeFontSize: (paneC) ->
-    return unless paneC?
-    [x, y] = [paneC.x, paneC.y]
-    xText = String x
-    yText = String y
-    xfc = paneC.xFacetC()
-    yfc = paneC.yFacetC()
-
-    optXFont = gg.util.Textsize.fit xText, xfc.w(), xfc.h(), 8, {padding: 2}
-    optYFont = gg.util.Textsize.fit yText, yfc.h(), yfc.w(), 8, {padding: 2}
-    [optXFont, optYFont]
-
-  # @param xfonts font object for each non-null grid item
-  setOptimalFacetFonts: (pairtable, grid, xfonts, yfonts) ->
-    md = pairtable.right()
-    md = md.project [
-      {
-        alias: ['xfacet-size', 'yfacet-size']
-        f: (x, y) ->
-          {
-            'xfacet-size': xfonts[idx].size
-            'yfacet-size': yfonts[idx].size
-          }
-        type: data.Schema.numeric
-        cols: ['facet-x', 'facet-y']
-      }
-      {
-        alias: ['xfacet-text', 'yfacet-text']
-        f: (x, y) ->
-          {
-            'xfacet-text': xfonts[idx].text
-            'yfacet-text': yfonts[idx].text
-          }
-        type: data.Schema.ordinal
-        cols: ['facet-x', 'facet-y']
-      }
-    ]
-
   # augments layout container (lc) with additional
   # containers.
   #
   # Also augments md with paneC (pane container)
   compute: (pairtable, params) ->
-    # Layout Containers: string -> Bound
-    # will end up containing:
-    #  background
-    #  x and yFacetLabelC
-    #  x and yaxisLabelC
-    #  plotC
-    #
-
     pairtable = pairtable.ensure ['facet-x', 'facet-y']
     md = pairtable.right()
     lc = md.any 'lc'

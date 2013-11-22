@@ -47,6 +47,10 @@ class gg.core.Data
       spec =
         type: "rows"
         val: spec
+    else if gg.core.Data.isJDBCString spec
+      spec =
+        type: "jdbc"
+        val: spec
     else if gg.core.Data.isCsvString spec
       spec =
         type: "csv"
@@ -111,7 +115,7 @@ class gg.core.Data
   setDefault: (spec) ->
     @defaults = gg.core.Data.loadSpec spec
 
-  addLayerDefaults: (layer) ->
+  addLayer: (layer) ->
     lIdx = layer.layerIdx
     dataSpec = layer.spec.data
     @layerDefaults[lIdx] = gg.core.Data.loadSpec dataSpec

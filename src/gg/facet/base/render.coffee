@@ -100,34 +100,8 @@ class gg.facet.base.Render extends gg.core.BForm
 
     for svg in md.all('svg')
       svg.plot = plotSvg
-
     
     md
-
-    # render the pane container
-    ###
-    draw = (c, fill) ->
-      _.subSvg svg, {
-        fill: fill
-        x: c.x0
-        y: c.y0
-        width: c.w()
-        height: c.h()
-        opacity: 0.1
-      }, "rect"
-    _.each {
-      "blue": bgC.drawC()
-      "red": bgC.xFacetC()
-      "green": bgC.yFacetC()
-      "pink": bgC.xAxisC()
-      "orange": bgC.yAxisC()
-    }, draw
-    ###
-
-
-
-
-
 
   compute: (pairtable, params) ->
     md = pairtable.right()

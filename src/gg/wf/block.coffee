@@ -6,33 +6,17 @@ class gg.wf.Block extends gg.wf.Node
   @ggpackage = "gg.wf.Block"
   @type = "block"
 
-  parseSpec: ->
-    @params.ensure 'compute', ['f'], null
-
   compute: (pairtable, params, cb) -> cb null, pairtable
 
   run: ->
     throw Error("node not ready") unless @ready()
 
     params = @params
-    pstore = @pstore()
     compute = @params.get('compute') or @compute.bind(@)
 
     compute @inputs[0], params, (err, pairtable) =>
       throw Error(err) if err?
       @output 0, pairtable
-
-    ###
-    # Write provenance
-    pstore = @pstore()
-    id2path = _.o2map flat, (data, idx) -> [data.id, paths[idx]]
-    for data, idx in newdatas
-      if data.id of id2path
-        pstore.writeData [idx], id2path[data.id]
-      else
-        pstore.writeData [idx], null
-    ###
-
 
 
 class gg.wf.SyncBlock extends gg.wf.Block
@@ -48,7 +32,7 @@ class gg.wf.SyncBlock extends gg.wf.Block
         cb null, res
       catch err
         console.log "error in syncblock #{name}"
-        console.log err.toString()
+        console.log err.stack
         cb err, null
     @params.put 'compute', compute
 

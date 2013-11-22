@@ -8,7 +8,9 @@ class gg.core.FormUtil
   # throws exception if inputs don't validate with schema
   @validateInput: (pt, params, log) ->
     table = pt.left()
-    return yes unless table.nrows() > 0
+    unless table.nrows() > 0
+      return yes
+
     iSchema = params.get "inputSchema", pt, params
     return unless iSchema?
 

@@ -43,12 +43,10 @@
 class gg.scale.Scales
   @ggpackage = "gg.scale.Scales"
 
-  constructor: (@g, @spec) ->
-    @scalesConfig = null
+  constructor: (@g) ->
+    @scalesConfig = gg.scale.Config.fromSpec {}
     @mappings = {}     # facetX -> facetY -> layerIdx -> scalesSet
     @scalesList = []  # list of the scalesSet objects
-    @parseSpec()
-
 
     @prestats = new gg.scale.train.Data(
       name: 'scales-prestats'
@@ -66,55 +64,10 @@ class gg.scale.Scales
         scaleTrain: @g.facets.scales
         config: @scalesConfig).compile()
 
-
     @log = gg.util.Log.logger @ggpackage, "scales"
     @log.level = gg.util.Log.DEBUG
-
-
-  # XXX: assumes layers have been created already
-  parseSpec: ->
-    @scalesConfig = gg.scale.Config.fromSpec @spec
-
-  layer: (layerIdx) -> @g.layers.getLayer layerIdx
-
-  # return the overall scalesSet for a given facet
-  facetScales: (facetX, facetY) ->
-    try
-      scaleSets = @scales facetX, facetY
-      ret = gg.scale.Set.merge scaleSets
-      ret
-    catch error
-      throw Error("gg.Scales.facetScales: not scales found\n\t#{error}")
 
   # retrieve all scales sets for a facet pane, or a specific
   # layer's scales set
   scales: (facetX=null, facetY=null, layerIdx=null) ->
-    @mappings[facetX] = {} unless facetX of @mappings
-    @mappings[facetX][facetY] = {} unless facetY of @mappings[facetX]
-    map = @mappings[facetX][facetY]
-
-    if layerIdx?
-      unless layerIdx of map
-        #aess = @aesthetics layerIdx
-        aess = []
-        # XXX: support other factories for per-layer scales
-        newScalesSet = @scalesConfig.scales layerIdx
-        map[layerIdx] = newScalesSet
-        @scalesList.push newScalesSet
-      map[layerIdx]
-    else
-      _.values map
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    throw Error "scales.scales not implemented"

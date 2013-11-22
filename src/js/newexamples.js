@@ -21,9 +21,9 @@ var geoms = {
 var selected_geoms = {
   area: false,
   point: false,
-  interval: true,
+  //interval: true,
   boxplot:false,
-  color: false,
+  color: true,
   radius: false,
   line: false,
   jitter:false,

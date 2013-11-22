@@ -30,15 +30,6 @@ class gg.core.XForm extends gg.wf.SyncExec
     super
 
   parseSpec: ->
-    # pre-xform aesthetic mapping
-    if _.findGoodAttr(@spec, gg.xform.Mapper.attrs, null)?
-      mapSpec = _.clone @spec
-      @premap = gg.xform.Mapper.fromSpec mapSpec
-
-    if @spec.postmap?
-      postmapSpec = {aes: @spec.postmap}
-      @postmap = gg.xform.Mapper.fromSpec @spec.postmap
-
     @params.putAll
       inputSchema: @extractAttr "inputSchema"
       outputSchema: @extractAttr "outputSchema"
@@ -56,8 +47,8 @@ class gg.core.XForm extends gg.wf.SyncExec
 
     super
 
-  extractAttr: (attr, spec=null) ->
-    spec = @spec unless spec?
+  extractAttr: (attr) ->
+    spec = @spec
     val = _.findGoodAttr spec, [attr], null
     val = @[attr] unless val?
     if _.isFunction val
@@ -69,7 +60,6 @@ class gg.core.XForm extends gg.wf.SyncExec
   # Schema verification functions that subclasses can override
   #
   ensureScales: (pairtable, params) -> gg.core.FormUtil.ensureScales pairtable, params, @log
-
   scales: (pairtable, params) -> gg.core.FormUtil.scales pairtable, params, @log
 
   # Defaults for optional attributes

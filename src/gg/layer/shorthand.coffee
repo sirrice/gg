@@ -34,7 +34,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
   #
   parseSpec: ->
     @setupGeom()
-    @setupStats()
+    #@setupStats()
     @setupPos()
     @setupMap()
     @setupCoord()
@@ -42,86 +42,43 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
 
   setupGeom: ->
-    @geomSpec = @extractSpec "geom"
+    @geomSpec = @spec.geom
     @geomSpec.name = "#{@geomSpec.name}-#{@layerIdx}"
     @geom = gg.geom.Geom.fromSpec @, @geomSpec
 
   setupStats: ->
-    globalSpec = @extractSpec 'stat', @g.spec
-    globalSpec = _.flatten [globalSpec]
-    globalStats = _.map globalSpec, (subSpec) ->
-      gg.stat.Stat.fromSpec subSpec
-
-    @statSpec = @extractSpec "stat"
+    @statSpec = @spec.stat
     @statSpec = _.flatten [@statSpec]
     @stats = _.map @statSpec, (subSpec) ->
       gg.stat.Stat.fromSpec subSpec
-
-    @stats.unshift.apply @stats, globalStats
     @stats
 
   setupPos: ->
-    globalSpec  = @extractSpec "pos", @g.spec
-    globalSpec = _.flatten [globalSpec]
-    globalPos = _.map globalSpec, (subSpec) ->
-      gg.pos.Position.fromSpec subSpec
-
-    @posSpec  = @extractSpec "pos"
+    @posSpec  = @spec.pos
     @posSpec = _.flatten [@posSpec]
     @pos = _.map @posSpec, (subSpec) ->
       gg.pos.Position.fromSpec subSpec
-    @pos.unshift.apply @pos, globalPos
     @pos
 
   setupMap: ->
-    mapSpec  = _.findGoodAttr @spec, ['aes', 'aesthetic', 'mapping'], {}
-    #mapSpec = _.extend(_.clone(@g.aesspec), mapSpec)
-    @mapSpec = {aes: mapSpec, name: "map-shorthand-#{@layerIdx}"}
+    console.log @spec
+    aes = @spec.aes
+    @group = gg.xform.Mapper.groupSpec aes
+    unless 'group' of aes
+      aes.group = @group.group
+
+    # XXX: infer if a mapping is for a constant and
+    #      set the scales to identity (if not already set)
+
+    @mapSpec = 
+      aes: aes
+      name: "map-shorthand-#{@layerIdx}"
     @map = gg.xform.Mapper.fromSpec @mapSpec
 
   setupCoord: ->
-    @coordSpec = @extractSpec "coord"
+    @coordSpec = @spec.coord
     @coordSpec.name = "coord-#{@layerIdx}"
     @coord = gg.coord.Coordinate.fromSpec @coordSpec
-
-
-  # extract the geom/stat/pos specific spec from
-  # the shorthand spec
-  #
-  # @param xform geom/stat/pos
-  # @param spec  defaults to @spec
-  # @return consistently formatted sub-spec of the form
-  #         { type: , aes:, param: }
-  extractSpec: (xform, spec=null) ->
-    spec = @spec unless spec?
-
-    [aliases, defaultType] = switch xform
-      when "geom"
-        [['geom', 'geometry'], "point"]
-      when "stat"
-        [['stat', 'stats', 'statistic'], "identity"]
-      when "pos"
-        [["pos", "position"], "identity"]
-      when "coord"
-        [["coord", "coordinate", "coordinates"], "identity"]
-      else
-        [[], "identity"]
-
-    defaultAes = {}
-    subSpec = _.findGoodAttr spec, aliases, defaultType
-    @log "extractSpec xform: #{xform}\tspec: #{JSON.stringify subSpec}"
-
-    if _.isString subSpec
-      subSpec =
-        type: subSpec
-        aes: defaultAes
-        param: {}
-    else
-      subSpec.aes = _.extend defaultAes, subSpec.aes
-      subSpec.param = {} unless subSpec.param?
-
-    subSpec.name = "#{xform}-#{subSpec.type}-#{@layerIdx}" unless subSpec.name?
-    subSpec
 
   makeStdOut: (name, params) ->
     arg = _.clone params
@@ -137,13 +94,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
     new gg.wf.Scales
       name: "#{name}-#{@layerIdx}"
 
-
-  compile: ->
-    @log "compile()"
-    nodes = []
-
-    # add environment variables
-    addenv = gg.wf.SyncBlock.create ((pt, params) ->
+  makeEnvSetup: ->
+    gg.wf.SyncBlock.create ((pt, params) ->
       [t, md] = [pt.left(), pt.right()]
       layerIdx = params.get 'layer'
       posMapping = params.get 'posMapping'
@@ -154,11 +106,14 @@ class gg.layer.Shorthand extends gg.layer.Layer
         layer: @layerIdx
         posMapping: @geom.posMapping()
       }, 'layer-labeler'
-    nodes.push addenv
 
-    nodes.push @compilePrestats()
-    nodes.push @g.facets.labeler
-    nodes.push @compileStats()
+
+  compile: ->
+    @log "compile()"
+    nodes = []
+
+    nodes.push @compileSetup()
+    #nodes.push @compileStats()
 
     nodes.push @compileGeomMap()
     nodes.push new gg.xform.ScalesValidate
@@ -169,142 +124,114 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push @compileGeomPos()
     nodes.push @compileCoord()
     nodes.push @compileRender()
+    nodes.push gg.wf.SyncExec.create (pt) ->
+      console.log pt.left().raw()
+      pt
 
     nodes = @compileNodes nodes
     nodes
 
 
 
-  compilePrestats: ->
-    nodes = [
-      @makeStdOut "init-data"
+  compileSetup: ->
+    [
+      @makeEnvSetup()
       @map
-      @makeStdOut "post-map-#{@layerIdx}"
       new gg.xform.ScalesSchema
         name: "scales-schema-#{@layerIdx}"
         params:
           config: @g.scales.scalesConfig
-      @makeStdOut "post-scaleschema"
-      @makeScalesOut "post-scaleschema-#{@layerIdx}"
-
+      @g.facets.labeler
     ]
-    nodes
 
   compileStats: ->
-    nodes = []
 
-    # train & filter scales
-    nodes.push @makeStdOut "pre-train"
-    nodes.push @g.scales.prestats
-    nodes.push @makeScalesOut "pre-stat-#{@layerIdx}"
-    nodes.push @makeStdOut "post-train"
-    nodes.push new gg.xform.ScalesFilter
-      name: "scalesfilter-#{@layerIdx}"
-      params:
-        posMapping: @geom.posMapping()
-        config: @g.scales.scalesConfig
-    nodes.push @makeStdOut "post-scalefilter-#{@layerIdx}"
-    nodes.push @makeScalesOut "pre-stat-#{@layerIdx}"
+    [
+      # train & filter scales
+      @makeStdOut "pre-train"
+      @g.scales.prestats
+      @makeScalesOut "pre-stat-#{@layerIdx}"
+      @makeStdOut "post-train"
 
-    # run the stat functions
-    nodes.push @stats
-    nodes.push @makeStdOut "post-stat-#{@layerIdx}"
-    nodes.push @makeScalesOut "post-stat-#{@layerIdx}"
-    nodes
+      new gg.xform.ScalesFilter
+        name: "scalesfilter-#{@layerIdx}"
+        params:
+          posMapping: @geom.posMapping()
+          config: @g.scales.scalesConfig
+      @makeStdOut "post-scalefilter-#{@layerIdx}"
+      @makeScalesOut "pre-stat-#{@layerIdx}"
+
+      # run the stat functions
+      @stats
+    ]
 
 
   compileGeomMap: ->
-    nodes = []
-
-    #
-    # Geometry Part of Workflow #
-    #
-
-    # geom: map attributes to aesthetic names
-    # scales: train scales after the final aesthetic mapping (inputs are data values)
-    #nodes.push new gg.wf.Stdout {name: "pre-geom-map", n: 1}
-    nodes.push @geom.map
-    nodes.push @makeStdOut "pre-geomtrain-#{@layerIdx}"
-    nodes.push @makeScalesOut "pre-geomtrain-#{@layerIdx}"
-
-
-    #nodes.push new gg.wf.Stdout {name: "post-geom-map", n: 1}
-    nodes.push @g.scales.postgeommap
-    nodes.push @makeStdOut "post-geommaptrain"
-    nodes.push @makeScalesOut "post-geommaptrain"
-
-    nodes
+    [
+      @geom.map
+      @g.scales.postgeommap
+      @makeStdOut "post-geommaptrain"
+      @makeScalesOut "post-geommaptrain"
+    ]
 
   compileInitialLayout: ->
-    nodes = []
+    [
+      @g.layoutNode
+      @g.facets.layout1
+      @g.facets.trainer
 
-
-    # layout the overall graphic, allocate space for facets
-    # facets: allocate containers and compute ranges for the scales
-    nodes.push @g.layoutNode
-    nodes.push @g.facets.layout1
-    #nodes.push @g.facets.layout1rpc
-
-    # geom: facets have set the ranges so transform data values to 
-    #       pixel values
-    # geom: map minimum attributes (x,y) to base attributes (x0, y0, x1, y1)
-    # geom: position transformation
-    nodes.push @g.facets.trainer
-    nodes.push @makeScalesOut "pre-scaleapply"
-    nodes.push new gg.xform.ScalesApply
-      name: "scalesapply-#{@layerIdx}"
-      params:
-        posMapping: @geom.posMapping()
-    nodes.push @makeStdOut "post-scaleapply"
-    nodes
-
+      @makeScalesOut "pre-scaleapply"
+      new gg.xform.ScalesApply
+        name: "scalesapply-#{@layerIdx}"
+        params:
+          posMapping: @geom.posMapping()
+      @makeStdOut "post-scaleapply"
+    ]
 
   compileGeomReparam: ->
-    nodes = []
-    nodes.push @geom.reparam
-    nodes.push @makeStdOut "post-reparam"
-    nodes
+    [
+      @geom.reparam
+      @makeStdOut "post-reparam"
+    ]
 
   compileGeomPos: ->
     nodes = []
+    if @pos.length > 0
+      nodes = nodes.concat [
+        @pos
+        @makeStdOut "post-position"
+      ]
 
-    if @pos? and @pos.length > 0
-      nodes.push @pos
-      nodes.push @makeStdOut "post-position"
+    nodes = nodes.concat [
+      @g.scales.pixel
+      @makeStdOut "post-pixeltrain"
 
-      nodes.push @g.scales.pixel
-      nodes.push @makeStdOut "post-pixeltrain"
-
-      # reconfigure the layout after positioning
-      nodes.push @g.facets.layout2
-
+      @g.facets.layout2
+    ]
     nodes
 
 
   compileCoord: ->
-    nodes = []
-    # coord: pixel -> domain -> transformed -> pixel
-    # XXX: not implemented
-    nodes.push @makeScalesOut "pre-coord"
-    nodes.push @coord
-    nodes.push @makeStdOut "post-coord"
-    nodes
+    [
+      @makeScalesOut "pre-coord"
+      @coord
+      @makeStdOut "post-coord"
+    ]
 
   #
   # Rendering Nodes are all Client only
   #
   # render: render axes
   compileRender: ->
-    nodes = []
-    nodes.push @g.renderNode
-    nodes.push @g.facets.render
-    nodes.push @g.facets.renderPanes()
+    [
+      @g.renderNode
+      @g.facets.render
+      @g.facets.renderPanes()
 
-    # render: render geometries
-    nodes.push @makeStdOut "pre-render"
-      location: "client"
-    nodes.push @geom.render
-    nodes
+      @makeStdOut "pre-render"
+        location: "client"
+      @geom.render
+    ]
 
 
 

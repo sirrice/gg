@@ -1,6 +1,6 @@
 #<< gg/wf/node
 
-class gg.xform.EnvPut extends gg.core.XForm
+class gg.xform.EnvPut extends gg.wf.SyncBlock
   @ggpackage = "gg.xform.EnvPut"
   @type = "envput"
 

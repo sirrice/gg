@@ -7,8 +7,6 @@ class gg.wf.Start extends gg.wf.Node
   ready: -> yes
 
   run: ->
-    @pstore().writeData [0], []
-
     result = new data.PairTable
     @output 0, result
 

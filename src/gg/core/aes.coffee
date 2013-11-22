@@ -23,5 +23,5 @@ class gg.core.Aes
     if aes of @aliases then @aliases[aes] else [aes]
 
   @groupable: (aes) -> 
-    _.any @resolve(aes), (col) -> col in gg.core.Aes.groupcols
+    _.any gg.core.Aes.resolve(aes), (col) -> col in gg.core.Aes.groupcols
 

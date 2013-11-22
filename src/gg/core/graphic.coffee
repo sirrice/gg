@@ -1,3 +1,4 @@
+#<< gg/util/*
 #<< gg/core/options
 #<< gg/core/data
 #<< gg/wf/*
@@ -23,9 +24,10 @@ class gg.core.Graphic extends events.EventEmitter
 
 
   constructor: (spec=null) ->
+    spec = gg.parse.Parser.parse spec
     @spec spec
 
-  spec: (spec=null) ->
+  spec: (spec) ->
     unless spec?
       return @spec
 
@@ -33,38 +35,25 @@ class gg.core.Graphic extends events.EventEmitter
 
 
     # setup debugging
-    @debugspec = @spec.debug or { "": gg.util.Log.WARN }
-    gg.util.Log.loggers = {}
-    gg.util.Log.setDefaults @debugspec
-
-    # extract specs
-    @aesspec = _.findGoodAttr @spec, ["aes", "aesthetic", "mapping"], {}
-    @layerspec = @spec.layers or []
-    @facetspec = @spec.facets or @spec.facet or {}
-    @scalespec = @spec.scales or {}
-    @optspec = @spec.opts or @spec.opt or @spec.options or {}
+    gg.util.Log.reset()
+    gg.util.Log.setDefaults @spec.debug
 
     # The order to instantiate these objects matters
-    @options = new gg.core.Options @optspec
-    @facets = gg.facet.base.Facets.fromSpec @, @facetspec
-    @layers = new gg.layer.Layers @, @layerspec
-    @scales = new gg.scale.Scales @, @scalespec
+    @options = new gg.core.Options @spec.options
+    @facets = gg.facet.base.Facets.fromSpec @, @spec.facets
+    @layers = new gg.layer.Layers @, @spec.layers
+    @scales = new gg.scale.Scales @
     @datas = gg.core.Data.fromSpec @spec.data
-    @map = gg.xform.Mapper.fromSpec 
-      name: "base-aes-map"
-      aes: @aesspec
 
-    
+
     # connect layer specs with scales config
     _.each @layers.layers, (layer) =>
-      @scales.scalesConfig.addLayerDefaults layer
-      @datas.addLayerDefaults layer
-
+      @scales.scalesConfig.addLayer layer
+      @datas.addLayer layer
 
     @svg = @options.svg or @svg
 
     @params = new gg.util.Params
-      container: new gg.core.Bound 0, 0, @options.w, @options.h
       options: @options
 
     @eventCoordinator = new events.EventEmitter
@@ -95,7 +84,6 @@ class gg.core.Graphic extends events.EventEmitter
     preMulticastNodes = []
     preMulticastNodes.push @datas.data()
     preMulticastNodes.push @setupEnvNode()
-    preMulticastNodes.push @map
     preMulticastNodes = _.compact preMulticastNodes
 
     prev = null
@@ -140,26 +128,30 @@ class gg.core.Graphic extends events.EventEmitter
           options: @options
         location: 'client'
 
-  renderGuides: -> null
+  optimize: ->
+    return unless @options.optimize
+    optimizer = new gg.wf.Optimizer [
+      new gg.wf.rule.RPCify
+      #new gg.wf.rule.RmDebug
+    ]
 
-  inputToTable: (input, cb) ->
-    if _.isArray input
-      table = data.RowTable.fromArray input
-      cb table
-    else if _.isType input, data.Table
-      table = input
-      cb table
-    else if _.isString input
-      d3.csv input, (arr) ->
-        table = data.RowTable arr
-        cb(table)
+    if @options.guid?
+      optimizer.rules.push new gg.wf.rule.Cache
+        params:
+          guid: @options.guid
+
+    @workflow = optimizer.run @workflow
 
 
-  render: (@svg, input) ->
+  render: (svg, input) ->
     @log "running graphic.render"
     @log input
+
+    @svg = svg if svg?
     $(@svg[0]).empty()
     @svg = @svg.append('svg')
+
+
     @compile()
 
     if input
@@ -168,22 +160,11 @@ class gg.core.Graphic extends events.EventEmitter
       dataNode = @datas.data()
       @workflow.prepend dataNode
 
-    if @options.optimize
-      optimizer = new gg.wf.Optimizer [
-        new gg.wf.rule.RPCify
-        #new gg.wf.rule.RmDebug
-      ]
-      if @options.guid?
-        optimizer.rules.push new gg.wf.rule.Cache
-          params:
-            guid: @options.guid
-
-      @workflow = optimizer.run @workflow
+    @optimize()
 
     @log "running workflow"
     @workflow.on "done", (debug) => 
       @emit "done", debug
-      #parentSvg.append @svg
     @workflow.run @options
 
 

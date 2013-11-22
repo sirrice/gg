@@ -64,49 +64,66 @@ class gg.facet.base.Facets
 
 
   parseSpec: ->
-    @splitParams = new gg.util.Params {
-      x: _.findGood [@spec.x, null]
-      y: _.findGood [@spec.y, null]
-      scales: _.findGood [@spec.scales, "fixed"]
-      type: _.findGood [@spec.type, "grid"]
-      sizing: _.findGood [@spec.sizing, @spec.size, "fixed"]
+    splitConfig = 
+      x: null
+      y: null
+      scales: 'fixed'
+      type: 'grid'
+      sizing: 'fixed'
       options: @g.options
-    }
 
-    xattrs = ['showx', 'showX', 'showXAxis']
-    yattrs = ['showy', 'showY', 'showYAxis']
-    ncol = ["ncols", "ncol", "nys", "ny"]
-    nrow = ["nrows", "nrow", "nxs", "nx"]
-    @layoutParams = new gg.util.Params {
-      showXAxis: _.findGoodAttr @spec, xattrs, yes
-      showYAxis: _.findGoodAttr @spec, yattrs, yes
-      ncol: _.findGoodAttr @spec, ncol, null
-      nrow: _.findGoodAttr @spec, nrow, null
-      paddingPane: @spec.padding or @spec.paddingPane or 5
-      margin: @spec.margin or 1
+    layoutConfig =
+      showXAxis: 
+        names: ['showx']
+        default: yes
+      showYAxis:
+        names: 'showy'
+        default: yes
+      ncol: null  # only matters for wrap
+      nrow: null  # only matters for wrap
+      paddingPane: 
+        name: 'padding'
+        default: 5
+      margin: 1
       options: @g.options
-    }
 
-    fClass = _.findGoodAttr @spec, ['facetclass', 'class'], ''
-    @renderParams = new gg.util.Params {
-      fXLabel: _.findGoodAttr @spec, ['xlabel', 'xLabel'], "x facets"
-      fYLabel: _.findGoodAttr @spec, ['ylabel', 'yLabel'], "y facets"
-      fClass: fClass
-      exSize: _.exSize {class: fClass}
-      showXTicks: _.findGood [@spec.showXTicks, true]
-      showYTicks: _.findGood [@spec.showYTicks, true]
+    renderConfig = 
+      fXLabel:
+        names: ['xlabel']
+        default: 'x facets'
+      fYLabel:
+        names: ['ylabel']
+        default: 'y facets'
+      cssClass: 
+        names: ['facetclass', 'class']
+        default: ''
+      showXTicks: true
+      showYTicks: true
       options: @g.options
       location: "client"
-    }
+
+    @splitParams = new gg.util.Params(
+      gg.parse.Parser.extractWithConfig @spec, splitConfig
+    )
+
+    @layoutParams = new gg.util.Params(
+      gg.parse.Parser.extractWithConfig @spec, layoutConfig
+    )
+
+    @renderParams = new gg.util.Params(
+      gg.parse.Parser.extractWithConfig @spec, renderConfig
+    )
+
 
   labelerNodes: ->
     log = @log
+
     f = (pairtable, params) ->
       t = pairtable.left()
       md = pairtable.right()
       xcol = params.get 'x'
       ycol = params.get 'y'
-      log "x/ycols: #{xcol}/#{ycol}" 
+
       mapping = [
         {
           alias: ['facet-keys', 'facet-id', 'facet-x', 'facet-y']
@@ -128,12 +145,11 @@ class gg.facet.base.Facets
     gg.wf.SyncBarrier.create f, @splitParams, 'facet-labeler'
 
   @fromSpec: (g, spec) ->
-    spec.type = spec.type or "grid"
-
-    klass = if spec.type is "wrap"
-      gg.facet.wrap.Facets
-    else
-      gg.facet.grid.Facets
+    klass = switch spec.type
+      when "grid"
+        gg.facet.grid.Facets
+      else
+        gg.facet.grid.Facets
 
     new klass g, spec
 

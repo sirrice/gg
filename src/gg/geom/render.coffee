@@ -71,7 +71,7 @@ class gg.geom.Render extends gg.core.XForm
   render: (table, rows) -> throw Error("#{@name}.render() not implemented")
 
   @klasses: ->
-    klasses = [
+    klasses = _.compact [
       gg.geom.svg.Point
       gg.geom.svg.Line
       gg.geom.svg.Rect
@@ -81,23 +81,14 @@ class gg.geom.Render extends gg.core.XForm
     ]
     ret = {}
     _.each klasses, (klass) ->
-      if _.isArray klass.aliases
-        _.each klass.aliases, (alias) -> ret[alias] = klass
-      else
-        ret[klass.aliases] = klass
+      for alias in _.flatten [klass.aliases]
+        ret[alias] = klass
     ret
-
 
   @fromSpec: (spec) ->
     klasses = gg.geom.Render.klasses()
-    if _.isString spec
-      type = spec
-      spec = {type: type}
-    else
-      type = _.findGoodAttr spec, ['geom', 'type', 'shape'], 'point'
-
-    klass = klasses[type] or gg.geom.svg.Point
-    gg.util.Log.logger(@ggpackage, "Render") "Render klass #{type} -> #{klass.name}"
+    klass = klasses[spec.type]
+    gg.util.Log.logger(@ggpackage, "Render") "Render klass #{spec.type} -> #{klass.name}"
     new klass spec
 
 

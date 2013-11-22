@@ -1,4 +1,3 @@
-#<< gg/util/log
 
 class gg.wf.ClearingHouse extends events.EventEmitter
   @ggpackage = "gg.wf.ClearingHouse"

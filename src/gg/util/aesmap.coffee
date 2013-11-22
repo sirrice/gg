@@ -1,3 +1,5 @@
+#<< gg/util/util
+
 class gg.util.Aesmap
   @log = gg.util.Log.logger "gg.util.Aesmap", "Aesmap"
 
@@ -9,37 +11,42 @@ class gg.util.Aesmap
     ret
 
   @mapToFunction: (table, key, val) ->
-    opstore = {}
-    opstore.writeSchema = () ->
-
     if _.isFunction val
       f = (row) -> 
         row = new gg.util.RowWrapper row
         ret = val row
-        opstore.writeSchema [key], row.accessed
         ret
       {alias: key, f: f, type: data.Schema.unknown, cols: '*'}
 
     else if table.has val
-      opstore.writeSchema key, val
       f = (v) -> v
       {alias: key, f: f, type: table.schema.type(val), cols: val}
 
     else if _.isObject val
-      if 'f' of val and 'args' of val
-        args = val.args
+      # in case it is already a projection description
+      if 'f' of val and ('cols' of val or 'args' of val)
+        if 'args' of val and not('cols' of val)
+          val.cols = val.args
+
+        cols = val.cols
         f = val.f
+        type = val.type
+
         unless f.length > args.length
           throw Error "f requires more arguments than specified: #{f.length}>#{args.length}"
         unless _.all(args, (col) -> table.has col)
           throw Error "table doesn't contain all args"
-        {alias: key, f: f, cols: args}
+
+        {alias: key, f: f, type: type, cols: args}
+
       else
+        # othrewise recursively map
         funcs = _.mappingToFunctions table, val
+        funcs = _.map funcs, data.ops.Project.normalizeMapping
         f = (row) ->
           ret = {}
-          _.each funcs, (f, subkey) ->
-            ret[subkey] = f row
+          _.each funcs, (desc, subkey) ->
+            ret[desc.alias] = desc.f row
           return ret
         {alias: key, f:f, cols: '*'}
 
@@ -53,13 +60,13 @@ class gg.util.Aesmap
       cmds.push "return #{userCode};"
       cmd = cmds.join ''
       f = Function("row", cmd)
-      {alias: key, f: f, type: data.Schema.object, cols: '*'}
+      {alias: key, f: f, type: data.Schema.unknown, cols: '*'}
 
     else
       # for constants (e.g., date, number)
       gg.util.Aesmap.log "mapToFunction: const:  f(#{key})->#{val}"
       f = (row) -> val
-      {alias: key, f: f, type: data.Schema.object, cols: '*'}
+      {alias: key, f: f, type: data.Schema.type(val), cols: '*'}
 
 
 class gg.util.RowWrapper

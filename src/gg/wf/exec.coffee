@@ -9,9 +9,6 @@ class gg.wf.Exec extends gg.wf.Node
   @ggpackage = "gg.wf.Exec"
   @type = "exec"
 
-  parseSpec: ->
-    @params.ensure 'compute', ['f'], null
-
   compute: (pairtable, params, cb) -> cb null, pairtable
 
   # partition by set of attributes
@@ -24,13 +21,7 @@ class gg.wf.Exec extends gg.wf.Node
 
     params = @params
     compute = @params.get('compute') or @compute.bind(@)
-    pstore = @pstore()
     log = @log
-
-    #pstore.store_params @params
-    # connect input rows to partitions and rows
-    # subclass connects input partition rows to output partition rows
-    # connect output to partition rows
 
     try
       tableset = @inputs[0]
@@ -43,7 +34,7 @@ class gg.wf.Exec extends gg.wf.Node
         try
           compute pt, params, cb
         catch err
-          console.log err.message
+          console.log err.stack
           cb err, null
 
       async.map partitions, iterator, (err, pairtables) =>

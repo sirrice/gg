@@ -1,12 +1,12 @@
 
-class gg.core.Bound
-  @ggpackage = 'gg.core.Bound'
+class gg.util.Bound
+  @ggpackage = 'gg.util.Bound'
 
   constructor: (@x0, @y0, @x1=null, @y1=null) ->
     @x1 = @x0 unless @x0?
     @y1 = @y0 unless @y0?
 
-  @empty: -> new gg.core.Bound 0, 0
+  @empty: -> new gg.util.Bound 0, 0
 
   width: -> @x1 - @x0
   height: -> @y1 - @y0
@@ -15,7 +15,7 @@ class gg.core.Bound
   h: -> @height()
   v: -> @volume()
 
-  clone: -> new gg.core.Bound @x0, @y0, @x1, @y1
+  clone: -> new gg.util.Bound @x0, @y0, @x1, @y1
 
 
   clear: ->
@@ -79,7 +79,7 @@ class gg.core.Bound
     )
 
   @fromJSON: (spec) ->
-    new gg.core.Bound spec.x0, spec.y0, spec.x1, spec.y1
+    new gg.util.Bound spec.x0, spec.y0, spec.x1, spec.y1
 
 
   toJSON: ->

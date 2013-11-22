@@ -73,9 +73,8 @@ class gg.wf.Scales extends gg.wf.SyncBlock
     log ?= @log 
 
     log "scaleset #{scaleset.id}, #{scaleset.scales}"
-    _.each scaleset.scales, (map, aes) ->
-      _.each map, (scale, type) ->
-        log "#{scaleset.id} l(#{layerIdx}) t(#{type})\t#{scale.toString()}"
+    _.each scaleset.all(), (scale) ->
+      log "#{scaleset.id} l(#{layerIdx}) t(#{scale.type})\t#{scale.toString()}"
 
 
 

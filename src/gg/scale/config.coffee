@@ -67,7 +67,6 @@ class gg.scale.Config
       _.each spec, (scaleSpec, aes) =>
         scaleSpec = {type: scaleSpec} if _.isString scaleSpec
         scaleSpec = _.clone scaleSpec
-        @log "resolve: #{aes} -> #{gg.core.Aes.resolve aes}"
         _.each gg.core.Aes.resolve(aes), (trueaes) ->
           scaleSpec.aes = trueaes
           scale = gg.scale.Scale.fromSpec scaleSpec
@@ -77,19 +76,14 @@ class gg.scale.Config
   # extract scales config from layer
   # also extract geom scale type defaults
   #   e.g., boxplot: x usually ordinal
-  addLayerDefaults: (layer) ->
+  addLayer: (layer) ->
     layerIdx = layer.layerIdx
     layerSpec = layer.spec
-    
-    scalesSpec = layer.geom.scaleConfigs()
-    _.extend scalesSpec, layerSpec.scales
-    config = gg.scale.Config.loadSpec scalesSpec
+    config = gg.scale.Config.loadSpec layerSpec.scales
 
     @layerDefaults[layerIdx] = config
     @specs.layerSpecs[layerIdx] = layerSpec
-    @log "addLayer: #{JSON.stringify scalesSpec}"
-
-
+    @log "addLayer: #{JSON.stringify layerSpec.scales}"
 
   factoryFor: (layerIdx) ->
     defaults = _.clone @defaults

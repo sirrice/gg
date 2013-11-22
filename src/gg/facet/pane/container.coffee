@@ -1,5 +1,3 @@
-#<< gg/core/bound
-
 
 # Container that manages all layout bound info to for a pane.  It encapsulates
 # the pane itself, and the four sides, each of which may render a facet or axis.
@@ -86,7 +84,7 @@ class gg.facet.pane.Container
   top: -> @c.y0 - @labelHeight * @bXFacet
   left: -> @c.x0 - @yAxisW * @bYAxis
   bound: ->
-    new gg.core.Bound @left(), @top(),
+    new gg.util.Bound @left(), @top(),
       @left() + @w(),
       @top() + @h()
 
@@ -100,7 +98,7 @@ class gg.facet.pane.Container
     y0 = @labelHeight * @bXFacet + @upad
     w = @c.w() - @rpad - @lpad
     h = @c.h() - @bpad - @upad
-    new gg.core.Bound x0, y0, x0+w, y0+h
+    new gg.util.Bound x0, y0, x0+w, y0+h
 
 
   xFacetC: ->
@@ -108,25 +106,25 @@ class gg.facet.pane.Container
     y0 = 0
     w = @c.w() - @rpad - @lpad
     h = @labelHeight * @bXFacet
-    new gg.core.Bound x0, y0, x0+w, y0+h
+    new gg.util.Bound x0, y0, x0+w, y0+h
 
   yFacetC: ->
     x0 = @yAxisW * @bYAxis + @c.width()
     y0 = @labelHeight * @bXFacet + @upad
     w = @labelHeight * @bYFacet
     h = @c.h() - @upad - @bpad
-    new gg.core.Bound x0, y0, x0+w, y0+h
+    new gg.util.Bound x0, y0, x0+w, y0+h
 
   xAxisC: ->
     x0 = @yAxisW * @bYAxis + @lpad
     y0 = @c.h() + @labelHeight*@bXFacet
     w = @c.w() - @lpad - @rpad
     h = @labelHeight * @bXAxis
-    new gg.core.Bound x0, y0, x0+w, y0+h
+    new gg.util.Bound x0, y0, x0+w, y0+h
 
   yAxisC: ->
     x0 = 0
     y0 = @labelHeight * @bXFacet + @upad
     w = @yAxisW * @bYAxis
     h = @c.h() - @upad - @bpad
-    new gg.core.Bound x0, y0, x0+w, y0+h
+    new gg.util.Bound x0, y0, x0+w, y0+h

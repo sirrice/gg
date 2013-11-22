@@ -7,9 +7,8 @@ class gg.geom.Point extends gg.geom.Geom
 
   parseSpec: ->
     super
-    @reparam = new gg.geom.reparam.Point(
+    @reparam = new gg.geom.reparam.Point
       name: "point-reparam:#{@layer.layerIdx}"
-    )
     @render = new gg.geom.svg.Point {}
 
   posMapping: ->
