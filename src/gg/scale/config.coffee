@@ -29,7 +29,7 @@ class gg.scale.Config
 
   # @param defaults:        aes -> scale
   # @param layerDefaults:   layer -> {aes -> scale}
-  constructor: (@defaults, @layerDefaults, @specs={})  ->
+  constructor: (@defaults={}, @layerDefaults={}, @specs={})  ->
     @specs.spec = {} unless @specs.spec
     @specs.layerSpecs = {} unless @specs.layerSpecs
     @log = gg.util.Log.logger @constructor.ggpackage, "scaleConfig"
@@ -84,6 +84,9 @@ class gg.scale.Config
     @layerDefaults[layerIdx] = config
     @specs.layerSpecs[layerIdx] = layerSpec
     @log "addLayer: #{JSON.stringify layerSpec.scales}"
+
+  layerSpec: (layerIdx) ->
+    @layerDefaults[layerIdx]
 
   factoryFor: (layerIdx) ->
     defaults = _.clone @defaults

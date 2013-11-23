@@ -2,6 +2,19 @@
 
 # Train on a table that has been mapped to aesthetic domain.
 #
+# For numeric domains (numeric and date):
+#
+# 1. invert x/y values to get domain
+# 2. train on inverted values to derive new domain
+# 3. keep the same ranges
+#
+# For categorical domains (ordinal and object):
+#
+# 1. compute new range values using x/y values
+# 2. resize ranges based on newrange/oldrange ratio
+#
+###################
+#
 # This is tricky because the table has lost the original
 # data types e.g., numerical values mapped to color strings
 # - invert the table using scales retrieved with original table's
@@ -31,146 +44,102 @@ class gg.scale.train.Pixel extends gg.core.BForm
   compute: (pairtable, params) ->
     gg.scale.train.Pixel.train pairtable, params, @log
 
+
+
   @train: (pairtable, params, log) ->
-    fOldScales = (pt, idx) ->
-      s = pt.right().any('scales').clone()
-      log "#{idx} origScales: #{s.toString()}"
-      s
-
-    # 0) setup some variables we'll need
     partitions = pairtable.fullPartition()
-    oldScaleSets = _.map partitions, fOldScales
-    args = _.zip(partitions, oldScaleSets)
+    scales = {}    # aes -> scaletype -> scale
+    ranges = {}    # aes -> scaletype -> range
+    getscale = (col, scale) ->
+      type = scale.type
+      scales[col] = {} unless col of scales
+      unless type of scales[col]
+        scales[col][type] = scale.clone() 
+        scales[col][type].resetDomain()
+      scales[col][type]
 
-    # 1) compute new scales
-    fMergeDomain = @createMergeDomain log
-    partitions = _.map args, fMergeDomain
-    tset = data.PairTable.union partitions
-
-    # 2) retrain scales across facets/layers and expand domains
-    #    must be done before rescaling!
-    tset = gg.scale.train.Master.train tset, params
-    partitions = tset.fullPartition()
-    args = _.zip(partitions, oldScaleSets)
-
-    # 3} invert data using old scales, then apply new scales
-    fRescale = @createRescale log
-    partitions = _.map args, fRescale
-
-    data.PairTable.union partitions
+    getrange = (col, type) ->
+      ranges[col] = {} unless col of ranges
+      ranges[col][type] = [Infinity, -Infinity] unless type of ranges[col]
+      ranges[col][type]
 
 
-    # 1. use old scales to invert column value
-    # 2. merge domains into a fresh scaleset
-    #    - reset domains of non-ordinal scales
-    #    - preserve ordinal scales
-    # 3. preserve existing ranges
-  @createMergeDomain: (log) ->
-    Schema = data.Schema
-    ([pt, oldscaleset], idx) ->
-      t = pt.left()
-      md = pt.right()
-      posMapping = md.any('posMapping') or {}
-      newscaleset = oldscaleset.clone()
-      seen = {}
+    for p in partitions
+      left = p.left()
+      md = p.right()
+      posMapping = md.any 'posMapping'
+      set = md.any 'scales'
+      cols = _.filter left.cols(), (col) ->
+        (posMapping[col] or col) in gg.scale.Scale.xys
 
-      f = (table, oldscale, aes) ->
-        return table if _.isType oldscale, gg.scale.Identity
-        return table if oldscale.frozen
+      console.log "colprov x1 = #{left.colProv 'x1'}"
+      for col in cols
+        s = set.get col, null, posMapping
+        xycol = posMapping[col] or col
+        switch s.type
+          when data.Schema.ordinal, data.Schema.object
+            vals = left.all col
+            range = getrange xycol, s.type
+            range[0] = Math.min range[0], _.mmin(vals)
+            range[1] = Math.max range[1], _.mmax(vals)
 
-        log "#{idx} retrive #{aes}: #{oldscale.aes}\t#{oldscale.type}"
-
-        if newscaleset.contains oldscale.aes, t.schema.type(aes)
-          newscale = newscaleset.scale oldscale.aes, t.schema.type(aes)
-        else if newscaleset.contains oldscale.aes
-          newscale = newscaleset.scale oldscale.aes, Schema.unknown
-        else
-          newscale = oldscale.clone()
-          newscaleset.scale newscale
-        col = table.all(aes).filter _.isValid
-
-        unless col? and col.length > 0
-          log "#{idx} mergeDomain: aes #{aes} #{col? and col.length>0}"
-          log "#{idx} mergeDomain: #{newscale.toString()}"
-          return table
-        if _.isType oldscale, gg.scale.BaseCategorical
-          log "#{idx} mergeDomain: categorical.  skipping"
-          log "#{idx} mergeDomain: #{newscale.toString()}"
-          return table
-
-        # Reset the domain if this is the first time we've seen it
-        if newscale.id not of seen
-          newscale.resetDomain()
-          seen[newscale.id] = yes
-
-        # col has pixel (range) units, so first invert
-        log "#{idx} oldScale: #{oldscale.toString()}"
-        range = oldscale.defaultDomain col
-        domain = _.map range, (v) ->
-          if v? then oldscale.invert v else null
-        newscale.mergeDomain domain
-        log "#{idx} mergeDomain: #{aes}\trange: #{range}"
-        log "#{idx} mergeDomain: #{aes}\tdomain: #{domain}"
-        log "#{idx} mergeDomain: #{newscale.toString()}"
-        table
-
-      t = oldscaleset.useScales t, posMapping, f
-      md = md.setColVal 'scales', newscaleset
-      pt.left t
-      pt.right md
-      pt
+          when data.Schema.numeric, data.Schema.date
+            vals = left.all col
+            # convert pixel values into domain
+            d = _.map s.defaultDomain(vals), (v) ->
+              if v? then s.invert(v) else null
+            getscale(xycol, s).mergeDomain d
 
 
 
-  @createRescale: (log) ->
-    Schema = data.Schema
-    ([pt, oldscaleset], idx ) ->
-      t = pt.left()
-      md = pt.right()
-      scaleset = md.any 'scales'
-      posMapping = md.any('posMapping') or {}
-      layer = md.any 'layer'
-      mappingFuncs = []
-      log "#{idx} fRescale called layer: #{layer}"
+    partitions = _.map partitions, (p) ->
+      left = p.left()
+      right = p.right()
 
-      rescale = (table, scale, aes) =>
-        if scale.type == Schema.ordinal
-          log "scale ordinal, skipping: #{aes}"
-          return table 
-        return table if scale.frozen
-        tabletype = table.schema.type aes
-        if oldscaleset.contains (posMapping[aes] or aes), tabletype
-          oldScale = oldscaleset.scale aes, tabletype, posMapping
-        else
-          oldScale = oldscaleset.scale aes, Schema.unknown, posMapping
-        g = (v) -> scale.scale oldScale.invert(v)
-        mappingFuncs.push {
-          alias: aes
-          f: g
-          type: data.Schema.unknown
-        }
-        log "#{idx} rescale: old: #{oldScale.toString()}"
-        log "#{idx} rescale: new: #{scale.toString()}"
-        table
+      posMapping = right.any 'posMapping'
+      set = right.any 'scales'
+      oldset = set.clone()
+      cols = _.filter left.cols(), (col) ->
+        (posMapping[col] or col) in gg.scale.Scale.xys
+      
+      mappings = _.map cols, (col) ->
+        s = set.get col, null, posMapping
+        oldscale = oldset.get col, null, posMapping
+        xycol = posMapping[col] or col
 
-      scaleset.useScales t, posMapping, rescale
-      log "#{idx} #{scaleset.toString()}"
-      t = t.mapCols mappingFuncs
+        f = switch s.type
+          when data.Schema.ordinal, data.Schema.object
+            newrange = getrange xycol, s.type
+            oldrange = [_.mmin(oldscale.range()), _.mmax(oldscale.range())]
+            newsize = newrange[1] - newrange[0]
+            oldsize = oldrange[1] - oldrange[0]
+            if newsize > oldsize
+              ratio = oldsize / newsize
+              resize = (oldsize - oldsize*ratio) / 2
+              newrange = [oldrange[0]+resize, oldrange[1]-resize]
+              s.range newrange
+              ((col,s,ratio,resize) ->
+                (v) -> v #*ratio+resize
+              )(col, s, ratio, resize)
 
-      if no and t.has 'y'
-        ys = t.all 'y'
-        yscale = scaleset.get 'y', [t.schema.type('y'), Schema.unknown]
-        range = yscale.range()
-        [miny, maxy] = [_.min(ys), _.max(ys)]
-        if miny < range[0]
-          console.log(yscale.toString())
-          throw Error("shit, rescaled y(#{miny}) is < range(#{range[0]}) ")
-        if maxy > range[1]
-          console.log(yscale.toString())
-          throw Error("shit, rescaled y(#{maxy}) is > range(#{range[1]})")
+          when data.Schema.numeric, data.Schema.date
+            s.domain getscale(xycol, s).domain()
+            ((col, s, oldscale) -> 
+              (v) -> s.scale oldscale.invert(v)
+            )(col, s, oldscale)
 
-      pt.left t
-      pt.right md
-      pt
+        if f?
+          {
+            alias: col
+            cols: col
+            f: f
+            type: s.type
+          }
+
+      left = left.project mappings, yes
+      p.left left
+      p
+
+    return data.PairTable.union partitions
 
 

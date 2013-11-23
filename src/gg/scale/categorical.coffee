@@ -8,6 +8,7 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
     @type = data.Schema.ordinal
     @d3Scale = d3.scale.ordinal()
     @invertScale = d3.scale.ordinal()
+    @isInterval = no
     super
 
   @defaultDomain: (col) ->
@@ -18,6 +19,8 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
 
   clone: ->
     ret = super
+    ret.d3Scale = @d3Scale.copy()
+    ret.isInterval = @isInterval
     ret.invertScale = @invertScale.copy()
     ret
 
@@ -47,10 +50,13 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
       #XXX: rangeBand vs range changes depending on if we're rendering
       #     points or rectangles?
       if _.isString interval[0]
+        @isInterval = no
         @d3Scale.range interval
       else if data.Schema.type(interval[0]) == data.Schema.numeric
+        @isInterval = yes
         @d3Scale.rangeBands interval#, @padding
       else
+        @isInterval = yes
         @d3Scale.rangePoints interval
         @d3Scale.rangeBands interval
       @invertScale.domain @d3Range()
@@ -63,6 +69,9 @@ class gg.scale.BaseCategorical extends gg.scale.Scale
 
   invert: (v) -> @invertScale v
 
+  #scale: (v) -> @d3Scale(v) + @d3Scale.rangeBand()/2 
+
   valid: (v) -> v in @domain()
+
 
 

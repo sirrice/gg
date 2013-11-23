@@ -32,11 +32,9 @@ suite.addBatch
       pt = gg.core.FormUtil.ensureScales pt, null, gg.util.Log.logger('test')
 
 
-    "after being trained":
+    "after being data trained":
       topic: (pt) ->
-        console.log "hi"
         node = new gg.scale.train.Data
-        console.log "training"
         runTest node, pt
 
       "doesn't have _barrier": (pt) ->
@@ -46,5 +44,22 @@ suite.addBatch
         md = pt.right()
         md.each (row) ->
           scales = row.get 'scales'
+          console.log scales.cols()
+
+    "after being pixel trained":
+      topic: (pt) ->
+        pt = gg.scale.train.Data.train pt, new gg.util.Params()
+        node = new gg.scale.train.Data
+        runTest node, pt
+
+      "doesn't have _barrier": (pt) ->
+        assert (not pt.leftSchema().has('_barrier'))
+
+      "returns trained scales": (pt) ->
+        md = pt.right()
+        md.each (row) ->
+          scales = row.get 'scales'
+          console.log scales.cols()
+
 
 suite.export module

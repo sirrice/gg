@@ -63,7 +63,7 @@ class gg.scale.Set
   #        retrieving the "master" scale to render for guides
   scale: (aesOrScale, type, posMapping={}) ->
     if _.isString aesOrScale
-      @get aesOrScale, posMapping
+      @get aesOrScale, type, posMapping
     else if aesOrScale?
       @set aesOrScale
 
@@ -83,7 +83,7 @@ class gg.scale.Set
 
     unless aes of @scales
       udt = @userdefinedType aes
-      type = udt if udt?
+      type = udt if udt? and udt != data.Schema.unknown
       @scales[aes] = @factory.scale aes, type
     @scales[aes]
 

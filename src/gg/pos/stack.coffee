@@ -84,8 +84,8 @@ class gg.pos.Stack extends gg.core.XForm
     _.each groups, (group, idx) ->
       layer = stackedLayers[idx]
       x2row = {}
-      group.map (row) ->
-        x2row[row.get 'x'] = row
+      group.each (row) ->
+        x2row[row.get 'x'] = row.clone()
 
       _.each layer, (pos) ->
         x = pos.x
@@ -94,6 +94,11 @@ class gg.pos.Stack extends gg.core.XForm
           row.set 'y0', pos.y0 + (baselines[x] or 0)
           row.set 'y1', row.get('y0') + pos.y
           row.set 'y', row.get('y1')
+          if row.has 'x1'
+            row.set 'x1', (row.get('x1')-row.get('x')+x)
+          if row.has 'x0'
+            row.set 'x0', (row.get('x0')-row.get('x')+x)
+          row.set 'x', x
           newrows.push row
 
     schema = params.get('outputSchema') pairtable, params

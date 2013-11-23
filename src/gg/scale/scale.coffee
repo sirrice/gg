@@ -211,8 +211,8 @@ class gg.scale.Scale
     spec.frozen = @frozen
 
     spec.ggpackage = @constructor.ggpackage
-    spec.domain = @domain()
-    spec.range = @range()
+    spec.domain = _.clone @domain()
+    spec.range = _.clone @range()
 
     return spec
 

@@ -34,5 +34,5 @@ class gg.scale.Color extends gg.scale.BaseCategorical
 
   invert: (v) -> @invertScale v
 
-
+  scale: (v) -> @d3Scale v
 

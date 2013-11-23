@@ -56,7 +56,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
   setupPos: ->
     @posSpec  = @spec.pos
     @posSpec = _.flatten [@posSpec]
-    @pos = _.map @posSpec, (subSpec) ->
+    @pos = _.map @posSpec, (subSpec) =>
+      subSpec.name = "pos-#{subSpec.type}-#{@layerIdx}"
       gg.pos.Position.fromSpec subSpec
     @pos
 
@@ -69,6 +70,10 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
     # XXX: infer if a mapping is for a constant and
     #      set the scales to identity (if not already set)
+
+    @detectscales = new gg.xform.DetectScales
+      params:
+        aes: aes
 
     @mapSpec = 
       aes: aes
@@ -137,6 +142,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     [
       @makeEnvSetup()
       @map
+      @detectscales
       new gg.xform.ScalesSchema
         name: "scales-schema-#{@layerIdx}"
         params:
@@ -206,7 +212,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
       @g.scales.pixel
       @makeStdOut "post-pixeltrain"
 
-      @g.facets.layout2
+      #@g.facets.layout2
     ]
     nodes
 

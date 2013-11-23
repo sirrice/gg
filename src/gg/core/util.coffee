@@ -69,11 +69,12 @@ class gg.core.FormUtil
       md = md.setColVal 'scalesconfig', gg.scale.Config.fromSpec({})
     unless md.has 'scales'
       f = (row) ->
-        layer = row.get 'layer'
-        config = row.get 'scalesconfig'
-        config.scales(layer)
+          return row.get 'scales' if row.get('scales')?
+          layer = row.get 'layer'
+          config = row.get 'scalesconfig'
+          config.scales(layer)
 
-      md = md.project [ { alias: 'scales', f: f, type: data.Schema.object } ]
+      md = md.project [ { alias: 'scales', f: f, type: data.Schema.object } ], yes
       pt.right md
       pt
     else

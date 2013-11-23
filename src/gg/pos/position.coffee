@@ -23,5 +23,7 @@ class gg.pos.Position
   @fromSpec: (spec) ->
     klasses = gg.pos.Position.klasses()
     klass = klasses[spec.type]
-    new klass spec
+    o = new klass spec
+    return null if _.isType o, gg.pos.Identity
+    o
 

@@ -1,6 +1,33 @@
 #<< gg/util/log
 #<< gg/core/xform
 
+class gg.xform.DetectScales extends gg.core.XForm
+  @ggpackage = "gg.xform.DetectScales"
+
+  parseSpec: ->
+    super
+    @params.put 'aes', @spec.aes 
+
+  compute: (pairtable, params) ->
+    table = pairtable.left()
+    md = pairtable.right()
+    aes = params.get 'aes'
+
+    constantCols = []
+    _.each aes, (v, k) ->
+      if _.isNumber(v) or (_.isString(v) and not table.has(v))
+        constantCols.push k
+
+    md.each (row) ->
+      config = row.get 'scalesconfig'
+      layer = row.get 'layer'
+      _.each constantCols, (col) ->
+        config.layerSpec(layer)[col] = new gg.scale.Identity
+          aes: col
+    pairtable
+
+
+
 class gg.xform.UseScales extends gg.core.XForm
   @ggpackage = "gg.xform.UseScales"
 
@@ -21,6 +48,9 @@ class gg.xform.UseScales extends gg.core.XForm
 
     table = @useScales table, scales, posMapping
     pairtable.left table
+    console.log "use scales #{@name}"
+    console.log pairtable.right().map (row) -> row.get('scales').id
+    console.log pairtable.right().map (row) -> row.get('scales').id
     pairtable
 
 
@@ -34,6 +64,7 @@ class gg.xform.ScalesSchema extends gg.xform.UseScales
     schema = table.schema
     _.each table.cols(), (col) ->
       tabletype = schema.type col
+
       scale = scales.get col, tabletype, posMapping
       scaletype = scale.type
 
@@ -42,8 +73,8 @@ class gg.xform.ScalesSchema extends gg.xform.UseScales
           log "settype: #{col}\t#{scaletype} from #{tabletype}"
           table.schema.setType col, scaletype
         else
-          console.log table.all(col)[0...10]
-          throw Error("Upcast #{col}: #{tabletype}->#{scaletype}")
+          log.warn "Upcasting #{col}: #{tabletype}->#{scaletype}"
+          table.schema.setType col, scaletype
     table
 
 # transforms data -> pixel/aesthetic values
