@@ -78,10 +78,9 @@ class gg.wf.Node extends events.EventEmitter
     # this block is all debugging code
     #
     listeners = @listeners outidx
-    console.log @name
-    if tableset.left().has('x') and tableset.left().has('y')
-      console.log JSON.stringify tableset.left().limit(3).project(['x', 'y'], false).raw()
     @log.info "output: port(#{outidx}), sizes: #{tableset.left().nrows()}"
+    tableset.left(tableset.left().cache())
+    tableset.right(tableset.right().cache())
     #@log tableset
 
 

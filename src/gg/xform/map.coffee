@@ -18,6 +18,8 @@ class gg.xform.Mapper extends gg.wf.SyncExec
     aes = params.get 'aes'
 
     functions = _.mappingToFunctions table, aes
+    @log "mapper #{@name} running on #{JSON.stringify aes}"
+    @log functions
     table = table.project functions, yes
     pt.left table
 

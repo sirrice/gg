@@ -16,6 +16,17 @@
 #       or
 #       list of data.ops.aggregate aggregation descs
 #
+# agg function spec is either a dictionary of
+# 
+#   type: "count"
+#   col:  "y"   (default: "y")
+#   args: []    (default: [])
+#
+# or name of the aggregate
+#
+#   "count"
+#   (col defausts to "y", args default to [])
+#
 #
 # Create group by attributes, functions understand how to create
 # bucketized groups

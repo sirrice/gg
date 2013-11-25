@@ -86,9 +86,11 @@ class gg.scale.train.Pixel extends gg.core.BForm
           when data.Schema.numeric, data.Schema.date
             vals = left.all col
             # convert pixel values into domain
+            console.log s.defaultDomain vals
             d = _.map s.defaultDomain(vals), (v) ->
-              if v? then s.invert(v) else null
-            getscale(xycol, s).mergeDomain d
+              if _.isValid(v) then s.invert(v) else null
+            if _.all d, _.isValid
+              getscale(xycol, s).mergeDomain d
 
 
 
@@ -117,7 +119,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
               ratio = oldsize / newsize
               resize = (oldsize - oldsize*ratio) / 2
               newrange = [oldrange[0]+resize, oldrange[1]-resize]
-              s.range newrange
+              #s.range newrange
               ((col,s,ratio,resize) ->
                 (v) -> v #*ratio+resize
               )(col, s, ratio, resize)

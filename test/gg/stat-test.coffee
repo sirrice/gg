@@ -22,6 +22,26 @@ runTest = (node, table) ->
 
 
 suite.addBatch 
+  "Bin2d":
+    topic: ->
+      rows = _.times 100, (i) ->
+        { 
+          x: Math.floor(Math.random()*2)
+          y: Math.floor(Math.random()*2)
+          z: 1
+        };
+      data.Table.fromArray rows
+
+    "when binned": 
+      topic: (table) ->
+        node = new gg.stat.Bin2D
+        runTest node, table
+
+      "doesnt crash": (pt) ->
+        pt.left().each (row) ->
+          console.log [row.get('x'), row.get('y'), row.get('sum')]
+
+
   "Loess":
     topic: ->
       rows = _.times 10, (i) ->

@@ -10,31 +10,9 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @log = gg.util.Log.logger @constructor.ggpackage, "Layer-#{@layerIdx}"
 
 
-  #
-  # spec:
-  #
-  # {
-  #  geom: geomspec
-  #  pos: posspec
-  #  stat: statspec
-  #  map: {}
-  # }
-  #
-  # geomspec/posspec/statspec:
-  #
-  # {
-  #  type: ""
-  #  aes: { ..., group: 1 }
-  #  param/args: {}
-  #  name: "...-shorthand"
-  # }
-  #
-  # map is a pre-stats mapping, if desired (for compatibility with ggplot2)
-  # it can be replicated by adding an aes attribute to statspec
-  #
   parseSpec: ->
     @setupGeom()
-    #@setupStats()
+    @setupStats()
     @setupPos()
     @setupMap()
     @setupCoord()
@@ -118,7 +96,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes = []
 
     nodes.push @compileSetup()
-    #nodes.push @compileStats()
+    nodes.push @compileStats()
 
     nodes.push @compileGeomMap()
     nodes.push new gg.xform.ScalesValidate
@@ -129,9 +107,6 @@ class gg.layer.Shorthand extends gg.layer.Layer
     nodes.push @compileGeomPos()
     nodes.push @compileCoord()
     nodes.push @compileRender()
-    nodes.push gg.wf.SyncExec.create (pt) ->
-      console.log pt.left().raw()
-      pt
 
     nodes = @compileNodes nodes
     nodes
@@ -154,10 +129,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
     [
       # train & filter scales
-      @makeStdOut "pre-train"
       @g.scales.prestats
-      @makeScalesOut "pre-stat-#{@layerIdx}"
-      @makeStdOut "post-train"
 
       new gg.xform.ScalesFilter
         name: "scalesfilter-#{@layerIdx}"

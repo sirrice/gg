@@ -88,6 +88,7 @@ class gg.geom.Render extends gg.core.XForm
   @fromSpec: (spec) ->
     klasses = gg.geom.Render.klasses()
     klass = klasses[spec.type]
+    return null unless klass?
     gg.util.Log.logger(@ggpackage, "Render") "Render klass #{spec.type} -> #{klass.name}"
     new klass spec
 

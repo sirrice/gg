@@ -82,6 +82,7 @@ class gg.geom.Geom
         gg.geom.Glyph
         gg.geom.Edge
         gg.geom.Text
+        gg.geom.Bin2D
     ]
     ret = {}
     _.each klasses, (klass) ->

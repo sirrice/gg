@@ -1,11 +1,11 @@
 #<< gg/core/bform
 
-class gg.geom.reparam.Rect extends gg.core.BForm
+class gg.geom.reparam.Rect extends gg.core.XForm
   @ggpackage = "gg.geom.reparam.Rect"
 
   parseSpec: ->
     super
-    @params.put "padding", _.findGoodAttr @spec, ["pad", "padding"], 0.1
+    @params.put 'keys', ['layer']
 
   inputSchema: -> ['x', 'y']
 

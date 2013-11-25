@@ -3,13 +3,10 @@
 
 class gg.scale.ColorCont extends gg.scale.Scale
   @ggpackage = 'gg.scale.ColorCont'
-  @aliases = "color_cont"
+  @aliases = ["color_cont", "colorcont"]
   constructor: (@spec={}) ->
     @d3Scale = d3.scale.linear()
-    super
-
-  parseSpec: ->
-    super
+    @type = data.Schema.numeric
 
     @startColor = @spec.startColor or d3.rgb 255, 247, 251
     @endColor = @spec.endColor or d3.rgb 2, 56, 88

@@ -67,59 +67,42 @@ class gg.scale.Scale
   @ggpackage = 'gg.scale.Scale'
   @log = gg.util.Log.logger @ggpackage, "scale"
   @aliases = "scale"
+  @id: -> gg.scale.Scale::_id += 1
   _id: 0
 
+  @xs = ['x', 'x0', 'x1']
+  @ys = ['y', 'y0', 'y1', 'q1', 'median', 'q3', 'lower', 'upper', 'min', 'max']
+  @xys = _.union @xs, @ys
+  @legendAess = ['size', 'group', 'color', 'fill', 'fill-opacity']
 
 
   constructor: (@spec={}) ->
-    @aes = null
-
-
-    # Whether or not the domain/range was set from the Spec
-    # -> don't update at all
-    # -> overrides @domainUpdated
-    @domainSet = no
-    @rangeSet = no
-
-    # Whether the domain/range has been updated or if
-    # still default values
-    @domainUpdated = false
-    @rangeUpdated = false
-    @id = gg.scale.Scale::_id += 1
-
-    # center scale on this value -- only useful for continuous scales
-    @center = null
-
-    @frozen = no
-
-    @parseSpec()
-
-  parseSpec: ->
     @aes = @spec.aes
     unless @aes?
       throw Error("Scale.fromSpec needs an aesthetic: #{JSON.stringify @spec}")
 
-    range = _.findGoodAttr @spec, ["range"], null
-    if range? #and @aes not in gg.scale.Scale.xys
-      @range range
+    @rangeSet = no
+    @domainSet = no
+
+    if @spec.range? 
+      @range @spec.range
       @rangeSet = yes
 
     attrs = ['domain','limit','limits','lims','lim']
-    domain = _.findGoodAttr @spec, attrs, null
+    domain = gg.parse.Parser.attr @spec, attrs, null
     if domain?
       @domain domain
       @domainSet = yes
 
-    @center = _.findGood [@spec.center, null]
-    @domainUpdated = _.findGood [@spec.domainUpdated, false]
-    @rangeUpdated = _.findGood [@spec.rangeUpdated, false]
-    @frozen = _.findGood [@spec.frozen, no]
+    @domainUpdated = @spec.domainUpdated or false
+    @rangeUpdated = @spec.rangeUpdated or false
+    @center = @spec.center
+    @frozen = @spec.frozen or no
 
     @log = gg.util.Log.logger @ggpackage, "Scale #{@aes}.#{@id} (#{@type},#{@constructor.name})"
+    @id = gg.scale.Scale.id()
 
-    # copy over other spec key-val pairs?
-    # for key, val of spec
-    #   @[key] = val
+
 
   ########
   #
@@ -127,10 +110,6 @@ class gg.scale.Scale
   #
   ########
 
-  @xs = ['x', 'x0', 'x1']
-  @ys = ['y', 'y0', 'y1', 'q1', 'median', 'q3', 'lower', 'upper', 'min', 'max']
-  @xys = _.union @xs, @ys
-  @legendAess = ['size', 'group', 'color', 'fill', 'fill-opacity']
 
   @klasses: ->
     klasses = [
@@ -141,6 +120,7 @@ class gg.scale.Scale
       gg.scale.Ordinal,
       gg.scale.Color,
       gg.scale.Shape,
+      gg.scale.ColorCont
     ]
     ret = {}
     for klass in klasses
@@ -148,17 +128,10 @@ class gg.scale.Scale
          ret[alias] = klass
     ret
 
-
-
   @fromSpec: (spec={}) ->
-    type = spec.type
     klasses = gg.scale.Scale.klasses()
-    klass = klasses[type] or gg.scale.Linear
-
-    aesAttrs = ['aesthetics', 'aesthetic', 'aes', 'var']
-    spec.aes = _.findGoodAttr spec,  aesAttrs, null
-    s = new klass spec
-    s
+    klass = klasses[spec.type] or gg.scale.Linear
+    new klass spec
 
 
   @defaultFor: (aes, type) ->
@@ -181,7 +154,7 @@ class gg.scale.Scale
       }[aes] or gg.scale.Identity
 
     if type?
-      if klass.name == gg.scale.Color
+      if klass == gg.scale.Color
         unless type is data.Schema.ordinal
           klass = gg.scale.ColorCont
       else if klass == gg.scale.Linear
@@ -189,12 +162,9 @@ class gg.scale.Scale
           klass = gg.scale.Ordinal
         else if type is data.Schema.date
           klass = gg.scale.Time
-      
 
     @log "Scale: defaultFor(#{aes}, #{type}) -> #{klass.name}"
-
-    s = new klass {aes: aes, type: type}
-    s
+    new klass {aes: aes, type: type}
 
   clone: ->
     return gg.scale.Scale.fromJSON @toJSON()
@@ -272,15 +242,14 @@ class gg.scale.Scale
 
   domain: (interval) ->
     if interval?
-      if not @domainSet
+      unless @domainSet
         @domainUpdated = yes
         @d3Scale.domain interval
     @d3Scale.domain()
 
   range: (interval) ->
     if interval? 
-
-      if not @rangeSet
+      unless @rangeSet
         @rangeUpdated = true
         @d3Scale.range interval
     @d3Scale.range()

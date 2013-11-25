@@ -146,7 +146,7 @@ var geom_interval = {
   "layers": [
     {
       "geom": {
-        "type": "rect", aes: {y:'avg'}
+        "type": "rect"
       }, 
       "stat": "bin",scales: {color: 'color'}
     }
@@ -156,12 +156,27 @@ var geom_interval = {
         "x": "d", 
         "y": "e", 
         "color": "g"
-      }, 
-  "facets": {
-    "y": "t", 
-    "x": "f"
-  }
+      }
 };
+var geom_interval = {
+  "layers": [
+  {
+    geom: 'line'
+  },
+    {
+      "geom": {
+        "type": "line"
+      }, 
+      aes: {stroke: 'green'}, scales: {stroke: 'color'}
+    }
+  ], 
+
+      "aes": {
+        "x": "d", 
+        "y": "e"
+      }
+};
+
 
 var geom_point_1 = {
   layers:[{ geom: "point"}],
@@ -269,3 +284,19 @@ var geom_taxi = {
   aes: { x: "{new Date(x)}", y: "{parseInt(y)}" }
          
 }
+
+
+var geom_bin2d = {
+  "layers": [
+    {
+      "geom": {
+        "type": "bin2d", aes: {fill: 'sum'}
+      }, stat: "bin2d"
+    }
+  ], 
+  "aes": {
+    "x": "d", 
+    "y": "e",
+    z: 1
+  }
+} ;

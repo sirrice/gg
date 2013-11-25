@@ -62,6 +62,7 @@ class gg.pos.Stack extends gg.core.XForm
 
     layers = []
     groups = table.partition("group").all('table')
+    console.log(groups)
     values = (group, groupidx) ->
       x2row = {}
       group.each (row) ->

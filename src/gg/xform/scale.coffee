@@ -6,7 +6,6 @@ class gg.xform.DetectScales extends gg.core.XForm
 
   parseSpec: ->
     super
-    @params.put 'aes', @spec.aes 
 
   compute: (pairtable, params) ->
     table = pairtable.left()
@@ -17,6 +16,7 @@ class gg.xform.DetectScales extends gg.core.XForm
     _.each aes, (v, k) ->
       if _.isNumber(v) or (_.isString(v) and not table.has(v))
         constantCols.push k
+    @log "constant columns: #{constantCols}"
 
     md.each (row) ->
       config = row.get 'scalesconfig'
@@ -44,13 +44,8 @@ class gg.xform.UseScales extends gg.core.XForm
     scales = md.any().get 'scales'
     posMapping = md.any().get 'posMapping'
 
-    @log "table has #{table.nrows()} rows"
-
     table = @useScales table, scales, posMapping
     pairtable.left table
-    console.log "use scales #{@name}"
-    console.log pairtable.right().map (row) -> row.get('scales').id
-    console.log pairtable.right().map (row) -> row.get('scales').id
     pairtable
 
 
