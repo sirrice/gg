@@ -74,7 +74,11 @@ class gg.facet.pane.Container
     )
 
   toString: ->
-    JSON.stringify @toJSON()
+    JSON.stringify {
+      xidx: @xidx
+      yidx: @yidx
+      c: @c.toString()
+    }
 
   #
   # bounds for the container (pane + facets + axes)

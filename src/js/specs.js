@@ -290,7 +290,7 @@ var geom_bin2d = {
   "layers": [
     {
       "geom": {
-        "type": "bin2d", aes: {fill: 'sum'}
+        "type": "bin2d", aes: {color: 'sum'}
       }, stat: "bin2d"
     }
   ], 
@@ -298,5 +298,5 @@ var geom_bin2d = {
     "x": "d", 
     "y": "e",
     z: 1
-  }
+  }, facets: {x: 'g'}
 } ;

@@ -39,7 +39,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
 
     # Compute derived values
     css = { 'font-size': '10pt' }  ## isn't there a facet class somewhere?
-    labelHeight = _.exSize().h + paddingPane
+    labelHeight = _.exSize().h 
     showXFacet = xs.length > 1 and xs[0]?
     showYFacet = ys.length > 1 and ys[0]?
 
@@ -49,11 +49,10 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     yAxisW = ydims.w + paddingPane
     xAxisW = xdims.w + paddingPane
 
-    log "paddingPane, md, xs, ys:"
-    log paddingPane
-    log md.raw()
-    log xs
-    log ys
+    log "paddingpane: #{paddingPane}"
+    log "facetxs:     #{xs}"
+    log "facetys:     #{ys}"
+    log "labelHeight: #{labelHeight}"
 
     #
     # OK layout time
@@ -77,13 +76,6 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     tmp = new data.PairTable xytable, md
     tmp = tmp.ensure facetKeys
     md = tmp.right()
-
-    xTextF = gg.util.Textsize.fitMany(
-      xs, grid.paneW, labelHeight+paddingPane, 8, {padding: 2}
-    )
-    yTextF = gg.util.Textsize.fitMany(
-      ys, grid.paneH, labelHeight+paddingPane, 8, {padding: 2}
-    )
 
     # 
     # Update MD:
@@ -113,6 +105,15 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
 
         xopts = { text: x, size: 8 }
         yopts = { text: y, size: 8 }
+
+        xfc = paneC.xFacetC()
+        yfc = paneC.yFacetC()
+        xTextF = gg.util.Textsize.fitMany(
+          xs, xfc.w(), xfc.h(), 8, {padding: 2}
+        )
+        yTextF = gg.util.Textsize.fitMany(
+          ys, yfc.w(), labelHeight, 8, {padding: 2}
+        )
         xopts = xTextF x
         yopts = yTextF y
 

@@ -65,7 +65,7 @@ class gg.geom.reparam.Rect extends gg.core.XForm
   # @param padding multiplier to remove space for padding
   # XXX: assumes x is numeric
   getRectWidth: (table, xscale, padding=0) ->
-    groups = table.partition ['facet-id', 'group', 'layer']
+    groups = table.partition ['facet-x', 'facet-y', 'group', 'layer']
     width = xscale.range()[1] - xscale.range()[0]
     mindiff = null
     groups.each (row) ->

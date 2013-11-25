@@ -36,7 +36,6 @@ class gg.facet.base.Facets
   #@facetXKey = "facet-x"
   #@facetYKey = "facet-y"
   #@facetXYKeys = "facet-xy"
-  @facetKeys = "facet-keys"
   @facetId = "facet-id"
 
   constructor: (@g, @spec={}) ->
@@ -126,12 +125,10 @@ class gg.facet.base.Facets
 
       mapping = [
         {
-          alias: ['facet-keys', 'facet-id', 'facet-x', 'facet-y']
+          alias: ['facet-x', 'facet-y']
           f: (xfacet, yfacet) -> 
             'facet-x': xfacet
             'facet-y': yfacet
-            'facet-keys': "key-#{xfacet}-#{yfacet}"
-            'facet-id': "facet-#{xfacet}-#{yfacet}"
           type: data.Schema.ordinal
           cols: [xcol, ycol]
         }
@@ -139,7 +136,7 @@ class gg.facet.base.Facets
       t = t.project mapping, yes
 
       pairtable.left t
-      pairtable = pairtable.ensure ['facet-x' ,'facet-y', 'facet-id', 'facet-keys']
+      pairtable = pairtable.ensure ['facet-x' ,'facet-y']
       pairtable
 
     gg.wf.SyncBarrier.create f, @splitParams, 'facet-labeler'

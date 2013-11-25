@@ -49,6 +49,7 @@ class gg.wf.Exec extends gg.wf.Node
 
         table = new data.ops.Union _.map(pairtables, (pt) -> pt.left())
         md = new data.ops.Union _.map(pairtables, (pt) -> pt.right())
+
         @output 0, new data.PairTable(table, md)
     catch err
       console.log err.stack

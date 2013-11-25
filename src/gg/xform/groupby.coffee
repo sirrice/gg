@@ -42,16 +42,11 @@ class gg.xform.GroupBy extends gg.core.XForm
   parseSpec: ->
     @log @params
     @params.ensureAll
-      cols: [[], []]
       aggs: [["agg", "aggs"], {}]
-      nBins: [["nbins", "bin", "n", "nbin", "bins"], 20]
-
 
     @annotate = new gg.xform.Quantize
       name: "#{@name}-quantize"
-      params: 
-        cols: @params.get('cols')
-        nBins: @params.get('nBins')
+      params: @params
 
     # turn aggs into actual aggregate specs for table.aggregate
     aggs = @params.get 'aggs'

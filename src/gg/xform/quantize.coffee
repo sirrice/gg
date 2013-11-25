@@ -60,7 +60,7 @@ class gg.xform.Quantize extends gg.wf.SyncExec
         alias: col
         f
         type
-        cols
+        cols: col
       }
 
 
@@ -79,7 +79,7 @@ class gg.xform.Quantize extends gg.wf.SyncExec
       when data.Schema.numeric
         [minD, maxD] = [domain[0], domain[1]]
         binRange = (maxD - minD) * 1.0
-        binSize = Math.ceil(binRange / nbins)
+        binSize = binRange / nbins
         toKey = (v) -> 
           idx = Math.ceil((v-minD) / binSize - 1)
           idx = Math.max(0, idx)
@@ -89,12 +89,12 @@ class gg.xform.Quantize extends gg.wf.SyncExec
         domain = [domain[0].getTime(), domain[1].getTime()]
         [minD, maxD] = [domain[0], domain[1]]
         binRange = (maxD - minD) * 1.0
-        binSize = Math.ceil(binRange / nbins)
+        binSize = (binRange / nbins)
         toKey = (v) ->
           time = v.getTime()
           idx = Math.ceil((time-minD) / binSize - 1)
           idx = Math.max(0, idx)
-          date = (idx * binSize) + minD + binSize/2
+          date = (Math.ceil(idx * binSize) + minD + binSize/2)
           new Date date
 
       else

@@ -81,6 +81,7 @@ class gg.wf.Node extends events.EventEmitter
     @log.info "output: port(#{outidx}), sizes: #{tableset.left().nrows()}"
     tableset.left(tableset.left().cache())
     tableset.right(tableset.right().cache())
+    tableset.left()
     #@log tableset
 
 

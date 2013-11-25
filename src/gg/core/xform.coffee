@@ -34,6 +34,7 @@ class gg.core.XForm extends gg.wf.SyncExec
       inputSchema: @extractAttr "inputSchema"
       outputSchema: @extractAttr "outputSchema"
       defaults: @extractAttr "defaults"
+      keys: ['facet-x', 'facet-y', 'layer']
     @params.ensure "klassname", [], @constructor.ggpackage
 
     # wrap compute in a verification method

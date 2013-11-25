@@ -13,6 +13,7 @@ class gg.core.BForm extends gg.wf.SyncBarrier
       inputSchema: @extractAttr "inputSchema"
       outputSchema: @extractAttr "outputSchema"
       defaults: @extractAttr "defaults"
+      keys: ['facet-x', 'facet-y', 'layer']
     @params.ensure "klassname", [], @constructor.ggpackage
 
     # wrap compute in a verification method

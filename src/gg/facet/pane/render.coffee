@@ -9,13 +9,14 @@ class gg.facet.pane.Svg extends gg.core.BForm
 
   @b2translate: (b) -> "translate(#{b.x0},#{b.y0})"
   b2translate: (b) -> @constructor.b2translate b
+  @facetId: (x, y) -> "facet-#{x}-#{y}"
 
   renderFacetPane: (md, params) ->
     row = md.any()
     svg = row.get('svg').plot
     paneC = row.get 'paneC'
     eventCoordinator = row.get 'event'
-    facetId = row.get 'facet-id'
+    facetId = gg.facet.pane.Svg.facetId(row.get('facet-x'), row.get('facet-y'))
     return null unless paneC?
 
     layerIdx = row.get 'layer'
@@ -264,12 +265,13 @@ class gg.facet.pane.Svg extends gg.core.BForm
     # This is where geoms in each layer will be rendered
     #
     els = {}
-    partitions = md.partition('facet-id').all('table')
+    partitions = md.partition(['facet-x', 'facet-y']).all('table')
     els = _.o2map partitions, (p) => 
-      facetid = p.any 'facet-id'
+      row = p.any()
+      facetId = gg.facet.pane.Svg.facetId(row.get('facet-x'), row.get('facet-y'))
       svg = @renderFacetPane p, params
       if svg? 
-        [facetid, svg] 
+        [facetId, svg] 
     start = Date.now()
     console.log md.raw()
     console.log "cost = #{Date.now() - start}"
@@ -278,8 +280,9 @@ class gg.facet.pane.Svg extends gg.core.BForm
     # Second pass sets ['svg'].paneSvg for each data
     # and adds g.layer-pane for each layer
     #
-    f = (paneC, facetId, layerIdx, svg) ->
+    f = (paneC, facetx, facety, layerIdx, svg) ->
       dc = paneC.drawC()
+      facetId = gg.facet.pane.Svg.facetId(facetx, facety)
       el = els[facetId]
 
       paneSvg = el.select('.data-pane').insert 'g', ':last-child'
@@ -296,7 +299,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
 
     md = md.project [{
       alias: 'svg'
-      cols: ['paneC', 'facet-id', 'layer', 'svg']
+      cols: ['paneC', 'facet-x', 'facet-y', 'layer', 'svg']
       f: f
       type: data.Schema.object
     }]

@@ -24,8 +24,6 @@ class gg.geom.reparam.Bin2D extends gg.geom.reparam.Rect
     else
       h = @getRectDiff table, yscale, 'y', padding
 
-    xytable = table.project('x', no).cross(table.project('y', no))
-    table = xytable.join(table, ['x', 'y'], 'left')
 
     mapping = [
       {
@@ -67,7 +65,7 @@ class gg.geom.reparam.Bin2D extends gg.geom.reparam.Rect
   # @param padding multiplier to remove space for padding
   # XXX: assumes x is numeric
   getRectDiff: (table, scale, col, padding=1) ->
-    groups = table.partition ['facet-id', 'group', 'layer']
+    groups = table.partition ['facet-x', 'facet-y', 'group', 'layer']
     diff = scale.range()[1] - scale.range()[0]
     groups.each (row) ->
       vals = row.get('table').all(col)
