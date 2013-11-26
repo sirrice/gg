@@ -75,6 +75,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
       console.log "colprov x1 = #{left.colProv 'x1'}"
       for col in cols
         s = set.get col, null, posMapping
+        continue if s.frozen
         xycol = posMapping[col] or col
         switch s.type
           when data.Schema.ordinal, data.Schema.object
@@ -107,6 +108,9 @@ class gg.scale.train.Pixel extends gg.core.BForm
       mappings = _.map cols, (col) ->
         s = set.get col, null, posMapping
         oldscale = oldset.get col, null, posMapping
+        if s.frozen
+          console.log "skipping #{col} in layer #{right.any 'layer'} because its frozen"
+          return 
         xycol = posMapping[col] or col
 
         f = switch s.type

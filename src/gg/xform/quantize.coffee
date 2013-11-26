@@ -1,6 +1,7 @@
 #<< gg/wf/exec
+#<< gg/core/xform
 
-class gg.xform.Quantize extends gg.wf.SyncExec
+class gg.xform.Quantize extends gg.core.XForm
   @ggpackage = "gg.xform.Quantize"
 
   parseSpec: ->

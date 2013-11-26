@@ -43,7 +43,6 @@ class gg.core.XForm extends gg.wf.SyncExec
     @compute = (pt, params) ->
       pt = gg.core.FormUtil.addDefaults pt, params, log
       gg.core.FormUtil.validateInput pt, params, log
-      log "running xform compute"
       compute pt, params
 
     super

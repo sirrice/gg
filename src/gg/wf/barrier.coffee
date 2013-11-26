@@ -12,37 +12,53 @@ class gg.wf.Barrier extends gg.wf.Node
 
   compute: (pt, params, cb) -> cb null, pt
 
+  @setup: (inputs) ->
+    tables = _.map inputs, (pt, idx) ->
+      t = pt.left()
+      t.setColVal '_barrier', idx
+
+    mds = _.map inputs, (pt, idx) ->
+      md = pt.right()
+      md.setColVal '_barrier', idx
+
+    table = new data.ops.Union tables
+    md = new data.ops.Union mds
+    new data.PairTable table, md
+
+
+  @finalize: (tableset) ->
+    table = tableset.left()
+    md = tableset.right()
+    table = table.partition '_barrier', 'table'
+    md = md.partition '_barrier', 'md'
+
+    pairtable = table.join md, '_barrier' 
+    pairtable.map (row) =>
+      table = row.get('table')
+      md = row.get('md') or null
+      table = table.exclude('_barrier') if table?
+      md = md.exclude('_barrier') if md?
+      idx = row.get '_barrier'
+      {
+        idx: idx
+        pairtable: new data.PairTable(table, md)
+      }
+
+
   run: ->
     throw Error("Node not ready") unless @ready()
     compute = @params.get('compute') or @compute.bind(@)
 
     try
-      tables = _.map @inputs, (pt, idx) ->
-        t = pt.left()
-        t.setColVal '_barrier', idx
-      mds = _.map @inputs, (pt, idx) ->
-        md = pt.right()
-        md.setColVal '_barrier', idx
+      pairtable = gg.wf.Barrier.setup @inputs
 
-      table = new data.ops.Union tables
-      md = new data.ops.Union mds
-      tableset = new data.PairTable table, md
-
-      compute tableset, @params, (err, tableset) =>
+      compute pairtable, @params, (err, tableset) =>
         throw err if err?
-        table = tableset.left()
-        md = tableset.right()
-        table = table.partition '_barrier', 'table'
-        md = md.partition '_barrier', 'md'
-
-        pairtable = table.join md, '_barrier' # schema: table, md, _barrier
-        pairtable.each (row) =>
-          table = row.get('table')
-          md = row.get('md') or null
-          table = table.exclude('_barrier') if table?
-          md = md.exclude('_barrier') if md?
-          idx = row.get '_barrier'
-          @output idx, new data.PairTable(table, md)
+        results = gg.wf.Barrier.finalize tableset
+        for result in results
+          idx = result.idx
+          output = result.pairtable
+          @output idx, output
     catch err
       console.log err.stack
       throw Error(err)

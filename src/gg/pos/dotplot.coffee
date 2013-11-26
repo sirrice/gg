@@ -45,7 +45,8 @@ class gg.pos.DotPlot extends gg.core.XForm
     xs = []
     ys = []
     prevx = null
-    shifted = no
+    # remember if previous point was stacked or not
+    stacked = no
 
     t.each (row) ->
       curx = row.get 'x'
@@ -53,22 +54,24 @@ class gg.pos.DotPlot extends gg.core.XForm
         xs.push curx
         ys.push null
         return
-      if prevx is null or curx-prevx > r*2
+      if prevx is null or curx-prevx >= r*2
+        # start a new column
         prevx = curx
         xs.push prevx
         ys.push r+miny
-        shifted = no
+        stacked = no
       else if curx != prevx
         xs.push prevx+(r/2.0)
-        if shifted
+        if stacked 
           ys.push (ys[ys.length-1]+r*2)
         else
           ys.push r+miny
-          shifted = yes
+          stacked = yes
       else 
+        # current x is the same as previous
         xs.push curx
         ys.push (ys[ys.length-1]+r*2)
-        shifted = no
+        stacked = yes
 
     y0s = _.map ys, (y) -> y - r
     y1s = _.map ys, (y) -> y + r
@@ -84,9 +87,9 @@ class gg.pos.DotPlot extends gg.core.XForm
     domain = [_.min(y0s), _.max(y1s)]
     sets = _.uniq pairtable.right().all 'scales'
     for set in sets
-      s = set.get 'y', data.Schema.numeric
-      s.domain domain
-      s.range [Math.max(domain[0], s.range()[0]), Math.min(domain[1], s.range()[1])]
+      s = set.get 'y'
+      #s.domain domain
+      #s.range [Math.max(domain[0], s.range()[0]), Math.min(domain[1], s.range()[1])]
       s.frozen = yes
 
     pairtable.left t

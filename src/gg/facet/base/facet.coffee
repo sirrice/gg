@@ -36,7 +36,8 @@ class gg.facet.base.Facets
   #@facetXKey = "facet-x"
   #@facetYKey = "facet-y"
   #@facetXYKeys = "facet-xy"
-  @facetId = "facet-id"
+  @row2facetId: (row) -> "facet-#{row.get 'facet-x'}-#{row.get 'facet-y'}"
+  @getFacetId: (x, y) -> "facet-#{x}-#{y}"
 
   constructor: (@g, @spec={}) ->
     @log = gg.util.Log.logger @ggpackage, "Facets"

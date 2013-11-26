@@ -129,6 +129,7 @@ class gg.scale.Set
         tabletype = table.schema.type col
         @log "scaleset doesn't contain #{col} creating using type #{tabletype}"
         scale = @scale col, tabletype, posMapping
+      @log "col #{col} depends on #{table.colProv col}"
       @log scale.toString()
 
       table = f table, scale, col

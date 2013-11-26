@@ -13,7 +13,7 @@ science = require 'science'
 #
 # This implementation uses lambda = 1
 #
-class gg.stat.Loess extends gg.wf.SyncExec
+class gg.stat.Loess extends gg.core.XForm
   @ggpackage = "gg.stat.Loess"
   @aliases = ['loess', 'smooth']
 

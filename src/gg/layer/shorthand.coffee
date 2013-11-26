@@ -27,7 +27,8 @@ class gg.layer.Shorthand extends gg.layer.Layer
   setupStats: ->
     @statSpec = @spec.stat
     @statSpec = _.flatten [@statSpec]
-    @stats = _.map @statSpec, (subSpec) ->
+    @stats = _.map @statSpec, (subSpec, idx) =>
+      subSpec.name = "stat-#{subSpec.type}-#{@layerIdx}"
       gg.stat.Stat.fromSpec subSpec
     @stats
 
@@ -50,6 +51,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     #      set the scales to identity (if not already set)
 
     @detectscales = new gg.xform.DetectScales
+      name: "detectscales"
       params:
         aes: aes
 

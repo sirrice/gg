@@ -132,7 +132,10 @@ class gg.core.Graphic extends events.EventEmitter
     return unless @options.optimize
     optimizer = new gg.wf.Optimizer [
       new gg.wf.rule.RPCify
-      #new gg.wf.rule.RmDebug
+      new gg.wf.rule.RmDebug
+      # there is a bug -- when scalesapply + reparam + dotplot are merged, partitioning is lost!
+      #new gg.wf.rule.MergeExec
+      new gg.wf.rule.MergeBarrier
     ]
 
     if @options.guid?

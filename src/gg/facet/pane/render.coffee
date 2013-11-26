@@ -9,14 +9,13 @@ class gg.facet.pane.Svg extends gg.core.BForm
 
   @b2translate: (b) -> "translate(#{b.x0},#{b.y0})"
   b2translate: (b) -> @constructor.b2translate b
-  @facetId: (x, y) -> "facet-#{x}-#{y}"
 
   renderFacetPane: (md, params) ->
     row = md.any()
     svg = row.get('svg').plot
     paneC = row.get 'paneC'
     eventCoordinator = row.get 'event'
-    facetId = gg.facet.pane.Svg.facetId(row.get('facet-x'), row.get('facet-y'))
+    facetId = gg.facet.base.Facets.row2facetId row
     return null unless paneC?
 
     layerIdx = row.get 'layer'
@@ -268,7 +267,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
     partitions = md.partition(['facet-x', 'facet-y']).all('table')
     els = _.o2map partitions, (p) => 
       row = p.any()
-      facetId = gg.facet.pane.Svg.facetId(row.get('facet-x'), row.get('facet-y'))
+      facetId = gg.facet.base.Facets.row2facetId row
       svg = @renderFacetPane p, params
       if svg? 
         [facetId, svg] 
@@ -282,7 +281,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
     #
     f = (paneC, facetx, facety, layerIdx, svg) ->
       dc = paneC.drawC()
-      facetId = gg.facet.pane.Svg.facetId(facetx, facety)
+      facetId = gg.facet.base.Facets.getFacetId facetx, facety
       el = els[facetId]
 
       paneSvg = el.select('.data-pane').insert 'g', ':last-child'

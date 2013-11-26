@@ -1,4 +1,5 @@
 #<< gg/wf/node
+#<< gg/wf/exec
 
 
 class gg.xform.Mapper extends gg.wf.SyncExec
@@ -10,8 +11,9 @@ class gg.xform.Mapper extends gg.wf.SyncExec
   ]
 
   parseSpec: ->
-    @params.put 'aes', @spec.aes
     super
+    @params.put 'aes', @spec.aes
+    @params.put 'keys', ['facet-x', 'facet-y', 'layer']
 
   compute: (pt, params) ->
     table = pt.left()

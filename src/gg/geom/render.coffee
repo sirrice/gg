@@ -39,11 +39,32 @@ class gg.geom.Render extends gg.core.XForm
     table = pairtable.left()
     md = pairtable.right()
     svg = @svg md
-    Facets = gg.facet.base.Facets
-    gg.wf.Stdout.print table, null, 2, @log
+
+    # debugging information
+    console.log "col provs"
+    console.log table.colProv 'x'
+    console.log table.colProv 'y'
+    console.log table.colProv 'sum'
+    counter = new ggutil.Counter()
+    table.dfs (n, path) ->
+      name = n.constructor.name
+      counter.inc(name)
+      counter.inc("#{name}-cost", n.timer().sum())
+      counter.inc(n.name)
+      counter.inc("#{n.name}-cost", n.timer().sum())
+    console.log counter.toString()
 
     @render table, svg
+    @renderDebug md, svg
+    @renderInteraction md, svg
 
+    pairtable
+
+  # @override this
+  render: (table, rows) -> throw Error("#{@name}.render() not implemented")
+
+
+  renderDebug: (md, svg) ->
     # Render some debugging info
     if @log.level == gg.util.Log.DEBUG
       write = (text, opts={}) ->
@@ -52,23 +73,23 @@ class gg.geom.Render extends gg.core.XForm
       write md.any('facet-y'), {dy: "2em"}
       write md.any(table.nrows()), {dy: "3em"}
 
+
+  renderInteraction: (md, svg) ->
+    Facets = gg.facet.base.Facets
     geoms = svg.selectAll(".geom")
 
     # Connect events
-    if false
+    if no
       geoms
         .on("mouseover", () -> )
         .on("mouseout", () -> )
 
-    if @constructor.brush?
-      brushEventName = "brush-#{md.any Facets.facetId}"
+    if no and @constructor.brush?
+      row = md.any()
+      brushEventName = "brush-#{md.any 'facet-x'}"
       event = md.any "event"
       event.on brushEventName, @constructor.brush(geoms)
 
-    pairtable
-
-  # @override this
-  render: (table, rows) -> throw Error("#{@name}.render() not implemented")
 
   @klasses: ->
     klasses = _.compact [
@@ -89,7 +110,6 @@ class gg.geom.Render extends gg.core.XForm
     klasses = gg.geom.Render.klasses()
     klass = klasses[spec.type]
     return null unless klass?
-    gg.util.Log.logger(@ggpackage, "Render") "Render klass #{spec.type} -> #{klass.name}"
     new klass spec
 
 

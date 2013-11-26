@@ -11,6 +11,18 @@ class gg.wf.Exec extends gg.wf.Node
 
   compute: (pairtable, params, cb) -> cb null, pairtable
 
+  @setup: (pairtable, params) ->
+    keys = params.get 'keys'
+    keys ?= pairtable.sharedCols()
+    keys = _.intersection keys, pairtable.sharedCols()
+    pairtable = pairtable.ensure keys
+    partitions = pairtable.partition(keys)
+    [keys, partitions]
+
+  @finalize: (pairtables, keys) ->
+    data.PairTable.union pairtables
+
+
   # partition by set of attributes
   # run UDF on each partition
   # merge partitions
@@ -21,15 +33,9 @@ class gg.wf.Exec extends gg.wf.Node
 
     params = @params
     compute = @params.get('compute') or @compute.bind(@)
-    log = @log
 
     try
-      tableset = @inputs[0]
-      keys = params.get 'keys'
-      keys ?= tableset.sharedCols()
-      keys = _.intersection keys, tableset.sharedCols()
-      tableset = tableset.ensure keys
-      partitions = tableset.partition(keys)
+      [keys, partitions] = gg.wf.Exec.setup @inputs[0], @params
 
       iterator = (pt, cb) ->
         try
@@ -40,18 +46,9 @@ class gg.wf.Exec extends gg.wf.Node
 
       async.map partitions, iterator, (err, pairtables) =>
         throw Error(err) if err?
-        pairtables = _.map pairtables, (pt) ->
-          md = pt.right()
-          t = pt.left()
-          for col in keys
-            v = md.any col
-            t = t.setColVal col, v
-          new data.PairTable t, md
+        result = gg.wf.Exec.finalize pairtables
+        @output 0, result
 
-        table = new data.ops.Union _.map(pairtables, (pt) -> pt.left())
-        md = new data.ops.Union _.map(pairtables, (pt) -> pt.right())
-
-        @output 0, new data.PairTable(table, md)
     catch err
       console.log err.stack
       throw Error(err)

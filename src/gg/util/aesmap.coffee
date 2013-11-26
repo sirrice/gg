@@ -40,15 +40,17 @@ class gg.util.Aesmap
         {alias: key, f: f, type: type, cols: args}
 
       else
-        # othrewise recursively map
+        # otherwise recursively transform each entry in the object
         funcs = _.mappingToFunctions table, val
-        funcs = _.map funcs, data.ops.Project.normalizeMapping
+        funcs = data.ops.Project.normalizeMappings funcs, table.schema
+        allcols = _.uniq _.flatten _.map funcs, (desc) -> desc.cols
+        allcols = '*' if '*' in allcols
         f = (row) ->
           ret = {}
           _.each funcs, (desc, subkey) ->
             ret[desc.alias] = desc.f row
           return ret
-        {alias: key, f:f, cols: '*'}
+        {alias: key, f:f, cols: allcols}
 
     else if key isnt 'text' and data.Table.reEvalJS.test val
       userCode = val[1...val.length-1]
@@ -66,7 +68,7 @@ class gg.util.Aesmap
       # for constants (e.g., date, number)
       gg.util.Aesmap.log "mapToFunction: const:  f(#{key})->#{val}"
       f = (row) -> val
-      {alias: key, f: f, type: data.Schema.type(val), cols: '*'}
+      {alias: key, f: f, type: data.Schema.type(val), cols: []}
 
 
 class gg.util.RowWrapper
