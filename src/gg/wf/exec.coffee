@@ -27,6 +27,7 @@ class gg.wf.Exec extends gg.wf.Node
       tableset = @inputs[0]
       keys = params.get 'keys'
       keys ?= tableset.sharedCols()
+      keys = _.intersection keys, tableset.sharedCols()
       tableset = tableset.ensure keys
       partitions = tableset.partition(keys)
 
