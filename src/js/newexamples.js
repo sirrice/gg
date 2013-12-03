@@ -198,9 +198,9 @@ var selected_geoms = {
     //
     // Generate random data with float attributes: d, r, g, f, t
     //
-    var npts = 100;
+    var npts = 200;
     bigdata = _.map(_.range(0, npts), function(d) {
-      g = d % 2//Math.floor(Math.random() * 3) + 1;
+      g = d % 3//Math.floor(Math.random() * 3) + 1;
       f = Math.floor(Math.random() * 3);
       t = Math.floor(Math.random() * 2);
       gauss.variance(d * 30.0 / npts);

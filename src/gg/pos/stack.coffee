@@ -14,7 +14,6 @@ class gg.pos.Stack extends gg.core.XForm
 
   parseSpec: ->
     super
-    @params.put 'keys', ['facet-x', 'facet-y', 'layer']
     @params.put "padding", _.findGoodAttr @spec, ['pad', 'padding'], 0.05
 
 

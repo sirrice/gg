@@ -18,7 +18,7 @@ class gg.pos.DotPlot extends gg.core.XForm
 
   parseSpec: ->
     super
-    r = _.findGood [@spec.r, @spec.radius, @spec.size, 3]
+    r = _.findGood [@spec.r, @spec.radius, @spec.size, null]
     @params.put 'r', r
     @params.put 'keys', ['facet-x', 'facet-y', 'layer']
 
@@ -36,7 +36,8 @@ class gg.pos.DotPlot extends gg.core.XForm
     t = pairtable.left()
     md = pairtable.right()
     r = params.get 'r'
-    t = t.setColVal 'r', r unless t.has('r')
+    if r?
+      t = t.setColVal 'r', r 
     yscale = md.any('scales').get 'y', data.Schema.numeric
     miny = yscale.range()[0]
     cmp = (r1, r2) -> r1.get('x') - r2.get('x')
@@ -62,11 +63,11 @@ class gg.pos.DotPlot extends gg.core.XForm
         stacked = no
       else if curx != prevx
         xs.push prevx+(r/2.0)
-        if stacked 
-          ys.push (ys[ys.length-1]+r*2)
-        else
-          ys.push r+miny
-          stacked = yes
+        #if stacked or yes
+        ys.push (ys[ys.length-1]+r*2)
+        #else
+        #  ys.push r+miny
+        #  stacked = yes
       else 
         # current x is the same as previous
         xs.push curx
@@ -88,10 +89,9 @@ class gg.pos.DotPlot extends gg.core.XForm
     sets = _.uniq pairtable.right().all 'scales'
     for set in sets
       set.get('y').frozen = yes
-      set.get('r').frozen = yes
+      set.get('r', data.Schema.numeric).frozen = yes
       #s.domain domain
       #s.range [Math.max(domain[0], s.range()[0]), Math.min(domain[1], s.range()[1])]
-      s.frozen = yes
 
     pairtable.left t
     pairtable

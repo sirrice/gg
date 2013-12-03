@@ -158,25 +158,6 @@ var geom_interval = {
         "color": "g"
       }
 };
-var geom_interval = {
-  "layers": [
-  {
-    geom: 'line'
-  },
-    {
-      "geom": {
-        "type": "line"
-      }, 
-      aes: {stroke: 'green'}, scales: {stroke: 'color'}
-    }
-  ], 
-
-      "aes": {
-        "x": "d", 
-        "y": "e"
-      }
-};
-
 
 var geom_point_1 = {
   layers:[{ geom: "point"}],
@@ -193,12 +174,20 @@ var geom_point_sum = {
 }
 
 var geom_point_interval = {
-  layers: [{
-    geom: "line"
-   ,pos: "dodge"
-   ,aes: {x: '{Math.floor(d/10.)*10 + "d"}', y: 'e', color: 'g'}
-   ,stat: "bin"
-  }],
+  layers: [
+    {
+      geom: "point"
+    },
+    {
+      geom: 'rect',
+      stat: 'bin'
+    }
+  ],
+  aes: {
+    x: 'd',
+    y: 'e',
+    color: 'g'
+  },
   facets: {y: 't'}
 }
 
