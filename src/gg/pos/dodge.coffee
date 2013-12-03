@@ -11,7 +11,7 @@ class gg.pos.Dodge extends gg.core.XForm
 
   parseSpec: ->
     super
-    @params.put 'keys', ['facet-x', 'facet-y', 'layer']
+    @params.put 'keys', ['layer']
     @params.put "padding", _.findGoodAttr @spec, ['pad', 'padding'], 0.05
 
   inputSchema: -> ['x', 'x0', 'x1', 'group']
@@ -20,11 +20,7 @@ class gg.pos.Dodge extends gg.core.XForm
   compute: (pairtable, params) ->
     table = pairtable.left()
 
-    counts = table.groupby ['x0', 'x1'], data.ops.Aggregate.count('count')
-    nrows = counts.all 'count'
-    maxGroup = _.max(nrows)
-
-    groups = table.partition 'group'
+    groups = table.partition('group').orderby('group')
     ngroups = groups.nrows()
     padding = params.get 'padding'
     

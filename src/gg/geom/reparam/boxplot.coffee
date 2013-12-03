@@ -50,7 +50,7 @@ class gg.geom.reparam.Boxplot extends gg.core.XForm
       xs[idx+1]-xs[idx]
     mindiff = _.mmin(diffs) or 1
     width = mindiff * 0.8
-    width = Math.min width, 40
+    #width = Math.min width, 40
 
     mapping = _.mappingToFunctions table, 
       y0: 'min'
