@@ -23,7 +23,7 @@ var selected_geoms = {
   area: false,
   point: false,
   interval: false,
-  boxplot:false,
+  boxplot:true,
   //color: true,
   radius: false,
   line: false,
@@ -31,7 +31,7 @@ var selected_geoms = {
   multiline: false,
   ptinterval: false,
   taxi: false,
-    bin2d: true
+    //bin2d: true
 
 };
 

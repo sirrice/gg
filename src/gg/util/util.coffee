@@ -13,5 +13,5 @@ _.mixin
   fromJson: gg.util.Json.fromJSON
 
 
-_.extend gg.util, _.omit(ggutil, 'Util')
+_.extend gg.util, _.omit(ggutil, 'Util', 'Json')
 _.extend gg.util.Util, ggutil.Util

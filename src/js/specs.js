@@ -111,26 +111,26 @@ var geom_area = {
 
 var geom_boxplot =  {
   opts: {optimizer: true, guid: "foobar"},
-  debug: {'gg.wf.rule':0, 'gg.wf.flow': 0},
-  layers: [{
-    aes: {
-      color: "g"
-      ,y: "d"
-      ,x: "{Math.floor(e/200)*200}"
-    }
-   ,geom: { 
-      type: "boxplot"
-    }
-  ,pos: "dodge"
-  ,stat: { type: "boxplot" }
-  ,scales: {
-      y: {type: 'linear', lim: [0, 50]}
-      ,r: {type: 'linear', range: [3,6]}
-      ,fill: "color"
-      ,stroke: "color"
-    }
+  debug: {},
+  aes: {
+    color: "g"
+    ,y: "d"
+    ,x: "{Math.floor(e/200)*200}"
+  }
+  ,  
+  layers: [
+  { geom: "point" },
+  {
+     geom: "boxplot"
+    ,pos: "dodge"
+    ,stat: "boxplot"
   }]
-  ,facets: {x: "g"}
+  ,facets: {x: "t"}
+  ,scales: {
+    y: {type: 'linear', lim: [0, 50]}
+    ,r: {type: 'linear', range: [3,6]}
+    ,color: "color"
+  }
 }
 
 var geom_interval = {

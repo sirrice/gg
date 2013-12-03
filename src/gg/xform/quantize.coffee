@@ -86,7 +86,6 @@ class gg.xform.Quantize extends gg.core.XForm
           idx = Math.ceil((v-minD) / binSize - 1)
           idx = Math.max(0, idx)
           ret = (idx * binSize) + minD + (binSize / 2)
-          console.log "#{v} --> #{ret}"
           ret
 
       when data.Schema.date
