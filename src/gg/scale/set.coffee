@@ -188,14 +188,15 @@ class gg.scale.Set
   #        e.g., median, q1, q3 should use 'y' position scale
   apply: (table,  posMapping={}) ->
     f = (table, scale, col) =>
+      return table unless table.has col
       mapping = [ {
         alias: col
         f: (v) -> scale.scale v
+        cols: col
         type: data.Schema.unknown
       } ]
 
-      if table.has col
-        table = table.mapCols mapping
+      table = table.project mapping, yes
 
       str = scale.toString()
       @log "apply: #{col}(#{scale.id}):\t#{str}\t#{table.nrows()} rows"
@@ -247,22 +248,17 @@ class gg.scale.Set
   # @return inverted table
   invert: (table, posMapping={}) ->
     f = (table, scale, col) =>
+      return table unless table.has col
       mapping = [
         {
           alias: col
+          cols: col
           f: (v) -> if v? then scale.invert(v) else null
           type: data.Schema.unknown
         }
       ]
 
-      origDomain = scale.defaultDomain table.all(col)
-      newDomain = null
-      if table.has col
-        table = table.mapCols mapping 
-
-      if scale.domain()?
-        newDomain = scale.defaultDomain table.all(col)
-        @log "invert: #{col}(#{scale.id};#{scale.domain()}):\t#{origDomain} --> #{newDomain}"
+      table = table.project mapping , yes
       table
 
     table = @useScales table, posMapping, f

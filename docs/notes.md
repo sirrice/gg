@@ -1,3 +1,9 @@
+Bugs
+------------
+
+* mergeexec is buggy -- the partition of layer/facet is lost between compute invocations.
+  possibly because can't statically determine if data contains partition key attributes
+
 Desired Features
 ----------
 

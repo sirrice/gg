@@ -38,6 +38,8 @@ class gg.wf.Exec extends gg.wf.Node
       [keys, partitions] = gg.wf.Exec.setup @inputs[0], @params
 
       iterator = (pt, cb) ->
+        pt.left pt.left().cache()
+        pt.right pt.right().cache()
         try
           compute pt, params, cb
         catch err

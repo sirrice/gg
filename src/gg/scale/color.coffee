@@ -8,11 +8,11 @@ class gg.scale.ColorCont extends gg.scale.Scale
     @d3Scale = d3.scale.linear()
     @type = data.Schema.numeric
 
-    @startColor = @spec.startColor or d3.rgb 255, 247, 251
-    @startColor = @spec.startColor or d3.rgb 255, 255, 255
-    @endColor = @spec.endColor or d3.rgb 2, 56, 88
-    @d3Scale.range [@startColor, @endColor]
+    range = [d3.rgb(255, 255, 255), d3.rgb(2, 56, 88)]
+    range = @spec.range if @spec.range?
+    @d3Scale.range range
     super
+
 
   # read only
   range: -> @d3Scale.range()

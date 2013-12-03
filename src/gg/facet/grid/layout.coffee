@@ -29,8 +29,10 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     [w,h] = [container.w(), container.h()]
 
     # x/y facet values
-    xs = _.uniq md.all(xFacet)
-    ys = _.uniq md.all(yFacet)
+    [xs, ys, sets] = md.all [xFacet, yFacet, 'scales']
+    xs = _.uniq xs
+    ys = _.uniq ys
+    sets = _.uniq sets, (set) -> set.id
     nxs = xs.length
     nys = ys.length
     xytable = data.ops.Util.cross
@@ -44,8 +46,8 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     showYFacet = ys.length > 1 and ys[0]?
 
     # axis label dimensions
-    xdims = _.textSize @getMaxText(md, 'x'), css
-    ydims = _.textSize @getMaxText(md, 'y'), css
+    xdims = _.textSize @getMaxText(sets, 'x'), css
+    ydims = _.textSize @getMaxText(sets, 'y'), css
     yAxisW = ydims.w + paddingPane
     xAxisW = xdims.w + paddingPane
 

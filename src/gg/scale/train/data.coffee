@@ -20,6 +20,6 @@ class gg.scale.train.Data extends gg.core.BForm
         row.get('scales').train table, row.get('posMapping')
 
     pairtable = data.PairTable.union partitions
-    pairtable = gg.scale.train.Master.train pairtable, params
+    pairtable = gg.scale.train.Master.train(pairtable, params)
     pairtable
 

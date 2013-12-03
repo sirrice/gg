@@ -36,13 +36,11 @@ class gg.facet.base.Layout extends gg.core.BForm
   # layout facets
   # layout panes
   getTitleHeight: (params, css={}) -> _.exSize(css).h
-  getMaxYText: (md) -> @getMaxText md, 'y'
-  getMaxYText: (md) -> @getMaxText md, 'y'
 
-  getMaxText: (md, aes) ->
+  getMaxText: (sets, aes) ->
     text = '100'
     formatter = d3.format ',.0f'
-    for set in md.all('scales')
+    for set in sets
       scale = set.scale aes, data.Schema.unknown
       if scale.type == data.Schema.numeric
         for v in scale.domain()
@@ -67,8 +65,9 @@ class gg.facet.base.Layout extends gg.core.BForm
     [w, h] = [container.w(), container.h()]
     Bound = gg.util.Bound
 
-    xs = _.uniq md.all 'facet-x'
-    ys = _.uniq md.all 'facet-y'
+    [xs, ys] = md.all ['facet-x', 'facet-y']
+    xs = _.uniq xs
+    ys = _.uniq ys
     nxs = xs.length
     nys = ys.length
     showXFacet = not(xs.length is 1 and not xs[0]?)

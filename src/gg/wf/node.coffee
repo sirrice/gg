@@ -79,10 +79,37 @@ class gg.wf.Node extends events.EventEmitter
     #
     listeners = @listeners outidx
     @log.info "output: port(#{outidx}), sizes: #{tableset.left().nrows()}"
-    tableset.left(tableset.left().cache())
-    tableset.right(tableset.right().cache())
-    tableset.left().name = "data-#{@name}"
-    tableset.right().name = "md-#{@name}"
+    @debugTSet tableset
+
+  debugTSet: (tableset) ->
+    table = tableset.left().cache()
+    md = tableset.right().cache()
+    table.name = "data-#{@name}"
+    md.name = "md-#{@name}"
+
+    counter = new ggutil.Counter()
+    total = 0
+    table.dfs (n, path) ->
+      name = n.constructor.name
+      counter.inc("#{name}-count")
+      counter.inc("#{n.name}-count")
+      for key in n.timer().names()
+        counter.inc(key, n.timer().sum(key))
+        total += n.timer().sum(key)
+    pairs = []
+    counter.each (v,k) -> pairs.push [k, v]
+    pairs.sort (o1, o2) -> o2[1] - o1[1]
+
+    if total > 1000
+      console.log ">> #{@name}\t#{total}"
+      console.log table.graph()
+      _.each pairs, (pair) ->
+        console.log "#{pair[0]}\t#{pair[1]}"
+      console.log "\n"
+
+    tableset.left table.disconnect()
+    tableset.right md.disconnect()
+    tableset
 
 
   error: (err) -> 

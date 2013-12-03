@@ -40,19 +40,6 @@ class gg.geom.Render extends gg.core.XForm
     md = pairtable.right()
     svg = @svg md
 
-    # debugging information
-    console.log "col provs"
-    console.log table.colProv 'x'
-    console.log table.colProv 'y'
-    console.log table.colProv 'sum'
-    counter = new ggutil.Counter()
-    table.dfs (n, path) ->
-      name = n.constructor.name
-      counter.inc(name)
-      counter.inc("#{name}-cost", n.timer().sum())
-      counter.inc(n.name)
-      counter.inc("#{n.name}-cost", n.timer().sum())
-    console.log counter.toString()
 
     @render table, svg
     @renderDebug md, svg

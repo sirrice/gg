@@ -3,6 +3,15 @@
 class gg.util.Aesmap
   @log = gg.util.Log.logger "gg.util.Aesmap", "Aesmap"
 
+  @reEvalJS = /^{.*}$/
+  @reVariable = /^[a-zA-Z]\w*$/
+  @reNestedAttr = /^[a-zA-Z]+\.[a-zA-Z]+$/
+
+  @isEvalJS: (s) ->@reEvalJS.test s
+  @isVariable: (s) -> @reVariable.test s
+  @isNestedAttr: (s) -> @reNestedAttr.test s
+
+
   @mappingToFunctions: (table, mapping) ->
     ret = []
     for key, val of mapping
@@ -52,7 +61,7 @@ class gg.util.Aesmap
           return ret
         {alias: key, f:f, cols: allcols}
 
-    else if key isnt 'text' and data.Table.reEvalJS.test val
+    else if key isnt 'text' and gg.util.Aesmap.isEvalJS val
       userCode = val[1...val.length-1]
       varFunc = (k) ->
         if data.Table.reVariable.test k
