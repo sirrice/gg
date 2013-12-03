@@ -60,6 +60,7 @@ class gg.xform.Quantize extends gg.core.XForm
       {
         alias: col
         f
+        fstr: f.toString()
         type
         cols: col
       }
@@ -84,7 +85,9 @@ class gg.xform.Quantize extends gg.core.XForm
         toKey = (v) -> 
           idx = Math.ceil((v-minD) / binSize - 1)
           idx = Math.max(0, idx)
-          (idx * binSize) + minD + (binSize / 2)
+          ret = (idx * binSize) + minD + (binSize / 2)
+          console.log "#{v} --> #{ret}"
+          ret
 
       when data.Schema.date
         domain = [domain[0].getTime(), domain[1].getTime()]

@@ -82,6 +82,9 @@ class gg.wf.Node extends events.EventEmitter
     @debugTSet tableset
 
   debugTSet: (tableset) ->
+    console.log @name
+    console.log tableset.left().any()
+    return tableset
     table = tableset.left().cache()
     md = tableset.right().cache()
     table.name = "data-#{@name}"

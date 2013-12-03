@@ -87,7 +87,8 @@ class gg.pos.DotPlot extends gg.core.XForm
     domain = [_.min(y0s), _.max(y1s)]
     sets = _.uniq pairtable.right().all 'scales'
     for set in sets
-      s = set.get 'y'
+      set.get('y').frozen = yes
+      set.get('r').frozen = yes
       #s.domain domain
       #s.range [Math.max(domain[0], s.range()[0]), Math.min(domain[1], s.range()[1])]
       s.frozen = yes

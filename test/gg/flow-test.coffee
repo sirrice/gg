@@ -27,7 +27,7 @@ suite.addBatch {
       flow.exec (pairtable, params, cb) -> 
         table = pairtable.left()
         f = (b) -> b* 100
-        table = table.mapCols {alias: 'b',  f: f}
+        table = table.project {alias: 'b',  f: f}
         ret = new data.PairTable table, pairtable.right()
         cb null,ret
       flow

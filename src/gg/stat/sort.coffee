@@ -13,6 +13,7 @@ class gg.stat.Sort extends gg.stat.Stat
     @params.putAll
       cols: cols
       reverse: reverse
+      keys: ['facet-x', 'facet-y', 'layer', 'group']
 
   inputSchema: (pairtable, params) -> params.get 'cols'
 

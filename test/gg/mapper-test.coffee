@@ -19,13 +19,15 @@ runOnTable = (node, table) ->
 
 suite.addBatch
 
+
   "Mapper with explicit group":
     topic: ->
       new gg.xform.Mapper
-        params:
-          aes:
-            group:
-              stroke: 'x'
+        aes:
+          group:
+            stroke: 'x'
+          a: "{x+10}"
+          b: "y"
 
     "when run on empty md":
       topic: (node) ->
@@ -40,8 +42,9 @@ suite.addBatch
 
       "the group is correct": (pt) ->
         pt.left().each (row) ->
-          console.log row.get('group')
           assert.equal row.get('group').stroke, row.get('x')
+          assert.equal row.get('a'), row.get('x')+10
+          assert.equal row.get('b'), row.get('y')
  
  
 suite.export module

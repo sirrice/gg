@@ -22,6 +22,7 @@ class gg.stat.Bin1D extends gg.xform.GroupBy
     params.merge @params
     @params = params
     @params.ensure 'nBins', ['n', 'bins', 'nbins'], 20
+    @params.put 'keys', ['facet-x', 'facet-y', 'layer', 'group']
 
     super
 
@@ -50,6 +51,7 @@ class gg.stat.Bin2D extends gg.xform.GroupBy
     params.merge(new gg.util.Params defaults)
     params.merge @params
     @params = params
+    @params.put 'keys', ['facet-x', 'facet-y', 'layer', 'group']
 
     super
 

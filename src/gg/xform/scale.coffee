@@ -14,7 +14,10 @@ class gg.xform.DetectScales extends gg.core.XForm
 
     constantCols = []
     _.each aes, (v, k) ->
-      if _.isNumber(v) or (_.isString(v) and not table.has(v))
+      if _.isNumber(v) or (
+        _.isString(v) and 
+        not table.has(v) and 
+        not gg.util.Aesmap.isEvalJS(v))
         constantCols.push k
     @log "constant columns: #{constantCols}"
 

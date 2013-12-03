@@ -22,6 +22,7 @@ class gg.stat.Loess extends gg.core.XForm
     @params.ensureAll
       bandwidth: [["band", "bw"], .3]
       acc: [["accuracy", "ac"], 1e-12]
+    @params.put 'keys', ['facet-x', 'facet-y', 'layer', 'group']
 
   inputSchema: -> ['x', 'y']
 

@@ -7,7 +7,7 @@ class gg.util.Aesmap
   @reVariable = /^[a-zA-Z]\w*$/
   @reNestedAttr = /^[a-zA-Z]+\.[a-zA-Z]+$/
 
-  @isEvalJS: (s) ->@reEvalJS.test s
+  @isEvalJS: (s) -> gg.util.Aesmap.reEvalJS.test s
   @isVariable: (s) -> @reVariable.test s
   @isNestedAttr: (s) -> @reNestedAttr.test s
 
@@ -51,25 +51,38 @@ class gg.util.Aesmap
       else
         # otherwise recursively transform each entry in the object
         funcs = _.mappingToFunctions table, val
-        funcs = data.ops.Project.normalizeMappings funcs, table.schema
         allcols = _.uniq _.flatten _.map funcs, (desc) -> desc.cols
-        allcols = '*' if '*' in allcols
-        f = (row) ->
-          ret = {}
-          _.each funcs, (desc, subkey) ->
-            ret[desc.alias] = desc.f row
-          return ret
+        if '*' in allcols
+          allcols = '*' 
+          f = (row) ->
+            ret = {}
+            for desc in funcs
+              ret[desc.alias] = desc.f row
+            return ret
+        else 
+          col2idx = _.o2map allcols, (col, idx) -> [col, idx]
+          f = ((funcs, col2idx) -> 
+            () ->
+              args = arguments
+              ret = {}
+              for desc in funcs
+                fargs = (args[col2idx[col]] for col in desc.cols)
+                fargs.push args[args.length-1]
+                ret[desc.alias] = desc.f.apply desc.f, fargs
+              ret
+          )(funcs, col2idx)
         {alias: key, f:f, cols: allcols}
 
     else if key isnt 'text' and gg.util.Aesmap.isEvalJS val
       userCode = val[1...val.length-1]
       varFunc = (k) ->
-        if data.Table.reVariable.test k
+        if gg.util.Aesmap.isVariable k
           "var #{k} = row.get('#{k}');"
 
       cmds = _.compact _.map(table.schema.cols, varFunc)
       cmds.push "return #{userCode};"
       cmd = cmds.join ''
+      console.log cmd
       f = Function("row", cmd)
       {alias: key, f: f, type: data.Schema.unknown, cols: '*'}
 

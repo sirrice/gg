@@ -46,7 +46,7 @@ suite.addBatch
       params:
         f: (pt) ->
           t = pt.left()
-          t = t.mapCols { alias: 'a', f: (a)->-a }
+          t = t.project { alias: 'a', f: (a)->-a }
           new data.PairTable t, pt.right()
 
     "runs compute correctly": genCheckTable  (pt) ->
