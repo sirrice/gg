@@ -18,7 +18,7 @@ class gg.core.Options
     @minimal = _.findGood [@spec.minimal, no]
 
 
-    @optimize = _.findGood [@spec.optimize, yes]
+    @optimize = _.findGood [@spec.optimize, no]
     @guid = _.findGood [@spec.guid, @spec.name, null]
 
     # RPC options
