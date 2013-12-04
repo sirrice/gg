@@ -88,8 +88,7 @@ var geom_boxplot2 =
       color: "f"
     }, "stats": "boxplot"
   }
-  ],
-  facets: {x: "t"}
+  ]
 };
 
 var geom_area = {

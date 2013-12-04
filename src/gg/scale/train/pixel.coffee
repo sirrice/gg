@@ -150,7 +150,8 @@ class gg.scale.train.Pixel extends gg.core.BForm
 
       left = left.project mappings, yes
 
-      #p.left left.cache()
+      # XXX: This is necessary so values are only rescaled _once_!
+      p.left left.once()
       p
 
     timer.stop('second')

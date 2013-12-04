@@ -74,6 +74,9 @@ class gg.pos.DotPlot extends gg.core.XForm
         ys.push (ys[ys.length-1]+r*2)
         stacked = yes
 
+    console.log xs
+    console.log ys
+    console.log 
     maxy = d3.max(ys) + r
     miny = d3.min(ys) - r
     y0s = _.map ys, (y) -> y - r

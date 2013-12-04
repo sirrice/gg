@@ -165,13 +165,11 @@ class gg.facet.base.Layout extends gg.core.BForm
     pairtable = pairtable.ensure ['facet-x', 'facet-y']
     md = pairtable.right()
     lc = md.any 'lc'
-    console.log md
 
     md = @layoutLabels md, params, lc
     md = @layoutPanes md, params, lc
 
-    console.log md
-    pairtable.right md
+    pairtable.right md.once()
     pairtable
 
 

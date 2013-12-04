@@ -31,8 +31,8 @@ var selected_geoms = {
   line: false,
   jitter:false,
   ptinterval: false,
-  taxi: true,
-  dotplot: false,
+  taxi: false,
+  dotplot: true,
     boxplot2: false,
 
 };
