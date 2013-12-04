@@ -10,4 +10,4 @@ vendor/*
 test.js
 *.Rhistory
 public
-lib/*.js
+lib/*
