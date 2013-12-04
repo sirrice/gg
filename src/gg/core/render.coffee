@@ -54,7 +54,7 @@ class gg.core.Render extends gg.core.BForm
     f = (svg) ->
       svg.facets = facetsSvg
       svg
-    md = md.project [{alias: 'svg', cols: 'svg', f: f}]
+    md = md.project [{alias: 'svg', cols: 'svg', f: f, type: data.Schema.object}]
     pairtable.right md
     pairtable
     #new data.PairTable pairtable.left(), md

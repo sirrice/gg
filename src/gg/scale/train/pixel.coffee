@@ -47,7 +47,11 @@ class gg.scale.train.Pixel extends gg.core.BForm
 
 
   @train: (pairtable, params, log) ->
+    timer = new gg.util.Timer()
+    timer.start('fullpart')
     partitions = pairtable.fullPartition()
+    timer.stop('fullpart')
+
     scales = {}    # aes -> scaletype -> scale
     ranges = {}    # aes -> scaletype -> range
     getscale = (col, scale) ->
@@ -64,6 +68,7 @@ class gg.scale.train.Pixel extends gg.core.BForm
       ranges[col][type]
 
 
+    timer.start('first')
     for p in partitions
       left = p.left()
       md = p.right()
@@ -87,14 +92,15 @@ class gg.scale.train.Pixel extends gg.core.BForm
           when data.Schema.numeric, data.Schema.date
             vals = left.all col
             # convert pixel values into domain
-            console.log s.defaultDomain vals
             d = _.map s.defaultDomain(vals), (v) ->
               if _.isValid(v) then s.invert(v) else null
             if _.all d, _.isValid
               getscale(xycol, s).mergeDomain d
 
 
+    timer.stop('first')
 
+    timer.start('second')
     partitions = _.map partitions, (p) ->
       left = p.left()
       right = p.right()
@@ -143,8 +149,12 @@ class gg.scale.train.Pixel extends gg.core.BForm
           }
 
       left = left.project mappings, yes
-      p.left left
+
+      #p.left left.cache()
       p
+
+    timer.stop('second')
+    console.log timer.toString()
 
     return data.PairTable.union partitions
 

@@ -1,3 +1,4 @@
+var outputs = {};
 
 var geoms = {
   //area: geom_area,
@@ -13,6 +14,7 @@ var geoms = {
   ,line: colored_lines
   ,multiline: colored_lines_multi
   ,boxplot: geom_boxplot
+  ,boxplot2: geom_boxplot2
   ,ptinterval: geom_point_interval
   ,dotplot: geom_dotplot
   ,taxi: geom_taxi
@@ -23,15 +25,15 @@ var selected_geoms = {
   area: false,
   point: false,
   interval: false,
-  boxplot:true,
+  boxplot:false,
   //color: true,
   radius: false,
   line: false,
   jitter:false,
-  multiline: false,
   ptinterval: false,
-  taxi: false,
-    //bin2d: true
+  taxi: true,
+  dotplot: false,
+    boxplot2: false,
 
 };
 
@@ -144,6 +146,9 @@ var selected_geoms = {
     //specs.opt = {optimize: true, guid: guid}
     var plot = gg(specs);
     plot.render(ex());
+    plot.on("output", function(nodeid, port, data) {
+      outputs[[nodeid, port]] = data;
+    });
     plot.on("done", function(debug) {
 
       debug = _.map(debug, function(o, id) {
@@ -156,6 +161,7 @@ var selected_geoms = {
         return {x: o[0], y: o[1]}
       })
       console.log("total cost\t\t" + cost);
+      return;
 
       var dspecs = {
         layers: [

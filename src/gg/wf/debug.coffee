@@ -18,8 +18,9 @@ class gg.wf.Stdout extends gg.wf.SyncBlock
 
   compute: (pairtable, params) ->
     mdcols = ['layer', 'facet-x', 'facet-y', 'group', 'lc']
-    gg.wf.Stdout.print pairtable.left(), params.get('cols'), params.get('n'), @log
-    gg.wf.Stdout.print pairtable.right(), mdcols, params.get('n'), @log
+    if @log.level >= ggutil.Log.lookupLevel(@log.logname)
+      gg.wf.Stdout.print pairtable.left(), params.get('cols'), params.get('n'), @log
+      gg.wf.Stdout.print pairtable.right(), mdcols, params.get('n'), @log
     pairtable
 
 
@@ -63,10 +64,11 @@ class gg.wf.Scales extends gg.wf.SyncBlock
 
   compute: (pairtable, params) ->
     md = pairtable.right()
-    md.each (row) =>
-      layer = row.get 'layer'
-      scale = row.get 'scales'
-      gg.wf.Scales.print scale, layer, @log
+    if @log.level >= ggutil.Log.lookupLevel(@log.logname)
+      md.each (row) =>
+        layer = row.get 'layer'
+        scale = row.get 'scales'
+        gg.wf.Scales.print scale, layer, @log
     pairtable
 
   @print: (scaleset, layerIdx, log=null) ->

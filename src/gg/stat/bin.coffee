@@ -72,7 +72,7 @@ class gg.stat.Bin2D extends gg.xform.GroupBy
     ytable = new data.ColTable yschema, [yvals]
     xytable = xtable.cross(ytable)
 
-    canonicalRow = table.any().clone()
+    canonicalRow = table.any().shallowClone()
     table = table.groupby cols, aggs
 
     f = ->

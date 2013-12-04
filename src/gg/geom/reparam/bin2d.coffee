@@ -13,6 +13,7 @@ class gg.geom.reparam.Bin2D extends gg.geom.reparam.Rect
     yscale = scales.scale 'y'
     xscale = scales.scale 'x'
     padding = 1.0 - params.get 'padding'
+    console.log _.uniq table.all('y')
 
     if xscale.type in [data.Schema.ordinal, data.Schema.object]
       w = xscale.range()[1] - xscale.range()[0]

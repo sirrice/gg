@@ -96,8 +96,10 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
         if set?
           xrange = [paddingPane, drawC.w()-2*paddingPane]
           yrange = [paddingPane, drawC.h()-2*paddingPane]
-          xscales = _.compact _.uniq _.map gg.scale.Scale.xs, (col) -> set.get col
-          yscales = _.compact _.uniq _.map gg.scale.Scale.ys, (col) -> set.get col
+          xscales = _.compact _.uniq _.map gg.scale.Scale.xs, (col) -> 
+            set.get(col, data.Schema.numeric) 
+          yscales = _.compact _.uniq _.map gg.scale.Scale.ys, (col) -> 
+            set.get(col, data.Schema.numeric)
           for s in xscales
             s.range xrange
           for s in yscales
@@ -110,14 +112,14 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
 
         xfc = paneC.xFacetC()
         yfc = paneC.yFacetC()
-        xTextF = gg.util.Textsize.fitMany(
-          xs, xfc.w(), xfc.h(), 8, {padding: 2}
-        )
-        yTextF = gg.util.Textsize.fitMany(
-          ys, yfc.w(), labelHeight, 8, {padding: 2}
-        )
-        xopts = xTextF x
-        yopts = yTextF y
+        #xTextF = gg.util.Textsize.fitMany(
+        #  xs, xfc.w(), xfc.h(), 8, {padding: 2}
+        #)
+        #yTextF = gg.util.Textsize.fitMany(
+        #  ys, yfc.w(), labelHeight, 8, {padding: 2}
+        #)
+        #xopts = xTextF x
+        #yopts = yTextF y
 
         {
           'paneC': paneC

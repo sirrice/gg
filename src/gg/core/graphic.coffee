@@ -129,20 +129,23 @@ class gg.core.Graphic extends events.EventEmitter
         location: 'client'
 
   optimize: ->
-    return unless @options.optimize
-    optimizer = new gg.wf.Optimizer [
+    rules = [
       new gg.wf.rule.RPCify
-      new gg.wf.rule.RmDebug
-      # there is a bug -- when scalesapply + reparam + dotplot are merged, partitioning is lost!
-      #new gg.wf.rule.MergeExec
-      new gg.wf.rule.MergeBarrier
     ]
 
-    if @options.guid?
-      optimizer.rules.push new gg.wf.rule.Cache
-        params:
-          guid: @options.guid
+    if @options.optimize
+      rules = rules.concat [
+        new gg.wf.rule.RmDebug
+        # there is a bug -- when scalesapply + reparam + dotplot are merged, partitioning is lost!
+        # new gg.wf.rule.MergeExec
+        new gg.wf.rule.MergeBarrier
+      ]
+      if @options.guid?
+        rules.push new gg.wf.rule.Cache
+          params:
+            guid: @options.guid
 
+    optimizer = new gg.wf.Optimizer rules
     @workflow = optimizer.run @workflow
 
 
@@ -165,9 +168,12 @@ class gg.core.Graphic extends events.EventEmitter
 
     @optimize()
 
-    @log "running workflow"
+    @workflow.on "output", (nodeid, port, data) =>
+      @emit "output", nodeid, port, data
     @workflow.on "done", (debug) => 
       @emit "done", debug
+
+    @log "running workflow"
     @workflow.run @options
 
 

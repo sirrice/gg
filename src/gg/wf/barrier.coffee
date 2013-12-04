@@ -29,8 +29,18 @@ class gg.wf.Barrier extends gg.wf.Node
   @finalize: (tableset) ->
     table = tableset.left()
     md = tableset.right()
+    timer = new gg.util.Timer()
     table = table.partition '_barrier', 'table'
+    timer.start()
+    oldmd = md
     md = md.partition '_barrier', 'md'
+    timer.stop()
+
+    if timer.sum() > 200
+      console.log("finalize took ttoo long")
+      console.log timer.toString()
+      console.log timer.timings()
+      console.log oldmd.graph()
 
     pairtable = table.join md, '_barrier' 
     pairtable.map (row) =>
@@ -54,6 +64,7 @@ class gg.wf.Barrier extends gg.wf.Node
 
       compute pairtable, @params, (err, tableset) =>
         throw err if err?
+        console.log "finalizing #{@name}"
         results = gg.wf.Barrier.finalize tableset
         for result in results
           idx = result.idx

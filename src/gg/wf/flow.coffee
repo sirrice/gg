@@ -585,13 +585,18 @@ class gg.wf.Flow extends events.EventEmitter
       @log json.links.join("\n")
 
     runner = new gg.wf.Runner @, null
+
+
+    #
+    # Add event emitters
+    #
+
     runner.on "output", (nodeid, outport, data) =>
-      @emit "output", outport, data
+      @emit "output", nodeid, outport, data
 
     runner.on "done", (debug) =>
       @debug = debug
       @emit "done", debug
-    @log "created runner"
 
     # if can access server
     uri = graphicOpts.serverURI

@@ -17,7 +17,6 @@ class gg.scale.train.Data extends gg.core.BForm
       table = p.left()
       md = p.right()
       md.each (row) ->
-        console.log row.get('scales').toString()
         row.get('scales').train table, row.get('posMapping')
 
     pairtable = data.PairTable.union partitions

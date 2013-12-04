@@ -42,7 +42,7 @@ class gg.facet.base.Layout extends gg.core.BForm
     formatter = d3.format ',.0f'
     for set in sets
       scale = set.scale aes, data.Schema.unknown
-      if scale.type == data.Schema.numeric
+      if scale.type == data.Schema.numeric and scale.domain()?
         for v in scale.domain()
           if _.isNumber v
             _text = formatter v
@@ -165,10 +165,12 @@ class gg.facet.base.Layout extends gg.core.BForm
     pairtable = pairtable.ensure ['facet-x', 'facet-y']
     md = pairtable.right()
     lc = md.any 'lc'
+    console.log md
 
     md = @layoutLabels md, params, lc
     md = @layoutPanes md, params, lc
 
+    console.log md
     pairtable.right md
     pairtable
 

@@ -85,7 +85,7 @@ class gg.pos.Stack extends gg.core.XForm
       layer = stackedLayers[idx]
       x2row = {}
       group.each (row) ->
-        x2row[row.get 'x'] = row.clone()
+        x2row[row.get 'x'] = row.shallowClone()
 
       _.each layer, (pos) ->
         x = pos.x

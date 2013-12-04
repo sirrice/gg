@@ -74,6 +74,8 @@ class gg.pos.DotPlot extends gg.core.XForm
         ys.push (ys[ys.length-1]+r*2)
         stacked = yes
 
+    maxy = d3.max(ys) + r
+    miny = d3.min(ys) - r
     y0s = _.map ys, (y) -> y - r
     y1s = _.map ys, (y) -> y + r
     x0s = _.map xs, (x) -> x - r
@@ -88,10 +90,9 @@ class gg.pos.DotPlot extends gg.core.XForm
     domain = [_.min(y0s), _.max(y1s)]
     sets = _.uniq pairtable.right().all 'scales'
     for set in sets
-      set.get('y').frozen = yes
+      yscale = set.get 'y', data.Schema.numeric
+      yscale.frozen = yes
       set.get('r', data.Schema.numeric).frozen = yes
-      #s.domain domain
-      #s.range [Math.max(domain[0], s.range()[0]), Math.min(domain[1], s.range()[1])]
 
     pairtable.left t
     pairtable

@@ -15,6 +15,13 @@ catch err
 # 2. An alternative is for each node to be locally responsible for spawning at most
 #    X threads, and bundling groups of child nodes together to run synchronously
 #
+# Emits:
+#
+#   "output": when a sink node generates an output
+#             args: nodeid, outport, outputs
+#   "done":   when all sink nodes have terminated
+#             args: debug object
+#
 #
 # States:
 #
@@ -29,6 +36,7 @@ catch err
 #   active.length = 0
 #   queue.length = 0
 #
+#
 class gg.wf.Runner extends events.EventEmitter
   @ggpackage = "gg.wf.Runner"
 
@@ -39,8 +47,9 @@ class gg.wf.Runner extends events.EventEmitter
     @setupQueue()
 
     @ch = new gg.wf.ClearingHouse @, null
-    @ch.on "output", (args...) => @emit "output", args...
     @ch.xferControl = xferControl if xferControl?
+    @ch.on "sink", (nodeid, outport, outputs) => 
+      @emit "output", nodeid, outport, outputs
 
     # every node's output goes through the clearing house
     @flow.graph.bfs (node) =>

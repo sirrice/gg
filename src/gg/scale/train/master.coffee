@@ -16,7 +16,7 @@ class gg.scale.train.Master extends gg.core.BForm
 
 
   @train: (pairtable, params) ->
-    scalesTrain = params.get('scalesTrain') or 'fixed'
+    scalesTrain = params.get('scalesTrain') or "fixed"
 
     table = pairtable.left()
     md = pairtable.right()

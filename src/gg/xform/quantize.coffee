@@ -54,6 +54,7 @@ class gg.xform.Quantize extends gg.core.XForm
       type = schema.type col
       scale = scales.scale col, type
       domain = scale.domain()
+      console.log scale.toString()
       f = gg.xform.Quantize.quantizer(
         col, type, nBins[idx], domain
       )

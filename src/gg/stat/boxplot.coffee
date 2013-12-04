@@ -8,10 +8,13 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
   parseSpec: ->
     @params.put 'cols', 'x'
     @params.put 'nBins', -1
+
+    types = _.times 7, () -> data.Schema.numeric
+    types.push data.Schema.table
     @params.put 'aggs', [{
       alias: ['q1', 'q3', 'median', 'lower', 'upper', 'min', 'max', 'outlier']
       f: gg.stat.Boxplot.udf
-      type: data.Schema.numeric
+      type: types
       col: 'y'
     }]
     super
@@ -59,9 +62,6 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
     upperIdx = (d3.bisectRight vals, q3 + fr, lowerIdx) - 1
     lower = vals[lowerIdx]
     upper = vals[upperIdx]
-    console.log "boxplot stats"
-    console.log vals
-    console.log [q1, median, q3, min, max, fr, lowerIdx, upperIdx, lower, upper, vals[lower-1]]
     outliers = vals.slice(0, lowerIdx).concat(vals.slice(upperIdx + 1))
     outliers = [null] unless outliers.length > 0
     outliers = _.map outliers, (v) -> { outlier : v}
@@ -77,5 +77,6 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
       min: min
       max: max
       outlier: outliers
+    console.log "called udf #{boxstats}"
     boxstats
 

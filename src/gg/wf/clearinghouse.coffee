@@ -1,4 +1,8 @@
 
+# Emits:
+#
+#   "sink": when a sink node generates an output.  
+#           args: nodeid, outport, outputs
 class gg.wf.ClearingHouse extends events.EventEmitter
   @ggpackage = "gg.wf.ClearingHouse"
 
@@ -14,7 +18,7 @@ class gg.wf.ClearingHouse extends events.EventEmitter
     @log "push: #{node.name} #{nodeid}(#{outport})"
     if @isSink(nodeid)
       @log "sink node: #{node.name} #{nodeid}"
-      @emit "output", nodeid, outport, outputs
+      @emit "sink", nodeid, outport, outputs
     else if @clientToServer nodeid, outport
       @xferControl nodeid, outport, outputs
     else if @serverToClient nodeid, outport

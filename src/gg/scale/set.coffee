@@ -123,17 +123,10 @@ class gg.scale.Set
   # a user defined function
   useScales: (table, posMapping={}, f) ->
     for col in table.cols()
-      if @has col, null, posMapping
-        scale = @scale col, null, posMapping
-      else
-        tabletype = table.schema.type col
-        @log "scaleset doesn't contain #{col} creating using type #{tabletype}"
-        scale = @scale col, tabletype, posMapping
-      @log "col #{col} depends on #{table.colProv col}"
+      tabletype = table.schema.type col
+      scale = @scale col, tabletype, posMapping
       @log scale.toString()
-
       table = f table, scale, col
-
     table
 
 
@@ -144,32 +137,32 @@ class gg.scale.Set
   #        attr -> aes
   #        attr -> [aes, type]
   train: (table, posMapping={}) ->
-    f = (table, scale, col) =>
-      unless table.has col
-        @log "col #{col} not in table"
-        return table
+    colDatas = table.all table.cols()
+    for col, idx in table.cols()
+      tabletype = table.schema.type col
+      scale = @scale col, tabletype, posMapping
 
       if _.isType scale, gg.scale.Identity
         @log "scale is identity."
-        return table
+        continue
 
-      colData = table.all col
-      unless colData?
-        throw Error("Set.train: attr #{col} does not exist in table")
-
+      colData = colDatas[idx]
+      nrows = colData.length
       colData = colData.filter _.isValid
-      if colData.length < table.nrows()
+      if colData.length < nrows
         @log "filtered out #{table.nrows()-colData.length} col values"
 
       @log "col #{col} has #{colData.length} elements"
       if colData? and colData.length > 0
         newDomain = scale.defaultDomain colData
         oldDomain = scale.domain()
-        minval = _.mmin [oldDomain[0],newDomain[0]]
-        maxval = _.mmax [oldDomain[1], newDomain[1]]
+        minval = d3.min [oldDomain[0],newDomain[0]]
+        maxval = d3.max [oldDomain[1], newDomain[1]]
         @log "domains: #{scale.toString()} #{oldDomain} + #{newDomain} = [#{minval}, #{maxval}]"
-        throw Error() unless newDomain?
-        throw Error() if _.isNaN newDomain[0]
+        unless newDomain?
+          throw Error("set.train #{col} no new domain. old: #{scale.toString()}") 
+        if _.isNaN newDomain[0]
+          throw Error("set.train #{col} newDomain has NaN: #{newDomain}.  old: #{scale.toString()}") 
 
         scale.mergeDomain newDomain
 
@@ -178,33 +171,28 @@ class gg.scale.Set
         else
           @log "train: #{col}(#{scale.id})\t#{scale}"
 
-      table
-
-    @useScales table, posMapping, f
     @
 
   # @param posMapping maps aesthetic names to the scale that
   #        should be used
   #        e.g., median, q1, q3 should use 'y' position scale
   apply: (table,  posMapping={}) ->
+    mappings = []
     f = (table, scale, col) =>
       return table unless table.has col
-      mapping = [ {
+      mapping = 
         alias: col
         f: (v) -> scale.scale v
         cols: col
-        type: data.Schema.unknown
-      } ]
+      mappings.push mapping
 
-      table = table.project mapping, yes
-
-      str = scale.toString()
-      @log "apply: #{col}(#{scale.id}):\t#{str}\t#{table.nrows()} rows"
+      if @log.level == 0
+        str = scale.toString()
+        @log "apply: #{col}(#{scale.id}):\t#{str}"
       table
 
-
-    @log "apply: table has #{table.nrows()} rows"
     table = @useScales table, posMapping, f
+    table = table.project mappings, yes
     table
 
   # @param posMapping maps aesthetic names to the scale that

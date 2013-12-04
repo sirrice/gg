@@ -40,6 +40,19 @@ class gg.geom.Render extends gg.core.XForm
     md = pairtable.right()
     svg = @svg md
 
+    i = 0
+    table.bfs (n) -> i += 1
+    console.log "#{i} nodes in table tree"
+    console.log data.Table.timer.toString 100
+    for name, errs of data.Table.timer._traces
+      for err in errs
+        console.log err.stack
+    console.log [
+      'getkey: ',
+      data.Table.timer.sum('getkey'),
+      data.Table.timer.count('getkey'),
+      data.Table.timer.avg('getkey')
+    ]
 
     @render table, svg
     @renderDebug md, svg

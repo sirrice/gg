@@ -86,21 +86,21 @@ class gg.parse.Parser
     pos
 
   @extractCoord: (spec, defaultval='identity') ->
-    coord = @attr spec, ['coord', 'coordinates'], defaultval
+    coord = @attr spec, ['coord', 'coords', 'coordinate', 'coordinates'], defaultval
     coord = @normalize coord
 
   @extractGeom: (spec, defaultval='point') ->
-    geom = @attr spec, ['geom', 'shape', 'geometry'], defaultval
+    geom = @attr spec, ['geom', 'geoms', 'shape', 'geometry'], defaultval
     geom = @normalize geom
     geom
 
   @extractStat: (spec, defaultval='identity') ->
-    stat = @attr spec, ['stat', 'statistics'], defaultval
+    stat = @attr spec, ['stat', 'stats', 'statistic', 'statistics'], defaultval
     stat = @normalize stat
     stat
 
   @extractOpts: (spec, defaultval={}) ->
-    opts = @attr spec, ['opts', 'options'], defaultval
+    opts = @attr spec, ['opt', 'opts', 'options'], defaultval
     unless _.isObject opts
       throw Error "options should be an object: #{JSON.stringify opts}"
     opts
