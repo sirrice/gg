@@ -11,3 +11,4 @@ test.js
 *.Rhistory
 public
 lib/*
+lib
