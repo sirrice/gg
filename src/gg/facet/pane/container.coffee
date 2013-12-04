@@ -41,7 +41,18 @@ class gg.facet.pane.Container
       @upad = @padding unless @bXFacet
 
   clone: ->
-    gg.facet.pane.Container.fromJSON @toJSON()
+    new gg.facet.pane.Container(
+      @c.clone(),
+      @xidx,
+      @yidx,
+      @x,
+      @y,
+      @bXFacet,
+      @bYFacet,
+      @bXAxis,
+      @bYAxis,
+      @opts
+    )
 
   toJSON: ->
     c: _.toJSON @c

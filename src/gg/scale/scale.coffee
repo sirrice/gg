@@ -167,7 +167,27 @@ class gg.scale.Scale
     new klass {aes: aes, type: type}
 
   clone: ->
-    return gg.scale.Scale.fromJSON @toJSON()
+    spec = 
+      aes: @aes
+      type: @type
+      domainUpdated: @domainUpdated
+      rangeUpdated: @rangeUpdated
+      center: @center
+      frozen: @frozen
+
+    clone = new @constructor spec
+
+    if clone.d3Scale?
+      clone.d3Scale.domain @domain()
+      clone.d3Scale.range @range()
+    else
+      clone.domain @domain()
+      clone.range @range()
+
+    clone.type = @type
+    clone.domainSet = @domainSet
+    clone.rangeSet = @rangeSet
+    clone
 
   toJSON: ->
     spec = _.clone @spec
