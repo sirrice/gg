@@ -23,7 +23,13 @@ _ = require 'underscore'
 #
 class gg.facet.axis.Layout 
 
-  @layoutYAxis: (c, em, scale, el) ->
+  # @param plot container bound object
+  # @param em size of a "typical" character
+  # @param scale the gg.scale.scale object
+  @layoutYAxis: (c, em, scale, el, opts={}) ->
+    maxWidthPerc = opts.maxWidthPerc 
+    maxWidthPerc ?= 0.3
+
     [w, h] = [c.w(), c.h()]
     ret = 
       rotate: no
@@ -54,9 +60,10 @@ class gg.facet.axis.Layout
     size = gg.util.Textsize.textSize maxlabel, ret.opts, el
     ret.bound.x1 = size.width
 
-    if size.width > w*0.3
-      ret.bound.x1 = w * 0.3
-      nchars = Math.floor(maxlabel.length * (w*0.3) / size.width)
+    maxWidth = w * maxWidthPerc
+    if size.width > maxWidth
+      ret.bound.x1 = maxWidth
+      nchars = Math.floor(maxlabel.length * maxWidth / size.width)
       ret.formatter = (label) -> ret.formatter(label).substr 0, nchars
       ret.nchars = nchars
 
@@ -65,7 +72,9 @@ class gg.facet.axis.Layout
 
 
 
-  @layoutXAxis: (c, em, scale, el) ->
+  @layoutXAxis: (c, em, scale, el, opts={}) ->
+    maxHeightPerc = opts.maxHeightPerc
+    maxHeightPerc ?= 0.3
     [w, h] = [c.w(), c.h()]
     ret = 
       rotate: no
@@ -132,7 +141,8 @@ class gg.facet.axis.Layout
         console.log longestlabel
         console.log longestsize
 
-        axisH = d3.min [h*.3, longestsize]
+        maxH = h * maxHeightPerc
+        axisH = d3.min [maxH, longestsize]
         plotH = h - axisH
         nchars = Math.floor(longestlabel.length * axisH / longestsize)
         console.log "nchars: #{nchars}"

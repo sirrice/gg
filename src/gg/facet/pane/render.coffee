@@ -12,10 +12,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
 
   renderFacetPane: (md, params) ->
     row = md.any()
-    svg = row.get('svg').plot
     paneC = row.get 'paneC'
-    eventCoordinator = row.get 'event'
-    facetId = gg.facet.base.Facets.row2facetId row
     return null unless paneC?
 
     layerIdx = row.get 'layer'
@@ -27,6 +24,11 @@ class gg.facet.pane.Svg extends gg.core.BForm
     yac = paneC.yAxisC()
     xscale = scaleSet.scale 'x', data.Schema.unknown
     yscale = scaleSet.scale 'y', data.Schema.unknown
+
+    svg = row.get('svg').plot
+    eventCoordinator = row.get 'event'
+    facetId = gg.facet.base.Facets.row2facetId row
+    paneId = "facet-grid-#{paneC.xidx}-#{paneC.yidx}"
 
     @log "panec: #{paneC.toString()}"
     @log "bound: #{paneC.bound().toString()}"
@@ -43,30 +45,13 @@ class gg.facet.pane.Svg extends gg.core.BForm
     }
 
     @renderBg(el, dc) # render this first so it's at the bottom
-    # XXX: check if show tick lines but not the labels
-    @renderXAxis(el, dc, xac, xscale, row.get('xaxistext-opts'))
-    @renderYAxis(el, dc, yac, yscale, row.get('yaxistext-opts'))
+    @renderXAxis(el, dc, xac, xscale, row.get('xaxistext-opts'), params.get('tickOpts'))
+    @renderYAxis(el, dc, yac, yscale, row.get('yaxistext-opts'), params.get('tickOpts'))
 
-    dataPaneSvg = _.subSvg el, {
-      class: 'data-pane facet-grid'
-      transform: @b2translate dc
-      width: dc.w()
-      height: dc.h()
-      id: "facet-grid-#{paneC.xidx}-#{paneC.yidx}"
-    }
-
-    eventName = "brush-#{facetId}"
-    @renderBrushes(
-      dataPaneSvg, 
-      xscale, 
-      yscale, 
-      eventCoordinator,
-      eventName)
-
+    dataPaneSvg = @renderDrawingPane(el, dc, paneC, paneId)
+    @renderBrushes dataPaneSvg, xscale, yscale, eventCoordinator, facetId
     @renderXFacet(el, xfc, md) if paneC.xFacetH > 0
     @renderYFacet(el, yfc, md) if paneC.yFacetW > 0
-
-
     el
 
 
@@ -79,6 +64,25 @@ class gg.facet.pane.Svg extends gg.core.BForm
       'z-index': 0
       class: 'pane-background facet-grid-background'
     bg
+
+
+  renderDrawingPane: (el, dc, paneC, paneId, facetId) ->
+    dataClip = el.append('clipPath')
+    dataClip.attr("id", "dataclip-#{@id}")
+    _.subSvg dataClip, {
+      width: dc.w()
+      height: dc.h()
+    }, "rect"
+    dataPaneSvg = _.subSvg el, {
+      class: 'data-pane facet-grid'
+      transform: @b2translate dc
+      width: dc.w()
+      height: dc.h()
+      id: "facet-grid-#{paneC.xidx}-#{paneC.yidx}"
+      "clip-path": "url(#dataclip-#{@id})"
+    }
+    dataPaneSvg
+
 
   renderXFacet: (el, container, md) ->
     opts = md.any 'xfacettext-opts'
@@ -225,7 +229,9 @@ class gg.facet.pane.Svg extends gg.core.BForm
 
 
 
-  renderBrushes: (el, xscale, yscale, eventCoordinator, eventName) ->
+  renderBrushes: (el, xscale, yscale, eventCoordinator, facetId) ->
+    eventName = "brush-#{facetId}"
+
     # transform brushed data into pixel space
     brushf = () ->
       [[minx, miny], [maxx, maxy]] = brush.extent()
