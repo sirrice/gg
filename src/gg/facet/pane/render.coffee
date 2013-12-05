@@ -44,8 +44,8 @@ class gg.facet.pane.Svg extends gg.core.BForm
 
     @renderBg(el, dc) # render this first so it's at the bottom
     # XXX: check if show tick lines but not the labels
-    @renderXAxis(el, dc, xac, xscale, {show: paneC.bXAxis})
-    @renderYAxis(el, dc, yac, yscale, {show: paneC.bYAxis})
+    @renderXAxis(el, dc, xac, xscale, row.get('xaxistext-opts'))
+    @renderYAxis(el, dc, yac, yscale, row.get('yaxistext-opts'))
 
     dataPaneSvg = _.subSvg el, {
       class: 'data-pane facet-grid'
@@ -63,8 +63,8 @@ class gg.facet.pane.Svg extends gg.core.BForm
       eventCoordinator,
       eventName)
 
-    @renderXFacet(el, xfc, md) if paneC.bXFacet 
-    @renderYFacet(el, yfc, md) if paneC.bYFacet
+    @renderXFacet(el, xfc, md) if paneC.xFacetH > 0
+    @renderYFacet(el, yfc, md) if paneC.yFacetW > 0
 
 
     el
@@ -132,100 +132,96 @@ class gg.facet.pane.Svg extends gg.core.BForm
       .style("font-size", "#{size}pt")
 
 
-  renderXAxis: (el, dc, container, xscale, tickOpts={}) ->
+  # @param dc draw container for the entire drawing plot area
+  # @param container bounds for the xaxis
+  # @param opts axis formatting options computed from facet layout
+  renderXAxis: (el, dc, container, xscale, opts) ->
+    return if container.h() == 0
+    xac2 = container.clone()
 
-      xac2 = container.clone()
-      #xael = el.insert 'g', ':first-child'
-      xael = el.append 'g'
-      xael.attr
-        class: 'axis x'
-        transform: @b2translate xac2
+    # content is clipped _before_ transformations
+    clip = el.append "clipPath"
+    clip.attr
+      id: "xaxisclip-#{@id}"
+    cliprect = clip.append('rect')
+    cliprect.attr
+      x: "0"
+      y: "-.5em"
+      width: xac2.h()
+      height: xac2.w()
 
-      show = if tickOpts.show? then tickOpts.show else yes
-      tickSize = dc.h()
-      axis = d3.svg.axis().scale(xscale.d3()).orient('bottom')
-      axis.tickSize -tickSize # because y coords are reversed
-      axis.tickFormat('') unless show
-      nticks = 5
-      d3scale = xscale.d3()
-      domain = d3scale.domain()
+    xael = el.append 'g'
+    xael.attr
+      class: 'axis x'
+      transform: @b2translate xac2
 
-      if xscale.type in [data.Schema.numeric, xscale.type is data.Schema.date]
-        fmtr = axis.tickFormat or d3scale.tickFormat
-        if fmtr? and _.isFunction fmtr
-          fmtr = fmtr()
-        else
-          fmtr = String
-
-        @log "autotuning x axis ticks"
-        @log "tickFormat is function: #{_.isFunction fmtr}"
-        if d3scale.ticks? and _.isFunction fmtr
-          nticks = 2
-          for n in _.range(1, 10)
-            ticks = _.map d3scale.ticks(n), fmtr
-            ticksizes = _.map ticks, (tick) ->
-              gg.util.Textsize.textSize(tick,
-                { class: "axis x"},
-                xael[0][0]).width
-            widthAtTick = _.sum ticksizes
-            @log "ticks: #{JSON.stringify ticks}"
-            @log "sizes: #{JSON.stringify ticksizes}"
-            @log "width: #{widthAtTick}"
-            if widthAtTick < dc.w()
-              axis.ticks nticks
-            else
-              break
-
-      else if xscale.type is data.Schema.ordinal
-        for n in _.range(1, 20)
-          blocksize = Math.ceil(domain.length / n)
-          nblocks = Math.floor(domain.length / blocksize)
-          ticks = _.times nblocks, (block) -> String(domain[block*blocksize])
-          ticksizes = _.map ticks, (tick) ->
-            gg.util.Textsize.textSize(tick,
-              { class: "axis x", padding: 3},
-              xael[0][0]).width
-          widthAtTick = _.sum ticksizes
-          @log "ticks: #{JSON.stringify ticks}"
-          @log "sizes: #{JSON.stringify ticksizes}"
-          @log "width: #{widthAtTick}"
-          if widthAtTick < dc.w()
-            axis.ticks n
-            axis.tickValues ticks
-          else
-            break
-        @log "final nticks: #{nticks}"
-
-      xael.call axis
+    showTicks = yes # if tickOpts.show? then tickOpts.show else yes
+    axis = d3.svg.axis().scale(xscale.d3()).orient('bottom')
+    axis.tickSize -dc.h()
+    # if showticks == false, then don't allocate space in axis.layout
+    axis.tickFormat opts.formatter
+    axis.tickFormat('') unless showTicks
 
 
-  renderYAxis: (el, dc, container, yscale, tickOpts={}) ->
-      yac2 = container.clone()
-      yac2.d container.w(), 0
-      #yael = el.insert 'g', ':first-child'
-      yael = el.append 'g'
-      yael.attr
-        class: 'axis y'
-        transform: @b2translate yac2
+    if xscale.type in [data.Schema.numeric, xscale.type is data.Schema.date]
+      axis.ticks opts.nticks
+    else if xscale.type is data.Schema.ordinal
+      labels = _.sample xscale.d3().domain(), opts.nticks
+      axis.tickValues labels
 
-      show = if tickOpts.show? then tickOpts.show else yes
-      axis = d3.svg.axis().scale(yscale.d3()).orient('left')
-      tickSize = dc.w()
-      axis.tickSize -tickSize
-      axis.tickFormat('') unless show
+    xael.call axis
+    if opts.rotate
+      xael.selectAll("text")
+        .style('text-anchor', 'start')
+        .attr(
+          transform: 'rotate(90)'
+          dy: '0em'
+          dx: '.5em'
+          "clip-path": "url(#xaxisclip-#{@id})"
+          )
 
-      @log "yaxis type: #{yscale.type}"
-      @log yscale.toString()
+  renderYAxis: (el, dc, container, yscale, opts, tickOpts={}) ->
+    return if container.w() == 0
+    yac2 = container.clone()
+    yac2.d container.w(), 0
+    console.log yac2
+    console.log yac2.w()
 
-      # compute number of ticks to show
+    # content is clipped _before_ transformations
+    clip = el.append "clipPath"
+    clip.attr
+      id: "yaxisclip-#{@id}"
+    cliprect = clip.append('rect')
+    cliprect.attr
+      x: "#{-yac2.w()}px"
+      y: "-1em"
+      width: "#{yac2.w()}px"
+      height: '2em'
 
-      if yscale.type is data.Schema.numeric
-        em = _.textSize("m", {padding: 2, class: "axis y"}, yael[0][0])
-        nticks = Math.min(5, Math.ceil(dc.h() / em.h))
-        axis.ticks(nticks, d3.format(',.0f'), 5)
-        @log "yaxis nticks #{nticks}"
+    yael = el.append 'g'
+    yael.attr
+      class: 'axis y'
+      transform: @b2translate yac2
 
-      yael.call axis
+    show = if tickOpts.show? then tickOpts.show else yes
+    axis = d3.svg.axis().scale(yscale.d3()).orient('left')
+    axis.tickSize -dc.w()
+    axis.tickFormat opts.formatter
+    axis.tickFormat('') unless show
+
+    @log "yaxis type: #{yscale.type}"
+    @log yscale.toString()
+
+    # compute number of ticks to show
+    if yscale.type in [data.Schema.numeric, data.Schema.date]
+      axis.ticks opts.nticks
+    else if yscale.type is data.Schema.ordinal
+      labels = _.sample yscale.d3().domain(), opts.nticks
+      axis.tickValues labels
+
+    yael.call axis
+    yael.selectAll('text').attr
+      "clip-path": "url(#yaxisclip-#{@id})"
 
 
 

@@ -37,11 +37,11 @@ class gg.facet.base.Layout extends gg.core.BForm
   # layout panes
   getTitleHeight: (params, css={}) -> _.exSize(css).h
 
-  getMaxText: (sets, aes) ->
+  getMaxText: (set) ->
     text = '100'
     formatter = d3.format ',.0f'
-    for set in sets
-      scale = set.scale aes, data.Schema.unknown
+    if set?
+      scale = set.get aes, data.Schema.unknown
       if scale.type == data.Schema.numeric and scale.domain()?
         for v in scale.domain()
           if _.isNumber v
@@ -102,12 +102,11 @@ class gg.facet.base.Layout extends gg.core.BForm
         0,
         "",
         "",
-        showXFacet,
-        showYFacet,
-        showXAxis,
-        showYAxis,
+        em * showXFacet,
+        em * showYFacet,
+        em * showXAxis,
+        em * showYAxis,
         {
-          labelHeight: em
           padding: 3
         }
 

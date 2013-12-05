@@ -6,40 +6,35 @@
 #
 class gg.facet.grid.PaneGrid
   constructor: (@xs, @ys, opts) ->
-    showXFacet = opts.showXFacet
-    showYFacet = opts.showYFacet
-    showXAxis = opts.showXAxis
-    showYAxis = opts.showYAxis
-    labelHeight = opts.labelHeight
+    xFacetH = opts.xFacetH
+    yFacetW = opts.yFacetW
+    xAxisH = opts.xAxisH
     yAxisW = opts.yAxisW
-    xAxisW = opts.xAxisW
     padding = opts.padding
     nxs = @xs.length
     nys = @ys.length
 
     opts = {
-      labelHeight
-      yAxisW
-      xAxisW
       padding
     }
 
     @grid = _.map @xs, (x, xidx) =>
       _.map @ys, (y, yidx) =>
-        bXFacet = showXFacet and yidx is 0
-        bYFacet = showYFacet and xidx >= nxs-1
-        bXAxis = showXAxis and yidx >= nys-1
-        bYAxis = showYAxis and xidx is 0
+        xfh = xFacetH * (yidx is 0)
+        yfw = yFacetW * (xidx >= nxs-1)
+        xah = xAxisH * (yidx >= nys-1)
+        yaw = yAxisW * (xidx is 0)
+        console.log ["pangrid", x, y, xfh, yfw, xah, yaw]
         new gg.facet.pane.Container(
           gg.util.Bound.empty(),
           xidx,
           yidx,
           x,
           y,
-          bXFacet,
-          bYFacet,
-          bXAxis,
-          bYAxis,
+          xfh,
+          yfw,
+          xah,
+          yaw,
           opts
         )
 
@@ -76,8 +71,8 @@ class gg.facet.grid.PaneGrid
     nonPaneWs = _.times @ys.length, ()->0
     nonPaneHs = _.times @xs.length, ()->0
     @each (pane, xidx, yidx, x, y) ->
-      dx = pane.labelHeight * pane.bYFacet + pane.yAxisW * pane.bYAxis
-      dy = pane.labelHeight * (pane.bXFacet + pane.bXAxis)
+      dx = pane.yFacetW + pane.yAxisW
+      dy = pane.xFacetH + pane.xAxisH
       nonPaneWs[yidx] += dx
       nonPaneHs[xidx] += dy
 

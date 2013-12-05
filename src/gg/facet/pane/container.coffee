@@ -23,22 +23,19 @@ class gg.facet.pane.Container
     @yidx,
     @x,
     @y,
-    @bXFacet,
-    @bYFacet,
-    @bXAxis,
-    @bYAxis,
+    @xFacetH,
+    @yFacetW,
+    @xAxisH,
+    @yAxisW,
     @opts={}) ->
 
-      @labelHeight = @opts.labelHeight or 15
-      @yAxisW = @opts.yAxisW or 20
-      @xAxisW = @opts.xAxisW or 20
       @padding = @opts.padding or 5
 
       @lpad = @rpad = @upad = @bpad = 0
-      @lpad = @padding unless @bYAxis
-      @rpad = @padding unless @bYFacet
+      @lpad = @padding unless @yAxisW
+      @rpad = @padding unless @yFacetW
       #@bpad = @padding unless @bXAxis
-      @upad = @padding unless @bXFacet
+      @upad = @padding unless @xFacetH
 
   clone: ->
     new gg.facet.pane.Container(
@@ -47,10 +44,10 @@ class gg.facet.pane.Container
       @yidx,
       @x,
       @y,
-      @bXFacet,
-      @bYFacet,
-      @bXAxis,
-      @bYAxis,
+      @xFacetH,
+      @yFacetW,
+      @xAxisH,
+      @yAxisW,
       @opts
     )
 
@@ -60,13 +57,10 @@ class gg.facet.pane.Container
     yidx: _.toJSON @yidx
     x: _.toJSON @x
     y: _.toJSON @y
-    bXFacet: @bXFacet
-    bYFacet: @bYFacet
-    bXAxis: @bXAxis
-    bYAxis: @bYAxis
-    labelHeight: @labelHeight
+    xFacetH: @xFacetH
+    yFacetW: @yFacetW
+    xAxisH: @xAxisH
     yAxisW: @yAxisW
-    xAxisW: @xAxisW
 
   @fromJSON: (json) ->
     new gg.facet.pane.Container(
@@ -75,13 +69,10 @@ class gg.facet.pane.Container
       _.fromJSON json.yidx
       _.fromJSON json.x
       _.fromJSON json.y
-      json.bXFacet
-      json.bYFacet
-      json.bXAxis
-      json.bYAxis
-      json.labelHeight
+      json.xFacetH
+      json.yFacetW
+      json.xAxisH
       json.yAxisW
-      json.xAxisW
     )
 
   toString: ->
@@ -94,10 +85,10 @@ class gg.facet.pane.Container
   #
   # bounds for the container (pane + facets + axes)
   #
-  w: -> @c.w() + @labelHeight * @bYFacet + @yAxisW * @bYAxis
-  h: -> @c.h() + @labelHeight * (@bXFacet + @bXAxis)
-  top: -> @c.y0 - @labelHeight * @bXFacet
-  left: -> @c.x0 - @yAxisW * @bYAxis
+  w: -> @c.w() + @yFacetW + @yAxisW 
+  h: -> @c.h() + @xFacetH + @xAxisH 
+  top: -> @c.y0 - @xFacetH
+  left: -> @c.x0 - @yAxisW
   bound: ->
     new gg.util.Bound @left(), @top(),
       @left() + @w(),
@@ -109,37 +100,37 @@ class gg.facet.pane.Container
   #
 
   drawC: ->
-    x0 = @yAxisW * @bYAxis + @lpad
-    y0 = @labelHeight * @bXFacet + @upad
+    x0 = @yAxisW + @lpad
+    y0 = @xFacetH + @upad
     w = @c.w() - @rpad - @lpad
     h = @c.h() - @bpad - @upad
     new gg.util.Bound x0, y0, x0+w, y0+h
 
 
   xFacetC: ->
-    x0 = @yAxisW * @bYAxis + @lpad
+    x0 = @yAxisW + @lpad
     y0 = 0
     w = @c.w() - @rpad - @lpad
-    h = @labelHeight * @bXFacet
+    h = @xFacetH
     new gg.util.Bound x0, y0, x0+w, y0+h
 
   yFacetC: ->
-    x0 = @yAxisW * @bYAxis + @c.width()
-    y0 = @labelHeight * @bXFacet + @upad
-    w = @labelHeight * @bYFacet
+    x0 = @yAxisW + @c.width()
+    y0 = @xFacetH + @upad
+    w = @yFacetW
     h = @c.h() - @upad - @bpad
     new gg.util.Bound x0, y0, x0+w, y0+h
 
   xAxisC: ->
-    x0 = @yAxisW * @bYAxis + @lpad
-    y0 = @c.h() + @labelHeight*@bXFacet
+    x0 = @yAxisW + @lpad
+    y0 = @c.h() + @xFacetH
     w = @c.w() - @lpad - @rpad
-    h = @labelHeight * @bXAxis
+    h = @xAxisH 
     new gg.util.Bound x0, y0, x0+w, y0+h
 
   yAxisC: ->
     x0 = 0
-    y0 = @labelHeight * @bXFacet + @upad
-    w = @yAxisW * @bYAxis
+    y0 = @xFacetH + @upad
+    w = @yAxisW
     h = @c.h() - @upad - @bpad
     new gg.util.Bound x0, y0, x0+w, y0+h

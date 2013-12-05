@@ -161,7 +161,6 @@ var selected_geoms = {
         return {x: o[0], y: o[1]}
       })
       console.log("total cost\t\t" + cost);
-      return;
 
       var dspecs = {
         layers: [

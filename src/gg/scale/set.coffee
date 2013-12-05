@@ -125,7 +125,6 @@ class gg.scale.Set
     for col in table.cols()
       tabletype = table.schema.type col
       scale = @scale col, tabletype, posMapping
-      @log scale.toString()
       table = f table, scale, col
     table
 
@@ -186,9 +185,8 @@ class gg.scale.Set
         cols: col
       mappings.push mapping
 
-      if @log.level == 0
-        str = scale.toString()
-        @log "apply: #{col}(#{scale.id}):\t#{str}"
+      str = scale.toString()
+      @log "apply: #{col}(#{scale.id}):\t#{str}"
       table
 
     table = @useScales table, posMapping, f
@@ -201,6 +199,7 @@ class gg.scale.Set
   filter: (table, posMapping={}) ->
     filterFuncs = []
     f = (table, scale, col) =>
+      return table if _.isType scale, gg.scale.Identity
       g = (row) -> 
         v = row.get col
         checks = [_.isNaN, _.isUndefined, _.isNull]

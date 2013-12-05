@@ -1,6 +1,8 @@
 #<< gg/facet/pane/container
 #<< gg/facet/base/layout
 #<< gg/facet/grid/pane
+#<< gg/facet/axis/*
+
 
 
 
@@ -33,6 +35,9 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     xs = _.uniq xs
     ys = _.uniq ys
     sets = _.uniq sets, (set) -> set.id
+    set = sets[0]
+    yscale = set.get 'y', data.Schema.numeric
+    xscale = set.get 'x', data.Schema.numeric
     nxs = xs.length
     nys = ys.length
     xytable = data.ops.Util.cross
@@ -41,33 +46,36 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
 
     # Compute derived values
     css = { 'font-size': '10pt' }  ## isn't there a facet class somewhere?
-    labelHeight = _.exSize().h 
+    ex = _.exSize()
+    labelHeight = ex.h
     showXFacet = xs.length > 1 and xs[0]?
     showYFacet = ys.length > 1 and ys[0]?
 
     # axis label dimensions
-    xdims = _.textSize @getMaxText(sets, 'x'), css
-    ydims = _.textSize @getMaxText(sets, 'y'), css
-    yAxisW = ydims.w + paddingPane
-    xAxisW = xdims.w + paddingPane
+    yaxisOpts = gg.facet.axis.Layout.layoutYAxis container, ex, yscale
+    xaxisOpts = gg.facet.axis.Layout.layoutXAxis container, ex, xscale
+    xFacetH = labelHeight * showXFacet
+    yFacetW = labelHeight * showYFacet
+    xAxisH = xaxisOpts.bound.h() * showXAxis
+    yAxisW = yaxisOpts.bound.w() * showYAxis
+
 
     log "paddingpane: #{paddingPane}"
     log "facetxs:     #{xs}"
     log "facetys:     #{ys}"
-    log "labelHeight: #{labelHeight}"
+    log "yaxisopts:"
+    log yaxisOpts
+    log "xaxisopts:"
+    log xaxisOpts
 
     #
     # OK layout time
     #
-
     grid = new gg.facet.grid.PaneGrid xs, ys, {
-        showXFacet
-        showYFacet
-        showXAxis
-        showYAxis
-        labelHeight
-        yAxisW 
-        xAxisW
+      xFacetH,
+      yFacetW,
+      xAxisH,
+      yAxisW,
     }
     grid.layout w, h
 
@@ -87,7 +95,7 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
     #
 
     mapping = [{
-      alias: ['paneC', 'xfacettext-opts', 'yfacettext-opts']
+      alias: ['paneC', 'xfacettext-opts', 'yfacettext-opts', 'xaxistext-opts', 'yaxistext-opts']
       cols: [xFacet, yFacet, 'scales']
       f: (x, y, set) ->
         paneC = grid.getByVal x, y
@@ -125,6 +133,8 @@ class gg.facet.grid.Layout extends gg.facet.base.Layout
           'paneC': paneC
           'xfacettext-opts': xopts
           'yfacettext-opts': yopts
+          'xaxistext-opts': xaxisOpts
+          'yaxistext-opts': yaxisOpts
         }
     }]
     md = md.project mapping, yes
