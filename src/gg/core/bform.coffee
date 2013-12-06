@@ -1,8 +1,8 @@
-#<< gg/wf/barrier
+#<< gg/wf/robarrier
 
 # A Barrier Transformation
 #
-class gg.core.BForm extends gg.wf.SyncBarrier
+class gg.core.BForm extends gg.wf.SyncROBarrier
   @ggpackage = "gg.core.BForm"
   @log = gg.util.Log.logger @ggpackage, @ggpackage.substr(@ggpackage.lastIndexOf(".")+1)
 
@@ -22,8 +22,8 @@ class gg.core.BForm extends gg.wf.SyncBarrier
     FormUtil = gg.core.FormUtil
     makecompute = (log) ->
       (pairtable, params) ->
-        pairtable = FormUtil.addDefaults pairtable, params, log
-        FormUtil.validateInput pairtable, params
+        #pairtable = FormUtil.addDefaults pairtable, params, log
+        #FormUtil.validateInput pairtable, params
         f pairtable, params
     @params.put 'compute', makecompute(@log)
     super

@@ -1,9 +1,9 @@
 #<< gg/wf/node
 
 #
-# Full access barrier
-#   the data table can be modified
-#   slower than ROBarrier
+# Read only barrier --
+#   the data table is read-only and throws error when projected 
+#   or aggregated
 #
 # It doesn't make sense to combine _data_ across layers and facets.
 #
@@ -12,16 +12,15 @@
 # Adds a hidden column (_barrier) to the data to track input and output ports
 #
 # 
-class gg.wf.Barrier extends gg.wf.Node
+class gg.wf.ROBarrier extends gg.wf.Node
   @ggpackage = "gg.wf.Barrier"
   @type = "barrier"
 
   compute: (pt, params, cb) -> cb null, pt
 
   @setup: (inputs) ->
-    tables = _.map inputs, (pt, idx) ->
-      t = pt.left()
-      t.setColVal '_barrier', idx
+    tables = _.map inputs, (pt) ->
+      pt.left()
 
     mds = _.map inputs, (pt, idx) ->
       md = pt.right()
@@ -29,49 +28,34 @@ class gg.wf.Barrier extends gg.wf.Node
 
     table = new data.ops.Union tables
     md = new data.ops.Union mds
-    new data.PairTable table, md
+    new data.PairTable table.freeze(), md
 
 
-  @finalize: (tableset) ->
-    table = tableset.left()
-    md = tableset.right()
-    timer = new gg.util.Timer()
-    table = table.partition '_barrier', 'table'
-    timer.start()
-    oldmd = md
-    md = md.partition '_barrier', 'md'
-    timer.stop()
-
-    if timer.sum() > 200
-      console.log("finalize took ttoo long")
-      console.log timer.toString()
-      console.log timer.timings()
-      console.log oldmd.graph()
-
-    pairtable = table.join md, '_barrier' 
-    pairtable.map (row) =>
-      table = row.get('table')
-      md = row.get('md') or null
-      table = table.exclude('_barrier') if table?
-      md = md.exclude('_barrier') if md?
+  @finalize: (inputs, tableset) ->
+    lefts = _.map inputs, (pt) -> pt.left()
+    right = tableset.right()
+    rights = right.partition '_barrier', 'md'
+    rights.map (row) ->
       idx = row.get '_barrier'
+      left = lefts[idx]
+      right = row.get('md') or null
+      right = right.exclude('_barrier') if right?
       {
         idx: idx
-        pairtable: new data.PairTable(table, md)
+        pairtable: new data.PairTable left, right
       }
-
 
   run: ->
     throw Error("Node not ready") unless @ready()
     compute = @params.get('compute') or @compute.bind(@)
 
     try
-      pairtable = gg.wf.Barrier.setup @inputs
+      pairtable = gg.wf.ROBarrier.setup @inputs
 
       compute pairtable, @params, (err, tableset) =>
         throw err if err?
         console.log "finalizing #{@name}"
-        results = gg.wf.Barrier.finalize tableset
+        results = gg.wf.ROBarrier.finalize @inputs, tableset
         for result in results
           idx = result.idx
           output = result.pairtable
@@ -81,7 +65,7 @@ class gg.wf.Barrier extends gg.wf.Node
       throw Error(err)
         
 
-class gg.wf.SyncBarrier extends gg.wf.Barrier
+class gg.wf.SyncROBarrier extends gg.wf.ROBarrier
   parseSpec: ->
     super
     f = @params.get 'compute'

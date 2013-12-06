@@ -71,7 +71,6 @@ class gg.facet.axis.Layout
 
 
 
-
   @layoutXAxis: (c, em, scale, el, opts={}) ->
     maxHeightPerc = opts.maxHeightPerc
     maxHeightPerc ?= 0.3
@@ -136,16 +135,11 @@ class gg.facet.axis.Layout
         sizes = longlabels.map (label) -> gg.util.Textsize.textSize(label, ret.css).w
         longestlabel = _.max longlabels, (label, idx) -> sizes[idx]
         longestsize = d3.max sizes
-        console.log longlabels
-        console.log sizes
-        console.log longestlabel
-        console.log longestsize
 
         maxH = h * maxHeightPerc
         axisH = d3.min [maxH, longestsize]
         plotH = h - axisH
         nchars = Math.floor(longestlabel.length * axisH / longestsize)
-        console.log "nchars: #{nchars}"
 
         ret.rotate = yes
         ret.formatter = (label) -> String(label).substr 0, nchars

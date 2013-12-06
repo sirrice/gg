@@ -74,23 +74,23 @@ class gg.pos.DotPlot extends gg.core.XForm
         ys.push (ys[ys.length-1]+r*2)
         stacked = yes
 
-    console.log xs
-    console.log ys
-    console.log 
-    maxy = d3.max(ys) + r
-    miny = d3.min(ys) - r
-    y0s = _.map ys, (y) -> y - r
-    y1s = _.map ys, (y) -> y + r
-    x0s = _.map xs, (x) -> x - r
-    x1s = _.map xs, (x) -> x + r
-    t = t.setCol 'x', xs, data.Schema.numeric, yes
-    t = t.setCol 'x0', x0s, data.Schema.numeric, yes
-    t = t.setCol 'x1', x1s, data.Schema.numeric, yes
-    t = t.setCol 'y', ys, data.Schema.numeric, yes
-    t = t.setCol 'y0', y0s, data.Schema.numeric, yes
-    t = t.setCol 'y1', y1s, data.Schema.numeric, yes
+    mapping = 
+      alias: ['x', 'x0', 'x1', 'y', 'y0', 'y1']
+      type: data.Schema.numeric
+      cols: ['x', 'y']
+      f: (x, y, idx) ->
+        x = xs[idx]
+        y = ys[idx]
+        {
+          x
+          x0: x - r
+          x1: x + r
+          y
+          y0: y - r
+          y1: y + r
+        }
+    t = t.project [mapping], yes
 
-    domain = [_.min(y0s), _.max(y1s)]
     sets = _.uniq pairtable.right().all 'scales'
     for set in sets
       yscale = set.get 'y', data.Schema.numeric

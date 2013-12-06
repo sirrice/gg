@@ -72,8 +72,22 @@ class gg.core.XForm extends gg.wf.SyncExec
   outputSchema: (pt, params) -> pt.leftSchema()
 
   compile: ->
+    ###
+    defaults = new gg.xform.AddDefaults
+      name: "defaults-#{@name}"
+      params: 
+        defaults: @params.get 'defaults'
+
+    validate = new gg.xform.ValidateSchema 
+      name: "validate-#{@name}"
+      params: 
+        inputSchema: @params.get 'inputSchema'
+    ###
+
     nodes = []
     nodes.push @premap.compile() if @premap?
+    #nodes.push defaults
+    #nodes.push validate
     nodes.push super
     nodes.push @postmap.compile() if @postmap?
     _.compact _.flatten nodes

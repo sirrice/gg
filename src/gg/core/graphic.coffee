@@ -133,18 +133,9 @@ class gg.core.Graphic extends events.EventEmitter
       new gg.wf.rule.RPCify
     ]
 
-    if @options.optimize
-      rules = rules.concat [
-        new gg.wf.rule.RmDebug
-        # there is a bug -- when scalesapply + reparam + dotplot are merged, partitioning is lost!
-        # new gg.wf.rule.MergeExec
-        new gg.wf.rule.MergeBarrier
-      ]
-      if @options.guid?
-        rules.push new gg.wf.rule.Cache
-          params:
-            guid: @options.guid
-
+    for name in @options.optimize
+      rules.push gg.wf.rule.Rule.fromSpec name
+    rules = _.compact rules
     optimizer = new gg.wf.Optimizer rules
     @workflow = optimizer.run @workflow
 

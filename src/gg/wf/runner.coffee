@@ -1,11 +1,6 @@
 #<< gg/util/*
 #<< gg/wf/clearinghouse
 
-try
-  timer = performance
-catch err
-  timer = Date
-
 
 # Executes an instantiated workflow
 # Single threaded javascript implementation
@@ -41,6 +36,12 @@ class gg.wf.Runner extends events.EventEmitter
   @ggpackage = "gg.wf.Runner"
 
   constructor: (@flow, xferControl) ->
+    try
+      @timer = performance
+    catch err
+      @timer = Date
+
+
     @log = gg.util.Log.logger @constructor.ggpackage, "Runner"
     @done = {}
     @seen = {}
@@ -56,7 +57,7 @@ class gg.wf.Runner extends events.EventEmitter
       node.on "output", (args...) =>
         if node.id of @debug
           o = @debug[node.id]
-          o['end'] = timer.now()
+          o['end'] = @timer.now()
           o['cost'] = o['end'] - o['start']
         @ch.push args...
 
@@ -86,7 +87,7 @@ class gg.wf.Runner extends events.EventEmitter
     @log "runNode: #{node.name} in(#{node.inputs.length})
           out(#{node.nChildren}) running"
     @debug[node.id] = 
-      start: timer.now()
+      start: @timer.now()
       name: node.name
       id: node.id
     node.run()

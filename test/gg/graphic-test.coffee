@@ -2,7 +2,6 @@ require "../env"
 vows = require "vows"
 assert = require "assert"
 
-###
 makeTable = (nrows=100) ->
   rows = _.map _.range(0, nrows), (d) ->
     g = Math.floor(Math.random() * 3) + 1
@@ -15,7 +14,7 @@ makeTable = (nrows=100) ->
       f:f
       t:t
     }
-  gg.data.RowTable.fromArray rows
+  data.RowTable.fromArray rows
 
 
 outputsProperlyGen = (check) ->
@@ -46,102 +45,25 @@ spec =
   layers: [
     {
       geom:
-        type: "area"
+        type: "point"
         aes:
-          x: 'd'
-          y: 'r'
-      pos: "stack"
+          y: 'sum'
+      pos: "dot"
     }
   ]
+  aes:
+    x: 'e'
 
-    {
-      # post-stats mapping (e.g., count --> y)
-      geom: {type:"interval", aes: {y:"total", r:"total", fill: "red"}},
-      # pre-stats mapping (to be consumed, and to split on discrete attributes)
-      aes:
-        x: "d"
-        y: "r"
-        fill: 'f'
-        r: "r"
-        "fill-opacity": 0.6
-      # positioning
-      pos: {type:"jitter", scale: 0.2}
-      stat: {type:"bin", name: "rect-bin"}
+  opts:
+    optimize: ['debug', 'server', 'barrier']
 
-    }
-   ,
-    {
-      # post-stats mapping (e.g., count --> y)
-      geom:
-        type:"point" #, aes: {y:"total", r:"total",}},
-      # pre-stats mapping (to be consumed, and to split on discrete attributes)
-      aes:
-        x: "d"
-        y: "r"
-        fill: 'f'
-        r: "r"
-        "fill-opacity": 0.6
-      # positioning
-      #pos: {type:"jitter", scale: 0.2}
-      #stat: {type:"bin", name: "point-bin"}
-
-    }
-
-  facets:
-    x: "f"
-    y: "g"
-  scales:
-    #x:
-    #  type: "log"
-    r:
-      type: "linear"
-      range: [2, 5]
-
-spec =
-  layers: [
-    {
-      geom: "boxplot"
-      aes:
-        x: 'f'
-        y: "e"
-        group:
-          color: "f"
-      stats: "boxplot"
-    }
-    {
-      geom: "point"
-      aes:
-        x: "g"
-        y: "e"
-        group:
-          color: "g"
-    }
-  ]
   facets:
     x: "t"
 
-
-spec =
-  layers: [
-    {
-      geom: "boxplot"
-      aes:
-        x: 'f'
-        y: "e"
-        group:
-          color: "f"
-      stats: "boxplot"
-    }
-  ]
-  facets:
-    x: "t"
   debug:
-    "gg": 5
-  options:
-    w: 500
-    h: 500
+    'gg.wf.runner': 0
 
-
+  data: makeTable(100)
 
 suite.addBatch
   "basic graphic":
@@ -149,12 +71,9 @@ suite.addBatch
       graphic = new gg.core.Graphic spec
       graphic
 
-    "dot": (graphic) ->
-      #console.log graphic.compile().toDot()
 
     "can run": (graphic) ->
       svg = d3.select("body").append("svg")
-      graphic.render svg, makeTable(100)
+      graphic.render svg
 
 suite.export module
-###

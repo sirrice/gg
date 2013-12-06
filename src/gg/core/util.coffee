@@ -52,9 +52,11 @@ class gg.core.FormUtil
       else
         log "adding:  #{k} -> #{v}"
         return _.mapToFunction table, k, v
+
     mapping = _.compact mapping
-    table = table.project mapping, yes
-    pt.left table
+    if mapping.length > 0
+      table = table.project mapping, yes
+      pt.left table
     pt
 
   @ensureScales: (pt, params, log) ->

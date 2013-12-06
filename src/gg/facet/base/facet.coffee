@@ -140,7 +140,7 @@ class gg.facet.base.Facets
       pairtable = pairtable.ensure ['facet-x' ,'facet-y']
       pairtable
 
-    gg.wf.SyncBarrier.create f, @splitParams, 'facet-labeler'
+    gg.wf.SyncBlock.create f, @splitParams, 'facet-labeler'
 
   @fromSpec: (g, spec) ->
     klass = switch spec.type

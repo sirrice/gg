@@ -1,4 +1,4 @@
-#<< gg/core/bform
+#<< gg/wf/barrier
 
 # Train on a table that has been mapped to aesthetic domain.
 #
@@ -31,7 +31,7 @@
 # before training
 #
 #
-class gg.scale.train.Pixel extends gg.core.BForm
+class gg.scale.train.Pixel extends gg.wf.SyncBarrier
   @ggpackage = "gg.scale.train.Pixel"
 
   #
@@ -44,11 +44,10 @@ class gg.scale.train.Pixel extends gg.core.BForm
   compute: (pairtable, params) ->
     gg.scale.train.Pixel.train pairtable, params, @log
 
-
-
   @train: (pairtable, params, log) ->
     timer = new gg.util.Timer()
     timer.start('fullpart')
+    # why full partition?
     partitions = pairtable.fullPartition()
     timer.stop('fullpart')
 

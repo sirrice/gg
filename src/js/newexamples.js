@@ -166,7 +166,8 @@ var selected_geoms = {
         layers: [
           {geom:'rect'}
         ],
-        data: debug
+        data: debug,
+      debug: {'gg.scale.train': 0, 'gg.scale.set': 0}
       };
       var dplot = gg(dspecs);
       $("#debug").empty()
@@ -203,7 +204,7 @@ var selected_geoms = {
     //
     // Generate random data with float attributes: d, r, g, f, t
     //
-    var npts = 200;
+    var npts = 500;
     bigdata = _.map(_.range(0, npts), function(d) {
       g = d % 3//Math.floor(Math.random() * 3) + 1;
       f = Math.floor(Math.random() * 3);

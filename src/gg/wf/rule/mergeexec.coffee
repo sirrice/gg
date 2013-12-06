@@ -3,6 +3,7 @@
 # Merges adjacent execs
 class gg.wf.rule.MergeExec extends gg.wf.rule.Rule
   @ggpackage = "gg.wf.rule.MergeExec"
+  @aliases = ['mergeexec', 'exec']
 
   run: (flow) ->
     getKeys = (n) -> n.params.get 'keys'

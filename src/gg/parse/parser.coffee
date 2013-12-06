@@ -103,6 +103,12 @@ class gg.parse.Parser
     opts = @attr spec, ['opt', 'opts', 'options'], defaultval
     unless _.isObject opts
       throw Error "options should be an object: #{JSON.stringify opts}"
+
+    # options should have an optimize option
+    optimize = @attr opts, ['optimize'], []
+    optimize = for o in optimize
+      @normalize o
+    opts.optimize = optimize
     opts
 
   @extractDebug: (spec, defaultval={}) ->

@@ -2,6 +2,7 @@
 
 class gg.wf.rule.EnvPut extends gg.wf.rule.Rule
   @ggpackage = "gg.wf.rule.EnvPut"
+  @aliases = 'envput'
 
   constructor: (spec) ->
     super

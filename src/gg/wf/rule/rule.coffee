@@ -79,3 +79,26 @@ class gg.wf.rule.Rule
         pre = cur
 
     flow
+
+  @klasses: ->
+    klasses = _.compact [
+      gg.wf.rule.Server
+      gg.wf.rule.RmDebug
+      gg.wf.rule.Cache
+      gg.wf.rule.EnvPut
+      gg.wf.rule.MergeBarrier
+      # errors with mergeexec
+      #gg.wf.rule.MergeExec
+      gg.wf.rule.RPCify
+    ]
+    ret = {}
+    for klass in klasses
+      for alias in _.flatten [klass.aliases]
+        ret[alias] = klass
+    ret
+
+  @fromSpec: (spec) ->
+    klass = gg.wf.rule.Rule.klasses()[spec.type]
+    return null unless klass?
+    new klass spec
+

@@ -24,7 +24,6 @@ class gg.facet.grid.PaneGrid
         yfw = yFacetW * (xidx >= nxs-1)
         xah = xAxisH * (yidx >= nys-1)
         yaw = yAxisW * (xidx is 0)
-        console.log ["pangrid", x, y, xfh, yfw, xah, yaw]
         new gg.facet.pane.Container(
           gg.util.Bound.empty(),
           xidx,

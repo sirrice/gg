@@ -3,6 +3,7 @@
 # Merges adjacent barriers 
 class gg.wf.rule.MergeBarrier extends gg.wf.rule.Rule
   @ggpackage = "gg.wf.rule.MergeBarrier"
+  @aliases = ['mergebarrier', 'barrier']
 
   run: (flow) ->
     console.log "mergebarrier"

@@ -2,6 +2,13 @@
 
 class gg.wf.rule.Cache extends gg.wf.rule.Rule
   @ggpackage = "gg.wf.rule.Cache"
+  @aliases = ['cache']
+
+  constructor: (spec) ->
+    super
+    @params.put 'guid', spec.guid, null
+    unless @params.get('guid')?
+      throw Error "rule.Cache requires a GUID"
 
   run: (flow) ->
     guid = @params.get 'guid'

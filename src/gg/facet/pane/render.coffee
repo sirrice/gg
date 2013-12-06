@@ -188,8 +188,6 @@ class gg.facet.pane.Svg extends gg.core.BForm
     return if container.w() == 0
     yac2 = container.clone()
     yac2.d container.w(), 0
-    console.log yac2
-    console.log yac2.w()
 
     # content is clipped _before_ transformations
     clip = el.append "clipPath"
@@ -274,8 +272,6 @@ class gg.facet.pane.Svg extends gg.core.BForm
       if svg? 
         [facetId, svg] 
     start = Date.now()
-    console.log md.raw()
-    console.log "cost = #{Date.now() - start}"
 
     #
     # Second pass sets ['svg'].paneSvg for each data
