@@ -264,7 +264,10 @@ class gg.facet.pane.Svg extends gg.core.BForm
     # This is where geoms in each layer will be rendered
     #
     els = {}
+    timer = new ggutil.Timer()
+    timer.start("partition")
     partitions = md.partition(['facet-x', 'facet-y']).all('table')
+    timer.stop("partition")
     els = _.o2map partitions, (p) => 
       row = p.any()
       facetId = gg.facet.base.Facets.row2facetId row
@@ -294,12 +297,15 @@ class gg.facet.pane.Svg extends gg.core.BForm
       svg.pane = paneSvg
       svg
 
+    timer.start("secondpass")
     md = md.project [{
       alias: 'svg'
       cols: ['paneC', 'facet-x', 'facet-y', 'layer', 'svg']
       f: f
       type: data.Schema.object
     }]
+    md.all()
+    timer.stop("secondpass")
     pairtable.right md
     pairtable
 

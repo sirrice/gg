@@ -11,6 +11,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
 
   parseSpec: ->
+    @setupData()
     @setupGeom()
     @setupStats()
     @setupPos()
@@ -18,6 +19,12 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @setupCoord()
     super
 
+  setupData: ->
+    @dataSpec = @spec.data
+    console.log @dataSpec
+    data = gg.core.Data.fromSpec @dataSpec
+    @data = data.data()
+    console.log @data
 
   setupGeom: ->
     @geomSpec = @spec.geom
@@ -35,7 +42,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
   setupPos: ->
     @posSpec  = @spec.pos
     @posSpec = _.flatten [@posSpec]
-    @pos = _.map @posSpec, (subSpec) =>
+    @pos = _.compact _.map @posSpec, (subSpec) =>
       subSpec.name = "pos-#{subSpec.type}-#{@layerIdx}"
       gg.pos.Position.fromSpec subSpec
     @pos
@@ -97,6 +104,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
     @log "compile()"
     nodes = []
 
+    nodes.push @data
     nodes.push @compileSetup()
     nodes.push @compileStats()
 

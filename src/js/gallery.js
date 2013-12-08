@@ -25,7 +25,7 @@ var all_specs = [
     var ex = function () {
       return d3.select("#gallery").append("span");
     };
-    specs.data = genData(500);
+    specs.data = genData(1000);
     if (!specs.opts)  specs.opts = {};
     specs.opts.w = 600;
     specs.opts.h = 400;

@@ -1,19 +1,23 @@
 #<< gg/stat/stat
 
-class gg.stat.Sort extends gg.stat.Stat
+class gg.stat.Sort extends gg.core.XForm
   @ggpackage = "gg.stat.Sort"
   @aliases = ['sort', 'sorted']
 
   parseSpec: ->
     super
-    cols = ["col", "cols", "attr", "attrs", "aes", "aess" ]
-    cols = _.findGoodAttr @spec, cols, []
-    cols = _.flatten [cols] 
-    reverse = _.findGood @spec, ['reverse', 'invert'], no
-    @params.putAll
-      cols: cols
-      reverse: reverse
-      keys: ['facet-x', 'facet-y', 'layer', 'group']
+    config = 
+      cols: 
+        names: ["col", "cols", "attr", "attrs"]
+        default: ['y']
+        f: (vals) -> _.flatten [vals]
+      reverse:
+        names: ['reversed', 'invert']
+        default: no
+
+    params = gg.parse.Parser.extractWithConfig @spec, config
+    params.keys = ['facet-x', 'facet-y', 'layer', 'group']
+    @params.putAll params
 
   inputSchema: (pairtable, params) -> params.get 'cols'
 

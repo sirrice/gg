@@ -14,7 +14,12 @@ class gg.pos.Stack extends gg.core.XForm
 
   parseSpec: ->
     super
-    @params.put "padding", _.findGoodAttr @spec, ['pad', 'padding'], 0.05
+    config = 
+      padding:
+        names: ['pad', 'padding']
+        default: 0.05
+
+    @params.putAll gg.parse.Parser.extractWithConfig(@spec, config)
 
 
   defaults: ->

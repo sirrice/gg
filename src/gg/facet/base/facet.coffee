@@ -82,7 +82,7 @@ class gg.facet.base.Facets
       ncol: null  # only matters for wrap
       nrow: null  # only matters for wrap
       paddingPane: 
-        name: 'padding'
+        names: 'padding'
         default: 5
       margin: 1
       options: @g.options
@@ -140,7 +140,7 @@ class gg.facet.base.Facets
       pairtable = pairtable.ensure ['facet-x' ,'facet-y']
       pairtable
 
-    gg.wf.SyncBlock.create f, @splitParams, 'facet-labeler'
+    gg.wf.SyncBarrier.create f, @splitParams, 'facet-labeler'
 
   @fromSpec: (g, spec) ->
     klass = switch spec.type

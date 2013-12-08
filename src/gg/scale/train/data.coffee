@@ -19,7 +19,6 @@ class gg.scale.train.Data extends gg.core.BForm
       md.each (row) ->
         set = row.get 'scales'
         set.train table, row.get('posMapping')
-        log set.toString()
 
     pairtable = data.PairTable.union partitions
     pairtable = gg.scale.train.Master.train(pairtable, params)

@@ -7,7 +7,9 @@ class gg.wf.Start extends gg.wf.Node
   ready: -> yes
 
   run: ->
-    result = new data.PairTable
+    mdrow = [{}]
+    md = data.Table.fromArray mdrow
+    result = new data.PairTable null, md
     @output 0, result
 
 

@@ -18,8 +18,12 @@ class gg.pos.DotPlot extends gg.core.XForm
 
   parseSpec: ->
     super
-    r = _.findGood [@spec.r, @spec.radius, @spec.size, null]
-    @params.put 'r', r
+    config = 
+      r: 
+        names: ['radius', 'size']
+        default: null
+
+    @params.putAll gg.parse.Parser.extractWithConfig(@spec, config)
     @params.put 'keys', ['facet-x', 'facet-y', 'layer']
 
   inputSchema: ->

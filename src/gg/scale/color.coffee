@@ -5,10 +5,10 @@ class gg.scale.ColorCont extends gg.scale.Scale
   @ggpackage = 'gg.scale.ColorCont'
   @aliases = ["color_cont", "colorcont"]
   constructor: (@spec={}) ->
-    @d3Scale = d3.scale.linear()
+    @d3Scale = d3.scale.linear().interpolate(d3.interpolateLab)
     @type = data.Schema.numeric
 
-    range = [d3.rgb(255, 255, 255), d3.rgb(2, 56, 88)]
+    range = [d3.rgb(255, 255, 255), d3.rgb('steelblue')]#2, 56, 88)]
     range = @spec.range if @spec.range?
     @d3Scale.range range
     super

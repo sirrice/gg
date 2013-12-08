@@ -77,6 +77,7 @@ class gg.geom.Geom
         gg.geom.Area
         gg.geom.Rect
         gg.geom.Polygon
+        gg.geom.Dot
         gg.geom.Hex
         gg.geom.Boxplot
         gg.geom.Glyph

@@ -28,7 +28,7 @@ class gg.wf.ROBarrier extends gg.wf.Node
 
     table = new data.ops.Union tables
     md = new data.ops.Union mds
-    new data.PairTable table.freeze(), md
+    new data.PairTable table, md
 
 
   @finalize: (inputs, tableset) ->

@@ -9,9 +9,15 @@ class gg.pos.Shift extends gg.core.XForm
 
   parseSpec: ->
     super
-    @params.putAll
-      xShift: _.findGood [@spec.x, @spec.amount, 10]
-      yShift: _.findGood [@spec.y, @spec.amount, 10]
+    config = 
+      xShift: 
+        names: ['x', 'amount']
+        default: 10
+      yShift:
+        names: ['y', 'amount']
+        default: 10
+
+    @params.putAll gg.parse.Parser.extractWithConfig(@spec, config)
 
   compute: (pairtable, params) ->
     table = pairtable.left()

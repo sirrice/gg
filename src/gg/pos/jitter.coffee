@@ -9,18 +9,18 @@ class gg.pos.Jitter extends gg.core.XForm
 
   parseSpec: ->
     super
-    scale = _.findGood [@spec.scale, 0.2]
-    xScale = _.findGood [@spec.xScale, @spec.x, null]
-    yScale = _.findGood [@spec.yScale, @spec.y, null]
-    if xScale? or yScale?
-      xScale = xScale or 0
-      yScale = yScale or 0
-    else
-      xScale = yScale = scale
+    config = 
+      scale: 0.2
+      xScale: 
+        name: ['x', 'scale']
+        default: null
+        f: (v) -> v or 0
+      yScale:
+        name: ['y', 'scale']
+        default: null
+        f: (v) -> v or 0
 
-    @params.putAll
-      xScale: xScale
-      yScale: yScale
+    @params.putAll gg.parse.Parser.extractWithConfig(@spec, config)
 
   compute: (pairtable, params) ->
     table = pairtable.left()

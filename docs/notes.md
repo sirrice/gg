@@ -3,14 +3,18 @@ Bugs
 
 * mergeexec is buggy -- the partition of layer/facet is lost between compute invocations.
   possibly because can't statically determine if data contains partition key attributes
+X somewhere in creating the md table, it
+  * creates as many rows as unique data rows
+  * keeps creating new scale sets
+* detect aes types based on scales and only add aes that are categorical to default group
 
 Desired Features
 ----------
 
-1. Keep workflow from breaking (not rendering facets) when table contains null values
+1. <strike>Keep workflow from breaking (not rendering facets) when table contains null values</strike>
 1. <strike>SQL source operator.  Server only</strike>
 1. Compile a server-side source + map/group operator into a SQL statement
-1. Implement a generalized Group-by aggregate operator
+1. <strike>Implement a generalized Group-by aggregate operator</strike>
 1. Schema based provenance.  Use to do between-operator schema mapping
 1. Data provenance to map from dom element to data and back
 1. Better JS interface

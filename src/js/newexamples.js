@@ -24,7 +24,7 @@ var geoms = {
 var selected_geoms = {
   area: false,
   point: false,
-  interval: false,
+  interval: true,
   boxplot:false,
   //color: true,
   radius: false,
@@ -32,7 +32,7 @@ var selected_geoms = {
   jitter:false,
   ptinterval: false,
   taxi: false,
-  dotplot: true,
+//dotplot: true,
     boxplot2: false,
 
 };
@@ -114,6 +114,7 @@ var selected_geoms = {
   }
 
   var setup_sample_data = function(data, n) {
+    return;
     if (!data || data.length == 0) return;
     var row = data[0];
     var keys = _.keys(row);
@@ -164,7 +165,7 @@ var selected_geoms = {
 
       var dspecs = {
         layers: [
-          {geom:'rect'}
+          {geom:'dot', stat: ['sort', 'bin', 'cdf']}
         ],
         data: debug,
       debug: {'gg.scale.train': 0, 'gg.scale.set': 0}

@@ -6,13 +6,16 @@ class gg.pos.Text extends gg.core.XForm
 
   parseSpec: ->
     super
+    config = 
+      bFast:
+        names: 'fast'
+        default: no
+      innerLoop: 15
+      temperature:
+        names: ['T', 't', 'temp', 'temperature']
+        default: 2.466303  # 1-e^(-1/T) = 2/3
 
-    tempAttrs = ['T', 't', 'temp', 'temperature']
-    @params.putAll(
-      bFast = - _.findGood [@spec.fast, false]
-      innerLoop = _.findGood [@spec.innerLoop, 15]
-      temperature = _.findGoodAttr @spec, tempAttrs, 2.466303 # 1-e^(-1/T) = 2/3
-    )
+    @params.putAll gg.parse.Parser.extractWithConfig(@spec, config)
 
   inputSchema: ->
     ['x', 'y', 'text']

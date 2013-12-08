@@ -19,9 +19,14 @@ class gg.stat.Loess extends gg.core.XForm
 
   parseSpec: ->
     super
-    @params.ensureAll
-      bandwidth: [["band", "bw"], .3]
-      acc: [["accuracy", "ac"], 1e-12]
+    config = 
+      bandwidth: 
+        names: ['band', 'bw']
+        default: .3
+      acc:
+        names: ['accuracy', 'ac']
+        default: 1e-12
+    @params.putAll gg.parse.Parser.extractWithConfig(@spec, config)
     @params.put 'keys', ['facet-x', 'facet-y', 'layer', 'group']
 
   inputSchema: -> ['x', 'y']

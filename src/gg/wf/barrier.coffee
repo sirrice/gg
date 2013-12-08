@@ -70,7 +70,6 @@ class gg.wf.Barrier extends gg.wf.Node
 
       compute pairtable, @params, (err, tableset) =>
         throw err if err?
-        console.log "finalizing #{@name}"
         results = gg.wf.Barrier.finalize tableset
         for result in results
           idx = result.idx

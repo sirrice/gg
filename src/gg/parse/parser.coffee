@@ -16,7 +16,6 @@ class gg.parse.Parser
     {
       layers: layers
       facets: global.facets
-      data: global.data
       debug: global.debug
       options: global.options
     }
@@ -46,7 +45,7 @@ class gg.parse.Parser
 
     {
       aes: aes
-      data: @extractData spec
+      data: @extractData spec, global.data
       geom: @extractGeom spec, global.geom
       scales: scales
       coord: @extractCoord spec, global.coord
@@ -54,10 +53,11 @@ class gg.parse.Parser
       pos: @extractPos spec, global.pos
     }
 
-  @extractData: (spec) ->
+  @extractData: (spec, defaultVal) ->
     data = null
     if spec?
       data = spec.data
+    data ?= defaultVal
     data
 
   @extractFacets: (spec) ->
@@ -144,24 +144,40 @@ class gg.parse.Parser
     defaultval
 
 
+  # @param spec
+  # @param config object of defaults and alternatives for extracting data from 
+  #        a spec.  The alternatives:
+  #
+  #        attr: defaultvalue
+  #
+  #        attr:
+  #          names: alternative attribute names
+  #          [default: default value]
+  #          [f: (extracted values) -> ]    # function to run on extracted values
+  #
   @extractWithConfig: (spec, config) ->
     o = {}
     for key, desc of config
       if _.isObject desc
-        if 'default' of desc or 'names' of desc
+        if 'default' of desc or 'names' of desc or 'f' of desc
           names = _.compact _.flatten [key, desc.names]
           defaultval = desc.default or null
+          f = desc.f or null
         else
           names = [key]
           defaultval = desc
+          f = null
       else
         names = [key]
         defaultval = desc
+        f = null
 
       for name in names
         if spec[name]?
-          o[name] = spec[name]
+          o[key] = spec[name]
+          break
 
       o[key] ?= defaultval
+      o[key] = f o[key] if f?
     o
 

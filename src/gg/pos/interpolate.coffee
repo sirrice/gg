@@ -5,11 +5,6 @@ class gg.pos.Interpolate extends gg.core.XForm
   @ggpackage = "gg.pos.Interpolate"
   @aliases = ["interpolate"]
 
-  constructor: ->
-    super
-    @log.level = gg.util.Log.DEBUG
-
-
   defaults: ->
     y0: 0
     x0: 'x'

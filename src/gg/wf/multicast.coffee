@@ -15,6 +15,7 @@ class gg.wf.Multicast extends gg.wf.Node
 
     pairtable = @inputs[0]
     for idx in [0...@nChildren]
+      #@output idx, pairtable.clone()
       @output idx, new data.PairTable(pairtable.left(), pairtable.right())
 
 

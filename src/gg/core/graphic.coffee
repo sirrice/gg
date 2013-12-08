@@ -13,6 +13,46 @@ try
 catch error
   console.log error
 
+###
+layer: (idx) ->
+  if idx?
+    addorcreate idx
+  else
+    add null
+
+geom:
+
+stat:
+
+pos:
+
+aes:
+
+data: 
+
+facets:
+
+debug: (str, v) ->
+
+opt: (keyOrMap, val)
+
+
+
+
+class gg.core.layer
+
+  geom: () ->
+    get or est
+
+  stat: () ->
+
+  pos
+
+  facets
+
+###
+
+
 class gg.core.Graphic extends events.EventEmitter
   @ggpackage = "gg.core.Graphic"
   @envKeys = [
@@ -82,7 +122,7 @@ class gg.core.Graphic extends events.EventEmitter
       params: @params).compile()
 
     preMulticastNodes = []
-    preMulticastNodes.push @datas.data()
+    #preMulticastNodes.push @datas.data()
     preMulticastNodes.push @setupEnvNode()
     preMulticastNodes = _.compact preMulticastNodes
 

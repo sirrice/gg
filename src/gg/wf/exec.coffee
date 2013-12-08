@@ -12,11 +12,16 @@ class gg.wf.Exec extends gg.wf.Node
   compute: (pairtable, params, cb) -> cb null, pairtable
 
   @setup: (pairtable, params) ->
+    timer = new gg.util.Timer()
+    timer.start()
     keys = params.get 'keys'
     keys ?= pairtable.sharedCols()
     keys = _.intersection keys, pairtable.sharedCols()
     pairtable = pairtable.ensure keys
     partitions = pairtable.partition(keys)
+    timer.stop()
+    if timer.sum() > 200
+      console.log("exec setup took #{timer.toString()}")
     [keys, partitions]
 
   @finalize: (pairtables, keys) ->
