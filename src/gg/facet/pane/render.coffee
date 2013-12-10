@@ -139,7 +139,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
   # @param dc draw container for the entire drawing plot area
   # @param container bounds for the xaxis
   # @param opts axis formatting options computed from facet layout
-  renderXAxis: (el, dc, container, xscale, opts) ->
+  renderXAxis: (el, dc, container, xscale, opts, tickOpts={}) ->
     return if container.h() == 0
     xac2 = container.clone()
 
@@ -159,7 +159,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
       class: 'axis x'
       transform: @b2translate xac2
 
-    showTicks = yes # if tickOpts.show? then tickOpts.show else yes
+    showTicks = if tickOpts.show? then tickOpts.show else yes
     axis = d3.svg.axis().scale(xscale.d3()).orient('bottom')
     axis.tickSize -dc.h()
     # if showticks == false, then don't allocate space in axis.layout
@@ -169,6 +169,14 @@ class gg.facet.pane.Svg extends gg.core.BForm
 
     if xscale.type in [data.Schema.numeric, xscale.type is data.Schema.date]
       axis.ticks opts.nticks
+
+      # TODO: log scales should not be sampled evenly, need to compute
+      # range locations to pick stratified sample
+      
+      # log scales doesn't pick ticks, need to pick ourselves
+      labels = _.sample xscale.d3().ticks(opts.nticks), opts.nticks
+      axis.tickValues labels
+
     else if xscale.type is data.Schema.ordinal
       labels = _.sample xscale.d3().domain(), opts.nticks
       axis.tickValues labels
@@ -217,6 +225,14 @@ class gg.facet.pane.Svg extends gg.core.BForm
     # compute number of ticks to show
     if yscale.type in [data.Schema.numeric, data.Schema.date]
       axis.ticks opts.nticks
+
+      # TODO: log scales should not be sampled evenly, need to compute
+      # range locations to pick stratified sample
+
+      # log scales doesn't pick ticks, need to pick ourselves
+      labels = _.sample yscale.d3().ticks(opts.nticks), opts.nticks
+      axis.tickValues labels
+
     else if yscale.type is data.Schema.ordinal
       labels = _.sample yscale.d3().domain(), opts.nticks
       axis.tickValues labels
@@ -235,12 +251,9 @@ class gg.facet.pane.Svg extends gg.core.BForm
       [[minx, miny], [maxx, maxy]] = brush.extent()
       minx = xscale.scale minx
       maxx = xscale.scale maxx
-      ylim = Math.max(yscale.range()[0], yscale.range()[1])
       miny = yscale.scale miny
       maxy = yscale.scale maxy
-      bigger = Math.max(miny, maxy)
-      miny = Math.min(miny, maxy)
-      maxy = bigger
+      [miny, maxy] = [Math.min(miny, maxy), Math.max(miny, maxy)]
       pixelExtent = [[minx, miny], [maxx, maxy]]
 
       eventCoordinator.emit eventName, pixelExtent

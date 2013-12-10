@@ -39,6 +39,8 @@ class gg.xform.UseScales extends gg.core.XForm
     @params.putAll
       aess: @spec.aess or []
 
+
+
   compute: (pairtable, params) ->
     pairtable = gg.core.FormUtil.ensureScales pairtable, params, @log
     table = pairtable.left()

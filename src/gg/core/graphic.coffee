@@ -98,6 +98,10 @@ class gg.core.Graphic extends events.EventEmitter
 
     @eventCoordinator = new events.EventEmitter
 
+    # propogate selection events up to the top level
+    @eventCoordinator.on 'selected', (geoms) =>
+      @emit 'selected', geoms
+
     @log = gg.util.Log.logger @constructor.ggpackage, "core"
 
 

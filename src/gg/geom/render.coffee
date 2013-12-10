@@ -15,7 +15,7 @@ class gg.geom.Render extends gg.core.XForm
     super
     @params.put "location", "client"
 
-  svg: (md) -> md.any('svg').pane
+  svg: (mdrow) -> mdrow.get('svg').pane
 
   groups: (g, klass, rows) ->
     g.selectAll("g.#{klass}")
@@ -38,7 +38,10 @@ class gg.geom.Render extends gg.core.XForm
   compute: (pairtable, params) ->
     table = pairtable.left()
     md = pairtable.right()
-    svg = @svg md
+    mdrow = md.any()
+    svg = @svg mdrow
+    facetId = gg.facet.base.Facets.row2facetId mdrow
+
 
     i = 0
     table.bfs (n) -> i += 1
@@ -56,7 +59,7 @@ class gg.geom.Render extends gg.core.XForm
 
     @render table, svg
     @renderDebug md, svg
-    @renderInteraction md, svg
+    @renderInteraction mdrow, svg
 
     pairtable
 
@@ -74,8 +77,9 @@ class gg.geom.Render extends gg.core.XForm
       write md.any(table.nrows()), {dy: "3em"}
 
 
-  renderInteraction: (md, svg) ->
+  renderInteraction: (mdrow, svg) ->
     Facets = gg.facet.base.Facets
+    facetId = Facets.row2facetId mdrow
     geoms = svg.selectAll(".geom")
 
     # Connect events
@@ -84,11 +88,13 @@ class gg.geom.Render extends gg.core.XForm
         .on("mouseover", () -> )
         .on("mouseout", () -> )
 
-    if no and @constructor.brush?
-      row = md.any()
-      brushEventName = "brush-#{md.any 'facet-x'}"
-      event = md.any "event"
-      event.on brushEventName, @constructor.brush(geoms)
+    if @constructor.brush?
+      brushEventName = "brush-#{facetId}"
+      event = mdrow.get "event"
+      emitSelected = (selected) -> 
+        event.emit "select-#{facetId}",  selected
+        event.emit "select", selected
+      event.on brushEventName, @constructor.brush(geoms, emitSelected)
 
 
   @klasses: ->

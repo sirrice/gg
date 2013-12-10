@@ -71,7 +71,7 @@ class gg.util.Aesmap
                 ret[desc.alias] = desc.f.apply desc.f, fargs
               ret
           )(funcs, col2idx)
-        {alias: key, f:f, cols: allcols}
+        {alias: key, f:f, cols: allcols, type: data.Schema.object}
 
     else if key isnt 'text' and gg.util.Aesmap.isEvalJS val
       userCode = val[1...val.length-1]

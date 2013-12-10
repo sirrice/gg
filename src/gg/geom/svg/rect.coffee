@@ -15,22 +15,19 @@ class gg.geom.svg.Rect extends gg.geom.Render
     ['x0', 'x1', 'y0', 'y1']
 
   # args are in pixels
-  @brush: (geoms) ->
-    x = (t) -> t.get 'x0'
-    y = (t) -> Math.min(t.get('y0'), t.get('y1'))
-    height = (t) -> Math.abs(t.get('y1') - t.get('y0'))
-    width = (t) -> t.get('x1') - t.get('x0')
+  @brush: (geoms, emit=()->) ->
+    selectedGeoms = []
+
+    emit selectedGeoms
 
     ([[minx, miny], [maxx, maxy]]) ->
       geoms.attr 'fill', (d, i) ->
         r = d3.select @
         row = r.datum()
-        x0 = x row
-        y0 = y row
-        h = height row
-        w = width row
-        x1 = x0 + w
-        y1 = y0 + h
+        x0 = row.get 'x0'
+        y0 = row.get 'y0'
+        x1 = row.get 'x1'
+        y1 = row.get 'y1'
         [x0, x1] = [Math.min(x0, x1), Math.max(x0, x1)]
         [y0, y1] = [Math.min(y0, y1), Math.max(y0, y1)]
 
@@ -41,7 +38,11 @@ class gg.geom.svg.Rect extends gg.geom.Render
           y0 > maxy
         )
 
+        if valid
+          selectedGeoms.push r
+
         if valid then 'black' else row.get 'fill'
+
 
 
 
@@ -61,6 +62,7 @@ class gg.geom.svg.Rect extends gg.geom.Render
     width = (t) -> t.get('x1') - t.get('x0')
 
     @applyAttrs enterRects, {
+      foo: (t) -> t.svg = d3.select(@)
       class: "geom"
       x
       y

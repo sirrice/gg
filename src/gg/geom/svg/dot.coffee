@@ -45,9 +45,7 @@ class gg.geom.svg.Dot extends gg.geom.Render
     }
 
     cssOver = {}
-    cssOut = {
-      x
-    }
+    cssOut = { }
 
 
     _this = @

@@ -80,7 +80,7 @@ class gg.facet.axis.Layout
       formatter: String
       css: 
         class: 'axis x' 
-        padding: '2px'
+        padding: '3px'
       nticks: 2
       nchars: null
       bound: new gg.util.Bound 0, 0, w, em.h
