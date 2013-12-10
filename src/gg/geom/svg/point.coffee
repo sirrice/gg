@@ -16,10 +16,11 @@ class gg.geom.svg.Point extends gg.geom.Render
   inputSchema: ->
     ['x', 'y']
 
-  @brush: (geoms) ->
+  @brush: (geoms, emit=()->) ->
     (extent) ->
       # extent is in pixels
       [[minx, miny], [maxx, maxy]] = extent
+      selected = []
       geoms.attr 'fill', (d, i) ->
         c = d3.select @
         row = c.datum()
@@ -34,7 +35,11 @@ class gg.geom.svg.Point extends gg.geom.Render
           maxy >= y
         )
 
+        if valid
+          selected.push c
+
         if valid then 'black' else row.get 'fill'
+      emit selected
 
 
 

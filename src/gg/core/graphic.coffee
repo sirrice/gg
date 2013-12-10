@@ -8,11 +8,6 @@
 #<< gg/stat/stat
 #<< gg/geom/geom
 
-try
-  events = require 'events'
-catch error
-  console.log error
-
 ###
 layer: (idx) ->
   if idx?
@@ -68,6 +63,12 @@ class gg.core.Graphic extends events.EventEmitter
     @spec spec
 
   spec: (spec) ->
+    try
+      events = require 'events'
+    catch error
+      console.log error
+
+
     unless spec?
       return @spec
 
@@ -84,23 +85,28 @@ class gg.core.Graphic extends events.EventEmitter
     @layers = new gg.layer.Layers @, @spec.layers
     @scales = new gg.scale.Scales @
     @datas = gg.core.Data.fromSpec @spec.data
+    @eventCoordinator = new events.EventEmitter
 
+    _.each spec.on, (f, name) =>
+      @eventCoordinator.on name, f
+
+    # propogate selection events up to the top level
+    @eventCoordinator.on 'select', (args...) =>
+      @emit 'select', args...
 
     # connect layer specs with scales config
     _.each @layers.layers, (layer) =>
       @scales.scalesConfig.addLayer layer
       @datas.addLayer layer
+      _.each layer.eventSpec, (f, name) =>
+        @eventCoordinator.on name, f
+
 
     @svg = @options.svg or @svg
 
     @params = new gg.util.Params
       options: @options
 
-    @eventCoordinator = new events.EventEmitter
-
-    # propogate selection events up to the top level
-    @eventCoordinator.on 'selected', (geoms) =>
-      @emit 'selected', geoms
 
     @log = gg.util.Log.logger @constructor.ggpackage, "core"
 

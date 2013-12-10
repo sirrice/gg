@@ -16,11 +16,10 @@ class gg.geom.svg.Rect extends gg.geom.Render
 
   # args are in pixels
   @brush: (geoms, emit=()->) ->
-    selectedGeoms = []
 
-    emit selectedGeoms
 
     ([[minx, miny], [maxx, maxy]]) ->
+      selectedGeoms = []
       geoms.attr 'fill', (d, i) ->
         r = d3.select @
         row = r.datum()
@@ -42,6 +41,7 @@ class gg.geom.svg.Rect extends gg.geom.Render
           selectedGeoms.push r
 
         if valid then 'black' else row.get 'fill'
+      emit selectedGeoms
 
 
 

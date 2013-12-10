@@ -1,4 +1,5 @@
 #<< gg/geom/render
+#<< gg/geom/svg/point
 
 class gg.geom.svg.Dot extends gg.geom.Render
   @ggpackage = "gg.geom.svg.Dot"
@@ -15,6 +16,8 @@ class gg.geom.svg.Dot extends gg.geom.Render
   inputSchema: ->
     ['x', 'y0', 'y1']
 
+  @brush: gg.geom.svg.Point.brush
+  
   render: (table, svg) ->
     rows = table.all()
 
@@ -29,6 +32,7 @@ class gg.geom.svg.Dot extends gg.geom.Render
     line = (t) -> "M#{t.get 'x'} #{t.get 'y0'} V #{t.get 'y1'}"
 
     @applyAttrs enterDots.append('circle'), {
+      class: 'geom'
       cx: get 'x'
       cy: get 'y'
       fill: get 'fill'

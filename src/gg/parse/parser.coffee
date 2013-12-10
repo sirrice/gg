@@ -18,6 +18,7 @@ class gg.parse.Parser
       facets: global.facets
       debug: global.debug
       options: global.options
+      on: global.on
     }
 
 
@@ -34,6 +35,7 @@ class gg.parse.Parser
       debug: @extractDebug spec
       options: @extractOpts spec
       data: @extractData spec
+      on: @extractEvents spec
     }
 
 
@@ -51,6 +53,7 @@ class gg.parse.Parser
       coord: @extractCoord spec, global.coord
       stat: @extractStat spec, global.stat
       pos: @extractPos spec, global.pos
+      on: @extractEvents spec
     }
 
   @extractData: (spec, defaultVal) ->
@@ -59,6 +62,10 @@ class gg.parse.Parser
       data = spec.data
     data ?= defaultVal
     data
+
+  @extractEvents:(spec) ->
+    @attr spec, ['on', 'event', 'events'], {}
+
 
   @extractFacets: (spec) ->
     facet = @attr spec, ['facet', 'facets'], "none"

@@ -59,7 +59,7 @@ class gg.geom.Render extends gg.core.XForm
 
     @render table, svg
     @renderDebug md, svg
-    @renderInteraction mdrow, svg
+    @renderInteraction mdrow, svg, table
 
     pairtable
 
@@ -77,7 +77,7 @@ class gg.geom.Render extends gg.core.XForm
       write md.any(table.nrows()), {dy: "3em"}
 
 
-  renderInteraction: (mdrow, svg) ->
+  renderInteraction: (mdrow, svg, table) ->
     Facets = gg.facet.base.Facets
     facetId = Facets.row2facetId mdrow
     geoms = svg.selectAll(".geom")
@@ -91,9 +91,16 @@ class gg.geom.Render extends gg.core.XForm
     if @constructor.brush?
       brushEventName = "brush-#{facetId}"
       event = mdrow.get "event"
+      roots = table.roots()
+      prov = (ids) ->
+        ret = []
+        for root in roots
+          filtered = root.filter (row) -> row.id in ids
+          filtered.each (row) -> ret.push row
+        ret
       emitSelected = (selected) -> 
-        event.emit "select-#{facetId}",  selected
-        event.emit "select", selected
+        event.emit "select-#{facetId}",  selected, prov
+        event.emit "select", selected, prov
       event.on brushEventName, @constructor.brush(geoms, emitSelected)
 
 

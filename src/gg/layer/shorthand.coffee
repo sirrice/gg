@@ -12,6 +12,7 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
   parseSpec: ->
     @setupData()
+    @setupEvents()
     @setupGeom()
     @setupStats()
     @setupPos()
@@ -21,10 +22,13 @@ class gg.layer.Shorthand extends gg.layer.Layer
 
   setupData: ->
     @dataSpec = @spec.data
-    console.log @dataSpec
     data = gg.core.Data.fromSpec @dataSpec
     @data = data.data()
     console.log @data
+
+  setupEvents: ->
+    @eventSpec = @spec.on
+
 
   setupGeom: ->
     @geomSpec = @spec.geom
@@ -94,10 +98,11 @@ class gg.layer.Shorthand extends gg.layer.Layer
       t = t.setColVal 'layer', layerIdx
       md = md.setColVal 'layer', layerIdx
       md = md.setColVal 'posMapping', posMapping
-      new data.PairTable t, md), {
-        layer: @layerIdx
-        posMapping: @geom.posMapping()
-      }, 'layer-labeler'
+      new data.PairTable t, md
+    ), {
+      layer: @layerIdx
+      posMapping: @geom.posMapping()
+    }, 'layer-labeler'
 
 
   compile: ->

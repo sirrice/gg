@@ -249,13 +249,16 @@ class gg.facet.pane.Svg extends gg.core.BForm
     # transform brushed data into pixel space
     brushf = () ->
       [[minx, miny], [maxx, maxy]] = brush.extent()
-      minx = xscale.scale minx
-      maxx = xscale.scale maxx
-      miny = yscale.scale miny
-      maxy = yscale.scale maxy
-      [miny, maxy] = [Math.min(miny, maxy), Math.max(miny, maxy)]
-      pixelExtent = [[minx, miny], [maxx, maxy]]
+      if xscale.type in [data.Schema.date, data.Schema.numeric]
+        minx = xscale.scale minx
+        maxx = xscale.scale maxx
+        [minx, maxx] = [Math.min(minx, maxx), Math.max(minx, maxx)]
+      if yscale.type in [data.Schema.date, data.Schema.numeric]
+        miny = yscale.scale miny
+        maxy = yscale.scale maxy
+        [miny, maxy] = [Math.min(miny, maxy), Math.max(miny, maxy)]
 
+      pixelExtent = [[minx, miny], [maxx, maxy]]
       eventCoordinator.emit eventName, pixelExtent
 
     brush = d3.svg.brush()
