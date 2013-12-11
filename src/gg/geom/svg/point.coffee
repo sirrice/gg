@@ -53,6 +53,9 @@ class gg.geom.svg.Point extends gg.geom.Render
     enterCircles = enter.append("circle")
 
     @applyAttrs enterCircles,
+      foo: (t) -> 
+        t.svg = d3.select @
+        null
       class: "geom"
       cx: (t) -> t.get('x')
       cy: (t) -> t.get('y')

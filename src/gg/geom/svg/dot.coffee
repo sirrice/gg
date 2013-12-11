@@ -32,6 +32,9 @@ class gg.geom.svg.Dot extends gg.geom.Render
     line = (t) -> "M#{t.get 'x'} #{t.get 'y0'} V #{t.get 'y1'}"
 
     @applyAttrs enterDots.append('circle'), {
+      foo: (t) -> 
+        t.svg = d3.select @
+        null
       class: 'geom'
       cx: get 'x'
       cy: get 'y'

@@ -62,7 +62,9 @@ class gg.geom.svg.Rect extends gg.geom.Render
     width = (t) -> t.get('x1') - t.get('x0')
 
     @applyAttrs enterRects, {
-      foo: (t) -> t.svg = d3.select(@)
+      foo: (t) -> 
+        t.svg = d3.select(@)
+        null
       class: "geom"
       x
       y
