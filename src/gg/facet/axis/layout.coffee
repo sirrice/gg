@@ -47,8 +47,12 @@ class gg.facet.axis.Layout
     ret.nticks = Math.ceil h/em.h
 
     if scale.type in [data.Schema.numeric, data.Schema.date]
+      if scale.type == data.Schema.date
+        ret.formatter ?= (o) -> if o? then o.toDateString() else ''
+      else
+        ret.formatter = d3.format(',.3g')
+
       ret.nticks = Math.min(5, ret.nticks)
-      ret.formatter = d3.format(',.3g')
       labels = d3scale.ticks ret.nticks
 
       labels = labels.map ret.formatter
@@ -92,6 +96,8 @@ class gg.facet.axis.Layout
       formatter = axis.tickFormat or d3scale.tickFormat
       if formatter? and _.isFunction formatter
         formatter = formatter()
+      if scale.type == data.Schema.date
+        formatter ?= (o) -> if o? then o.toDateString() else ''
       formatter ?= String
 
       nticks = 2
