@@ -2,18 +2,17 @@
 
 class gg.scale.Shape extends gg.scale.BaseCategorical
   @ggpackage = 'gg.scale.Shape'
-  @aliases = "shape"
+  @aliases = ['symbol', "shape"]
 
   constructor: (@padding=1) ->
-      customTypes = ['star', 'ex']
-      @symbolTypes = d3.svg.symbolTypes.concat customTypes
-      @d3Scale = d3.scale.ordinal().range @symbolTypes
-      @invertScale = d3.scale.ordinal().domain @d3Scale.range()
-      @symbScale = d3.svg.symbol()
-      @type = data.Schema.ordinal
       super
+      customTypes = ['star', 'ex']
+      @symbolTypes = d3.svg.symbolTypes#.concat customTypes
+      @d3Scale.range @symbolTypes
+      @invertScale.domain @d3Scale.range()
 
   range: (interval) -> # not allowed
+  ###
   scale: (v) ->
     throw Error("shape scale not thought through yet")
     size = args[0] if args? and args.length
@@ -34,4 +33,5 @@ class gg.scale.Shape extends gg.scale.BaseCategorical
       else
           @symbScale.size(size).type(@d3Scale v)()
 
+  ###
 

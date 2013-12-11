@@ -6,6 +6,7 @@ class gg.geom.svg.Point extends gg.geom.Render
   @aliases = ["point", "pt"]
 
   defaults: ->
+    shape: 'circle'
     r: 2
     "fill-opacity": "0.5"
     fill: "steelblue"
@@ -45,39 +46,40 @@ class gg.geom.svg.Point extends gg.geom.Render
 
   render: (table, svg) ->
     rows = table.all()
-    circles = svg.append('g').classed('circles geoms', true)
-      .selectAll("circle")
-      .data(rows)
-    enter = circles.enter()
-    exit = circles.exit()
-    enterCircles = enter.append("circle")
 
-    @applyAttrs enterCircles,
-      foo: (t) -> 
+
+    points = svg.append('g').classed('point geoms', true)
+      .selectAll(".geom")
+      .data(rows)
+    enter = points.enter()
+    exit = points.exit()
+    enterPoints = enter.append('path')
+    symbol = d3.svg.symbol()
+
+    @applyAttrs enterPoints,
+      foobar: (t) ->
         t.svg = d3.select @
         null
       class: "geom"
-      cx: (t) -> t.get('x')
-      cy: (t) -> t.get('y')
-      "fill-opacity": (t) -> t.get('fill-opacity')
+      transform: (t) -> "translate(#{t.get 'x'}, #{t.get 'y'})"
+      d: (t) -> symbol.size(t.get('r')*t.get('r')).type(t.get 'shape')()
+      stroke: (t) -> t.get 'stroke'
       "stroke-opacity": (t) -> t.get("stroke-opacity")
       fill: (t) -> t.get('fill')
-      r: (t) -> t.get('r')
+      "fill-opacity": (t) -> t.get('fill-opacity')
+
 
     cssOver =
       fill: (t) -> d3.rgb(t.get("fill")).darker(2)
       "fill-opacity": 1
-      r: (t) -> t.get('r') + 2
     cssOut =
       fill: (t) -> t.get('fill')
       "fill-opacity": (t) -> t.get('fill-opacity')
-      r: (t) -> t.get('r')
 
     _this = @
-    circles
+    points
       .on("mouseover", (d, idx) -> _this.applyAttrs d3.select(@), cssOver)
       .on("mouseout", (d, idx) ->  _this.applyAttrs d3.select(@), cssOut)
-      #.on("brush", @constructor.brush circles)
 
 
     exit.transition()
@@ -86,5 +88,8 @@ class gg.geom.svg.Point extends gg.geom.Render
       .attr("stroke-opacity", 0)
     .transition()
       .remove()
+
+
+
 
 
