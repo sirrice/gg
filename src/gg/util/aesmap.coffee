@@ -73,7 +73,8 @@ class gg.util.Aesmap
           )(funcs, col2idx)
         {alias: key, f:f, cols: allcols, type: data.Schema.object}
 
-    else if key isnt 'text' and gg.util.Aesmap.isEvalJS val
+    else if gg.util.Aesmap.isEvalJS val
+      # key isnt 'text' and 
       userCode = val[1...val.length-1]
       varFunc = (k) ->
         if gg.util.Aesmap.isVariable k
