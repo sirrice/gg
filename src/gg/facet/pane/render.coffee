@@ -167,7 +167,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
     axis.tickFormat('') unless showTicks
 
 
-    if xscale.type in [data.Schema.numeric, xscale.type is data.Schema.date]
+    if xscale.type in [data.Schema.numeric, data.Schema.date]
       axis.ticks opts.nticks
 
       # TODO: log scales should not be sampled evenly, need to compute
