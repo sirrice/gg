@@ -12,11 +12,11 @@ class gg.scale.Linear extends gg.scale.Scale
 
 class gg.scale.Time extends gg.scale.Scale
   @ggpackage = 'gg.scale.Time'
-  @aliases = "time"
+  @aliases = ["time", 'timestamp', 'date']
   constructor: (@spec) ->
-      @d3Scale = d3.time.scale()
-      @type = data.Schema.date
-      super
+    @d3Scale = d3.time.scale()
+    @type = data.Schema.date
+    super
 
 class gg.scale.Log extends gg.scale.Scale
   @ggpackage = 'gg.scale.Log'
