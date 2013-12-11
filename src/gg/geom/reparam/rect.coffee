@@ -16,22 +16,40 @@ class gg.geom.reparam.Rect extends gg.core.XForm
     yscale = scales.scale 'y'
     xscale = scales.scale 'x'
     padding = 1.0 - params.get 'padding'
+    console.log table
 
     minY = yscale.scale 0
-    mapping = [
-      {
-        alias: 'y0'
-        f: (y0, y) -> if y0? then y0 else Math.min(minY, y)
-        type: data.Schema.numeric
-        cols: ['y0', 'y']
-      },
-      {
-        alias: 'y1'
-        f: (y1, y) -> if y1? then y1 else Math.max(minY, y)
-        type: data.Schema.numeric
-        cols: ['y1', 'y']
-      }
-    ]
+    if table.has 'height'
+      mapping = [
+        {
+          alias: 'y0'
+          f: (y, h) -> y
+          type: data.Schema.numeric
+          cols: ['y', 'height']
+        },
+        {
+          alias: 'y1'
+          f: (y, h) -> y + h
+          type: data.Schema.numeric
+          cols: ['y', 'height']
+        }
+      ]
+
+    else
+      mapping = [
+        {
+          alias: 'y0'
+          f: (y0, y) -> if y0? then y0 else Math.min(minY, y)
+          type: data.Schema.numeric
+          cols: ['y0', 'y']
+        },
+        {
+          alias: 'y1'
+          f: (y1, y) -> if y1? then y1 else Math.max(minY, y)
+          type: data.Schema.numeric
+          cols: ['y1', 'y']
+        }
+      ]
 
 
     if table.has 'width'
@@ -75,21 +93,12 @@ class gg.geom.reparam.Rect extends gg.core.XForm
           type: data.Schema.numeric
           cols: ['x1', 'x']
         }
-        {
-          alias: 'y0'
-          f: (y0, y) -> if y0? then y0 else Math.min(minY, y)
-          type: data.Schema.numeric
-          cols: ['y0', 'y']
-        }
-        {
-          alias: 'y1'
-          f: (y1, y) -> if y1? then y1 else Math.max(minY, y)
-          type: data.Schema.numeric
-          cols: ['y1', 'y']
-        }
       ]
 
+
+
     table = table.project mapping, yes
+    console.log table.any().raw()
     pairtable.left table
     pairtable
 
