@@ -195,12 +195,12 @@ class gg.layer.Shorthand extends gg.layer.Layer
         @makeStdOut "post-position"
       ]
 
-      nodes = nodes.concat [
-        @g.scales.pixel
-        @makeStdOut "post-pixeltrain"
+    nodes = nodes.concat [
+      @g.scales.pixel
+      @makeStdOut "post-pixeltrain"
 
-        #@g.facets.layout2
-      ]
+      #@g.facets.layout2
+    ]
     nodes
 
 
