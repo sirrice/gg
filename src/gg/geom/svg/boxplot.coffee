@@ -9,6 +9,7 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
     "stroke-width": 1
     stroke: "steelblue"
     fill: d3.rgb("steelblue").brighter(2)
+    'stroke-opacity': 0.5
     "fill-opacity": 0.5
 
   inputSchema: ->
@@ -29,6 +30,7 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
       .append("g")
       .attr("class", "boxplot")
 
+    any = (attr) -> (t) -> t.any(attr)
     y = (t) -> Math.min(t.any('y0'), t.any('y1'))
     height = (t) -> Math.abs(t.any('y1') - t.any('y0'))
     width = (t) -> Math.abs(t.any('x1') - t.any('x0'))
@@ -45,6 +47,12 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
       y: (t) -> Math.min(t.any('q3'), t.any('q1'))
       width: width
       height: (t) -> Math.abs(t.any('q1') - t.any('q3'))
+      "fill-opacity": any 'fill-opacity'
+      "stroke-opacity": any 'stroke-opacity'
+      fill: (t) -> d3.rgb(t.any('fill'))
+      stroke: (t) -> d3.rgb(t.any "stroke")
+      "stroke-width": any 'stroke-width'
+
 
     median = @applyAttrs enter.append('line'),
       class: "boxplot median"
@@ -52,6 +60,12 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
       x2: x1
       y1: (t) -> t.any 'median'
       y2: (t) -> t.any 'median'
+      "fill-opacity": any 'fill-opacity'
+      "stroke-opacity": any 'stroke-opacity'
+      fill: (t) -> d3.rgb(t.any('fill'))
+      stroke: (t) -> d3.rgb(t.any "stroke")
+      "stroke-width": any 'stroke-width'
+
 
     # upper whisker
     upperw = @applyAttrs enter.append("line"),
@@ -60,6 +74,12 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
       x2: (t) -> t.any 'x'
       y1: (t) -> t.any 'q3'
       y2: (t) -> t.any 'upper'
+      "fill-opacity": any 'fill-opacity'
+      "stroke-opacity": any 'stroke-opacity'
+      fill: (t) -> d3.rgb(t.any('fill'))
+      stroke: (t) -> d3.rgb(t.any "stroke")
+      "stroke-width": any 'stroke-width'
+
 
     # upper tick
     uppert = @applyAttrs enter.append("line"),
@@ -68,6 +88,12 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
       x2: (t) -> t.any('x')+width(t)*0.2
       y1: (t) -> t.any 'upper'
       y2: (t) -> t.any 'upper'
+      "fill-opacity": any 'fill-opacity'
+      "stroke-opacity": any 'stroke-opacity'
+      fill: (t) -> d3.rgb(t.any('fill'))
+      stroke: (t) -> d3.rgb(t.any "stroke")
+      "stroke-width": any 'stroke-width'
+
 
 
     # lower whisker
@@ -77,6 +103,12 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
       x2: (t) -> t.any 'x'
       y1: (t) -> t.any 'q1'
       y2: (t) -> t.any 'lower'
+      "fill-opacity": any 'fill-opacity'
+      "stroke-opacity": any 'stroke-opacity'
+      fill: (t) -> d3.rgb(t.any('fill'))
+      stroke: (t) -> d3.rgb(t.any "stroke")
+      "stroke-width": any 'stroke-width'
+
 
 
     # lower tick
@@ -86,6 +118,12 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
       x2: (t) -> t.any('x')+width(t)*0.2
       y1: (t) -> t.any 'lower'
       y2: (t) -> t.any 'lower'
+      "fill-opacity": any 'fill-opacity'
+      "stroke-opacity": any 'stroke-opacity'
+      fill: (t) -> d3.rgb(t.any('fill'))
+      stroke: (t) -> d3.rgb(t.any "stroke")
+      "stroke-width": any 'stroke-width'
+
 
     circles = enter.selectAll("circle")
       .data((d) -> 

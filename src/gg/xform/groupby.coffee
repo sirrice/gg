@@ -84,7 +84,9 @@ class gg.xform.GroupBy extends gg.core.XForm
     md = pairtable.right()
 
     cols = params.get 'cols'
+    cols = _.uniq(_.flatten([cols]).concat params.get('keys'))
     aggs = params.get 'aggs'
+
 
     table = table.groupby cols, aggs
     table = table.flatten()

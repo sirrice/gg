@@ -53,6 +53,8 @@ class gg.scale.train.Pixel extends gg.wf.SyncBarrier
 
     scales = {}    # aes -> scaletype -> scale
     ranges = {}    # aes -> scaletype -> range
+    hasscale = (col, type) ->
+      (col of scales) and (type of scales[col])
     getscale = (col, scale) ->
       type = scale.type
       scales[col] = {} unless col of scales
@@ -92,8 +94,11 @@ class gg.scale.train.Pixel extends gg.wf.SyncBarrier
             vals = left.all col
             # convert pixel values into domain
             d = _.map s.defaultDomain(vals), (v) ->
-              if _.isValid(v) then s.invert(v) else null
-            if _.all d, _.isValid
+              if _.isValid(v) and _.isFinite(v) 
+                s.invert(v) 
+              else 
+                null
+            if d.length > 0 and _.all(d, _.isValid)
               getscale(xycol, s).mergeDomain d
 
 
@@ -134,10 +139,14 @@ class gg.scale.train.Pixel extends gg.wf.SyncBarrier
               )(col, s, ratio, resize)
 
           when data.Schema.numeric, data.Schema.date
-            s.domain getscale(xycol, s).domain()
-            ((col, s, oldscale) -> 
-              (v) -> s.scale oldscale.invert(v)
-            )(col, s, oldscale)
+            if hasscale(xycol, s.type)
+              s.domain getscale(xycol, s).domain()
+              if _.isEqual(s.domain(), oldscale.domain())
+                null
+              else
+                ((col, s, oldscale) -> 
+                  (v) -> s.scale oldscale.invert(v)
+                )(col, s, oldscale)
 
         if f?
           {

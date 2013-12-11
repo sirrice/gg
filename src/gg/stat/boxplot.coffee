@@ -18,7 +18,7 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
       col: 'y'
     }]
     super
-    @params.put 'keys', _.uniq(@params.get('keys').concat(['group']))
+    @params.put 'keys', _.uniq(@params.get('keys').concat(['layer', 'group']))
 
   inputSchema: -> ['x', 'y']
 
@@ -77,6 +77,5 @@ class gg.stat.Boxplot extends gg.xform.GroupBy
       min: min
       max: max
       outlier: outliers
-    console.log "called udf #{boxstats}"
     boxstats
 

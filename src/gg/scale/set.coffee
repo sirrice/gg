@@ -181,7 +181,11 @@ class gg.scale.Set
       return table unless table.has col
       mapping = 
         alias: col
-        f: (v) -> scale.scale v
+        f: (v) -> 
+          if scale.valid(v) 
+            scale.scale v
+          else
+            v
         cols: col
       mappings.push mapping
 

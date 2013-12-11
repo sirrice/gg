@@ -24,7 +24,7 @@
         "geom": "rect",
         "aes": {
           "text": "",
-          "fill-opacity": 0.9
+          "fill-opacity": 0.5
         },
         "pos": "text"
       },
@@ -38,15 +38,17 @@
       {
         "geom": "rect",
         "aes": {
-          "fill-opacity": 0.15,
+          "fill-opacity": 0.08,
         }
       },
       {
         "geom": "text",
         "aes": {
           text: "id",
-          color: "black"
-        }
+          color: "black",
+          dx: '1em'
+        }, 
+        scales: {color: 'identity'}
       }
     ],
     aes: {
@@ -55,7 +57,8 @@
       color: "id"
     },
     "scales": {
-      "fill-opacity": "identity"
+      "fill-opacity": "identity",
+      color: 'color'
     },
     "options": {
       "w": 900,
@@ -92,7 +95,7 @@
       return d3.select('#ex').append('span');
     };
 
-    var data = genboxes(30);
+    var data = genboxes(50);
     var plot = gg(spec);
     plot.render(ex(), data);
   }

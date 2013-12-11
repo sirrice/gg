@@ -281,7 +281,7 @@ class gg.scale.Scale
   d3: -> @d3Scale
   valid: (v) ->
     if @domainUpdated or @domainSet
-      @minDomain() <= v and v <= @maxDomain()
+      v? and @minDomain() <= v and v <= @maxDomain()
     else
       v?
   minDomain: -> @domain()[0]

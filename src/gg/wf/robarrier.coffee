@@ -38,6 +38,8 @@ class gg.wf.ROBarrier extends gg.wf.Node
     rights.map (row) ->
       idx = row.get '_barrier'
       left = lefts[idx]
+      if (left.nrows() > 0)
+        console.log(left.any().raw())
       right = row.get('md') or null
       right = right.exclude('_barrier') if right?
       {
