@@ -102,6 +102,7 @@ class gg.stat.Bin2D extends gg.xform.GroupBy
         _.times nbins, (idx) ->
           idx * binSize + minD + (binSize / 2)
       when data.Schema.date
+        domain = scale.domain()
         domain = [domain[0].getTime(), domain[1].getTime()]
         [minD, maxD] = [domain[0], domain[1]]
         binRange = (maxD - minD) * 1.0

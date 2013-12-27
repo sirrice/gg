@@ -76,6 +76,9 @@ class gg.wf.ClearingHouse extends events.EventEmitter
     @log "setInput #{node.name}:#{outport} ->
           #{child.name}:#{inport} #{child.location}"
 
+    # provenance
+    prov.Prov.get().connect child, input.left(), 'input', inport
+
     child.setInput inport, input
 
     if child.ready()

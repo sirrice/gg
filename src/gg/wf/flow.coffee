@@ -91,6 +91,9 @@ class gg.wf.Flow extends events.EventEmitter
       for weightid in [0...weight]
         connectPath path
 
+    for [from, to, type, weight] in @graph.edges("normal")
+      prov.Prov.get().connect from, to, 'wf'
+
     @
 
 

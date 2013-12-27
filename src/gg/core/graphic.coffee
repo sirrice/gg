@@ -113,7 +113,7 @@ class gg.core.Graphic extends events.EventEmitter
 
   pstore: ->
     if @workflow?
-      gg.prov.PStore.get @workflow
+      prov.Prov.get @workflow.id, (t) -> t.id
     else
       @log.warn "plot has not been compiled.  no prov store found"
       null

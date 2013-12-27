@@ -1,6 +1,7 @@
 "use strict"
 
 data = require 'ggdata'
+prov = require 'ggprov'
 ggutil = require 'ggutil'
 events = require 'events'
 # this is a problem because of how node deals with _
@@ -33,5 +34,6 @@ fromSpec = (spec) -> new gg.core.Graphic spec
 _.extend @gg, gg
 @gg.data = data
 @gg.io = io
+@gg.prov = prov
 #@gg.log = gg.util.Log
 

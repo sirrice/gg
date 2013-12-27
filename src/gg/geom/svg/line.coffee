@@ -42,7 +42,9 @@ class gg.geom.svg.Line extends gg.geom.Render
 
   @brush: (geoms) ->
     ([[minx, miny], [maxx, maxy]]) ->
+      return
       extent = [minx, miny, maxx, maxy]
+      selected = []
       geoms.attr 'stroke', (d, i) ->
         l = d3.select @
         row = l.data()[0]
@@ -52,17 +54,23 @@ class gg.geom.svg.Line extends gg.geom.Render
         for cur in _.rest pts
           line = [prev.x, prev.y1, cur.x, cur.y1]
           if gg.geom.svg.Line.lineCrossBox(line , extent)
+            selected.push l
             return 'black'
           prev = cur
         return row.get 'stroke'
 
 
   render: (table, svg) ->
+    partition = table.partition 'group', 'table'
+
+
     linetables = table.partition('group', 'table').all('table')
 
-    lines = @groups(svg, 'line', linetables)
-      .selectAll('path')
-      .data((d) -> [d])
+    lines = svg.append('g')
+      .classed('geoms', yes)
+      .selectAll('path.geom')
+      .data(linetables)
+
     enter = lines.enter()
     enterLines = enter.append("path")
     exit = lines.exit()
@@ -70,6 +78,8 @@ class gg.geom.svg.Line extends gg.geom.Render
     liner = d3.svg.line()
         .x((d) -> d.get 'x')
         .y((d) -> d.get 'y1')
+
+
 
     @log "stroke is #{table.any "stroke"}"
 
@@ -100,5 +110,12 @@ class gg.geom.svg.Line extends gg.geom.Render
 
     exit.remove()
 
+
+    table.project {
+      alias: 'el'
+      cols: '*'
+      type: data.Schema.object
+      f: (row, idx) -> enterLines[0][idx]
+    }
 
 

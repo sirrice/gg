@@ -63,3 +63,13 @@ class gg.geom.svg.Area extends gg.geom.Render
       .remove()
 
 
+    table.project {
+      alias: 'el'
+      cols: '*'
+      type: data.Schema.object
+      f: (row, idx) -> enterAreas[0][idx]
+    }
+
+
+
+

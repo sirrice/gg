@@ -21,7 +21,7 @@ socket.set('browser client', false)
 
 socket.configure 'production',  () ->
   socket.enable('browser client etag')
-  socket.set('log level', 1)
+  socket.set('log level', 5)
 
 ###
 socket.configure 'development', () ->
@@ -77,7 +77,6 @@ socket.on 'connection', (client) ->
       unless nonce?
         console.log "#{nodeid}:port#{outport}
         Couldn't find a nonce!!"
-      console.log outputs
       console.log "emit to client nonce: #{nonce}"
       client.emit "runflow",
         nodeid: nodeid

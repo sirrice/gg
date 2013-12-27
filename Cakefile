@@ -12,6 +12,8 @@ glob = require 'glob'
 log = console.log
 path = require 'path'
 remove = require 'remove'
+process.setMaxListeners 30
+
   
 
 
@@ -58,57 +60,51 @@ release = (callback) ->
 
 
 build = (callback) ->
-    create_build_dirs()
+  create_build_dirs()
 
-    commands = []
-
-
-    commands.push 'toaster -dc'
-    commands.push 'ls build/compiled/*'
-    commands.push 'cp -r build/compiled/ build/js/'
-
-    #  commands.push 'cp src/manifest.json build/'
-    commands.push 'cp -r src/html build/'
-    commands.push 'cp -r src/js build/'
-    commands.push 'cp -r data build/'
-    # TODO: consider optipng
-    #commands.push 'cp -r src/images build/'
-
-    compile_less commands
-    copy_vendor commands
-
-    #commands.push "#{coffeebin} --output build/js --compile src/gg/*.coffee"
-    commands.push "#{coffeebin} --output test/js --compile  test/gg/*.coffee"
-    commands.push 'cp build/js/ggplotjs2.js lib/'
-    commands.push "./node_modules/browserify/bin/cmd.js -e lib/ggplotjs2.js >  build/js/gg.js"
-    commands.push "echo 'compiled build/js/gg.js'"
+  commands = []
 
 
-    # copy final sources into lib/
-    commands.push "cp build/js/gg.js lib/gg-client.js"
-    commands.push "cp build/js/gg.js lib/gg.js"
-    commands.push "cp build/js/ggplotjs2.js lib/gg-server.js"
-    commands.push "cp build/css/gg.css lib/"
+  commands.push 'toaster -dc'
+  commands.push 'ls build/compiled/*'
+  commands.push 'cp -r build/compiled/ build/js/'
+  commands.push 'cp -r src/html src/js data build/'
+
+  compile_less commands
+  copy_vendor commands
+
+  #commands.push "#{coffeebin} --output build/js --compile src/gg/*.coffee"
+  commands.push "#{coffeebin} --output test/js --compile  test/gg/*.coffee"
+  commands.push 'cp build/js/ggplotjs2.js lib/'
+  commands.push "./node_modules/browserify/bin/cmd.js -e lib/ggplotjs2.js >  build/js/gg.js"
+  commands.push "echo 'compiled build/js/gg.js'"
 
 
-    async.forEachSeries commands, run, ->
-      callback() if callback
+  # copy final sources into lib/
+  commands.push "cp build/js/gg.js lib/gg-client.js"
+  commands.push "cp build/js/gg.js lib/gg.js"
+  commands.push "cp build/js/ggplotjs2.js lib/gg-server.js"
+  commands.push "cp build/css/gg.css lib/"
+
+
+  async.forEachSeries commands, run, ->
+    callback() if callback
 
 
 
 
 clean = (callback) ->
-    fs.remove 'build',  ->
-        fs.remove 'test/js/*', ->
-          fs.remove 'release', ->
-            fs.remove 'lib/gg*.js', ->
-              callback() if callback
+  fs.remove 'build',  ->
+    fs.remove 'test/js/*', ->
+      fs.remove 'release', ->
+        fs.remove 'lib/gg*.js', ->
+          callback() if callback
 
 
 test = (callback) ->
-    commands = []
-    commands.push "node_modules/vows/bin/vows ./test/gg/*"
-    async.forEachSeries commands, run, ->
+  commands = []
+  commands.push "node_modules/vows/bin/vows ./test/gg/*"
+  async.forEachSeries commands, run, ->
 
 vendor = (callback) ->
   dirs = ['vendor', 'vendor/js', 'vendor/less', 'vendor/font', 'vendor/tmp']
@@ -122,20 +118,12 @@ vendor = (callback) ->
     # Zepto.js is a small subset of jQuery.
     ['http://code.jquery.com/jquery-1.9.0.min.js', 'vendor/js/jquery.min.js'],
 
-    # Humanize for user-readable sizes.
-    ['https://raw.github.com/taijinlee/humanize/0a97f11503e3844115cfa3dc365cf9884e150e4b/humanize.js',
-     'vendor/js/humanize.js'],
-
     # JSON2
     ['https://raw.github.com/douglascrockford/JSON-js/master/json2.js',
      'vendor/js/json2.js'],
 
     # underscore.js
     ['http://underscorejs.org/underscore-min.js', 'vendor/js/underscore.min.js'],
-
-    # FontAwesome for icons.
-    ['https://github.com/FortAwesome/Font-Awesome/archive/v3.0.1.zip',
-     'vendor/tmp/font_awesome.zip'],
 
     # SeedRandom (http://davidbau.com/archives/2010/01/30/random_seeds_coded_hints_and_quintillions.html)
     ['http://davidbau.com/encode/seedrandom.js', 'vendor/js/seedrandom.js'],
@@ -152,40 +140,7 @@ vendor = (callback) ->
   ]
 
   async.forEachSeries downloads, download, ->
-    commands = []
-
-    # Minify humanize.
-    unless fs.existsSync 'vendor/js/humanize.min.js'
-      commands.push 'node_modules/uglify-js/bin/uglifyjs --compress ' +
-          '--mangle --output vendor/js/humanize.min.js vendor/js/humanize.js'
-
-    # Unpack fontawesome.
-    unless fs.existsSync 'vendor/tmp/Font-Awesome-3.0.1/'
-      commands.push 'unzip -qq -d vendor/tmp vendor/tmp/font_awesome'
-      # Patch fontawesome inplace.
-      commands.push 'sed -i -e "/^@FontAwesomePath:/d" ' +
-                    'vendor/tmp/Font-Awesome-3.0.1/less/font-awesome.less'
-
-    async.forEachSeries commands, run, ->
-      commands = []
-
-      # Copy fontawesome to vendor/.
-      for inFile in glob.sync 'vendor/tmp/Font-Awesome-3.0.1/less/*.less'
-        outFile = inFile.replace /^vendor\/tmp\/Font-Awesome-3\.0\.1\/less\//,
-                                 'vendor/less/'
-        unless fs.existsSync outFile
-          commands.push "cp #{inFile} #{outFile}"
-      for inFile in glob.sync 'vendor/tmp/Font-Awesome-3.0.1/font/*'
-        outFile = inFile.replace /^vendor\/tmp\/Font-Awesome-3\.0\.1\/font\//,
-                                 'vendor/font/'
-        unless fs.existsSync outFile
-          commands.push "cp #{inFile} #{outFile}"
-
-      async.forEachSeries commands, run, ->
-        callback() if callback
-
-
-
+    callback() if callback
 
 create_build_dirs = ->
   for dir in [
@@ -214,14 +169,15 @@ compile_less = (commands) ->
 
 
 copy_vendor = (commands) ->
+  if fs.existsSync 'vendor/js'
     for inFile in glob.sync 'vendor/js/*.js'
-        #continue if inFile.match /\.min\.js$/
-        outFile = 'build/' + inFile
-        commands.push "cp #{inFile} #{outFile}"
+      outFile = 'build/' + inFile
+      commands.push "cp #{inFile} #{outFile}"
 
+  if fs.existsSync 'vendor/font'
     for inFile in glob.sync 'vendor/font/*'
-        outFile = 'build/' + inFile
-        commands.push "cp #{inFile} #{outFile}"
+      outFile = 'build/' + inFile
+      commands.push "cp #{inFile} #{outFile}"
 
 
 
@@ -238,8 +194,12 @@ run = (args...) ->
   command += ' ' + params.join ' ' if params?
   cmd = spawn '/bin/sh', ['-c', command], options
   cmd.stdout.on 'data', (data) -> process.stdout.write data
-  cmd.stderr.on 'data', (data) -> process.stderr.write data
-  process.on 'SIGHUP', -> cmd.kill()
+  cmd.stderr.on 'data', (data) -> 
+    console.log args
+    process.stderr.write data
+  process.on 'SIGHUP', -> 
+    console.log args
+    cmd.kill()
   cmd.on 'exit', (code) -> callback() if callback? and code is 0
 
 

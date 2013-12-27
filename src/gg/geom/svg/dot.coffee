@@ -20,21 +20,21 @@ class gg.geom.svg.Dot extends gg.geom.Render
   
   render: (table, svg) ->
     rows = table.all()
+    _id = @id
 
-    dots = @agroup(svg, "dots geoms", rows)
-      .selectAll(".dot")
+    dots = svg.append('g')
+      .classed('dots geoms', yes)
+      .selectAll('g.dot')
       .data(rows)
     enter = dots.enter()
     exit = dots.exit()
-    enterDots = enter.append("g").classed('dot', yes)
+    enterDots = enter.append("g")
+      .classed('dot', yes)
 
     get = (attr) -> (t) -> t.get(attr)
     line = (t) -> "M#{t.get 'x'} #{t.get 'y0'} V #{t.get 'y1'}"
 
     @applyAttrs enterDots.append('circle'), {
-      foo: (t) -> 
-        t.svg = d3.select @
-        null
       class: 'geom'
       cx: get 'x'
       cy: get 'y'
@@ -70,4 +70,9 @@ class gg.geom.svg.Dot extends gg.geom.Render
     .transition()
       .remove()
 
-
+    table.project {
+      alias: 'el'
+      cols: '*'
+      type: data.Schema.object
+      f: (row, idx) -> enterDots[0][idx]
+    }

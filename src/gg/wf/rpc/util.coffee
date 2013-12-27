@@ -17,7 +17,7 @@ class gg.wf.rpc.Util
 
     payload =
       table: pairtable.left().toJSON()
-      md: pairtable.right().toJSON()
+      md: md.toJSON()
       params: paramsJSON
 
     [payload, removedEls]

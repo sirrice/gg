@@ -54,12 +54,18 @@ class gg.wf.Runner extends events.EventEmitter
 
     # every node's output goes through the clearing house
     @flow.graph.bfs (node) =>
-      node.on "output", (args...) =>
+      node.on "output", (nodeid, outidx, pt) =>
         if node.id of @debug
           o = @debug[node.id]
           o['end'] = @timer.now()
           o['cost'] = o['end'] - o['start']
-        @ch.push args...
+
+
+        # provenance
+        prov.Prov.get().tag node, 'node'
+        prov.Prov.get().connect node, pt.left(), 'output'
+
+        @ch.push nodeid, outidx, pt
 
     @debug = {}
 

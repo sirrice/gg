@@ -36,20 +36,31 @@ class gg.geom.Render extends gg.core.XForm
     domEl
 
   compute: (pairtable, params) ->
-    table = pairtable.left()
+    table = pairtable.left().cache()
     md = pairtable.right()
+    pairtable.left table
     mdrow = md.any()
     svg = @svg mdrow
     facetId = gg.facet.base.Facets.row2facetId mdrow
 
+    table = @render table, svg
+    @renderDebug table, md, svg
+    @renderInteraction mdrow, svg, table
 
+    pairtable.left table
+    pairtable
+
+  # @override this
+  render: (table, rows) -> 
+    throw Error("#{@name}.render() not implemented")
+
+
+  renderDebug: (table, md, svg) ->
+    # print some provenance info
     i = 0
     table.bfs (n) -> i += 1
     console.log "#{i} nodes in table tree"
     console.log data.Table.timer.toString 100
-    for name, errs of data.Table.timer._traces
-      for err in errs
-        console.log err.stack
     console.log [
       'getkey: ',
       data.Table.timer.sum('getkey'),
@@ -57,17 +68,9 @@ class gg.geom.Render extends gg.core.XForm
       data.Table.timer.avg('getkey')
     ]
 
-    @render table, svg
-    @renderDebug md, svg
-    @renderInteraction mdrow, svg, table
-
-    pairtable
-
-  # @override this
-  render: (table, rows) -> throw Error("#{@name}.render() not implemented")
 
 
-  renderDebug: (md, svg) ->
+
     # Render some debugging info
     if @log.level == gg.util.Log.DEBUG
       write = (text, opts={}) ->
@@ -80,6 +83,7 @@ class gg.geom.Render extends gg.core.XForm
   renderInteraction: (mdrow, svg, table) ->
     Facets = gg.facet.base.Facets
     facetId = Facets.row2facetId mdrow
+    svg.select('.geoms')[0][0].__data__ = table
     geoms = svg.selectAll(".geom")
 
     # Connect events
@@ -91,16 +95,11 @@ class gg.geom.Render extends gg.core.XForm
     if @constructor.brush?
       brushEventName = "brush-#{facetId}"
       event = mdrow.get "event"
-      roots = table.roots()
-      prov = (ids) ->
-        ret = []
-        for root in roots
-          filtered = root.filter (row) -> row.id in ids
-          filtered.each (row) -> ret.push row
-        ret
-      emitSelected = (selected) -> 
-        event.emit "select-#{facetId}",  selected, prov
-        event.emit "select", selected, prov
+      pstore = prov.Prov.get()
+
+      emitSelected = (rows) => 
+        event.emit "select-#{facetId}",  rows, @, pstore
+        event.emit "select", rows, @, pstore
       event.on brushEventName, @constructor.brush(geoms, emitSelected)
 
 

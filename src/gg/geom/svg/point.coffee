@@ -37,18 +37,22 @@ class gg.geom.svg.Point extends gg.geom.Render
         )
 
         if valid
-          selected.push c
+          selected.push row
 
-        if valid then 'black' else row.get 'fill'
+        if valid 
+          return d3.rgb(row.get('fill')).darker(2);
+        else
+          return row.get 'fill'
       emit selected
 
 
 
   render: (table, svg) ->
-    rows = table.all()
+    rows = table.all() #.rows
+    _id = @id
 
 
-    points = svg.append('g').classed('point geoms', true)
+    points = svg.append('g').classed('geoms', true)
       .selectAll(".geom")
       .data(rows)
     enter = points.enter()
@@ -57,9 +61,6 @@ class gg.geom.svg.Point extends gg.geom.Render
     symbol = d3.svg.symbol()
 
     @applyAttrs enterPoints,
-      foobar: (t) ->
-        t.svg = d3.select @
-        null
       class: "geom"
       transform: (t) -> "translate(#{t.get 'x'}, #{t.get 'y'})"
       d: (t) -> symbol.size(t.get('r')*t.get('r')).type(t.get 'shape')()
@@ -89,6 +90,13 @@ class gg.geom.svg.Point extends gg.geom.Render
     .transition()
       .remove()
 
+
+    table.project {
+      alias: 'el'
+      cols: '*'
+      type: data.Schema.object
+      f: (row, idx) -> enterPoints[0][idx]
+    }
 
 
 

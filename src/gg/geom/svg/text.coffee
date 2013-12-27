@@ -19,19 +19,17 @@ class gg.geom.svg.Text extends gg.geom.Render
   @brush: gg.geom.svg.Rect.brush
 
   render: (table, svg) ->
+    _id = @id
     rows = table.distinct(['x', 'y', 'text']).all()
 
-    texts = @agroup(svg, "text geoms", rows)
-      .selectAll("text")
+    texts = svg.append('g').classed('geoms', yes)
+      .selectAll('text.geom')
       .data(rows)
     enter = texts.enter()
     exit = texts.exit()
     enterTexts = enter.append("text")
 
     @applyAttrs enterTexts,
-      foo: (t) ->  
-        t.svg = d3.select @
-        null
       class: "geom"
       x: (t) -> t.get 'x0'
       y: (t) -> t.get 'y0'
@@ -61,5 +59,12 @@ class gg.geom.svg.Text extends gg.geom.Render
       .attr("fill-opacity", 0)
     .transition()
       .remove()
+
+    table.project {
+      alias: 'el'
+      cols: '*'
+      type: data.Schema.object
+      f: (row, idx) -> enterText[0][idx]
+    }
 
 

@@ -19,7 +19,7 @@ class gg.geom.svg.Rect extends gg.geom.Render
 
 
     ([[minx, miny], [maxx, maxy]]) ->
-      selectedGeoms = []
+      selected = []
       geoms.attr 'fill', (d, i) ->
         r = d3.select @
         row = r.datum()
@@ -38,10 +38,11 @@ class gg.geom.svg.Rect extends gg.geom.Render
         )
 
         if valid
-          selectedGeoms.push r
-
-        if valid then 'black' else row.get 'fill'
-      emit selectedGeoms
+          selected.push row
+          d3.rgb(row.get('fill')).darker(2)
+        else
+          row.get('fill')
+      emit selected 
 
 
 
@@ -49,8 +50,8 @@ class gg.geom.svg.Rect extends gg.geom.Render
   render: (table, svg) ->
     rows = table.all()
 
-    rects = @agroup(svg, "intervals geoms", rows)
-      .selectAll("rect")
+    rects = svg.append('g').classed('intervals geoms', yes)
+      .selectAll('rect')
       .data(rows)
     enter = rects.enter()
     exit = rects.exit()
@@ -62,9 +63,6 @@ class gg.geom.svg.Rect extends gg.geom.Render
     width = (t) -> t.get('x1') - t.get('x0')
 
     @applyAttrs enterRects, {
-      foo: (t) -> 
-        t.svg = d3.select(@)
-        null
       class: "geom"
       x
       y
@@ -102,5 +100,15 @@ class gg.geom.svg.Rect extends gg.geom.Render
       .attr("stroke-opacity", 0)
     .transition()
       .remove()
+
+
+    table.project {
+      alias: 'el'
+      cols: '*'
+      type: data.Schema.object
+      f: (row, idx) -> enterRects[0][idx]
+    }
+
+
 
 

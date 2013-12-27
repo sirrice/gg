@@ -151,6 +151,20 @@ var selected_geoms = {
       outputs[[nodeid, port]] = data;
     });
     plot.on("done", function(debug) {
+      var pstore = prov.Prov.get()
+      var wfnodes = pstore.nodes(function(n) { 
+        return gg.util.Util.isType(n, gg.wf.Node); 
+      })
+      var geoms = wfnodes.filter(function(n) { 
+        return pstore.children(n, 'wf').length == 0; 
+      })
+      var sources = pstore.backward(geoms, 'wf');
+      var views = pstore.forward(sources, 'wf');
+      var outputs = pstore.forward(views, 'output');
+      console.log(views);
+      console.log(outputs);
+      return;
+
 
       debug = _.map(debug, function(o, id) {
         return [o['name'], o['cost']]

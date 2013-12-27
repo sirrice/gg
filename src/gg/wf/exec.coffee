@@ -38,9 +38,6 @@ class gg.wf.Exec extends gg.wf.Node
 
     params = @params
     compute = @params.get('compute') or @compute.bind(@)
-    if @inputs[0].left().nrows() > 0 and not @inputs[0].right().any('scales')?
-      console.log "#{@name} input scale is null"
-      console.log @inputs[0].left().any().raw()
 
     try
       [keys, partitions] = gg.wf.Exec.setup @inputs[0], @params

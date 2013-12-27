@@ -23,8 +23,9 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
 
     # attributes should be imported in bulk using
     # .attr( {} ) where {} is @attrs
-    boxes = svg.append("g").classed('boxes geoms', true)
-    boxes = boxes.selectAll('g')
+    boxes = svg.append("g")
+      .classed('boxes geoms', true)
+      .selectAll('g')
       .data(boxtables)
     enter = boxes.enter()
       .append("g")
@@ -159,5 +160,9 @@ class gg.geom.svg.Boxplot extends gg.geom.Render
         .on("mouseover", (d, idx) -> _this.applyAttrs d3.select(@), cssOver)
         .on("mouseout", (d, idx) -> _this.applyAttrs d3.select(@), cssOut)
 
-
-
+    table.project {
+      alias: 'el'
+      cols: '*'
+      type: data.Schema.object
+      f: (row, idx) -> enter[0][idx]
+    }

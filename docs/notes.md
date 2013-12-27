@@ -23,6 +23,128 @@ Desired Features
 
    
     
+Dec 24, 2014
+------------
+
+Provenance Model for Visualization
+
+    Workflow level: 
+      
+        node  -(wf)-> node -(wf)-> node
+
+        table -(input)-> node -(output)-> table
+
+    Table level:
+
+        table -(table)-> table
+
+        table -(row)->   rows
+
+    Multi-level
+
+        node ---------------(wf)--------> node
+         |                                 |
+         | (input)                (output) |
+         v                                 v
+        intable -(table)-> table' -> ..-> outtable
+         |                         |       |
+         | (implicit)              |       |
+         v                         v       v
+        rows                     (rows)   rows
+
+
+        intable  -(table) -> outtable
+         |                      |
+         | (col)          (col) |
+         v                      v
+        col   <--(coldep)--    col
+
+    Backward
+
+      Given output rows Rs
+      Find all input rows that contributed
+
+      inputs(Rs, ['inputtable'], <condition>)
+
+      SELECT i
+      FROM allrows r
+      WHERE
+        p_intersect
+
+    Prov check
+
+      Given outputs R1 and R2
+      Find all r in R1 U R2 that use the same base inputs
+
+      SELECT R1
+      FROM R1, R2
+      WHERE
+        inputs(R1, 'root') == inputs(R2, 'root')
+
+
+      Given outputs R1 and R2
+      Find all r in R1 U R2 that share base inputs
+
+      SELECT R1
+      FROM R1, R2
+      WHERE
+        intersection(inputs(R1, 'root'), inputs(R2, 'root')).len > 0
+
+
+    Forward 1
+
+      Given input rows Rs
+      Find all dependent geometries
+
+      SELECT 
+      FROM allrows as r, nodes as n
+      WHERE
+        p_intersect(r, R) AND
+        n = r.table.output AND
+        'view' = r.table.output.type 
+
+    Space Transforms
+
+      outputspace -> dataspace -> outputspaces
+    
+    Brush+Link
+
+      given selected rows Rs in one view
+      find all rows that share _any_ input rows
+      where the row is part of a table that is the output of a node with no children
+
+      SELECT r
+      FROM allrows as r, nodes as n
+      WHERE
+        p_intersect(r, Rs, 'initial table') AND
+        n = r.table.output AND
+        p_children(n).length == 0
+
+
+    Tooltip 1
+
+      given selected rows Rs in one view
+      compute aggregate over _all_ input rows that generated Rs
+
+      SELECT COUNT(r)
+      FROM allrows as r, nodes as n
+      WHERE
+        p_intersect(r, Rs, 'initial table')
+        
+
+    Tooltip 2
+
+      given selected rows Rs in one view
+      compute groupby (R?) aggregate over _all_ input rows that generated Rs
+
+      SELECT Rs.id, COUNT(r)
+      FROM allrows as r, nodes as n
+      WHERE 
+        p_intersect(r, Rs, 'initial table')
+      GROUPBY Rs.id
+
+
+
     
 Misc Braindump
 -------
