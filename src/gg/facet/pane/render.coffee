@@ -45,8 +45,8 @@ class gg.facet.pane.Svg extends gg.core.BForm
     }
 
     @renderBg(el, dc) # render this first so it's at the bottom
-    @renderXAxis(el, dc, xac, xscale, row.get('xaxistext-opts'), params.get('tickOpts'))
-    @renderYAxis(el, dc, yac, yscale, row.get('yaxistext-opts'), params.get('tickOpts'))
+    @renderXAxis(el, dc, xac, xscale, paneId, row.get('xaxistext-opts'), params.get('tickOpts'))
+    @renderYAxis(el, dc, yac, yscale,  paneId,row.get('yaxistext-opts'), params.get('tickOpts'))
 
     dataPaneSvg = @renderDrawingPane(el, dc, paneC, paneId)
     @renderBrushes dataPaneSvg, xscale, yscale, eventCoordinator, facetId
@@ -139,14 +139,14 @@ class gg.facet.pane.Svg extends gg.core.BForm
   # @param dc draw container for the entire drawing plot area
   # @param container bounds for the xaxis
   # @param opts axis formatting options computed from facet layout
-  renderXAxis: (el, dc, container, xscale, opts, tickOpts={}) ->
-    return if container.h() == 0
+  renderXAxis: (el, dc, container, xscale, paneId, opts, tickOpts={}) ->
     xac2 = container.clone()
 
     # content is clipped _before_ transformations
+    clipid = "xaxisclip-#{paneId}-#{@id}"
     clip = el.append "clipPath"
     clip.attr
-      id: "xaxisclip-#{@id}"
+      id: clipid
     cliprect = clip.append('rect')
     cliprect.attr
       x: "0"
@@ -160,6 +160,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
       transform: @b2translate xac2
 
     showTicks = if tickOpts.show? then tickOpts.show else yes
+    showTicks = showTicks and container.h() != 0
     axis = d3.svg.axis().scale(xscale.d3()).orient('bottom')
     axis.tickSize -dc.h()
     # if showticks == false, then don't allocate space in axis.layout
@@ -181,6 +182,8 @@ class gg.facet.pane.Svg extends gg.core.BForm
       labels = _.sample xscale.d3().domain(), opts.nticks
       axis.tickValues labels
 
+    
+
     xael.call axis
     if opts.rotate
       xael.selectAll("text")
@@ -189,18 +192,18 @@ class gg.facet.pane.Svg extends gg.core.BForm
           transform: 'rotate(90)'
           dy: '0em'
           dx: '.5em'
-          "clip-path": "url(#xaxisclip-#{@id})"
+          "clip-path": "url(##{clipid})"
           )
 
-  renderYAxis: (el, dc, container, yscale, opts, tickOpts={}) ->
-    return if container.w() == 0
+  renderYAxis: (el, dc, container, yscale, paneId, opts, tickOpts={}) ->
     yac2 = container.clone()
     yac2.d container.w(), 0
 
     # content is clipped _before_ transformations
+    clipid = "yaxisclip-#{paneId}-#{@id}"
     clip = el.append "clipPath"
     clip.attr
-      id: "yaxisclip-#{@id}"
+      id: clipid
     cliprect = clip.append('rect')
     cliprect.attr
       x: "#{-yac2.w()}px"
@@ -214,6 +217,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
       transform: @b2translate yac2
 
     show = if tickOpts.show? then tickOpts.show else yes
+    show = show and container.w() != 0
     axis = d3.svg.axis().scale(yscale.d3()).orient('left')
     axis.tickSize -dc.w()
     axis.tickFormat opts.formatter
@@ -239,7 +243,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
 
     yael.call axis
     yael.selectAll('text').attr
-      "clip-path": "url(#yaxisclip-#{@id})"
+      "clip-path": "url(##{clipid})"
 
 
 
