@@ -22,10 +22,10 @@ class gg.geom.svg.Area extends gg.geom.Render
         .y1((d) -> d.get 'y1')
         #.interpolate('basis')
 
-
-    areas = @groups(svg, 'areas', linetables)
-      .selectAll('path')
-      .data((d) -> [d])
+    areas = svg.append('g')
+      .classed('areas geoms', yes)
+      .selectAll('path.geom')
+      .data(linetables)
     enter = areas.enter()
     enterAreas = enter.append("path")
     exit = areas.exit()
