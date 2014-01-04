@@ -3,6 +3,9 @@ var onselect = function(rows, node, pstore) {
   var tableoutput = pstore.children(node, 'output');
   var tablesource = pstore.backward(tableoutput, 'table');
   var tablesinks = pstore.forward(tablesource, 'table');
+  tablesinks = tablesinks.filter(function(t) { 
+    return pstore.parents(t, 'output').length > 0;
+  })
   var allviews = tablesinks.map(function(n) {
     return pstore.parents(n, 'output') 
   });
@@ -13,12 +16,16 @@ var onselect = function(rows, node, pstore) {
   views = views.filter(function(v) {
     return v.id != node.id;
   });
-  var outputs = views.map(function(view) { return pstore.children(view, 'output')[0] });
+  var outputs = views.map(function(view) {
+    return pstore.children(view, 'output')[0]
+  });
 
   var ids = pstore.ids(rows);
-
   var svgs = [];
   _.each(outputs, function(output) {
+    var allids = _.union(output.map(function(row){
+      return row.prov()
+    }))
     output.each(function(row) {
       var el = d3.select(row.get('el'));
       if (_.intersection(row.prov(), ids).length > 0) {
@@ -145,12 +152,20 @@ var specs = [
       outputs[[nodeid, port]] = data;
     });
     plot.on("done", function(debug) {
+      return;
       var pstore = prov.Prov.get()
       var wfnodes = pstore.nodes(function(n) { return gg.util.Util.isType(n, gg.wf.Node); })
       var geoms = wfnodes.filter(function(n) { return pstore.children(n, 'wf').length == 0; } )
       var sources = pstore.backward(geoms, 'wf');
       var views = pstore.forward(sources, 'wf');
       var outputs = pstore.forward(views, 'output');
+
+      _.each(wfnodes, function(n) {
+        var output = pstore.children(n, 'output')[0];
+        console.log([n.name, 
+          output.id,
+          (gg.util.Util.isType(n, gg.wf.Exec) || gg.util.Util.isType(n, gg.wf.Barrier)), pstore.children(output, 'table')])
+      })
     })
 
   }

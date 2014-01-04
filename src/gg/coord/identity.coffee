@@ -32,6 +32,6 @@ class gg.coord.Identity extends gg.coord.Coordinate
       cols: col
     }
     table = table.project mapping, yes
-    pt.left table
+    pt.left table.once()
     pt
 

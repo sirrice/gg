@@ -55,7 +55,7 @@ class gg.coord.XFlip extends gg.coord.Coordinate
         }
       ], yes
 
-    pt.left table
+    pt.left table.once()
     pt
 
 
@@ -95,6 +95,6 @@ class gg.coord.Flip extends gg.coord.Coordinate
         }
       ], yes
 
-    pt.left table
+    pt.left table.once()
     pt 
 

@@ -53,5 +53,5 @@ class gg.coord.Swap extends gg.coord.Coordinate
     scales.set yScale
 
     table = scales.apply inverted, gg.scale.Scale.xys
-    pt.left table
+    pt.left table.once()
     pt 

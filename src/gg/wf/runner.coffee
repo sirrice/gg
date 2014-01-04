@@ -63,7 +63,10 @@ class gg.wf.Runner extends events.EventEmitter
 
         # provenance
         prov.Prov.get().tag node, 'node'
-        prov.Prov.get().connect node, pt.left(), 'output'
+        if nodeid in _.map(@flow.sinks(), (sink) -> sink.id)
+          prov.Prov.get().connect node, pt.left().cache(), 'output'
+        else
+          prov.Prov.get().connect node, pt.left(), 'output'
 
         @ch.push nodeid, outidx, pt
 
