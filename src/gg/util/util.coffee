@@ -3,6 +3,17 @@ ggutil = require 'ggutil'
 _ = require 'underscore'
 
 class gg.util.Util
+  @typeFromPackage: (o) ->
+    unless o?
+      return null
+    unless o.constructor.ggpackage?
+      return "_none_"
+    res = /(\w+)\.\w+$/.exec o.constructor.ggpackage
+    if res?
+      res[0]
+    else
+      "_none_"
+
   @ggklass: (ggpackage) ->
     cmd = "return ('gg' in window)? window.#{ggpackage} : #{ggpackage}"
     Function(cmd)()

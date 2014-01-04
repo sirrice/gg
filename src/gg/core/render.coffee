@@ -57,4 +57,3 @@ class gg.core.Render extends gg.core.BForm
     md = md.project [{alias: 'svg', cols: 'svg', f: f, type: data.Schema.object}]
     pairtable.right md
     pairtable
-    #new data.PairTable pairtable.left(), md

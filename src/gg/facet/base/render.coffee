@@ -107,7 +107,6 @@ class gg.facet.base.Render extends gg.core.BForm
     md = pairtable.right()
     lc = md.any 'lc'
     md = @renderLabels md, params, lc
-    md = md.setColVal 'lc', lc
     pairtable.right md
     pairtable
 

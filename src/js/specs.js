@@ -158,6 +158,14 @@ var geom_interval = {
       }
 };
 
+var geom_interval = {
+  layers:[{ geom: "point"}],
+  aes: {x: 'd', y: 'e'}
+  ,facets: {x: 'f'}
+  ,opts: {optimize: ['debug']},
+  debug: {}
+}
+
 var geom_point_1 = {
   layers:[{ geom: "point"}],
   aes: {x: 'd', y: 'e'}
@@ -271,6 +279,48 @@ var geom_taxi = {
   layers: [{geom: "point"}],
   aes: { x: "{new Date(x)}", y: "{parseInt(y)}" }
          
+}
+
+var intel = { 
+  on: { 
+    select: function(rows, table, pstore) { 
+      foobar(rows, table, pstore); 
+    }
+  }, 
+  opts: { "uri": "http://localhost:8881" }, 
+  "data": { 
+    "type": "jdbc", 
+    "q": "SELECT avg(temp), stddev(temp), date_trunc('hour',date+time) as x FROM readings WHERE date >= '2004-3-1' and date < '2004-3-10' group by x", 
+    "uri": "postgresql://localhost/intel" 
+  }, 
+  "layers": [ 
+    { 
+      geom: 'line', aes: { y: 'avg'}
+    }, 
+    {
+      geom: 'line', aes: { y: 'stddev'} 
+    }, 
+    { 
+      "geom": {
+        type:"point", 
+        aes: {r: "count"}
+      }, 
+      stat: "bin2d", 
+      aes: { y: "avg", z: 1 } 
+    }, 
+    { 
+      "geom": {type:"point", aes: {r: "count"}}, 
+      stat: "bin2d", 
+      aes: { y: "stddev", z: 1 } 
+    }
+  ], 
+  aes: { 
+    x: "{new Date(x)}", 
+    z: 1 
+  }, 
+  scales: { 
+    r: { range: [0, 20] } 
+  } 
 }
 
 

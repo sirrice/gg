@@ -1,9 +1,10 @@
+#<< gg/wf/barrier
 
-class gg.core.Layout extends gg.core.BForm
+class gg.core.Layout extends gg.wf.SyncBarrier
   @ggpackage = "gg.core.Layout"
 
 
-  compute: (pt, params) ->
+  compute: (pairtable, params) ->
     options = params.get 'options'
     c = new gg.util.Bound 0, 0, options.w, options.h
     [w,h] = [c.w(), c.h()]
@@ -29,15 +30,17 @@ class gg.core.Layout extends gg.core.BForm
 
 
     # Add containers to the environment
-    md = pt.right()
-    lc = {}
-    lc = md.any('lc') if md.has 'lc'
-    lc.titleC = titleC
-    lc.facetC = facetC
-    lc.baseC = c
+    for [key, pt] in pairtable.partition pairtable.cols
+      md = pt.right()
+      lc = {}
+      lc = md.any('lc') if md.has 'lc'
+      lc.titleC = titleC
+      lc.facetC = facetC
+      lc.baseC = c
 
-    md = md.setColVal 'lc', lc
-    pt.right md
-    pt
+      md = md.setColVal 'lc', lc
+      pt.right md
+      pairtable.update key, pt
+    pairtable
 
 

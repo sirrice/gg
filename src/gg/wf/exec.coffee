@@ -11,21 +11,10 @@ class gg.wf.Exec extends gg.wf.Node
 
   compute: (pairtable, params, cb) -> cb null, pairtable
 
-  @setup: (pairtable, params) ->
-    timer = new gg.util.Timer()
-    timer.start()
-    keys = params.get 'keys'
-    keys ?= pairtable.sharedCols()
-    keys = _.intersection keys, pairtable.sharedCols()
-    pairtable = pairtable.ensure keys
-    partitions = pairtable.partition(keys)
-    timer.stop()
-    if timer.sum() > 200
-      console.log("exec setup took #{timer.toString()}")
-    [keys, partitions]
-
-  @finalize: (pairtables, keys) ->
-    data.PairTable.union pairtables
+  @finalize: (keyptPairs, masterPt) ->
+    for [key, pt] in keyptPairs
+      masterPt.update key, pt
+    masterPt
 
 
   # partition by set of attributes
@@ -38,21 +27,29 @@ class gg.wf.Exec extends gg.wf.Node
 
     params = @params
     compute = @params.get('compute') or @compute.bind(@)
+    pairtable = @inputs[0]
+
+    keys = params.get 'keys'
+    keys ?= pairtable.sharedCols()
+    keys = _.intersection keys, pairtable.sharedCols()
 
     try
-      [keys, partitions] = gg.wf.Exec.setup @inputs[0], @params
+      pairtable = pairtable.partitionOn keys
+      pairtable = pairtable.ensure keys
+      partitions = pairtable.partition keys
 
-      iterator = (pt, cb) ->
+      iterator = ([key, pt], cb) ->
         try
-          compute pt, params, cb
+          compute pt, params, (err, pt) ->
+            cb err, [key, pt]
         catch err
           console.log err.stack
           cb err, null
 
-      async.map partitions, iterator, (err, pairtables) =>
+      async.map partitions, iterator, (err, keyptPairs) =>
         throw Error(err) if err?
-        result = gg.wf.Exec.finalize pairtables
-        @output 0, result
+        gg.wf.Exec.finalize keyptPairs, pairtable
+        @output 0, pairtable
 
     catch err
       console.log err.stack

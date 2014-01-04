@@ -1,6 +1,7 @@
 #<< gg/core/xform
+#<< gg/wf/barrier
 
-class gg.facet.pane.Svg extends gg.core.BForm
+class gg.facet.pane.Svg extends gg.wf.SyncBarrier#BForm
   @ggpackage = "gg.facet.pane.Svg"
 
   parseSpec: ->
@@ -34,6 +35,8 @@ class gg.facet.pane.Svg extends gg.core.BForm
     @log "bound: #{paneC.bound().toString()}"
     @log "drawC: #{paneC.drawC().toString()}"
     @log "xaxis: #{paneC.xAxisC().toString()}"
+    @log "facet: #{facetId}"
+
     @log "yFacet:#{yfc.toString()}" if yfc?
     @log "layer: #{layerIdx}"
 
@@ -44,7 +47,7 @@ class gg.facet.pane.Svg extends gg.core.BForm
       container: paneC.bound().toString()
     }
 
-    @renderBg(el, dc) # render this first so it's at the bottom
+    @renderBg(el, dc) if layerIdx == 0 # render this first so it's at the bottom
     @renderXAxis(el, dc, xac, xscale, paneId, row.get('xaxistext-opts'), params.get('tickOpts'))
     @renderYAxis(el, dc, yac, yscale,  paneId,row.get('yaxistext-opts'), params.get('tickOpts'))
 
@@ -277,6 +280,51 @@ class gg.facet.pane.Svg extends gg.core.BForm
       
 
   compute: (pairtable, params) ->
+    console.log pairtable
+    timer = new ggutil.Timer()
+    timer.start("partition")
+    pairtable = pairtable.partitionOn ['facet-x', 'facet-y']
+    partitions = pairtable.partition ['facet-x', 'facet-y']
+    timer.stop("partition")
+
+    timer.start("secondpass")
+    for [key, pt] in pairtable.partition ['facet-x', 'facet-y']
+      md = pt.right()
+      facetId =  gg.facet.base.Facets.row2facetId md.any()
+      el = @renderFacetPane md, params
+      layerEls = {}
+      f = (paneC, facetx, facety, layerIdx, svg) ->
+        unless layerIdx of layerEls
+          dc = paneC.drawC()
+          facetId = gg.facet.base.Facets.getFacetId facetx, facety
+          paneSvg = el.select('.data-pane').insert 'g', ':last-child'
+          paneSvg.attr {
+            class: 'layer-pane facet-layer-grid'
+            width: dc.w()
+            height: dc.h()
+            id: "facet-grid-#{paneC.xidx}-#{paneC.yidx}-#{layerIdx}"
+            container: gg.facet.pane.Svg.b2translate(paneC.bound())
+          }
+          layerEls[layerIdx] = paneSvg
+
+        svg = _.o2map svg, (v, k) -> [k,v]
+        svg.pane = paneSvg
+        svg
+
+      md = md.project({
+        alias: 'svg'
+        cols: ['paneC', 'facet-x', 'facet-y', 'layer', 'svg']
+        f: f
+        type: data.Schema.object
+      }).cache()
+      pt.right md
+      pairtable.update key, pt
+
+    timer.stop("secondpass")
+    console.log timer.toString()
+    return pairtable
+
+
     md = pairtable.right()
 
     # 

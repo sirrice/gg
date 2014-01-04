@@ -29,9 +29,7 @@ class gg.scale.train.Master extends gg.core.BForm
       for set in sets
         set.merge masterSet
     else
-      md = @trainFreeScales md
-
-    pairtable.right md
+      @trainFreeScales md
     pairtable
 
 

@@ -48,7 +48,8 @@ class gg.scale.train.Pixel extends gg.wf.SyncBarrier
     timer = new gg.util.Timer()
     timer.start('fullpart')
     # why full partition?
-    partitions = pairtable.fullPartition()
+    pairtable = pairtable.partitionOn ['facet-x', 'facet-y', 'layer']
+    partitions = pairtable.partition ['facet-x', 'facet-y', 'layer']
     timer.stop('fullpart')
 
     scales = {}    # aes -> scaletype -> scale
@@ -70,7 +71,7 @@ class gg.scale.train.Pixel extends gg.wf.SyncBarrier
 
 
     timer.start('first')
-    for p in partitions
+    for [key, p] in partitions
       left = p.left()
       md = p.right()
       posMapping = md.any 'posMapping'
@@ -105,7 +106,7 @@ class gg.scale.train.Pixel extends gg.wf.SyncBarrier
     timer.stop('first')
 
     timer.start('second')
-    partitions = _.map partitions, (p) ->
+    partitions = _.map partitions, ([key, p]) ->
       left = p.left()
       right = p.right()
 
@@ -160,11 +161,13 @@ class gg.scale.train.Pixel extends gg.wf.SyncBarrier
 
       # XXX: This is necessary so values are only rescaled _once_!
       p.left left.once()
-      p
+      [key, p]
 
     timer.stop('second')
     console.log timer.toString()
 
-    return data.PairTable.union partitions
+    for [key, partition] in partitions
+      pairtable.update key, partition
+    pairtable
 
 

@@ -1,6 +1,6 @@
-#<< gg/core/bform
+#<< gg/wf/barrier
 
-class gg.scale.train.Data extends gg.core.BForm
+class gg.scale.train.Data extends gg.wf.SyncBarrier
   @ggpackage = "gg.scale.train.Data"
 
   compute: (pairtable, params) ->
@@ -12,15 +12,15 @@ class gg.scale.train.Data extends gg.core.BForm
   @train: (pairtable, params, log) ->
     log ?= console.log
 
-    partitions = pairtable.partition ['facet-x', 'facet-y', 'layer']
-    for p in partitions
+    pairtable = pairtable.partitionOn ['facet-x', 'facet-y', 'layer']
+    partitions = pairtable.partition pairtable.cols
+    for [key, p] in partitions
       table = p.left()
       md = p.right()
       md.each (row) ->
         set = row.get 'scales'
         set.train table, row.get('posMapping')
 
-    pairtable = data.PairTable.union partitions
     pairtable = gg.scale.train.Master.train(pairtable, params)
     pairtable
 

@@ -5,7 +5,7 @@
 #   the data table can be modified
 #   slower than ROBarrier
 #
-# It doesn't make sense to combine _data_ across layers and facets.
+# XXX: It doesn't make sense to combine _data_ across layers and facets.
 #
 # Multiinput -> tableset -> compute -> tableset -> multioutput
 #
@@ -19,47 +19,30 @@ class gg.wf.Barrier extends gg.wf.Node
   compute: (pt, params, cb) -> cb null, pt
 
   @setup: (inputs) ->
-    tables = _.map inputs, (pt, idx) ->
-      t = pt.left()
-      t.setColVal '_barrier', idx
-
-    mds = _.map inputs, (pt, idx) ->
-      md = pt.right()
-      md.setColVal '_barrier', idx
-
-    table = new data.ops.Union tables
-    md = new data.ops.Union mds
-    new data.PairTable table, md
-
+    inputs = for pt in inputs
+      pt.partitionOn []
+    inputs = for pt, idx in inputs
+      pt.addSharedCol '_barrier', idx, data.Schema.numeric
+    pt = data.PartitionedPairTable.fromPairTables inputs
 
   @finalize: (tableset) ->
-    table = tableset.left()
-    md = tableset.right()
-    timer = new gg.util.Timer()
-    table = table.partition '_barrier', 'table'
-    timer.start()
-    oldmd = md
-    md = md.partition '_barrier', 'md'
-    timer.stop()
+    tableset = tableset.partitionOn '_barrier'
+    partitions = tableset.table.partition '_barrier'
 
-    if timer.sum() > 200
-      console.log("finalize took ttoo long")
-      console.log timer.toString()
-      console.log timer.timings()
-      console.log oldmd.graph()
-
-    pairtable = table.join md, '_barrier' 
-    pairtable.map (row) =>
-      table = row.get('table')
-      md = row.get('md') or null
-      table = table.exclude('_barrier') if table?
-      md = md.exclude('_barrier') if md?
-      idx = row.get '_barrier'
+    ret = partitions.map (row) ->
+      outidx = row.get '_barrier'
+      ppt = new data.PartitionedPairTable(
+        row.get 'table'
+        tableset.cols
+        tableset.lschema
+        tableset.rschema
+      )
       {
-        idx: idx
-        pairtable: new data.PairTable(table, md)
+        idx: outidx
+        pairtable: ppt.rmSharedCol('_barrier')
       }
 
+    ret
 
   run: ->
     throw Error("Node not ready") unless @ready()

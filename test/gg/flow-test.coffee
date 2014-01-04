@@ -45,7 +45,7 @@ suite.addBatch {
         flow.prepend gg.core.Data.spec2Node
           type: "table"
           val: makeTable 10
-        flow.on "output", (id, pt) ->
+        flow.on "output", (id, outidx, pt) ->
           promise.emit "success", pt
         flow.run()
         promise
@@ -85,7 +85,7 @@ suite.addBatch {
           flow.prepend gg.core.Data.spec2Node
             type: "table"
             val: makeTable 10
-          flow.on "output", (id, pt) ->
+          flow.on "output", (id, outidx, pt) ->
             promise.emit "success", pt
           flow.run()
           promise
@@ -116,7 +116,7 @@ suite.addBatch {
           flow.prepend gg.core.Data.spec2Node
             type: "table"
             val: makeTable 10
-          flow.on "output", (id, pt) ->
+          flow.on "output", (id, outidx, pt) ->
             promise.emit "success", pt
           flow.run()
           promise

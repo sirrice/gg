@@ -119,25 +119,28 @@ class gg.facet.base.Facets
     log = @log
 
     f = (pairtable, params) ->
-      t = pairtable.left()
-      md = pairtable.right()
-      xcol = params.get 'x'
-      ycol = params.get 'y'
+      for [key, pt] in pairtable.partition pairtable.cols
+        t = pt.left()
+        md = pt.right()
+        xcol = params.get 'x'
+        ycol = params.get 'y'
 
-      mapping = [
-        {
-          alias: ['facet-x', 'facet-y']
-          f: (xfacet, yfacet) -> 
-            'facet-x': xfacet
-            'facet-y': yfacet
-          type: data.Schema.ordinal
-          cols: [xcol, ycol]
-        }
-      ]
-      t = t.project mapping, yes
+        mapping = [
+          {
+            alias: ['facet-x', 'facet-y']
+            f: (xfacet, yfacet) -> 
+              'facet-x': xfacet
+              'facet-y': yfacet
+            type: data.Schema.ordinal
+            cols: [xcol, ycol]
+          }
+        ]
+        t = t.project mapping, yes
 
-      pairtable.left t
+        pt.left t
+        pairtable.update key, pt
       pairtable = pairtable.ensure ['facet-x' ,'facet-y']
+      console.log pairtable
       pairtable
 
     gg.wf.SyncBarrier.create f, @splitParams, 'facet-labeler'

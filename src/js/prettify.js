@@ -11,7 +11,7 @@ JSON.prettify = function(o, tabsize, maxlinesize) {
 var prettylist = function(o, tab, maxlinesize) {
 
   if (_.isFunction(o)) {
-    return "Function";
+    return [o.toString()];
   } else if (_.isArray(o)) {
     var list = _.map(o, function(v, idx) {
       var sublist = prettylist(v, tab);

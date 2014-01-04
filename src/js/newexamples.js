@@ -18,6 +18,7 @@ var geoms = {
   ,ptinterval: geom_point_interval
   ,dotplot: geom_dotplot
   ,taxi: geom_taxi
+  ,intel: intel
   ,bin2d: geom_bin2d
 };
 
@@ -36,7 +37,6 @@ var selected_geoms = {
     boxplot2: false,
 
 };
-
 
 
 
@@ -163,7 +163,6 @@ var selected_geoms = {
       var outputs = pstore.forward(views, 'output');
       console.log(views);
       console.log(outputs);
-      return;
 
 
       debug = _.map(debug, function(o, id) {
@@ -176,6 +175,7 @@ var selected_geoms = {
         return {x: o[0], y: o[1]}
       })
       console.log("total cost\t\t" + cost);
+      return
 
       var dspecs = {
         layers: [

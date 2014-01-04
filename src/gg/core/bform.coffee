@@ -1,4 +1,5 @@
 #<< gg/wf/robarrier
+#<< gg/wf/barrier
 
 # A Barrier Transformation
 #

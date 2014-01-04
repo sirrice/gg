@@ -77,6 +77,7 @@ class gg.wf.ClearingHouse extends events.EventEmitter
           #{child.name}:#{inport} #{child.location}"
 
     # provenance
+    prov.Prov.get().tag child, gg.util.Util.typeFromPackage(child)
     prov.Prov.get().connect child, input.left(), 'input', inport
 
     child.setInput inport, input
